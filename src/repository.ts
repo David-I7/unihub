@@ -1,35 +1,123 @@
 import catalogJson from './data/catalog.json' with { type: 'json' }
-import algorithmsJson from './data/courses/2025-2026/year-2/semester-1/algorithms.json' with { type: 'json' }
-import databasesJson from './data/courses/2025-2026/year-2/semester-1/databases.json' with { type: 'json' }
-import webEngineeringJson from './data/courses/2025-2026/year-2/semester-2/web-engineering.json' with { type: 'json' }
 import { coursePathFromRepositoryPath } from './coursePath.js'
 import type { Catalog, Course, LoadedCourse, RepositorySnapshot } from './types.js'
 
-type CourseModule = {
-  path: string
-  data: unknown
+declare global {
+  var nodeRequire: ((id: string) => unknown) | undefined
 }
 
-const staticCourseModules: CourseModule[] = [
-  { path: './data/courses/2025-2026/year-2/semester-1/algorithms.json', data: algorithmsJson },
-  { path: './data/courses/2025-2026/year-2/semester-1/databases.json', data: databasesJson },
-  { path: './data/courses/2025-2026/year-2/semester-2/web-engineering.json', data: webEngineeringJson },
-]
+type NodeFs = {
+  existsSync: (path: string) => boolean
+  readdirSync: (path: string) => string[]
+  statSync: (path: string) => { isDirectory: () => boolean }
+  readFileSync: (path: string, encoding: string) => string
+}
+
+type NodePath = {
+  join: (...args: string[]) => string
+  relative: (from: string, to: string) => string
+}
+
+type NodeProcess = {
+  cwd: () => string
+}
 
 export function loadRepositoryData(): RepositorySnapshot {
-  return createRepositorySnapshot(catalogJson, staticCourseModules)
-}
-
-export function createRepositorySnapshot(catalog: unknown, courseModules: CourseModule[]): RepositorySnapshot {
+  const requireFn = globalThis.nodeRequire
+  if (requireFn) {
+    // Node environment: read synchronously from the filesystem for tests
+    return {
+      catalog: catalogJson as Catalog,
+      courses: loadAllCoursesNodeSync(requireFn),
+    }
+  }
   return {
-    catalog: catalog as Catalog,
-    courses: courseModules.map(loadCourseModule),
+    catalog: catalogJson as Catalog,
+    courses: [],
   }
 }
 
-function loadCourseModule(file: CourseModule): LoadedCourse {
-  return {
-    ...(file.data as Course),
-    path: coursePathFromRepositoryPath(file.path),
+// Function to load all courses synchronously in Node.js (for tests)
+function loadAllCoursesNodeSync(requireFn: (id: string) => unknown): LoadedCourse[] {
+  const fs = requireFn('node:fs') as NodeFs
+  const path = requireFn('node:path') as NodePath
+  const processObj = (globalThis as unknown as { process: NodeProcess }).process
+  const cwd = processObj.cwd()
+
+  const coursesDir = path.join(cwd, 'public/data/courses')
+  const files = getJsonFiles(coursesDir, fs, path)
+
+  return files.map((filePath: string) => {
+    const fileContent = fs.readFileSync(filePath, 'utf8')
+    const data = JSON.parse(fileContent)
+    const relativePath = path.relative(cwd, filePath).replace(/\\/g, '/')
+    return {
+      ...(data as Course),
+      path: coursePathFromRepositoryPath(relativePath),
+    }
+  })
+}
+
+function getJsonFiles(dir: string, fs: NodeFs, path: NodePath): string[] {
+  const results: string[] = []
+  if (!fs.existsSync(dir)) return results
+  const list = fs.readdirSync(dir)
+  for (const file of list) {
+    const filePath = path.join(dir, file)
+    const stat = fs.statSync(filePath)
+    if (stat && stat.isDirectory()) {
+      results.push(...getJsonFiles(filePath, fs, path))
+    } else if (file.endsWith('.json')) {
+      results.push(filePath)
+    }
+  }
+  return results
+}
+
+export async function loadCoursesForContext(context: { academicYearId: string; studyYearId: string; semesterId: string }): Promise<LoadedCourse[]> {
+  const { academicYearId, studyYearId, semesterId } = context
+
+  const academicYear = catalogJson.academicYears.find((y) => y.id === academicYearId)
+  const studyYear = academicYear?.studyYears.find((y) => y.id === studyYearId)
+  const semester = studyYear?.semesters.find((s) => s.id === semesterId)
+  const coursesList = (semester as { courses?: Array<{ id: string; title: string }> })?.courses || []
+
+  if (typeof window !== 'undefined') {
+    // Browser environment: fetch from public folder `/data/courses/...`
+    const loaded = await Promise.all(
+      coursesList.map(async (c) => {
+        const response = await fetch(`/data/courses/${academicYearId}/${studyYearId}/${semesterId}/${c.id}.json`)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch course: ${c.id}`)
+        }
+        const data = await response.json()
+        return {
+          ...data,
+          path: { academicYearId, studyYearId, semesterId, courseId: c.id },
+        } as LoadedCourse
+      })
+    )
+    return loaded
+  } else {
+    // Node environment: read from public/data/courses/... using fs
+    const requireFn = globalThis.nodeRequire
+    if (!requireFn) {
+      return []
+    }
+    const fs = requireFn('node:fs') as NodeFs
+    const path = requireFn('node:path') as NodePath
+    const processObj = (globalThis as unknown as { process: NodeProcess }).process
+    const cwd = processObj.cwd()
+
+    const loaded = coursesList.map((c) => {
+      const filePath = path.join(cwd, 'public/data/courses', academicYearId, studyYearId, semesterId, `${c.id}.json`)
+      const fileContent = fs.readFileSync(filePath, 'utf8')
+      const data = JSON.parse(fileContent)
+      return {
+        ...data,
+        path: { academicYearId, studyYearId, semesterId, courseId: c.id },
+      } as LoadedCourse
+    })
+    return loaded
   }
 }

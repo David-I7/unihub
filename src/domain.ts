@@ -29,8 +29,8 @@ export {
 } from './coursePath.js'
 export { deriveCourseDetailView, type CourseDetailView } from './courseDetailView.js'
 export { applyContribution, contributionPayloadFromText, prepareContribution, validateContribution, type GithubTarget, type PreparedContribution } from './contribution.js'
-export { createRepositorySnapshot, loadRepositoryData } from './repository.js'
-export { repositorySchema, validateCatalog, validateCourse, validateRepository } from './validation.js'
+export { loadRepositoryData, loadCoursesForContext } from './repository.js'
+export { repositorySchema, validateCatalog, validateCourse, validateRepository, validateContributionPayload } from './validation.js'
 
 import { courseInContext } from './coursePath.js'
 import type { Catalog, CourseContext, Hierarchy, LoadedCourse } from './types.js'

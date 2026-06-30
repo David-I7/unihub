@@ -1,3 +1,9 @@
+import { createRequire } from 'module'
+declare global {
+  var nodeRequire: ((id: string) => unknown) | undefined
+}
+globalThis.nodeRequire = createRequire(import.meta.url)
+
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
@@ -210,4 +216,77 @@ test('Contribution preparation accepts explicit repository and GitHub adapters',
 test('repositorySchema exposes formal JSON Schema files', () => {
   assert.equal(repositorySchema.catalog.$schema, 'https://json-schema.org/draft/2020-12/schema')
   assert.deepEqual(repositorySchema.course.required, ['id', 'title', 'professors', 'materials', 'assignmentDeadlines', 'courseSessions', 'exams'])
+})
+
+test('applyContribution supports flexible array of objects (batch) for batchable types and rejects it for non-batchable types', () => {
+  const repository = loadRepositoryData()
+  const target = repository.courses.find((c) => c.id === 'algorithms')
+  assert(target)
+
+  // 1. Valid batch contribution of materials
+  const batchMaterials = [
+    { id: 'batch-mat-1', type: 'course', title: 'Batch Material 1', url: 'https://example.edu/1' },
+    { id: 'batch-mat-2', type: 'course', title: 'Batch Material 2', url: 'https://example.edu/2' },
+  ]
+  const resultOk = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-material',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify(batchMaterials),
+    },
+  })
+  assert.equal(resultOk.valid, true)
+  assert.match(resultOk.changedJson ?? '', /Batch Material 1/)
+  assert.match(resultOk.changedJson ?? '', /Batch Material 2/)
+
+  // Verify that pre-existing course warning "Grade Weight total is below 100 and incomplete" is ignored
+  const hasCourseLevelWarning = resultOk.warnings.some((w) => w.includes('below 100'))
+  assert.equal(hasCourseLevelWarning, false)
+
+  // 2. Reject arrays for non-batchable types
+  const badBatchMetadata = [
+    { title: 'New Course Title 1' },
+    { title: 'New Course Title 2' },
+  ]
+  const resultErr = prepareContribution({
+    repository,
+    draft: {
+      type: 'edit-course-metadata',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify(badBatchMetadata),
+    },
+  })
+  assert.equal(resultErr.valid, false)
+  assert.match(resultErr.errors.join('\n'), /does not support multiple items/)
+
+  // 3. Error when duplicate ID exists in the course
+  const dupIdPayload = { id: 'alg-course-01', type: 'course', title: 'Duplicate ID Material', url: 'https://example.edu' }
+  const resultDupId = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-material',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify(dupIdPayload),
+    },
+  })
+  assert.equal(resultDupId.valid, false)
+  assert.match(resultDupId.errors.join('\n'), /Duplicate ID/)
+
+  // 4. Error when adding gradeWeight that exceeds 100 (existing algorithms weight is 90)
+  const heavyExam = { id: 'heavy-exam', title: 'Heavy Exam', gradeWeight: 15 } // 90 + 15 = 105
+  const resultHeavy = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-exam',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify(heavyExam),
+    },
+  })
+  assert.equal(resultHeavy.valid, false)
+  assert.match(resultHeavy.errors.join('\n'), /Grade Weight total cannot exceed 100/)
 })

@@ -2,7 +2,7 @@ import catalogSchema from './data/schema/catalog.schema.json' with { type: 'json
 import courseSchema from './data/schema/course.schema.json' with { type: 'json' }
 import { courseRepositoryPath } from './coursePath.js'
 import { arrayOfRecords, fail, hasNumber, hasString, isRecord, stringArray } from './records.js'
-import type { LoadedCourse, MaterialType, SessionStatus, ValidationResult } from './types.js'
+import type { LoadedCourse, MaterialType, SessionStatus, ValidationResult, Course } from './types.js'
 
 type JsonSchema = {
   type?: 'object' | 'array' | 'string' | 'number'
@@ -11,6 +11,7 @@ type JsonSchema = {
   items?: JsonSchema
   enum?: unknown[]
   minLength?: number
+  additionalProperties?: boolean
 }
 
 export const repositorySchema = {
@@ -178,4 +179,138 @@ function numberValue(value: unknown): number {
 
 function unique<T>(values: T[]): T[] {
   return [...new Set(values)]
+}
+
+export function validateContributionPayload(
+  type: string,
+  payload: unknown,
+  targetCourse?: Course,
+): ValidationResult {
+  const errors: string[] = []
+  const warnings: string[] = []
+
+  if (type === 'add-new-course') {
+    return validateCourse(payload)
+  }
+
+  const isBatchable = ['add-material', 'add-assignment-deadline', 'add-exam', 'add-course-session'].includes(type)
+  const payloads = Array.isArray(payload) ? payload : [payload]
+
+  if (Array.isArray(payload) && !isBatchable) {
+    return fail(`Contribution type '${type}' does not support multiple items.`)
+  }
+
+  if (Array.isArray(payload) && !payload.every(isRecord)) {
+    return fail('Contribution payload array must contain only JSON objects.')
+  }
+
+  let itemSchema: JsonSchema | undefined
+  const schemaObj = courseSchema as unknown as { properties: Record<string, { items: JsonSchema }> }
+  if (type === 'add-material') itemSchema = schemaObj.properties.materials.items
+  if (type === 'add-assignment-deadline') itemSchema = schemaObj.properties.assignmentDeadlines.items
+  if (type === 'add-exam') itemSchema = schemaObj.properties.exams.items
+  if (type === 'add-course-session') itemSchema = schemaObj.properties.courseSessions.items
+  if (type === 'edit-course-metadata') {
+    itemSchema = {
+      type: 'object',
+      properties: {
+        title: { type: 'string', minLength: 1 },
+        professors: { type: 'array', items: { type: 'string' } },
+        description: { type: 'string' },
+      },
+      additionalProperties: false,
+    }
+  }
+
+  for (let i = 0; i < payloads.length; i++) {
+    const item = payloads[i]
+    const prefix = Array.isArray(payload) ? `Item ${i + 1}` : 'Contribution'
+
+    if (itemSchema) {
+      const schemaErrors = validateJsonSchema(itemSchema, item, prefix)
+      errors.push(...schemaErrors.map(rewordCourseSchemaError))
+    }
+
+    if (!isRecord(item)) continue
+
+    const itemId = String(item.id ?? '')
+    if (item.id === undefined && type !== 'edit-course-metadata') {
+      errors.push(`${prefix} requires id.`)
+    }
+
+    if (item.addedAt === undefined && type !== 'edit-course-metadata') {
+      warnings.push(`${itemId || prefix} is missing optional addedAt.`)
+    }
+
+    if (type === 'add-course-session') {
+      if (hasString(item, 'startsAt') && hasString(item, 'endsAt') && Date.parse(item.endsAt) <= Date.parse(item.startsAt)) {
+        errors.push(`${itemId || prefix} Course Session ends before it starts.`)
+      }
+    }
+
+    if (type === 'add-exam') {
+      if (!hasString(item, 'startsAt')) {
+        warnings.push(`${itemId || prefix} Exam date is to be announced.`)
+      }
+    }
+
+    if (targetCourse && itemId) {
+      const existsInMaterials = Array.isArray(targetCourse.materials) && targetCourse.materials.some((m) => m.id === itemId)
+      const existsInAssignments = Array.isArray(targetCourse.assignmentDeadlines) && targetCourse.assignmentDeadlines.some((a) => a.id === itemId)
+      const existsInSessions = Array.isArray(targetCourse.courseSessions) && targetCourse.courseSessions.some((s) => s.id === itemId)
+      const existsInExams = Array.isArray(targetCourse.exams) && targetCourse.exams.some((e) => e.id === itemId)
+      if (existsInMaterials || existsInAssignments || existsInSessions || existsInExams) {
+        errors.push(`Duplicate ID: '${itemId}' already exists in target Course.`)
+      }
+
+      if (type === 'add-assignment-deadline' || type === 'add-exam') {
+        const materialIds = stringArray(item.materialIds)
+        for (const matId of materialIds) {
+          const material = Array.isArray(targetCourse.materials) && targetCourse.materials.find((m) => m.id === matId)
+          if (!material) {
+            errors.push(`${itemId || prefix} references missing Material ${matId}.`)
+          } else {
+            const expectedType = type === 'add-assignment-deadline' ? 'assignment' : 'exam'
+            if (material.type !== expectedType) {
+              errors.push(`${itemId || prefix} references non-${expectedType} Material ${matId}.`)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (targetCourse && (type === 'add-assignment-deadline' || type === 'add-exam')) {
+    let currentWeight = 0
+    const assignments = Array.isArray(targetCourse.assignmentDeadlines) ? targetCourse.assignmentDeadlines : []
+    const exams = Array.isArray(targetCourse.exams) ? targetCourse.exams : []
+    for (const a of assignments) currentWeight += numberValue(a.gradeWeight)
+    for (const e of exams) currentWeight += numberValue(e.gradeWeight)
+
+    let introducedWeight = 0
+    for (const item of payloads) {
+      if (isRecord(item)) {
+        introducedWeight += numberValue(item.gradeWeight)
+      }
+    }
+
+    if (currentWeight + introducedWeight > 100) {
+      errors.push('Grade Weight total cannot exceed 100.')
+    }
+  }
+
+  if (Array.isArray(payload)) {
+    const batchIds = new Set<string>()
+    for (let i = 0; i < payloads.length; i++) {
+      const item = payloads[i]
+      if (isRecord(item) && typeof item.id === 'string') {
+        if (batchIds.has(item.id)) {
+          errors.push(`Duplicate ID in batch: '${item.id}'.`)
+        }
+        batchIds.add(item.id)
+      }
+    }
+  }
+
+  return { valid: errors.length === 0, errors: unique(errors), warnings: unique(warnings) }
 }

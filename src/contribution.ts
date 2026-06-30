@@ -1,7 +1,7 @@
 import { courseDataFilePath, courseRepositoryPath, findCourse } from './coursePath.js'
-import { fail, hasString, isRecord } from './records.js'
+import { fail, hasString } from './records.js'
 import { loadRepositoryData } from './repository.js'
-import { validateCourse } from './validation.js'
+import { validateContributionPayload } from './validation.js'
 import type { AssignmentDeadline, ContributionDraft, ContributionType, Course, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
 
 export type GithubTarget = {
@@ -94,26 +94,31 @@ export function applyContribution(
   payload: unknown,
   targetCourse?: Course,
 ): ValidationResult & { updatedCourse?: Course } {
+  const validation = validateContributionPayload(type, payload, targetCourse)
+  if (!validation.valid) {
+    return { ...validation }
+  }
+
   if (type === 'add-new-course') {
-    const validation = validateCourse(payload)
-    return validation.valid ? { ...validation, updatedCourse: payload as Course } : validation
+    return { ...validation, updatedCourse: payload as Course }
   }
   if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
-  if (!isRecord(payload)) return fail('Contribution payload must be a JSON object.')
 
   const nextCourse = structuredClone(targetCourse) as Course
-  if (type === 'add-material') nextCourse.materials = [...nextCourse.materials, payload as Material]
-  if (type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, payload as AssignmentDeadline]
-  if (type === 'add-exam') nextCourse.exams = [...nextCourse.exams, payload as Exam]
-  if (type === 'add-course-session') nextCourse.courseSessions = [...nextCourse.courseSessions, payload as CourseSession]
+  const payloads = Array.isArray(payload) ? payload : [payload]
+
+  if (type === 'add-material') nextCourse.materials = [...nextCourse.materials, ...(payloads as Material[])]
+  if (type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(payloads as AssignmentDeadline[])]
+  if (type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(payloads as Exam[])]
+  if (type === 'add-course-session') nextCourse.courseSessions = [...nextCourse.courseSessions, ...(payloads as CourseSession[])]
   if (type === 'edit-course-metadata') {
-    nextCourse.title = String(payload.title ?? nextCourse.title)
-    nextCourse.professors = Array.isArray(payload.professors) ? payload.professors.map(String) : nextCourse.professors
-    nextCourse.description = hasString(payload, 'description') ? payload.description : nextCourse.description
+    const singlePayload = payload as Record<string, unknown>
+    nextCourse.title = String(singlePayload.title ?? nextCourse.title)
+    nextCourse.professors = Array.isArray(singlePayload.professors) ? singlePayload.professors.map(String) : nextCourse.professors
+    nextCourse.description = hasString(singlePayload, 'description') ? singlePayload.description : nextCourse.description
   }
 
-  const validation = validateCourse(nextCourse)
-  return validation.valid ? { ...validation, updatedCourse: nextCourse } : validation
+  return { ...validation, updatedCourse: nextCourse }
 }
 
 export const validateContribution = applyContribution
