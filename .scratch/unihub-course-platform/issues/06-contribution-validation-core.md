@@ -1,6 +1,6 @@
 # Contribution Validation Core
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 

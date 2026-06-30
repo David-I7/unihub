@@ -1,0 +1,20 @@
+{
+  "academicYears": [
+    {
+      "id": "2025-2026",
+      "label": "2025-2026",
+      "order": 1,
+      "studyYears": [
+        {
+          "id": "year-2",
+          "label": "Study Year 2",
+          "order": 1,
+          "semesters": [
+            { "id": "semester-1", "label": "Semester 1", "order": 1 },
+            { "id": "semester-2", "label": "Semester 2", "order": 2 }
+          ]
+        }
+      ]
+    }
+  ]
+}

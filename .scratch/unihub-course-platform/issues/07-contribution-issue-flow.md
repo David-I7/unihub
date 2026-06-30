@@ -1,6 +1,6 @@
 # Contribution Issue Flow
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 

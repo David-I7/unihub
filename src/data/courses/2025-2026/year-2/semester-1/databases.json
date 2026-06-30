@@ -1,0 +1,52 @@
+{
+  "id": "databases",
+  "title": "Databases",
+  "professors": ["Prof. Andrei Pop"],
+  "description": "Relational modeling, SQL, and transactions.",
+  "materials": [
+    {
+      "id": "db-course-01",
+      "type": "course",
+      "title": "Relational Algebra Slides",
+      "url": "https://example.edu/databases/relational-algebra",
+      "addedAt": "2026-02-11T08:00:00.000Z"
+    },
+    {
+      "id": "db-seminar-01",
+      "type": "seminar",
+      "title": "Normalization Worksheet",
+      "url": "./materials/normalization.pdf"
+    }
+  ],
+  "assignmentDeadlines": [
+    {
+      "id": "db-a1",
+      "title": "Schema Design",
+      "description": "Design a normalized schema for the library case study.",
+      "dueAt": "2026-03-01T21:59:00.000Z",
+      "submissionUrl": "https://example.edu/submit/db-a1",
+      "gradeWeight": 15,
+      "materialIds": [],
+      "addedAt": "2026-02-14T12:00:00.000Z"
+    }
+  ],
+  "courseSessions": [
+    {
+      "id": "db-l1",
+      "title": "Transactions",
+      "startsAt": "2026-02-13T11:00:00.000Z",
+      "endsAt": "2026-02-13T13:00:00.000Z",
+      "location": "Room B1",
+      "status": "scheduled"
+    }
+  ],
+  "exams": [
+    {
+      "id": "db-final",
+      "title": "Database Systems Exam",
+      "startsAt": "2026-06-10T08:00:00.000Z",
+      "gradeWeight": 50,
+      "materialIds": []
+    }
+  ]
+}

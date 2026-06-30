@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "strict": true,
+    "outDir": "dist-test",
+    "rootDir": "."
+  },
+  "include": ["src/domain.ts", "src/data/**/*.json", "tests/**/*.ts"]
+}

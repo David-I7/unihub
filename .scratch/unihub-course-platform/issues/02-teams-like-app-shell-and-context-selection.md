@@ -1,6 +1,6 @@
 # Teams-Like App Shell And Context Selection
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 

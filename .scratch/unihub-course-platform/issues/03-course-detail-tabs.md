@@ -1,6 +1,6 @@
 # Course Detail Tabs
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 

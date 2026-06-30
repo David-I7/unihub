@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unihub.local/schema/course.schema.json",
+  "title": "UniHub Course",
+  "type": "object",
+  "required": ["id", "title", "professors", "materials", "assignmentDeadlines", "courseSessions", "exams"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "professors": { "type": "array", "items": { "type": "string" } },
+    "description": { "type": "string" },
+    "materials": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "title", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "type": { "enum": ["course", "seminar", "lab", "assignment", "exam", "other"] },
+          "title": { "type": "string", "minLength": 1 },
+          "url": { "type": "string", "minLength": 1 },
+          "addedAt": { "type": "string" }
+        }
+      }
+    },
+    "assignmentDeadlines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "dueAt"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "dueAt": { "type": "string", "minLength": 1 },
+          "submissionUrl": { "type": "string" },
+          "gradeWeight": { "type": "number" },
+          "materialIds": { "type": "array", "items": { "type": "string" } },
+          "addedAt": { "type": "string" }
+        }
+      }
+    },
+    "courseSessions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "startsAt", "endsAt", "status"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "startsAt": { "type": "string", "minLength": 1 },
+          "endsAt": { "type": "string", "minLength": 1 },
+          "location": { "type": "string" },
+          "status": { "enum": ["scheduled", "cancelled"] },
+          "addedAt": { "type": "string" }
+        }
+      }
+    },
+    "exams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "startsAt": { "type": "string" },
+          "gradeWeight": { "type": "number" },
+          "materialIds": { "type": "array", "items": { "type": "string" } },
+          "addedAt": { "type": "string" }
+        }
+      }
+    }
+  }
+}

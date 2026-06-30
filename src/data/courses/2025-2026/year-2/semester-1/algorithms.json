@@ -1,0 +1,89 @@
+{
+  "id": "algorithms",
+  "title": "Algorithms",
+  "professors": ["Dr. Mara Ionescu"],
+  "description": "Algorithm design, correctness, and complexity.",
+  "materials": [
+    {
+      "id": "alg-course-01",
+      "type": "course",
+      "title": "Greedy Algorithms Notes",
+      "url": "https://example.edu/algorithms/greedy",
+      "addedAt": "2026-02-10T08:00:00.000Z"
+    },
+    {
+      "id": "alg-lab-01",
+      "type": "lab",
+      "title": "Dynamic Programming Lab",
+      "url": "https://example.edu/algorithms/dp-lab"
+    },
+    {
+      "id": "alg-assignment-01",
+      "type": "assignment",
+      "title": "Graph Traversal Starter",
+      "url": "./materials/graph-traversal.pdf",
+      "addedAt": "2026-02-18T09:00:00.000Z"
+    },
+    {
+      "id": "alg-exam-01",
+      "type": "exam",
+      "title": "Exam Formula Sheet",
+      "url": "./materials/exam-formulas.pdf"
+    }
+  ],
+  "assignmentDeadlines": [
+    {
+      "id": "alg-a1",
+      "title": "Graph Traversal Report",
+      "description": "Submit a short report and implementation archive.",
+      "dueAt": "2026-03-15T21:59:00.000Z",
+      "submissionUrl": "https://example.edu/submit/alg-a1",
+      "gradeWeight": 20,
+      "materialIds": ["alg-assignment-01"],
+      "addedAt": "2026-02-18T09:10:00.000Z"
+    }
+  ],
+  "courseSessions": [
+    {
+      "id": "alg-l1",
+      "title": "Greedy Algorithms",
+      "startsAt": "2026-02-12T08:00:00.000Z",
+      "endsAt": "2026-02-12T10:00:00.000Z",
+      "location": "Room A2",
+      "status": "scheduled",
+      "addedAt": "2026-02-01T10:00:00.000Z"
+    },
+    {
+      "id": "alg-l2",
+      "title": "Cancelled Recurrence Review",
+      "startsAt": "2026-02-19T08:00:00.000Z",
+      "endsAt": "2026-02-19T10:00:00.000Z",
+      "location": "Room A2",
+      "status": "cancelled",
+      "addedAt": "2026-02-16T10:00:00.000Z"
+    }
+  ],
+  "exams": [
+    {
+      "id": "alg-midterm",
+      "title": "Midterm Exam",
+      "startsAt": "2026-04-20T09:00:00.000Z",
+      "gradeWeight": 30,
+      "materialIds": ["alg-exam-01"],
+      "addedAt": "2026-03-01T08:00:00.000Z"
+    },
+    {
+      "id": "alg-final",
+      "title": "Final Exam",
+      "gradeWeight": 40,
+      "materialIds": ["alg-exam-01"]
+    },
+    {
+      "id": "alg-retake",
+      "title": "Retake Exam",
+      "startsAt": "2026-07-20T09:00:00.000Z",
+      "materialIds": ["alg-exam-01"],
+      "addedAt": "2026-06-20T08:00:00.000Z"
+    }
+  ]
+}

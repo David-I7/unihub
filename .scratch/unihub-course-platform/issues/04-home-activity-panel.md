@@ -1,6 +1,6 @@
 # Home Activity Panel
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 

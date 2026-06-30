@@ -1,6 +1,6 @@
 # Calendar Agenda
 
-Status: ready-for-agent
+Status: ready-for-human
 
 ## Parent
 
