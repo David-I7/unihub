@@ -29,7 +29,7 @@ export {
 } from './coursePath.js'
 export { deriveCourseDetailView, type CourseDetailView } from './courseDetailView.js'
 export { applyContribution, contributionPayloadFromText, prepareContribution, validateContribution, type GithubTarget, type PreparedContribution } from './contribution.js'
-export { loadRepositoryData, loadCoursesForContext } from './repository.js'
+export { loadCatalog, loadRepositoryData, loadCoursesForContext } from './repository.js'
 export { repositorySchema, validateCatalog, validateCourse, validateRepository, validateContributionPayload } from './validation.js'
 
 import { courseInContext } from './coursePath.js'
@@ -67,26 +67,31 @@ export function deriveActivity(courses: LoadedCourse[], context: CourseContext) 
     .flatMap((course) => [
       ...course.materials.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
-        addedAt: item.addedAt,
+        occurredAt: item.addedAt,
         text: `${item.title} Material added for ${course.title}`,
+      })),
+      ...course.materials.filter(hasUpdatedAt).map((item) => ({
+        id: `${course.id}-${item.id}-updated`,
+        occurredAt: item.updatedAt,
+        text: `${item.title} Material updated for ${course.title}`,
       })),
       ...course.assignmentDeadlines.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
-        addedAt: item.addedAt,
+        occurredAt: item.addedAt,
         text: `${item.title} Assignment Deadline added for ${course.title}`,
       })),
       ...course.courseSessions.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
-        addedAt: item.addedAt,
+        occurredAt: item.addedAt,
         text: `${item.title} Lecture added for ${course.title}${item.status === 'cancelled' ? ' (cancelled)' : ''}`,
       })),
       ...course.exams.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
-        addedAt: item.addedAt,
+        occurredAt: item.addedAt,
         text: `${item.title} Exam added for ${course.title}`,
       })),
     ])
-    .sort((a, b) => Date.parse(b.addedAt) - Date.parse(a.addedAt))
+    .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt))
 }
 
 export function deriveCalendarEvents(options: {
@@ -134,6 +139,10 @@ export function deriveCalendarEvents(options: {
 
 function hasAddedAt<T extends { addedAt?: string }>(item: T): item is T & { addedAt: string } {
   return typeof item.addedAt === 'string'
+}
+
+function hasUpdatedAt<T extends { updatedAt?: string }>(item: T): item is T & { updatedAt: string } {
+  return typeof item.updatedAt === 'string'
 }
 
 function byOrder(a: { order: number }, b: { order: number }) {

@@ -1,6 +1,6 @@
 import type { LoadedCourse, Material, MaterialType } from './types.js'
 
-const generalMaterialTypes: MaterialType[] = ['course', 'seminar', 'lab', 'other']
+const generalMaterialTypes: MaterialType[] = ['course', 'seminar', 'lab', 'video', 'other']
 
 export type CourseDetailView = {
   materialGroups: Array<{ type: MaterialType; label: string; materials: Material[] }>

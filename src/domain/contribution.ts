@@ -108,6 +108,10 @@ export function applyContribution(
   const payloads = Array.isArray(payload) ? payload : [payload]
 
   if (type === 'add-material') nextCourse.materials = [...nextCourse.materials, ...(payloads as Material[])]
+  if (type === 'update-material') {
+    const update = payload as Material
+    nextCourse.materials = nextCourse.materials.map((material) => (material.id === update.id ? { ...material, ...update } : material))
+  }
   if (type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(payloads as AssignmentDeadline[])]
   if (type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(payloads as Exam[])]
   if (type === 'add-course-session') nextCourse.courseSessions = [...nextCourse.courseSessions, ...(payloads as CourseSession[])]

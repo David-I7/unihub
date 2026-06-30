@@ -1,7 +1,8 @@
-export type MaterialType = 'course' | 'seminar' | 'lab' | 'assignment' | 'exam' | 'other'
+export type MaterialType = 'course' | 'seminar' | 'lab' | 'assignment' | 'exam' | 'video' | 'other'
 export type SessionStatus = 'scheduled' | 'cancelled'
 export type ContributionType =
   | 'add-material'
+  | 'update-material'
   | 'add-assignment-deadline'
   | 'add-exam'
   | 'add-course-session'
@@ -37,6 +38,7 @@ export type Material = {
   title: string
   url: string
   addedAt?: string
+  updatedAt?: string
 }
 
 export type AssignmentDeadline = {

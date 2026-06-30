@@ -2,6 +2,8 @@ Status: completed
 
 # Issue 04: Contribution Form Dynamic Validation
 
+Superseded note: `.scratch/course-data-domain-fixes/issues/05-allow-grade-weight-totals-above-100.md` supersedes the total Grade Weight limit-check assumption below. Contribution validation should allow totals above 100 and keep below-100 totals as warnings.
+
 ## Parent
 
 [.scratch/lazy-loading-courses/PRD.md](file:///C:/Users/Dave2swag/Desktop/projects/agents/unihub/.scratch/lazy-loading-courses/PRD.md)

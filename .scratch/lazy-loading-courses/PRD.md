@@ -2,6 +2,8 @@ Status: ready-for-agent
 
 # PRD: Lazy Load Course Data
 
+Superseded note: `.scratch/course-data-domain-fixes/PRD.md` supersedes the statement below that Catalog data is duplicated in `src/data`. Canonical Catalog and Course JSON now live only under `public/data`.
+
 ## Problem Statement
 
 The current UniHub application architecture loads all course data statically into memory at startup. Every single course JSON file is statically imported at build time. As the project grows to include more Academic Years, Study Years, and Semesters, this approach will lead to bloated initial bundles, high initial memory usage, slow page load times, and dynamic scaling issues for static deployments.

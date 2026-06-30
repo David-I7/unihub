@@ -10,8 +10,11 @@
     "types": ["node", "vite/client"],
     "skipLibCheck": true,
     "strict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "outDir": "dist-test",
     "rootDir": "."
   },
-  "include": ["src/domain.ts", "src/data/**/*.json", "tests/**/*.ts"]
+  "include": ["src/domain/**/*.ts", "public/data/**/*.json", "tests/**/*.ts"]
 }

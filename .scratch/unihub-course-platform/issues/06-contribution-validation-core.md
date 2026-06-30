@@ -1,5 +1,7 @@
 # Contribution Validation Core
 
+Superseded note: `.scratch/course-data-domain-fixes/issues/05-allow-grade-weight-totals-above-100.md` supersedes the Grade Weight hard-cap assumption in this older issue. Contribution validation should not block additions that push known Grade Weight totals above 100.
+
 Status: ready-for-human
 
 ## Parent

@@ -1,5 +1,7 @@
 # UniHub Course Platform PRD
 
+Superseded note: `.scratch/course-data-domain-fixes/PRD.md` supersedes this older PRD where it says Activity represents only newly inserted items or Grade Weight totals above 100 are invalid. Activity now includes Material updates via `updatedAt`, and Grade Weight totals above 100 are valid Course data.
+
 Status: ready-for-agent
 
 ## Problem Statement

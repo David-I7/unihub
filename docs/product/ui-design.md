@@ -2,6 +2,8 @@
 
 UniHub uses a Microsoft Teams-inspired layout while staying focused on course information.
 
+The Tailwind, shadcn, and lucide migration is component-system parity work, not a visual redesign. The app should keep the compact academic dashboard feel, desktop rail, mobile bottom navigation, course grid, agenda list, contribution split view, and schema guide dialog.
+
 ## Navigation
 
 Desktop uses a left app rail:
@@ -21,6 +23,14 @@ Home | Calendar | Contribute
 The selected academic year, study year, and semester are remembered in `localStorage`.
 
 Routing uses React Router with `HashRouter` for GitHub Pages compatibility.
+
+Route-level screens live under `src/pages`: `HomePage`, `CalendarPage`, `ContributePage`, and `CourseDetailPage`. Shared page chrome and navigation live under `src/layouts`, reusable UI pieces live under `src/components`, and shared hooks or non-domain helpers live outside route pages. Source imports use the `@/*` alias so shadcn components and split route files do not rely on deep relative paths.
+
+The app layout owns the selected academic context, local persistence, course loading, loading states, and load errors. Route pages consume that shared state from the layout instead of reimplementing context loading or persistence.
+
+Reusable UI primitives should come from shadcn when they directly match the interface: buttons, selects, cards, tabs, textareas, dialogs, tables, and status badges. Heavier shadcn patterns should wait until the product needs them.
+
+Navigation and action icons use lucide instead of letters or emoji. Primary mappings are `House` for Home, `CalendarDays` for Calendar, `PlusCircle` or `GitPullRequestCreate` for Contribute, `Monitor`/`Sun`/`Moon` for theme state, `BookOpen` for the schema guide, `X` for close actions, and `CalendarRange` or `GraduationCap` for the academic context picker. Visible text labels remain in the rail and bottom navigation.
 
 ## Home
 
@@ -43,7 +53,7 @@ Professor names
 
 Desktop shows Activity as a right-side panel. Mobile shows Activity below the course grid.
 
-Activity shows the latest N items with `addedAt`, filtered to the selected academic year, study year, and semester.
+Activity shows the latest additions with `addedAt` and Material updates with `updatedAt`, filtered to the selected academic year, study year, and semester.
 
 ## Course Details
 

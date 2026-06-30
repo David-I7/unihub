@@ -19,6 +19,7 @@ Users contribute one change at a time:
 
 ```text
 Add material
+Update material
 Add assignment
 Add exam
 Add lecture
@@ -39,7 +40,7 @@ Academic Year -> Study Year -> Semester -> Course
 The app computes the target file path:
 
 ```text
-src/data/2025-2026/year-1/semester-1/data-structures.json
+public/data/courses/2025-2026/year-1/semester-1/data-structures.json
 ```
 
 For new course contributions, users choose:
@@ -95,7 +96,7 @@ Assignment without dueAt
 Assignment linked to a non-assignment material
 Exam linked to a non-exam material
 Lecture endsAt before startsAt
-Stored grade weights totaling above 100
+Material update targeting a missing material
 ```
 
 The contribution UI allows incomplete but valid data with warnings.
@@ -107,7 +108,7 @@ Grade weights total below 100
 No professors listed
 Exam date not announced
 Course has no materials yet
-Missing optional addedAt
+Missing optional addedAt or material updatedAt
 ```
 
 ## Maintainer Review

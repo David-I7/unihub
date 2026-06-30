@@ -21,7 +21,7 @@ export function courseRepositoryPath(path: CoursePath): string {
 }
 
 export function courseDataFilePath(path: CoursePath): string {
-  return `src/data/courses/${courseRepositoryPath(path)}.json`
+  return `public/data/courses/${courseRepositoryPath(path)}.json`
 }
 
 export function courseRoute(path: CoursePath): string {

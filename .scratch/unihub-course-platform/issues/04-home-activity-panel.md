@@ -1,5 +1,7 @@
 # Home Activity Panel
 
+Superseded note: `.scratch/course-data-domain-fixes/issues/03-show-material-updates-in-activity.md` supersedes the statement that Activity represents newly inserted items only. Activity now includes Material update events from `updatedAt` as well as additions from `addedAt`.
+
 Status: ready-for-human
 
 ## Parent

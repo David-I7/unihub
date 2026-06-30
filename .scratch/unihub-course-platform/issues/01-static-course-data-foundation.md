@@ -1,5 +1,7 @@
 # Static Course Data Foundation
 
+Superseded note: `.scratch/course-data-domain-fixes/PRD.md` supersedes the Grade Weight hard-cap assumption in this older issue. Grade Weight totals above 100 are valid; totals below 100 remain warnings when grading data is present.
+
 Status: ready-for-human
 
 ## Parent

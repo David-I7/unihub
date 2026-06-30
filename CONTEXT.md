@@ -37,11 +37,11 @@ A course assessment that may have a start date and time or may be announced late
 _Avoid_: Test, final
 
 **Grade Weight**:
-The percentage an assignment deadline or exam counts toward the final course grade.
+The numeric percentage an assignment deadline or exam counts toward the final course grade. Grade weights may exceed 100 when a professor's grading policy allows bonus or overweighted components.
 _Avoid_: Exam type, partial
 
 **Material**:
-A learning resource attached to a course. Materials have a type: course, seminar, lab, assignment, exam, or other.
+A learning resource attached to a course. Materials have a type: course, seminar, lab, assignment, exam, video, or other.
 _Avoid_: Resource, file
 
 **Material Reference**:
@@ -49,7 +49,7 @@ A link from another course item to an existing material in the same course, usin
 _Avoid_: Embedded material, duplicate link
 
 **Activity**:
-A feed item that highlights newly added course items, such as materials, assignment deadlines, exams, or lectures. Activity is derived from optional timestamps on course items and is not a general announcement system.
+A feed item that highlights newly added course items and updated materials. Activity is derived from optional timestamps on course items and is not a general announcement system.
 _Avoid_: Announcement, notification
 
 **Course Session**:

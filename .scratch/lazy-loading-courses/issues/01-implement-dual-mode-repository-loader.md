@@ -2,6 +2,8 @@ Status: completed
 
 # Issue 01: Implement Dual-Mode Repository Loader
 
+Superseded note: `.scratch/course-data-domain-fixes/PRD.md` supersedes any `src/data/courses` loader assumptions in this older issue. Repository loading should read canonical Course JSON from `public/data/courses`.
+
 ## Parent
 
 [.scratch/lazy-loading-courses/PRD.md](file:///C:/Users/Dave2swag/Desktop/projects/agents/unihub/.scratch/lazy-loading-courses/PRD.md)

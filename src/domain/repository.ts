@@ -1,4 +1,3 @@
-import catalogJson from './data/catalog.json' with { type: 'json' }
 import { coursePathFromRepositoryPath } from './coursePath.js'
 import type { Catalog, Course, LoadedCourse, RepositorySnapshot } from './types.js'
 
@@ -25,14 +24,33 @@ type NodeProcess = {
 export function loadRepositoryData(): RepositorySnapshot {
   const requireFn = globalThis.nodeRequire
   if (requireFn) {
-    // Node environment: read synchronously from the filesystem for tests
     return {
-      catalog: catalogJson as Catalog,
+      catalog: loadCatalogNodeSync(requireFn),
       courses: loadAllCoursesNodeSync(requireFn),
     }
   }
+  throw new Error('Synchronous repository loading is only available in Node.js.')
+}
+
+export async function loadCatalog(): Promise<Catalog> {
+  const requireFn = globalThis.nodeRequire
+  if (requireFn) return loadCatalogNodeSync(requireFn)
+  const response = await fetch('/data/catalog.json')
+  if (!response.ok) throw new Error('Failed to fetch Catalog data.')
+  return (await response.json()) as Catalog
+}
+
+function loadCatalogNodeSync(requireFn: (id: string) => unknown): Catalog {
+  const fs = requireFn('node:fs') as NodeFs
+  const path = requireFn('node:path') as NodePath
+  const processObj = (globalThis as unknown as { process: NodeProcess }).process
+  const filePath = path.join(processObj.cwd(), 'public/data/catalog.json')
+  return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Catalog
+}
+
+export function loadRepositoryDataForBrowserFallback(): RepositorySnapshot {
   return {
-    catalog: catalogJson as Catalog,
+    catalog: { academicYears: [] },
     courses: [],
   }
 }
@@ -76,8 +94,9 @@ function getJsonFiles(dir: string, fs: NodeFs, path: NodePath): string[] {
 
 export async function loadCoursesForContext(context: { academicYearId: string; studyYearId: string; semesterId: string }): Promise<LoadedCourse[]> {
   const { academicYearId, studyYearId, semesterId } = context
+  const catalog = await loadCatalog()
 
-  const academicYear = catalogJson.academicYears.find((y) => y.id === academicYearId)
+  const academicYear = catalog.academicYears.find((y) => y.id === academicYearId)
   const studyYear = academicYear?.studyYears.find((y) => y.id === studyYearId)
   const semester = studyYear?.semesters.find((s) => s.id === semesterId)
   const coursesList = (semester as { courses?: Array<{ id: string; title: string }> })?.courses || []

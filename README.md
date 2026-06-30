@@ -9,14 +9,14 @@ The app uses a Microsoft Teams-inspired layout and is intended to be deployed on
 - Browse courses by academic year, study year, and semester.
 - Open a course to view its materials, assignments, lectures, and exams.
 - See assignment deadlines, lecture dates, and exam dates in a calendar agenda.
-- Check recent activity for newly added course items.
+- Check recent activity for newly added course items and updated materials.
 - Contribute missing or corrected information through GitHub issues or pull requests.
 
 ## Course Pages
 
 Each course page is organized into four sections:
 
-- **Materials**: general course, seminar, lab, and other learning resources.
+- **Materials**: general course, seminar, lab, video, and other learning resources.
 - **Assignments**: deadlines, descriptions, submission links, grade weights, and assignment materials.
 - **Lectures**: scheduled, cancelled, and completed lecture sessions.
 - **Exams**: exam dates when known, grade weights, locations, and exam materials.
@@ -35,11 +35,12 @@ Calendar events include:
 
 ## Contributions
 
-UniHub stores course information as JSON files in this repository. Because the site is static, the app does not write directly to the repository.
+UniHub stores course information as JSON files under `public/data` in this repository. Because the site is static, the app does not write directly to the repository.
 
 Contributors can use the contribution page to propose one change at a time:
 
 - Add material
+- Update material
 - Add assignment
 - Add exam
 - Add lecture
@@ -62,4 +63,4 @@ Product and architecture notes live in:
 - `docs/adr/`
 - `CONTEXT.md`
 
-Implementation work is tracked under `.scratch/unihub-course-platform/`.
+Implementation work is tracked under `.scratch/`.

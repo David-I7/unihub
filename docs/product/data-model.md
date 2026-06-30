@@ -1,15 +1,15 @@
 # Data Model
 
-UniHub stores canonical course data as JSON in the repository. The app is static, so data is loaded from local files at build time and rendered in the browser.
+UniHub stores canonical course data as JSON in the repository under `public/data`. The app is static, so catalog and course data are available as deployed static assets and can be fetched by the browser.
 
 ## File Layout
 
 Course files are split by course. The folder path is the source of hierarchy:
 
 ```text
-src/data/catalog.json
-src/data/2025-2026/year-1/semester-1/data-structures.json
-src/data/2025-2026/year-1/semester-1/algebra.json
+public/data/catalog.json
+public/data/courses/2025-2026/year-1/semester-1/data-structures.json
+public/data/courses/2025-2026/year-1/semester-1/algebra.json
 ```
 
 `catalog.json` defines labels and ordering for the navigable hierarchy:
@@ -60,20 +60,27 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "id": "lecture-1-slides",
       "title": "Lecture 1 Slides",
       "type": "course",
-      "href": "/materials/2025-2026/year-1/semester-1/data-structures/lecture-1.pdf",
-      "addedAt": "2026-03-01T12:00:00+02:00"
+      "url": "/materials/2025-2026/year-1/semester-1/data-structures/lecture-1.pdf",
+      "addedAt": "2026-03-01T12:00:00+02:00",
+      "updatedAt": "2026-03-04T12:00:00+02:00"
     },
     {
       "id": "lab-2-brief",
       "title": "Lab 2 Brief",
       "type": "assignment",
-      "href": "https://example.com/lab-2.pdf"
+      "url": "https://example.com/lab-2.pdf"
     },
     {
       "id": "final-example-2025",
       "title": "Final Example Exam 2025",
       "type": "exam",
-      "href": "/materials/2025-2026/year-1/semester-1/data-structures/final-example-2025.pdf"
+      "url": "/materials/2025-2026/year-1/semester-1/data-structures/final-example-2025.pdf"
+    },
+    {
+      "id": "lecture-1-recording",
+      "title": "Lecture 1 Recording",
+      "type": "video",
+      "url": "https://example.com/lecture-1"
     }
   ],
   "assignmentDeadlines": [
@@ -121,6 +128,7 @@ seminar
 lab
 assignment
 exam
+video
 other
 ```
 
@@ -130,6 +138,7 @@ The Materials tab shows only:
 course
 seminar
 lab
+video
 other
 ```
 
@@ -160,23 +169,18 @@ cancelled
 
 ## Grade Weights
 
-Assignments and exams may have `gradeWeight` as a percentage number. The schema allows incomplete grading data.
+Assignments and exams may have `gradeWeight` as a percentage number. Grade weights may exceed `100` when the professor's grading policy allows it. The schema allows incomplete grading data.
 
-Validation should block totals above `100`, but totals below `100` are allowed with a warning.
+Validation should not block totals above `100`. Totals below `100` are allowed with a warning because they may indicate incomplete grading data.
 
 ## Activity
 
-Activity is derived from optional `addedAt` timestamps on materials, assignment deadlines, lectures, and exams.
+Activity is derived from optional `addedAt` timestamps on materials, assignment deadlines, lectures, and exams, plus optional `updatedAt` timestamps on materials.
 
-The activity bar shows the latest items with `addedAt`, sorted newest first. Activity represents newly inserted items only, not later changes or cancellations.
+The activity bar shows the latest additions and material updates, sorted newest first by the relevant activity timestamp. Material updates should appear as updates rather than as newly added items.
 
-## Schema Validation
+When an existing material changes, maintainers should set or replace the material's `updatedAt` timestamp. `updatedAt` is only for changes to existing materials; new materials use `addedAt`.
 
-The repo should include formal JSON Schema files for catalog and course data:
+## Data Validation
 
-```text
-src/data/schema/catalog.schema.json
-src/data/schema/course.schema.json
-```
-
-Schemas are used by CI/development validation and by the contribution UI before generating GitHub issues or pull request instructions.
+The repo validates catalog data, course data, and contribution payloads with zod schemas. The same validation rules are used by CI/development checks and by the contribution UI before generating GitHub issues or pull request instructions. Zod owns runtime validation; existing TypeScript domain types may remain unless schema inference clearly reduces duplication. After equivalent zod schemas are in place and tests pass, legacy JSON Schema files should be removed so there is only one validation source.
