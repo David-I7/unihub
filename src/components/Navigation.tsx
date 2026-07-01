@@ -49,7 +49,7 @@ export function Navigation() {
         aria-label="Primary"
       >
         <img
-          src="/favicon.svg"
+          src={`${import.meta.env?.BASE_URL || '/'}favicon.svg`}
           alt="UniHub Logo"
           className="h-[42px] w-[42px] rounded-lg object-contain"
         />

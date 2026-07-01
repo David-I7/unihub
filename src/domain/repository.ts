@@ -35,7 +35,8 @@ export function loadRepositoryData(dataRoot = 'public/data'): RepositorySnapshot
 export async function loadCatalog(): Promise<Catalog> {
   const requireFn = globalThis.nodeRequire
   if (requireFn) return loadCatalogNodeSync(requireFn)
-  const response = await fetch('/data/catalog.json')
+  const baseUrl = import.meta.env?.BASE_URL || '/'
+  const response = await fetch(`${baseUrl}data/catalog.json`)
   if (!response.ok) throw new Error('Failed to fetch Catalog data.')
   return (await response.json()) as Catalog
 }
@@ -103,9 +104,10 @@ export async function loadCoursesForContext(context: { academicYearId: string; s
 
   if (typeof window !== 'undefined') {
     // Browser environment: fetch from public folder `/data/courses/...`
+    const baseUrl = import.meta.env?.BASE_URL || '/'
     const loaded = await Promise.all(
       coursesList.map(async (c) => {
-        const response = await fetch(`/data/courses/${academicYearId}/${studyYearId}/${semesterId}/${c.id}.json`)
+        const response = await fetch(`${baseUrl}data/courses/${academicYearId}/${studyYearId}/${semesterId}/${c.id}.json`)
         if (!response.ok) {
           throw new Error(`Failed to fetch course: ${c.id}`)
         }
