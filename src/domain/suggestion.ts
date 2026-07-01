@@ -48,6 +48,287 @@ const githubHandoffCopy = [
   'After submitting on GitHub, maintainers will review your suggestion there.',
 ].join('\n')
 
+interface SuggestionIntentHandler {
+  intent: SuggestionIntent
+  section: SuggestionSection
+  contributionType: ContributionType
+  requiresNote: boolean
+  showInSectionOptions: boolean
+  issueTitleAction: string
+  buildInput(input: Record<string, unknown>, course: LoadedCourse): Record<string, unknown>
+  buildSummary(input: Record<string, unknown>, course: LoadedCourse): string
+}
+
+const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
+  'add-material': {
+    intent: 'add-material',
+    section: 'materials',
+    contributionType: 'add-material',
+    requiresNote: false,
+    showInSectionOptions: true,
+    issueTitleAction: 'Add material',
+    buildInput: (input) => ({
+      title: text(input.title),
+      type: text(input.type) || 'course',
+      url: text(input.url),
+    }),
+    buildSummary: (input, course) => `Add material "${text(input.title) || 'the selected item'}" to ${course.title}.`,
+  },
+  'fix-material': {
+    intent: 'fix-material',
+    section: 'materials',
+    contributionType: 'update-material',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Fix material',
+    buildInput: (input, course) => {
+      const existing = course.materials.find((material) => material.id === text(input.materialId))
+      return {
+        materialId: text(input.materialId),
+        title: text(input.title) || existing?.title,
+        type: text(input.type) || existing?.type || 'course',
+        url: text(input.url) || existing?.url,
+      }
+    },
+    buildSummary: (input, course) => `Fix material "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'broken-material-link': {
+    intent: 'broken-material-link',
+    section: 'materials',
+    contributionType: 'update-material',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report broken material link',
+    buildInput: (input, course) => {
+      const existing = course.materials.find((material) => material.id === text(input.materialId))
+      return {
+        materialId: text(input.materialId),
+        title: text(input.title) || existing?.title,
+        type: text(input.type) || existing?.type || 'course',
+        url: text(input.url) || existing?.url,
+      }
+    },
+    buildSummary: (input, course) => `Report a broken material link for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'add-assignment': {
+    intent: 'add-assignment',
+    section: 'assignments',
+    contributionType: 'add-assignment-deadline',
+    requiresNote: false,
+    showInSectionOptions: true,
+    issueTitleAction: 'Add assignment',
+    buildInput: (input) => ({
+      title: text(input.title),
+      dueAt: text(input.dueAt),
+      description: text(input.description),
+      submissionUrl: text(input.submissionUrl),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Add assignment "${text(input.title) || 'the selected item'}" to ${course.title}.`,
+  },
+  'fix-assignment': {
+    intent: 'fix-assignment',
+    section: 'assignments',
+    contributionType: 'add-assignment-deadline',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Fix assignment',
+    buildInput: (input) => ({
+      title: text(input.title),
+      dueAt: text(input.dueAt),
+      description: text(input.description),
+      submissionUrl: text(input.submissionUrl),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Fix assignment details for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'changed-assignment-deadline': {
+    intent: 'changed-assignment-deadline',
+    section: 'assignments',
+    contributionType: 'add-assignment-deadline',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report changed assignment deadline',
+    buildInput: (input) => ({
+      title: text(input.title),
+      dueAt: text(input.dueAt),
+      description: text(input.description),
+      submissionUrl: text(input.submissionUrl),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Report a changed assignment deadline for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'add-lecture': {
+    intent: 'add-lecture',
+    section: 'lectures',
+    contributionType: 'add-course-session',
+    requiresNote: false,
+    showInSectionOptions: true,
+    issueTitleAction: 'Add lecture',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      endsAt: text(input.endsAt),
+      location: text(input.location),
+      status: text(input.status) || 'scheduled',
+    }),
+    buildSummary: (input, course) => `Add lecture "${text(input.title) || 'the selected item'}" to ${course.title}.`,
+  },
+  'fix-lecture': {
+    intent: 'fix-lecture',
+    section: 'lectures',
+    contributionType: 'add-course-session',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Fix lecture',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      endsAt: text(input.endsAt),
+      location: text(input.location),
+      status: text(input.status) || 'scheduled',
+    }),
+    buildSummary: (input, course) => `Fix lecture details for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'cancel-lecture': {
+    intent: 'cancel-lecture',
+    section: 'lectures',
+    contributionType: 'add-course-session',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report lecture cancellation',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      endsAt: text(input.endsAt),
+      location: text(input.location),
+      status: 'cancelled',
+    }),
+    buildSummary: (input, course) => `Report lecture cancellation for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'changed-lecture-time-location': {
+    intent: 'changed-lecture-time-location',
+    section: 'lectures',
+    contributionType: 'add-course-session',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report changed lecture time or location',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      endsAt: text(input.endsAt),
+      location: text(input.location),
+      status: text(input.status) || 'scheduled',
+    }),
+    buildSummary: (input, course) => `Report a changed lecture time or location for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'add-exam': {
+    intent: 'add-exam',
+    section: 'exams',
+    contributionType: 'add-exam',
+    requiresNote: false,
+    showInSectionOptions: true,
+    issueTitleAction: 'Add exam',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Add exam "${text(input.title) || 'the selected item'}" to ${course.title}.`,
+  },
+  'fix-exam': {
+    intent: 'fix-exam',
+    section: 'exams',
+    contributionType: 'add-exam',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Fix exam',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Fix exam details for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'changed-exam-date-location': {
+    intent: 'changed-exam-date-location',
+    section: 'exams',
+    contributionType: 'add-exam',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report changed exam date or location',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: text(input.startsAt),
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Report a changed exam date or location for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" in ${course.title}.`,
+  },
+  'exam-date-not-announced': {
+    intent: 'exam-date-not-announced',
+    section: 'exams',
+    contributionType: 'add-exam',
+    requiresNote: true,
+    showInSectionOptions: true,
+    issueTitleAction: 'Report exam date not announced',
+    buildInput: (input) => ({
+      title: text(input.title),
+      startsAt: '',
+      gradeWeight: number(input.gradeWeight),
+      materialIds: stringArray(input.materialIds),
+    }),
+    buildSummary: (input, course) => `Report that the exam date for "${text(input.title) || text(input.itemTitle) || 'the selected item'}" is not announced in ${course.title}.`,
+  },
+  'fix-course-title': {
+    intent: 'fix-course-title',
+    section: 'course-info',
+    contributionType: 'edit-course-metadata',
+    requiresNote: true,
+    showInSectionOptions: false,
+    issueTitleAction: 'Fix Course title',
+    buildInput: (input, course) => ({
+      title: text(input.title),
+      professors: course.professors,
+      description: course.description,
+    }),
+    buildSummary: (_, course) => `Fix the Course title for ${course.title}.`,
+  },
+  'fix-course-professors': {
+    intent: 'fix-course-professors',
+    section: 'course-info',
+    contributionType: 'edit-course-metadata',
+    requiresNote: true,
+    showInSectionOptions: false,
+    issueTitleAction: 'Fix Course professors',
+    buildInput: (input, course) => ({
+      title: course.title,
+      professors: splitList(text(input.professorsText)),
+      description: course.description,
+    }),
+    buildSummary: (_, course) => `Fix the professor list for ${course.title}.`,
+  },
+  'fix-course-description': {
+    intent: 'fix-course-description',
+    section: 'course-info',
+    contributionType: 'edit-course-metadata',
+    requiresNote: true,
+    showInSectionOptions: false,
+    issueTitleAction: 'Fix Course description',
+    buildInput: (input, course) => ({
+      title: course.title,
+      professors: course.professors,
+      description: text(input.description),
+    }),
+    buildSummary: (_, course) => `Fix the Course description for ${course.title}.`,
+  },
+}
+
 export function prepareSuggestion(options: {
   repository: RepositorySnapshot
   course: LoadedCourse
@@ -57,8 +338,18 @@ export function prepareSuggestion(options: {
   githubTarget?: GithubTarget
   now?: () => string
 }): PreparedSuggestion {
-  const { repository, course, section, intent, input, githubTarget = defaultGithubTarget, now } = options
-  if (requiresNote(intent) && !text(input.note)) {
+  const { repository, course, intent, input, githubTarget = defaultGithubTarget, now } = options
+
+  const handler = suggestionHandlers[intent]
+  if (!handler) {
+    return {
+      valid: false,
+      errors: [`Unsupported Suggestion intent: ${intent}`],
+      warnings: [],
+    }
+  }
+
+  if (handler.requiresNote && !text(input.note)) {
     return {
       valid: false,
       errors: ['Corrections to existing Course information require a note or source.'],
@@ -66,22 +357,21 @@ export function prepareSuggestion(options: {
     }
   }
 
-  const contributionType = contributionTypeForIntent(intent)
   const contribution = prepareGeneratedContribution({
     repository,
     githubTarget,
     now,
     draft: {
-      type: contributionType,
+      type: handler.contributionType,
       mode: 'issue',
       path: course.path,
-      input: contributionInputForSuggestion(section, intent, input, course),
+      input: handler.buildInput(input, course),
     },
   })
   if (!contribution.valid) return { valid: false, errors: contribution.errors, warnings: contribution.warnings }
 
-  const summary = suggestionSummary(course, intent, input)
-  const issueTitle = `Suggestion: ${issueTitleAction(intent)} to ${course.title}`
+  const summary = handler.buildSummary(input, course)
+  const issueTitle = `Suggestion: ${handler.issueTitleAction} to ${course.title}`
   const issueBody = [
     'Suggestion summary',
     '',
@@ -110,133 +400,32 @@ export function suggestionHandoffCopy(): string {
 }
 
 export function suggestionIntentsForSection(section: SuggestionSection): SuggestionIntentOption[] {
-  if (section === 'materials') {
-    return [
-      { value: 'broken-material-link', label: 'Report a broken link' },
-    ]
-  }
-  if (section === 'assignments') {
-    return [
-      { value: 'changed-assignment-deadline', label: 'Report changed deadline' },
-    ]
-  }
-  if (section === 'lectures') {
-    return [
-      { value: 'cancel-lecture', label: 'Report cancellation' },
-      { value: 'changed-lecture-time-location', label: 'Report changed time/location' },
-    ]
-  }
-  if (section === 'exams') {
-    return [
-      { value: 'changed-exam-date-location', label: 'Report changed exam date/location' },
-      { value: 'exam-date-not-announced', label: 'Report exam date not announced' },
-    ]
-  }
-  return []
+  return Object.values(suggestionHandlers)
+    .filter((handler) => handler.section === section && handler.showInSectionOptions)
+    .map((handler) => ({
+      value: handler.intent,
+      label: handlerOptionLabel(handler.intent),
+    }))
 }
 
-function contributionTypeForIntent(intent: SuggestionIntent): ContributionType {
-  if (intent === 'add-material' || intent === 'fix-material' || intent === 'broken-material-link') return intent === 'add-material' ? 'add-material' : 'update-material'
-  if (intent === 'add-assignment' || intent === 'fix-assignment' || intent === 'changed-assignment-deadline') return 'add-assignment-deadline'
-  if (intent === 'add-lecture' || intent === 'fix-lecture' || intent === 'cancel-lecture' || intent === 'changed-lecture-time-location') return 'add-course-session'
-  if (intent === 'add-exam' || intent === 'fix-exam' || intent === 'changed-exam-date-location' || intent === 'exam-date-not-announced') return 'add-exam'
-  return 'edit-course-metadata'
-}
-
-function contributionInputForSuggestion(section: SuggestionSection, intent: SuggestionIntent, input: Record<string, unknown>, course: LoadedCourse): Record<string, unknown> {
-  if (section === 'materials') {
-    if (intent === 'add-material') return { title: text(input.title), type: text(input.type) || 'course', url: text(input.url) }
-    const existing = course.materials.find((material) => material.id === text(input.materialId))
-    return {
-      materialId: text(input.materialId),
-      title: text(input.title) || existing?.title,
-      type: text(input.type) || existing?.type || 'course',
-      url: text(input.url) || existing?.url,
-    }
-  }
-  if (section === 'assignments') {
-    return {
-      title: text(input.title),
-      dueAt: text(input.dueAt),
-      description: text(input.description),
-      submissionUrl: text(input.submissionUrl),
-      gradeWeight: number(input.gradeWeight),
-      materialIds: stringArray(input.materialIds),
-    }
-  }
-  if (section === 'lectures') {
-    return {
-      title: text(input.title),
-      startsAt: text(input.startsAt),
-      endsAt: text(input.endsAt),
-      location: text(input.location),
-      status: intent === 'cancel-lecture' ? 'cancelled' : text(input.status) || 'scheduled',
-    }
-  }
-  if (section === 'exams') {
-    return {
-      title: text(input.title),
-      startsAt: intent === 'exam-date-not-announced' ? '' : text(input.startsAt),
-      gradeWeight: number(input.gradeWeight),
-      materialIds: stringArray(input.materialIds),
-    }
-  }
-  return {
-    title: intent === 'fix-course-title' ? text(input.title) : course.title,
-    professors: intent === 'fix-course-professors' ? splitList(text(input.professorsText)) : course.professors,
-    description: intent === 'fix-course-description' ? text(input.description) : course.description,
-  }
-}
-
-function suggestionSummary(course: LoadedCourse, intent: SuggestionIntent, input: Record<string, unknown>): string {
-  const title = text(input.title) || text(input.itemTitle) || 'the selected item'
-  const note = text(input.note)
-  const base = {
-    'add-material': `Add material "${title}" to ${course.title}.`,
-    'fix-material': `Fix material "${title}" in ${course.title}.`,
-    'broken-material-link': `Report a broken material link for "${title}" in ${course.title}.`,
-    'add-assignment': `Add assignment "${title}" to ${course.title}.`,
-    'fix-assignment': `Fix assignment details for "${title}" in ${course.title}.`,
-    'changed-assignment-deadline': `Report a changed assignment deadline for "${title}" in ${course.title}.`,
-    'add-lecture': `Add lecture "${title}" to ${course.title}.`,
-    'fix-lecture': `Fix lecture details for "${title}" in ${course.title}.`,
-    'cancel-lecture': `Report lecture cancellation for "${title}" in ${course.title}.`,
-    'changed-lecture-time-location': `Report a changed lecture time or location for "${title}" in ${course.title}.`,
-    'add-exam': `Add exam "${title}" to ${course.title}.`,
-    'fix-exam': `Fix exam details for "${title}" in ${course.title}.`,
-    'changed-exam-date-location': `Report a changed exam date or location for "${title}" in ${course.title}.`,
-    'exam-date-not-announced': `Report that the exam date for "${title}" is not announced in ${course.title}.`,
-    'fix-course-title': `Fix the Course title for ${course.title}.`,
-    'fix-course-professors': `Fix the professor list for ${course.title}.`,
-    'fix-course-description': `Fix the Course description for ${course.title}.`,
-  }[intent]
-  return note ? `${base}\n\nNote/source: ${note}` : base
-}
-
-function issueTitleAction(intent: SuggestionIntent): string {
-  return {
-    'add-material': 'Add material',
-    'fix-material': 'Fix material',
-    'broken-material-link': 'Report broken material link',
-    'add-assignment': 'Add assignment',
-    'fix-assignment': 'Fix assignment',
-    'changed-assignment-deadline': 'Report changed assignment deadline',
-    'add-lecture': 'Add lecture',
-    'fix-lecture': 'Fix lecture',
-    'cancel-lecture': 'Report lecture cancellation',
-    'changed-lecture-time-location': 'Report changed lecture time or location',
-    'add-exam': 'Add exam',
-    'fix-exam': 'Fix exam',
-    'changed-exam-date-location': 'Report changed exam date or location',
+function handlerOptionLabel(intent: SuggestionIntent): string {
+  const labels: Record<string, string> = {
+    'add-material': 'Add new material',
+    'fix-material': 'Update material',
+    'broken-material-link': 'Report a broken link',
+    'add-assignment': 'Add new assignment',
+    'fix-assignment': 'Update assignment',
+    'changed-assignment-deadline': 'Report changed deadline',
+    'add-lecture': 'Add new lecture',
+    'fix-lecture': 'Update lecture',
+    'cancel-lecture': 'Report cancellation',
+    'changed-lecture-time-location': 'Report changed time/location',
+    'add-exam': 'Add new exam',
+    'fix-exam': 'Update exam',
+    'changed-exam-date-location': 'Report changed exam date/location',
     'exam-date-not-announced': 'Report exam date not announced',
-    'fix-course-title': 'Fix Course title',
-    'fix-course-professors': 'Fix Course professors',
-    'fix-course-description': 'Fix Course description',
-  }[intent]
-}
-
-function requiresNote(intent: SuggestionIntent): boolean {
-  return !intent.startsWith('add-')
+  }
+  return labels[intent] || intent
 }
 
 function githubIssueUrl(target: GithubTarget, title: string, body: string): string {

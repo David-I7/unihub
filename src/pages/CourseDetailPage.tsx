@@ -387,36 +387,75 @@ function SuggestionFields({
   }
 
   if (section === 'assignments') {
+    const assignmentOptions = course.assignmentDeadlines.map((item) => [item.id, item.title])
     return (
       <div className="grid gap-3">
-        <TextField label="Assignment title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-        <DateTimeField label="Due date and time" value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
-        {intent !== 'changed-assignment-deadline' && <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />}
-        <TextField label="Submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
-        <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-        {intent !== 'add-assignment' && <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />}
+        {intent === 'add-assignment' ? (
+          <>
+            <TextField label="Assignment title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+            <DateTimeField label="Due date and time" value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
+            <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+            <TextField label="Submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+            <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          </>
+        ) : (
+          <>
+            <SelectField label="Assignment" value={textValue(form.assignmentId)} options={assignmentOptions} onChange={(value) => applySelectedAssignment(value, course.assignmentDeadlines, updateField)} />
+            <TextField label="Correct title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+            <DateTimeField label={intent === 'changed-assignment-deadline' ? 'Correct/changed due date and time' : 'Correct due date and time'} value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
+            {intent !== 'changed-assignment-deadline' && <TextArea label="Correct description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />}
+            <TextField label="Correct submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+            <TextField label="Correct grade weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+            <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />
+          </>
+        )}
       </div>
     )
   }
 
   if (section === 'lectures') {
+    const lectureOptions = course.courseSessions.map((item) => [item.id, item.title])
     return (
       <div className="grid gap-3">
-        <TextField label="Lecture title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-        <DateTimeField label="Starts at" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
-        <DateTimeField label="Ends at" value={textValue(form.endsAt)} onChange={(value) => updateField('endsAt', value)} />
-        {intent !== 'cancel-lecture' && <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />}
-        {intent !== 'add-lecture' && <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />}
+        {intent === 'add-lecture' ? (
+          <>
+            <TextField label="Lecture title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+            <DateTimeField label="Starts at" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
+            <DateTimeField label="Ends at" value={textValue(form.endsAt)} onChange={(value) => updateField('endsAt', value)} />
+            <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
+          </>
+        ) : (
+          <>
+            <SelectField label="Lecture" value={textValue(form.lectureId)} options={lectureOptions} onChange={(value) => applySelectedLecture(value, course.courseSessions, updateField)} />
+            <TextField label="Correct title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+            <DateTimeField label="Correct starts at" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
+            <DateTimeField label="Correct ends at" value={textValue(form.endsAt)} onChange={(value) => updateField('endsAt', value)} />
+            {intent !== 'cancel-lecture' && <TextField label="Correct location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />}
+            <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />
+          </>
+        )}
       </div>
     )
   }
 
+  const examOptions = course.exams.map((item) => [item.id, item.title])
   return (
     <div className="grid gap-3">
-      <TextField label="Exam title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-      {intent !== 'exam-date-not-announced' && <DateTimeField label="Exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />}
-      <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-      {intent !== 'add-exam' && <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />}
+      {intent === 'add-exam' ? (
+        <>
+          <TextField label="Exam title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+          <DateTimeField label="Exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
+          <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+        </>
+      ) : (
+        <>
+          <SelectField label="Exam" value={textValue(form.examId)} options={examOptions} onChange={(value) => applySelectedExam(value, course.exams, updateField)} />
+          <TextField label="Correct title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+          {intent !== 'exam-date-not-announced' && <DateTimeField label="Correct exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />}
+          <TextField label="Correct grade weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />
+        </>
+      )}
     </div>
   )
 }
@@ -572,8 +611,11 @@ function initialSuggestionForm(section: SuggestionSection, intent: SuggestionInt
   }
   if (section === 'assignments') {
     const assignment = course.assignmentDeadlines[0]
+    if (intent === 'add-assignment') return { title: '', dueAt: '', description: '', submissionUrl: '', gradeWeight: '' }
     return {
-      title: intent === 'add-assignment' ? '' : assignment?.title ?? '',
+      assignmentId: assignment?.id ?? '',
+      itemTitle: assignment?.title ?? '',
+      title: assignment?.title ?? '',
       dueAt: localDateTimeValue(assignment?.dueAt),
       description: assignment?.description ?? '',
       submissionUrl: assignment?.submissionUrl ?? '',
@@ -583,8 +625,11 @@ function initialSuggestionForm(section: SuggestionSection, intent: SuggestionInt
   }
   if (section === 'lectures') {
     const lecture = course.courseSessions[0]
+    if (intent === 'add-lecture') return { title: '', startsAt: '', endsAt: '', location: '' }
     return {
-      title: intent === 'add-lecture' ? '' : lecture?.title ?? '',
+      lectureId: lecture?.id ?? '',
+      itemTitle: lecture?.title ?? '',
+      title: lecture?.title ?? '',
       startsAt: localDateTimeValue(lecture?.startsAt),
       endsAt: localDateTimeValue(lecture?.endsAt),
       location: lecture?.location ?? '',
@@ -592,8 +637,11 @@ function initialSuggestionForm(section: SuggestionSection, intent: SuggestionInt
     }
   }
   const exam = course.exams[0]
+  if (intent === 'add-exam') return { title: '', startsAt: '', gradeWeight: '' }
   return {
-    title: intent === 'add-exam' ? '' : exam?.title ?? '',
+    examId: exam?.id ?? '',
+    itemTitle: exam?.title ?? '',
+    title: exam?.title ?? '',
     startsAt: localDateTimeValue(exam?.startsAt),
     gradeWeight: exam?.gradeWeight?.toString() ?? '',
     note: '',
@@ -604,6 +652,15 @@ function suggestionInput(section: SuggestionSection, intent: SuggestionIntent, f
   const input: Record<string, unknown> = { ...form }
   if (section === 'materials' && intent !== 'add-material' && !textValue(form.itemTitle)) {
     input.itemTitle = course.materials.find((material) => material.id === textValue(form.materialId))?.title ?? ''
+  }
+  if (section === 'assignments' && intent !== 'add-assignment' && !textValue(form.itemTitle)) {
+    input.itemTitle = course.assignmentDeadlines.find((item) => item.id === textValue(form.assignmentId))?.title ?? ''
+  }
+  if (section === 'lectures' && intent !== 'add-lecture' && !textValue(form.itemTitle)) {
+    input.itemTitle = course.courseSessions.find((item) => item.id === textValue(form.lectureId))?.title ?? ''
+  }
+  if (section === 'exams' && intent !== 'add-exam' && !textValue(form.itemTitle)) {
+    input.itemTitle = course.exams.find((item) => item.id === textValue(form.examId))?.title ?? ''
   }
   return input
 }
@@ -619,6 +676,36 @@ function applySelectedMaterial(materialId: string, materials: Material[], update
   updateField('title', material?.title ?? '')
   updateField('type', material?.type ?? 'course')
   updateField('url', material?.url ?? '')
+}
+
+function applySelectedAssignment(assignmentId: string, assignments: LoadedCourse['assignmentDeadlines'], updateField: (name: string, value: string | string[]) => void) {
+  const assignment = assignments.find((item) => item.id === assignmentId)
+  updateField('assignmentId', assignmentId)
+  updateField('itemTitle', assignment?.title ?? '')
+  updateField('title', assignment?.title ?? '')
+  updateField('dueAt', localDateTimeValue(assignment?.dueAt))
+  updateField('description', assignment?.description ?? '')
+  updateField('submissionUrl', assignment?.submissionUrl ?? '')
+  updateField('gradeWeight', assignment?.gradeWeight?.toString() ?? '')
+}
+
+function applySelectedLecture(lectureId: string, lectures: LoadedCourse['courseSessions'], updateField: (name: string, value: string | string[]) => void) {
+  const lecture = lectures.find((item) => item.id === lectureId)
+  updateField('lectureId', lectureId)
+  updateField('itemTitle', lecture?.title ?? '')
+  updateField('title', lecture?.title ?? '')
+  updateField('startsAt', localDateTimeValue(lecture?.startsAt))
+  updateField('endsAt', localDateTimeValue(lecture?.endsAt))
+  updateField('location', lecture?.location ?? '')
+}
+
+function applySelectedExam(examId: string, exams: LoadedCourse['exams'], updateField: (name: string, value: string | string[]) => void) {
+  const exam = exams.find((item) => item.id === examId)
+  updateField('examId', examId)
+  updateField('itemTitle', exam?.title ?? '')
+  updateField('title', exam?.title ?? '')
+  updateField('startsAt', localDateTimeValue(exam?.startsAt))
+  updateField('gradeWeight', exam?.gradeWeight?.toString() ?? '')
 }
 
 function localDateTimeValue(value: string | undefined): string {

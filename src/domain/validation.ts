@@ -117,7 +117,7 @@ export function validateCourse(course: unknown): ValidationResult {
 
   const warnings: string[] = []
   const result = courseSchema.safeParse(course)
-  const errors = result.success ? [] : result.error.issues.map((issue) => zodIssueToMessage(issue)).map(rewordCourseSchemaError)
+  const errors = result.success ? [] : result.error.issues.map((issue) => zodIssueToMessage(issue)).map((error) => rewordCourseSchemaError(error))
 
   if (Array.isArray(course.professors) && course.professors.length === 0) warnings.push('Course has no professors.')
 
@@ -233,7 +233,7 @@ export function validateContributionPayload(
     const prefix = Array.isArray(payload) ? `Item ${i + 1}` : 'Contribution'
     const result = itemSchema.safeParse(item)
     if (!result.success) {
-      errors.push(...result.error.issues.map((issue) => zodIssueToMessage(issue, prefix)).map(rewordCourseSchemaError))
+      errors.push(...result.error.issues.map((issue) => zodIssueToMessage(issue, prefix)).map((error) => rewordCourseSchemaError(error, type)))
     }
 
     if (!isRecord(item)) continue
@@ -341,8 +341,11 @@ function rewordCatalogSchemaError(error: string): string {
   return error
 }
 
-function rewordCourseSchemaError(error: string): string {
+function rewordCourseSchemaError(error: string, type?: string): string {
   const itemId = itemIndexDisplay(error)
+  const isSingle = itemId === 'Contribution'
+  const subject = isSingle ? '' : `${itemId} `
+
   if (error === 'Course must be a JSON object.') return 'Course must be a JSON object.'
   if (error.includes('Course.id')) return 'Course requires id.'
   if (error.includes('Course.title')) return 'Course requires title.'
@@ -351,17 +354,36 @@ function rewordCourseSchemaError(error: string): string {
   if (error.includes('Course.assignmentDeadlines') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
   if (error.includes('Course.courseSessions') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
   if (error.includes('Course.exams') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
-  if (error.includes('materials') && error.includes('.type')) return `${itemId} has an invalid Material type.`
-  if (error.includes('Contribution.type')) return 'Contribution has an invalid Material type.'
-  if ((error.includes('materials') || error.includes('Contribution.url')) && error.includes('external URL')) return `${itemId} Material requires an external URL.`
-  if (error.includes('materials') && (error.includes('.title') || error.includes('.url'))) return `${itemId} Material requires title and url.`
-  if (error.includes('.addedAt')) return `${itemId} requires addedAt.`
-  if (error.includes('.updatedAt')) return `${itemId} requires updatedAt.`
-  if (error.includes('assignmentDeadlines') && error.includes('.dueAt')) return `${itemId} Assignment Deadline requires dueAt.`
-  if (error.includes('courseSessions') && (error.includes('.startsAt') || error.includes('.endsAt'))) return `${itemId} Course Session requires startsAt and endsAt.`
-  if (error.includes('courseSessions') && error.includes('.status')) return `${itemId} has an invalid Session Status.`
-  if (error.includes('Contribution.dueAt')) return 'Contribution Assignment Deadline requires dueAt.'
-  if (error.includes('Contribution.status')) return 'Contribution has an invalid Session Status.'
+
+  const isMaterial = type ? ['add-material', 'update-material'].includes(type) : error.includes('materials')
+  const isAssignment = type ? type === 'add-assignment-deadline' : error.includes('assignmentDeadlines')
+  const isSession = type ? type === 'add-course-session' : error.includes('courseSessions')
+  const isExam = type ? type === 'add-exam' : error.includes('exams')
+
+  if (isMaterial) {
+    if (error.includes('type')) return `${subject}Material has an invalid Material type.`
+    if (error.includes('external URL')) return `${subject}Material requires an external URL.`
+    if (error.includes('title') || error.includes('url')) return `${subject}Material requires title and url.`
+  }
+
+  if (isAssignment) {
+    if (error.includes('title')) return `${subject}Assignment Deadline requires title.`
+    if (error.includes('dueAt')) return `${subject}Assignment Deadline requires dueAt.`
+  }
+
+  if (isSession) {
+    if (error.includes('startsAt') || error.includes('endsAt')) return `${subject}Course Session requires startsAt and endsAt.`
+    if (error.includes('status')) return `${itemId} has an invalid Session Status.`
+    if (error.includes('title')) return `${subject}Course Session requires title.`
+  }
+
+  if (isExam) {
+    if (error.includes('title')) return `${subject}Exam requires title.`
+  }
+
+  if (error.includes('addedAt')) return `${itemId} requires addedAt.`
+  if (error.includes('updatedAt')) return `${itemId} requires updatedAt.`
+
   return error
 }
 
@@ -369,7 +391,9 @@ function itemIndexDisplay(error: string): string {
   const dotIndexMatch = error.match(/\.(\d+)\./)
   if (dotIndexMatch) return `Item ${Number(dotIndexMatch[1]) + 1}`
   const itemPrefixMatch = error.match(/Item (\d+)/)
-  return itemPrefixMatch ? `Item ${itemPrefixMatch[1]}` : 'Unnamed item'
+  if (itemPrefixMatch) return `Item ${itemPrefixMatch[1]}`
+  if (error.includes('Contribution')) return 'Contribution'
+  return 'Unnamed item'
 }
 
 function displayId(value: Record<string, unknown>): string {

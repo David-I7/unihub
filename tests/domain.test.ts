@@ -767,16 +767,24 @@ test('Material Suggestions produce student-facing GitHub issue output with maint
 
 test('Suggestion options omit Contribution-level update duplicates', () => {
   assert.deepEqual(suggestionIntentsForSection('materials').map((item) => item.value), [
+    'add-material',
+    'fix-material',
     'broken-material-link',
   ])
   assert.deepEqual(suggestionIntentsForSection('assignments').map((item) => item.value), [
+    'add-assignment',
+    'fix-assignment',
     'changed-assignment-deadline',
   ])
   assert.deepEqual(suggestionIntentsForSection('lectures').map((item) => item.value), [
+    'add-lecture',
+    'fix-lecture',
     'cancel-lecture',
     'changed-lecture-time-location',
   ])
   assert.deepEqual(suggestionIntentsForSection('exams').map((item) => item.value), [
+    'add-exam',
+    'fix-exam',
     'changed-exam-date-location',
     'exam-date-not-announced',
   ])
@@ -933,4 +941,50 @@ test('applyContribution supports flexible array of objects (batch) for batchable
   })
   assert.equal(resultHeavy.valid, true)
   assert.doesNotMatch(resultHeavy.errors.join('\n'), /Grade Weight total cannot exceed 100/)
+})
+
+test('validation formatting produces non-cryptic error messages for UI display', () => {
+  const repository = loadTestRepositoryData()
+  const target = repository.courses[0]
+
+  // 1. Single contribution validation error formatting (no Item X index)
+  const singleResult = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-assignment-deadline',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify({
+        id: 'new-deadline',
+        title: '', // Empty title
+        dueAt: '', // Empty dueAt
+        addedAt: '2026-02-01T00:00:00.000Z',
+        updatedAt: '2026-02-01T00:00:00.000Z',
+      }),
+    },
+  })
+  assert.equal(singleResult.valid, false)
+  // Should omit "Item X" and "Contribution" prefix, returning clean messages:
+  assert.deepEqual(singleResult.errors, [
+    'Assignment Deadline requires title.',
+    'Assignment Deadline requires dueAt.',
+  ])
+
+  // 2. Full Course validation error formatting (includes Item X index)
+  const badCourse = validateCourse({
+    id: 'course-error',
+    title: 'Error Course',
+    professors: [],
+    materials: [],
+    assignmentDeadlines: [
+      { id: 'dl-1', title: 'Valid Deadline', dueAt: '2026-02-15T00:00:00Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+      { id: 'dl-2', title: '', dueAt: '', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }, // Invalid title and dueAt
+    ],
+    courseSessions: [],
+    exams: [],
+  })
+  assert.equal(badCourse.valid, false)
+  // Should preserve Item index for course validation:
+  assert.ok(badCourse.errors.includes('Item 2 Assignment Deadline requires title.'))
+  assert.ok(badCourse.errors.includes('Item 2 Assignment Deadline requires dueAt.'))
 })

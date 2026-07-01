@@ -48,9 +48,11 @@ export function Navigation() {
         className="sticky top-0 flex h-svh flex-col items-center gap-2.5 bg-[var(--bg-rail)] px-2 py-3.5 text-[var(--color-rail-text)] max-[820px]:hidden"
         aria-label="Primary"
       >
-        <div className="grid h-[42px] w-[42px] place-items-center rounded-lg bg-[var(--primary)] font-bold text-white">
-          UH
-        </div>
+        <img
+          src="/favicon.svg"
+          alt="UniHub Logo"
+          className="h-[42px] w-[42px] rounded-lg object-contain"
+        />
         {items.map((item) => {
           const Icon = item.icon;
           return (

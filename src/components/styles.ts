@@ -6,7 +6,7 @@ export const headingClass = 'mb-1.5 text-lg leading-tight font-semibold text-[va
 
 export const mutedTextClass = 'text-[var(--text-muted)]'
 
-export const labelClass = 'grid gap-1.5 text-[13px] font-semibold text-[var(--text-label)] max-[820px]:w-[calc(100vw-40px)] max-[820px]:max-w-[calc(100vw-40px)]'
+export const labelClass = 'grid gap-1.5 text-[13px] font-semibold text-[var(--text-label)] w-full'
 
 export const selectClass = 'min-w-[190px] rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-2.5 py-2 text-[var(--text-main)] font-[inherit] max-[820px]:min-w-0'
 

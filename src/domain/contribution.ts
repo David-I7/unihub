@@ -37,6 +37,187 @@ const defaultGithubTarget: GithubTarget = {
   branch: 'main',
 }
 
+/**
+ * ContributionProcessor encapsulates validation, state transitions,
+ * and formatting of repository contributions.
+ */
+class ContributionProcessor {
+  private repository: RepositorySnapshot
+  private githubTarget: GithubTarget
+
+  constructor(
+    repository: RepositorySnapshot,
+    githubTarget: GithubTarget = defaultGithubTarget
+  ) {
+    this.repository = repository
+    this.githubTarget = githubTarget
+  }
+
+  processCourseContribution(options: {
+    type: ContributionType
+    mode: "issue" | "pull-request"
+    path: CoursePath
+    payload: unknown
+  }): PreparedContribution {
+    const { type, mode, path, payload } = options
+    const targetCourse = findCourse(this.repository.courses, path)
+
+    const applied = this.applyToCourse(type, payload, targetCourse)
+    if (!applied.valid) return { ...applied, parsed: payload }
+
+    return this.formatCourseReview({
+      applied,
+      parsed: payload,
+      type,
+      mode,
+      path,
+      currentCourse: targetCourse,
+    })
+  }
+
+  applyToCourse(
+    type: ContributionType,
+    payload: unknown,
+    targetCourse?: Course
+  ): ValidationResult & { updatedCourse?: Course } {
+    const validation = validateContributionPayload(type, payload, targetCourse)
+    if (!validation.valid) {
+      return { ...validation }
+    }
+
+    if (type === 'add-new-course') {
+      return { ...validation, updatedCourse: payload as Course }
+    }
+    if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
+
+    const nextCourse = structuredClone(targetCourse) as Course
+    const payloads = Array.isArray(payload) ? payload : [payload]
+
+    if (type === 'add-material') nextCourse.materials = [...nextCourse.materials, ...(payloads as Material[])]
+    if (type === 'update-material') {
+      const update = payload as Material
+      nextCourse.materials = nextCourse.materials.map((material) => (material.id === update.id ? { ...material, ...update } : material))
+    }
+    if (type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(payloads as AssignmentDeadline[])]
+    if (type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(payloads as Exam[])]
+    if (type === 'add-course-session') nextCourse.courseSessions = [...nextCourse.courseSessions, ...(payloads as CourseSession[])]
+    if (type === 'edit-course-metadata') {
+      const singlePayload = payload as Record<string, unknown>
+      nextCourse.title = String(singlePayload.title ?? nextCourse.title)
+      nextCourse.professors = Array.isArray(singlePayload.professors) ? singlePayload.professors.map(String) : nextCourse.professors
+      nextCourse.description = hasString(singlePayload, 'description') ? singlePayload.description : nextCourse.description
+    }
+
+    return { ...validation, updatedCourse: nextCourse }
+  }
+
+  formatCourseReview(options: {
+    applied: ValidationResult & { updatedCourse?: Course }
+    parsed: unknown
+    type: ContributionType
+    mode: 'issue' | 'pull-request'
+    path: CoursePath
+    currentCourse?: Course
+  }): PreparedContribution {
+    const { applied, parsed, type, mode, path, currentCourse } = options
+    const currentJson = JSON.stringify(currentCourse ? repositoryCourseJson(currentCourse) : null, null, 2)
+    const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
+    const pathText = courseRepositoryPath(path)
+    const diffText = jsonLineDiff(currentJson, changedJson)
+    const body = [
+      `Contribution type: ${type}`,
+      `Target Course Path: ${pathText}`,
+      '',
+      'Current state:',
+      '```json',
+      currentJson,
+      '```',
+      '',
+      'Diff:',
+      '```diff',
+      diffText,
+      '```',
+      '',
+      'Updated state:',
+      '```json',
+      changedJson,
+      '```',
+    ].join('\n')
+
+    if (mode === 'issue') {
+      return {
+        ...applied,
+        parsed,
+        path,
+        changedJson,
+        issueBody: body,
+        issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
+      }
+    }
+
+    const prTitle = `Contribution: ${type} for ${path.courseId}`
+    return {
+      ...applied,
+      parsed,
+      path,
+      changedJson,
+      prTitle,
+      prBody: body,
+      githubLink: githubEditUrl(this.githubTarget, courseDataFilePath(path)),
+    }
+  }
+
+  formatCatalogReview(options: {
+    applied: ValidationResult & { updatedCatalog?: Catalog }
+    parsed: unknown
+    type: ContributionType
+    mode: 'issue' | 'pull-request'
+  }): PreparedContribution {
+    const { applied, parsed, type, mode } = options
+    const currentJson = JSON.stringify(this.repository.catalog, null, 2)
+    const changedJson = JSON.stringify(applied.updatedCatalog, null, 2)
+    const diffText = jsonLineDiff(currentJson, changedJson)
+    const body = [
+      `Contribution type: ${type}`,
+      'Target Catalog File: public/data/catalog.json',
+      '',
+      'Current state:',
+      '```json',
+      currentJson,
+      '```',
+      '',
+      'Diff:',
+      '```diff',
+      diffText,
+      '```',
+      '',
+      'Updated state:',
+      '```json',
+      changedJson,
+      '```',
+    ].join('\n')
+
+    if (mode === 'issue') {
+      return {
+        ...applied,
+        parsed,
+        changedJson,
+        issueBody: body,
+        issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
+      }
+    }
+
+    return {
+      ...applied,
+      parsed,
+      changedJson,
+      prTitle: `Contribution: ${type} for Catalog`,
+      prBody: body,
+      githubLink: githubEditUrl(this.githubTarget, 'public/data/catalog.json'),
+    }
+  }
+}
+
 export function contributionPayloadFromText(draft: ContributionDraft): PreparedContribution {
   return prepareContribution({
     draft,
@@ -58,20 +239,25 @@ export function prepareContribution(options: {
     return { valid: false, errors: ['Contribution JSON is malformed.'], warnings: [] }
   }
 
-  const targetCourse = findCourse(repository.courses, draft.path)
-  const applied = applyContribution(draft.type, parsed, targetCourse)
-  if (!applied.valid) return { ...applied, parsed }
-
-  return prepareReviewOutput({
-    applied,
-    parsed,
+  const processor = new ContributionProcessor(repository, githubTarget)
+  return processor.processCourseContribution({
     type: draft.type,
     mode: draft.mode,
     path: draft.path,
-    currentCourse: targetCourse,
-    githubTarget,
+    payload: parsed,
   })
 }
+
+export function applyContribution(
+  type: ContributionType,
+  payload: unknown,
+  targetCourse?: Course,
+): ValidationResult & { updatedCourse?: Course } {
+  const processor = new ContributionProcessor({ catalog: { academicYears: [] }, courses: [] })
+  return processor.applyToCourse(type, payload, targetCourse)
+}
+
+export const validateContribution = applyContribution
 
 export function prepareGeneratedContribution(options: {
   draft: GeneratedContributionDraft
@@ -80,20 +266,22 @@ export function prepareGeneratedContribution(options: {
   now?: () => string
 }): PreparedContribution {
   const { draft, repository, githubTarget = defaultGithubTarget, now = () => new Date().toISOString() } = options
+  const processor = new ContributionProcessor(repository, githubTarget)
+
   if (isCatalogContributionType(draft.type)) {
     const generated = generateCatalogContribution(draft, repository)
     if (!generated.valid) return generated
-    return prepareCatalogReviewOutput({
+    return processor.formatCatalogReview({
       applied: generated,
       parsed: generated.parsed,
       type: draft.type,
       mode: draft.mode,
-      currentCatalog: repository.catalog,
-      githubTarget,
     })
   }
+
   const generated = generateContributionPayload(draft, repository, now())
   if (!generated.valid) return generated
+
   if ((draft.type === 'add-assignment-deadline' || draft.type === 'add-exam') && Array.isArray(generated.payload)) {
     const targetCourse = findCourse(repository.courses, generated.path)
     if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
@@ -105,25 +293,22 @@ export function prepareGeneratedContribution(options: {
     if (draft.type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(courseItems as Exam[])]
     const validation = validateCourse(nextCourse)
     if (!validation.valid) return { ...validation, parsed: generated.payload, path: generated.path }
-    return prepareReviewOutput({
+
+    return processor.formatCourseReview({
       applied: { ...validation, updatedCourse: nextCourse },
       parsed: generated.payload,
       type: draft.type,
       mode: draft.mode,
       path: generated.path,
       currentCourse: targetCourse,
-      githubTarget,
     })
   }
-  return prepareContribution({
-    draft: {
-      type: draft.type,
-      mode: draft.mode,
-      path: generated.path,
-      payloadText: JSON.stringify(generated.payload),
-    },
-    repository,
-    githubTarget,
+
+  return processor.processCourseContribution({
+    type: draft.type,
+    mode: draft.mode,
+    path: generated.path,
+    payload: generated.payload,
   })
 }
 
@@ -194,44 +379,6 @@ function validatedCatalog(catalog: Catalog): ValidationResult & { updatedCatalog
   const validation = validateCatalog(catalog)
   return validation.valid ? { ...validation, updatedCatalog: catalog } : validation
 }
-
-export function applyContribution(
-  type: ContributionType,
-  payload: unknown,
-  targetCourse?: Course,
-): ValidationResult & { updatedCourse?: Course } {
-  const validation = validateContributionPayload(type, payload, targetCourse)
-  if (!validation.valid) {
-    return { ...validation }
-  }
-
-  if (type === 'add-new-course') {
-    return { ...validation, updatedCourse: payload as Course }
-  }
-  if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
-
-  const nextCourse = structuredClone(targetCourse) as Course
-  const payloads = Array.isArray(payload) ? payload : [payload]
-
-  if (type === 'add-material') nextCourse.materials = [...nextCourse.materials, ...(payloads as Material[])]
-  if (type === 'update-material') {
-    const update = payload as Material
-    nextCourse.materials = nextCourse.materials.map((material) => (material.id === update.id ? { ...material, ...update } : material))
-  }
-  if (type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(payloads as AssignmentDeadline[])]
-  if (type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(payloads as Exam[])]
-  if (type === 'add-course-session') nextCourse.courseSessions = [...nextCourse.courseSessions, ...(payloads as CourseSession[])]
-  if (type === 'edit-course-metadata') {
-    const singlePayload = payload as Record<string, unknown>
-    nextCourse.title = String(singlePayload.title ?? nextCourse.title)
-    nextCourse.professors = Array.isArray(singlePayload.professors) ? singlePayload.professors.map(String) : nextCourse.professors
-    nextCourse.description = hasString(singlePayload, 'description') ? singlePayload.description : nextCourse.description
-  }
-
-  return { ...validation, updatedCourse: nextCourse }
-}
-
-export const validateContribution = applyContribution
 
 function generateContributionPayload(
   draft: GeneratedContributionDraft,
@@ -413,115 +560,6 @@ function generatedInlineMaterials(value: unknown, type: 'assignment' | 'exam', t
     materials.push(generated.payload)
   }
   return { valid: errors.length === 0, errors, warnings: [], payload: materials }
-}
-
-function prepareReviewOutput(options: {
-  applied: ValidationResult & { updatedCourse?: Course }
-  parsed: unknown
-  type: ContributionType
-  mode: 'issue' | 'pull-request'
-  path: CoursePath
-  currentCourse?: Course
-  githubTarget: GithubTarget
-}): PreparedContribution {
-  const { applied, parsed, type, mode, path, currentCourse, githubTarget } = options
-  const currentJson = JSON.stringify(currentCourse ? repositoryCourseJson(currentCourse) : null, null, 2)
-  const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
-  const pathText = courseRepositoryPath(path)
-  const diffText = jsonLineDiff(currentJson, changedJson)
-  const body = [
-    `Contribution type: ${type}`,
-    `Target Course Path: ${pathText}`,
-    '',
-    'Current state:',
-    '```json',
-    currentJson,
-    '```',
-    '',
-    'Diff:',
-    '```diff',
-    diffText,
-    '```',
-    '',
-    'Updated state:',
-    '```json',
-    changedJson,
-    '```',
-  ].join('\n')
-
-  if (mode === 'issue') {
-    return {
-      ...applied,
-      parsed,
-      path,
-      changedJson,
-      issueBody: body,
-      issueUrl: githubIssueUrl(githubTarget, `Contribution: ${type}`, body),
-    }
-  }
-
-  const prTitle = `Contribution: ${type} for ${path.courseId}`
-  return {
-    ...applied,
-    parsed,
-    path,
-    changedJson,
-    prTitle,
-    prBody: body,
-    githubLink: githubEditUrl(githubTarget, courseDataFilePath(path)),
-  }
-}
-
-function prepareCatalogReviewOutput(options: {
-  applied: ValidationResult & { updatedCatalog?: Catalog }
-  parsed: unknown
-  type: ContributionType
-  mode: 'issue' | 'pull-request'
-  currentCatalog: Catalog
-  githubTarget: GithubTarget
-}): PreparedContribution {
-  const { applied, parsed, type, mode, currentCatalog, githubTarget } = options
-  const currentJson = JSON.stringify(currentCatalog, null, 2)
-  const changedJson = JSON.stringify(applied.updatedCatalog, null, 2)
-  const diffText = jsonLineDiff(currentJson, changedJson)
-  const body = [
-    `Contribution type: ${type}`,
-    'Target Catalog File: public/data/catalog.json',
-    '',
-    'Current state:',
-    '```json',
-    currentJson,
-    '```',
-    '',
-    'Diff:',
-    '```diff',
-    diffText,
-    '```',
-    '',
-    'Updated state:',
-    '```json',
-    changedJson,
-    '```',
-  ].join('\n')
-
-  if (mode === 'issue') {
-    return {
-      ...applied,
-      parsed,
-      changedJson,
-      issueBody: body,
-      issueUrl: githubIssueUrl(githubTarget, `Contribution: ${type}`, body),
-    }
-  }
-
-  return {
-    ...applied,
-    parsed,
-    changedJson,
-    prTitle: `Contribution: ${type} for Catalog`,
-    prBody: body,
-    githubLink: githubEditUrl(githubTarget, 'public/data/catalog.json'),
-  }
 }
 
 function slugify(value: string): string {

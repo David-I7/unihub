@@ -25,6 +25,8 @@ export function Select({
   ariaLabel?: string
 }) {
   const [isOpen, setIsOpen] = React.useState(false)
+  const [align, setAlign] = React.useState<'left' | 'right'>('left')
+  const [verticalAlign, setVerticalAlign] = React.useState<'bottom' | 'top'>('bottom')
   const rootRef = React.useRef<HTMLDivElement>(null)
   const selected = options.find((option) => option.value === value) ?? options[0]
 
@@ -41,6 +43,34 @@ export function Select({
     return () => {
       window.removeEventListener('pointerdown', handlePointerDown)
       window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
+
+  React.useEffect(() => {
+    if (!isOpen || !rootRef.current) return
+    const updateAlignment = () => {
+      if (!rootRef.current) return
+      const rect = rootRef.current.getBoundingClientRect()
+      // We expect the dropdown to be at least min-w-48 (192px) or the button width, whichever is larger
+      const dropdownWidth = Math.max(rect.width, 192)
+      if (rect.left + dropdownWidth > window.innerWidth) {
+        setAlign('right')
+      } else {
+        setAlign('left')
+      }
+
+      // Check vertical space: dropdown has max-h-72 (288px) plus some padding, say 300px
+      const dropdownHeight = 288
+      if (rect.bottom + dropdownHeight > window.innerHeight && rect.top > dropdownHeight) {
+        setVerticalAlign('top')
+      } else {
+        setVerticalAlign('bottom')
+      }
+    }
+    updateAlignment()
+    window.addEventListener('resize', updateAlignment)
+    return () => {
+      window.removeEventListener('resize', updateAlignment)
     }
   }, [isOpen])
 
@@ -64,7 +94,11 @@ export function Select({
       {isOpen && (
         <div
           role="listbox"
-          className="absolute z-[180] mt-1 max-h-72 w-full min-w-48 overflow-auto rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] p-1 shadow-xl"
+          className={cn(
+            "absolute z-[180] max-h-72 w-full min-w-48 overflow-auto rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] p-1 shadow-xl",
+            align === 'right' ? 'right-0 left-auto' : 'left-0 right-auto',
+            verticalAlign === 'top' ? 'bottom-full mb-1 mt-0' : 'top-full mt-1 mb-0'
+          )}
         >
           {options.map((option) => {
             const isSelected = option.value === value

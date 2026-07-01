@@ -41,7 +41,7 @@ export function CalendarPage({
           Course
           <Select
             selectSize="compact"
-            className="min-w-72 max-[820px]:w-full max-[820px]:max-w-full"
+            className="w-56 max-[820px]:w-[65%]"
             value={courseId}
             options={[{ value: 'all', label: 'All courses' }, ...selectedCourses.map((course) => ({ value: course.id, label: course.title }))]}
             onValueChange={setCourseId}
@@ -51,6 +51,7 @@ export function CalendarPage({
           Type
           <Select
             selectSize="compact"
+            className="w-56 max-[820px]:w-[65%]"
             value={eventType}
             options={[
               { value: 'all', label: 'All types' },
@@ -65,6 +66,7 @@ export function CalendarPage({
           Range
           <Select
             selectSize="compact"
+            className="w-56 max-[820px]:w-[65%]"
             value={timeRange}
             options={[
               { value: 'upcoming', label: 'Upcoming' },
