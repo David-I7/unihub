@@ -2,8 +2,6 @@
 
 UniHub brings university course information into one place, so students do not have to jump between platforms to find materials, deadlines, lectures, and exam details.
 
-It is a static GitHub Pages app with a compact academic dashboard layout.
-
 ## What You Can Do
 
 - Browse courses by academic year, study year, and semester.
