@@ -38,11 +38,13 @@ export type CourseDetailView = {
 
 export function deriveCourseDetailView(course: LoadedCourse, nowTime: number): CourseDetailView {
   return {
-    materialGroups: generalMaterialTypes.map((type) => ({
-      type,
-      label: `${capitalize(type)} Materials`,
-      materials: course.materials.filter((material) => material.type === type),
-    })),
+    materialGroups: generalMaterialTypes
+      .map((type) => ({
+        type,
+        label: `${capitalize(type)} Materials`,
+        materials: course.materials.filter((material) => material.type === type),
+      }))
+      .filter((group) => group.materials.length > 0),
     assignments: [...course.assignmentDeadlines]
       .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt))
       .map((assignment) => ({

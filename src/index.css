@@ -8,8 +8,11 @@
   --bg-card: #fff;
   --bg-rail: #252932;
   --bg-rail-hover: #3a404c;
+  --bg-option-hover: #f1f5f9;
+  --bg-option-selected: #e6f2f1;
   --color-rail-text: #cfd4dc;
   --color-rail-text-active: #fff;
+  --ring-color: rgb(63 111 107 / 0.22);
   --border-color: #dfe4eb;
   --text-main: #151922;
   --text-muted: #5d6675;
@@ -24,6 +27,24 @@
   --validation-err-bg: #fff7f7;
   --bg-code: #f2f4f7;
   --color-time: #7c8797;
+  --status-cancelled-bg: #fff1f2;
+  --status-cancelled-border: #fecdd3;
+  --status-cancelled-text: #be123c;
+  --status-completed-bg: #ecfdf3;
+  --status-completed-border: #bbf7d0;
+  --status-completed-text: #15803d;
+  --status-scheduled-bg: #f1f5f9;
+  --status-scheduled-border: #cbd5e1;
+  --status-scheduled-text: #475569;
+  --status-upcoming-bg: #eff6ff;
+  --status-upcoming-border: #bfdbfe;
+  --status-upcoming-text: #1d4ed8;
+  --status-exam-bg: #faf5ff;
+  --status-exam-border: #e9d5ff;
+  --status-exam-text: #7e22ce;
+  --status-assignment-bg: #fffbeb;
+  --status-assignment-border: #fde68a;
+  --status-assignment-text: #b45309;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -36,8 +57,11 @@
     --bg-card: #1e293b;
     --bg-rail: #0f172a;
     --bg-rail-hover: #1e293b;
-    --color-rail-text: #94a3b8;
+    --bg-option-hover: #334155;
+    --bg-option-selected: #123b3a;
+    --color-rail-text: #cbd5e1;
     --color-rail-text-active: #f8fafc;
+    --ring-color: rgb(20 184 166 / 0.28);
     --border-color: #334155;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
@@ -52,6 +76,24 @@
     --validation-err-bg: #450a0a;
     --bg-code: #1e293b;
     --color-time: #64748b;
+    --status-cancelled-bg: #450a0a;
+    --status-cancelled-border: #991b1b;
+    --status-cancelled-text: #fecaca;
+    --status-completed-bg: #052e16;
+    --status-completed-border: #166534;
+    --status-completed-text: #bbf7d0;
+    --status-scheduled-bg: #1e293b;
+    --status-scheduled-border: #475569;
+    --status-scheduled-text: #cbd5e1;
+    --status-upcoming-bg: #172554;
+    --status-upcoming-border: #1d4ed8;
+    --status-upcoming-text: #bfdbfe;
+    --status-exam-bg: #3b0764;
+    --status-exam-border: #7e22ce;
+    --status-exam-text: #e9d5ff;
+    --status-assignment-bg: #451a03;
+    --status-assignment-border: #92400e;
+    --status-assignment-text: #fde68a;
   }
 }
 
@@ -60,8 +102,11 @@
   --bg-card: #1e293b;
   --bg-rail: #0f172a;
   --bg-rail-hover: #1e293b;
-  --color-rail-text: #94a3b8;
+  --bg-option-hover: #334155;
+  --bg-option-selected: #123b3a;
+  --color-rail-text: #cbd5e1;
   --color-rail-text-active: #f8fafc;
+  --ring-color: rgb(20 184 166 / 0.28);
   --border-color: #334155;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -76,6 +121,24 @@
   --validation-err-bg: #450a0a;
   --bg-code: #1e293b;
   --color-time: #64748b;
+  --status-cancelled-bg: #450a0a;
+  --status-cancelled-border: #991b1b;
+  --status-cancelled-text: #fecaca;
+  --status-completed-bg: #052e16;
+  --status-completed-border: #166534;
+  --status-completed-text: #bbf7d0;
+  --status-scheduled-bg: #1e293b;
+  --status-scheduled-border: #475569;
+  --status-scheduled-text: #cbd5e1;
+  --status-upcoming-bg: #172554;
+  --status-upcoming-border: #1d4ed8;
+  --status-upcoming-text: #bfdbfe;
+  --status-exam-bg: #3b0764;
+  --status-exam-border: #7e22ce;
+  --status-exam-text: #e9d5ff;
+  --status-assignment-bg: #451a03;
+  --status-assignment-border: #92400e;
+  --status-assignment-text: #fde68a;
 }
 
 [data-theme="light"] {
@@ -83,8 +146,11 @@
   --bg-card: #fff;
   --bg-rail: #252932;
   --bg-rail-hover: #3a404c;
+  --bg-option-hover: #f1f5f9;
+  --bg-option-selected: #e6f2f1;
   --color-rail-text: #cfd4dc;
   --color-rail-text-active: #fff;
+  --ring-color: rgb(63 111 107 / 0.22);
   --border-color: #dfe4eb;
   --text-main: #151922;
   --text-muted: #5d6675;
@@ -99,6 +165,24 @@
   --validation-err-bg: #fff7f7;
   --bg-code: #f2f4f7;
   --color-time: #7c8797;
+  --status-cancelled-bg: #fff1f2;
+  --status-cancelled-border: #fecdd3;
+  --status-cancelled-text: #be123c;
+  --status-completed-bg: #ecfdf3;
+  --status-completed-border: #bbf7d0;
+  --status-completed-text: #15803d;
+  --status-scheduled-bg: #f1f5f9;
+  --status-scheduled-border: #cbd5e1;
+  --status-scheduled-text: #475569;
+  --status-upcoming-bg: #eff6ff;
+  --status-upcoming-border: #bfdbfe;
+  --status-upcoming-text: #1d4ed8;
+  --status-exam-bg: #faf5ff;
+  --status-exam-border: #e9d5ff;
+  --status-exam-text: #7e22ce;
+  --status-assignment-bg: #fffbeb;
+  --status-assignment-border: #fde68a;
+  --status-assignment-text: #b45309;
 }
 
 * {
@@ -110,5 +194,5 @@ body {
 }
 
 a {
-  color: #2d625e;
+  color: inherit;
 }

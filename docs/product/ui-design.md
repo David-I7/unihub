@@ -14,6 +14,8 @@ Calendar
 Contribute
 ```
 
+`Contribute` remains visible in the main navigation, but the page is framed as a maintainer and advanced contribution surface. Normal student suggestions should be encouraged from the relevant course section instead of starting from the repository-oriented contribution page.
+
 Mobile uses bottom navigation:
 
 ```text

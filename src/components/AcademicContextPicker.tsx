@@ -2,7 +2,8 @@ import { CalendarDays, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { ContextSelection } from '@/app/academicContext'
 import type { Hierarchy } from '@/domain'
-import { iconButtonClass, labelClass, selectClass } from './styles'
+import { Select } from '@/components/ui/select'
+import { iconButtonClass, labelClass } from './styles'
 
 export function AcademicContextPicker({
   context,
@@ -55,11 +56,11 @@ export function AcademicContextPicker({
             <div className="grid gap-3">
               <label className={labelClass}>
                 Academic Year
-                <select
-                  className={selectClass}
+                <Select
                   value={context.academicYearId}
-                  onChange={(event) => {
-                    const nextYear = hierarchy.academicYears.find((item) => item.id === event.target.value) || hierarchy.academicYears[0]
+                  options={hierarchy.academicYears.map((item) => ({ value: item.id, label: item.label }))}
+                  onValueChange={(value) => {
+                    const nextYear = hierarchy.academicYears.find((item) => item.id === value) || hierarchy.academicYears[0]
                     const nextStudyYear = nextYear.studyYears[0]
                     const nextSemester = nextStudyYear?.semesters[0]
                     onContextChange({
@@ -68,21 +69,15 @@ export function AcademicContextPicker({
                       semesterId: nextSemester?.id || '',
                     })
                   }}
-                >
-                  {hierarchy.academicYears.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
               <label className={labelClass}>
                 Study Year
-                <select
-                  className={selectClass}
+                <Select
                   value={context.studyYearId}
-                  onChange={(event) => {
-                    const nextStudyYear = academicYear.studyYears.find((item) => item.id === event.target.value) || academicYear.studyYears[0]
+                  options={academicYear.studyYears.map((item) => ({ value: item.id, label: item.label }))}
+                  onValueChange={(value) => {
+                    const nextStudyYear = academicYear.studyYears.find((item) => item.id === value) || academicYear.studyYears[0]
                     const nextSemester = nextStudyYear.semesters[0]
                     onContextChange({
                       ...context,
@@ -90,32 +85,20 @@ export function AcademicContextPicker({
                       semesterId: nextSemester?.id || '',
                     })
                   }}
-                >
-                  {academicYear.studyYears.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
               <label className={labelClass}>
                 Semester
-                <select
-                  className={selectClass}
+                <Select
                   value={context.semesterId}
-                  onChange={(event) => {
+                  options={studyYear.semesters.map((item) => ({ value: item.id, label: item.label }))}
+                  onValueChange={(value) => {
                     onContextChange({
                       ...context,
-                      semesterId: event.target.value,
+                      semesterId: value,
                     })
                   }}
-                >
-                  {studyYear.semesters.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.label}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
             </div>
           </div>

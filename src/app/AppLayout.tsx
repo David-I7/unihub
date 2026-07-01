@@ -102,7 +102,7 @@ function LoadedAppLayout({ catalog }: { catalog: Catalog }) {
               <Route path="/" element={<HomePage context={context} onContextChange={setContext} loadedCourses={loadedCourses} hierarchy={hierarchy} />} />
               <Route path="/calendar" element={<CalendarPage context={context} onContextChange={setContext} loadedCourses={loadedCourses} hierarchy={hierarchy} />} />
               <Route path="/contribute" element={<ContributePage context={context} onContextChange={setContext} loadedCourses={loadedCourses} catalog={catalog} hierarchy={hierarchy} />} />
-              <Route path="/courses/:academicYearId/:studyYearId/:semesterId/:courseId" element={<CourseDetailPage loadedCourses={loadedCourses} />} />
+              <Route path="/courses/:academicYearId/:studyYearId/:semesterId/:courseId" element={<CourseDetailPage loadedCourses={loadedCourses} catalog={catalog} />} />
             </Routes>
           )}
         </main>

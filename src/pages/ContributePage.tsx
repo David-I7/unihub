@@ -2,7 +2,8 @@ import { Clipboard, ExternalLink } from 'lucide-react'
 import { useState } from 'react'
 import { AcademicContextPicker } from '@/components/AcademicContextPicker'
 import { PageHeader } from '@/components/PageHeader'
-import { compactFilterLabelClass, compactFilterSelectClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
+import { Select } from '@/components/ui/select'
+import { compactFilterLabelClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
 import { ValidationPanel } from '@/components/ValidationPanel'
 import type { ContextSelection } from '@/app/academicContext'
 import { prepareGeneratedContribution, selectedContextCourses, type Catalog, type ContributionType, type Hierarchy, type LoadedCourse, type MaterialType } from '@/domain'
@@ -30,7 +31,7 @@ export function ContributePage({
   const [courseId, setCourseId] = useState(selectedCourses[0]?.id ?? '')
   const [form, setForm] = useState<FormState>(initialForm('add-new-course'))
   const [clipboardStatus, setClipboardStatus] = useState('')
-  const [viewMode, setViewMode] = useState<'diff' | 'full'>('diff')
+  const [viewMode, setViewMode] = useState<'diff' | 'full' | 'issue'>('diff')
   const targetsCatalog = isCatalogContributionType(type)
   const selectedCourseId = selectedCourses.some((course) => course.id === courseId) ? courseId : selectedCourses[0]?.id ?? ''
   const selectedCourse = selectedCourses.find((course) => course.id === selectedCourseId)
@@ -71,44 +72,67 @@ export function ContributePage({
     }
   }
 
+  async function copyIssueContent() {
+    if (!result.valid) return
+    const content = [`Contribution: ${type}`, '', result.issueBody].join('\n')
+    try {
+      await navigator.clipboard.writeText(content)
+      setClipboardStatus('Issue content copied.')
+    } catch {
+      setClipboardStatus('Clipboard unavailable. Select the generated issue body below and copy it manually.')
+      setViewMode('issue')
+    }
+  }
+
   return (
     <div className={pageClass}>
-      <PageHeader title="Contribute" subtitle="Create one maintainer-reviewed Contribution at a time" />
+      <PageHeader title="Maintainer contributions" subtitle="Repository-level course data changes, advanced corrections, and GitHub issue or pull request preparation for maintainer review." />
+      <section className={`${panelClass} mb-4 p-4`}>
+        <p className={`m-0 ${mutedTextClass}`}>
+          Use this page for repository-level course data changes, advanced corrections, and preparing GitHub issues or pull requests for maintainer review. If you are a student fixing a specific course item, start from that Course page and use Suggest update.
+        </p>
+      </section>
       <AcademicContextPicker context={context} onContextChange={onContextChange} hierarchy={hierarchy} />
 
       <div className="mb-4.5 flex flex-wrap items-center gap-4 max-[820px]:grid max-[820px]:max-w-[calc(100vw-40px)] max-[820px]:grid-cols-1 max-[820px]:gap-2">
         <label className={compactFilterLabelClass}>
           Mode
-          <select className={compactFilterSelectClass} value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="issue">GitHub issue</option>
-            <option value="pull-request">Pull request assist</option>
-          </select>
+          <Select
+            selectSize="compact"
+            className="min-w-48"
+            value={mode}
+            options={[
+              { value: 'issue', label: 'GitHub issue' },
+              { value: 'pull-request', label: 'Pull request assist' },
+            ]}
+            onValueChange={(value) => setMode(value as typeof mode)}
+          />
         </label>
         <label className={compactFilterLabelClass}>
           Contribution task
-          <select className={compactFilterSelectClass} value={type} onChange={(event) => changeType(event.target.value as ContributionType)}>
-            <option value="add-new-course">Add new Course</option>
-            <option value="add-academic-year">Add Academic Year</option>
-            <option value="add-study-year">Add Study Year</option>
-            <option value="add-semester">Add Semester</option>
-            <option value="add-material">Add Material</option>
-            <option value="update-material">Update Material</option>
-            <option value="add-assignment-deadline">Add Assignment Deadline</option>
-            <option value="add-exam">Add Exam</option>
-            <option value="add-course-session">Add Course Session</option>
-            <option value="edit-course-metadata">Edit Course metadata</option>
-          </select>
+          <Select
+            selectSize="compact"
+            className="min-w-64"
+            value={type}
+            options={[
+              { value: 'add-new-course', label: 'Add new Course' },
+              { value: 'add-academic-year', label: 'Add Academic Year' },
+              { value: 'add-study-year', label: 'Add Study Year' },
+              { value: 'add-semester', label: 'Add Semester' },
+              { value: 'add-material', label: 'Add Material' },
+              { value: 'update-material', label: 'Update Material' },
+              { value: 'add-assignment-deadline', label: 'Add Assignment Deadline' },
+              { value: 'add-exam', label: 'Add Exam' },
+              { value: 'add-course-session', label: 'Add Course Session' },
+              { value: 'edit-course-metadata', label: 'Edit Course metadata' },
+            ]}
+            onValueChange={(value) => changeType(value as ContributionType)}
+          />
         </label>
         {type !== 'add-new-course' && !targetsCatalog && (
           <label className={compactFilterLabelClass}>
             Course
-            <select className={compactFilterSelectClass} value={selectedCourseId} onChange={(event) => setCourseId(event.target.value)}>
-              {selectedCourses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.title}
-                </option>
-              ))}
-            </select>
+            <Select selectSize="compact" className="min-w-64" value={selectedCourseId} options={selectedCourses.map((course) => ({ value: course.id, label: course.title }))} onValueChange={setCourseId} />
           </label>
         )}
       </div>
@@ -129,10 +153,17 @@ export function ContributePage({
               {mode === 'issue' ? (
                 <>
                   <h2 className={headingClass}>Generated Issue</h2>
-                  <a href={result.issueUrl} target="_blank" className="mb-3 inline-flex items-center gap-2 font-semibold text-[var(--primary)]">
-                    <ExternalLink aria-hidden="true" size={16} />
-                    Open prefilled GitHub issue
-                  </a>
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <button type="button" className="inline-flex items-center gap-2 rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-2.5 py-1 text-[13px] font-semibold text-[var(--text-main)] hover:border-[var(--primary)] cursor-pointer" onClick={copyIssueContent}>
+                      <Clipboard aria-hidden="true" size={16} />
+                      Copy issue content
+                    </button>
+                    <a href={result.issueUrl} target="_blank" className="inline-flex items-center gap-2 font-semibold text-[var(--primary)]">
+                      <ExternalLink aria-hidden="true" size={16} />
+                      Open GitHub issue
+                    </a>
+                  </div>
+                  {clipboardStatus && <p className="mb-3 text-sm text-[var(--text-muted)]">{clipboardStatus}</p>}
                   <div className="mb-3 flex border-b border-[var(--border-color)]">
                     <button
                       type="button"
@@ -156,9 +187,20 @@ export function ContributePage({
                     >
                       Full JSON
                     </button>
+                    <button
+                      type="button"
+                      className={`ml-4 pb-1.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer ${
+                        viewMode === 'issue'
+                          ? 'border-[var(--primary)] text-[var(--primary)]'
+                          : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                      onClick={() => setViewMode('issue')}
+                    >
+                      Issue Body
+                    </button>
                   </div>
                   <pre className="max-w-full overflow-auto rounded-md bg-[var(--bg-code)] p-3 whitespace-pre-wrap text-[var(--text-main)] [overflow-wrap:anywhere]">
-                    {viewMode === 'diff' ? JSON.stringify(result.parsed, null, 2) : result.changedJson}
+                    {viewMode === 'issue' ? result.issueBody : viewMode === 'diff' ? JSON.stringify(result.parsed, null, 2) : result.changedJson}
                   </pre>
                 </>
               ) : (
@@ -365,13 +407,7 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   return (
     <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
       {label}
-      <select className={fieldClass} value={value} onChange={(event) => onChange(event.target.value)}>
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>
-            {optionLabel}
-          </option>
-        ))}
-      </select>
+      <Select value={value} options={options.map(([optionValue, optionLabel]) => ({ value: optionValue, label: optionLabel }))} onValueChange={onChange} />
     </label>
   )
 }
@@ -391,7 +427,7 @@ function MultiSelectField({ label, value, options, onChange }: { label: string; 
   )
 }
 
-const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)]'
+const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)] shadow-sm outline-none transition-colors hover:border-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring-color)]'
 
 function initialForm(type: ContributionType, course?: LoadedCourse): FormState {
   if (type === 'add-academic-year') return { academicYearId: '', label: '', order: '' }

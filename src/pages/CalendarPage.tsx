@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { AcademicContextPicker } from '@/components/AcademicContextPicker'
 import { PageHeader } from '@/components/PageHeader'
-import { compactFilterLabelClass, compactFilterSelectClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
+import { Select } from '@/components/ui/select'
+import { compactFilterLabelClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
 import { deriveCalendarEvents, selectedContextCourses, type Hierarchy, type LoadedCourse } from '@/domain'
 import { formatDate } from '@/lib/format'
 import type { ContextSelection } from '@/app/academicContext'
+import { eventStatusTone, statusChipClass } from '@/components/statusStyles'
 
 export function CalendarPage({
   context,
@@ -37,30 +39,39 @@ export function CalendarPage({
       <div className="mb-4.5 flex flex-wrap items-center gap-4 max-[820px]:grid max-[820px]:max-w-[calc(100vw-40px)] max-[820px]:grid-cols-1 max-[820px]:gap-2">
         <label className={compactFilterLabelClass}>
           Course
-          <select className={compactFilterSelectClass} value={courseId} onChange={(event) => setCourseId(event.target.value)}>
-            <option value="all">All courses</option>
-            {selectedCourses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {course.title}
-              </option>
-            ))}
-          </select>
+          <Select
+            selectSize="compact"
+            className="min-w-72 max-[820px]:w-full max-[820px]:max-w-full"
+            value={courseId}
+            options={[{ value: 'all', label: 'All courses' }, ...selectedCourses.map((course) => ({ value: course.id, label: course.title }))]}
+            onValueChange={setCourseId}
+          />
         </label>
         <label className={compactFilterLabelClass}>
           Type
-          <select className={compactFilterSelectClass} value={eventType} onChange={(event) => setEventType(event.target.value as typeof eventType)}>
-            <option value="all">All types</option>
-            <option value="assignment">Assignments</option>
-            <option value="lecture">Lectures</option>
-            <option value="exam">Exams</option>
-          </select>
+          <Select
+            selectSize="compact"
+            value={eventType}
+            options={[
+              { value: 'all', label: 'All types' },
+              { value: 'assignment', label: 'Assignments' },
+              { value: 'lecture', label: 'Lectures' },
+              { value: 'exam', label: 'Exams' },
+            ]}
+            onValueChange={(value) => setEventType(value as typeof eventType)}
+          />
         </label>
         <label className={compactFilterLabelClass}>
           Range
-          <select className={compactFilterSelectClass} value={timeRange} onChange={(event) => setTimeRange(event.target.value as typeof timeRange)}>
-            <option value="upcoming">Upcoming</option>
-            <option value="all">All events</option>
-          </select>
+          <Select
+            selectSize="compact"
+            value={timeRange}
+            options={[
+              { value: 'upcoming', label: 'Upcoming' },
+              { value: 'all', label: 'All events' },
+            ]}
+            onValueChange={(value) => setTimeRange(value as typeof timeRange)}
+          />
         </label>
       </div>
       <div className="grid gap-3">
@@ -69,9 +80,8 @@ export function CalendarPage({
             <time className="mb-1 block text-xs text-[var(--color-time)]">{formatDate(event.startsAt)}</time>
             <div>
               <h2 className={headingClass}>{event.title}</h2>
-              <p className={`m-0 ${mutedTextClass}`}>
-                {event.courseTitle} / {event.status}
-              </p>
+              <p className={`m-0 mb-2 ${mutedTextClass}`}>{event.courseTitle}</p>
+              <span className={statusChipClass(eventStatusTone(event.status))}>{event.status}</span>
             </div>
           </article>
         ))}

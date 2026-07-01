@@ -42,6 +42,15 @@ export {
   type PreparedContribution,
 } from "./contribution.js";
 export {
+  prepareSuggestion,
+  suggestionHandoffCopy,
+  suggestionIntentsForSection,
+  type PreparedSuggestion,
+  type SuggestionIntentOption,
+  type SuggestionIntent,
+  type SuggestionSection,
+} from "./suggestion.js";
+export {
   loadCatalog,
   loadRepositoryData,
   loadCoursesForContext,
@@ -106,28 +115,43 @@ export function deriveActivity(
     .flatMap((course) => [
       ...course.materials.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
+        type: "material" as const,
+        action: "added" as const,
         occurredAt: item.addedAt,
-        text: `${item.title} Material added for ${course.title}`,
+        title: item.title,
+        courseTitle: course.title,
       })),
-      ...course.materials.filter(hasUpdatedAt).map((item) => ({
+      ...course.materials.filter(hasChangedAt).map((item) => ({
         id: `${course.id}-${item.id}-updated`,
+        type: "material" as const,
+        action: "updated" as const,
         occurredAt: item.updatedAt,
-        text: `${item.title} Material updated for ${course.title}`,
+        title: item.title,
+        courseTitle: course.title,
       })),
       ...course.assignmentDeadlines.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
+        type: "assignment" as const,
+        action: "added" as const,
         occurredAt: item.addedAt,
-        text: `${item.title} Assignment Deadline added for ${course.title}`,
+        title: item.title,
+        courseTitle: course.title,
       })),
       ...course.courseSessions.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
+        type: "lecture" as const,
+        action: item.status === "cancelled" ? "cancelled" as const : "added" as const,
         occurredAt: item.addedAt,
-        text: `${item.title} Lecture added for ${course.title}${item.status === "cancelled" ? " (cancelled)" : ""}`,
+        title: item.title,
+        courseTitle: course.title,
       })),
       ...course.exams.filter(hasAddedAt).map((item) => ({
         id: `${course.id}-${item.id}`,
+        type: "exam" as const,
+        action: "added" as const,
         occurredAt: item.addedAt,
-        text: `${item.title} Exam added for ${course.title}`,
+        title: item.title,
+        courseTitle: course.title,
       })),
     ])
     .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
@@ -152,7 +176,7 @@ export function deriveCalendarEvents(options: {
         title: item.title,
         courseTitle: course.title,
         startsAt: item.dueAt,
-        status: "due assignment",
+        status: Date.parse(item.dueAt) < nowTime ? "completed assignment" : "due assignment",
       })),
       ...course.courseSessions.map((item) => ({
         id: `${course.id}-${item.id}`,
@@ -163,7 +187,9 @@ export function deriveCalendarEvents(options: {
         status:
           item.status === "cancelled"
             ? "cancelled lecture"
-            : "scheduled lecture",
+            : Date.parse(item.endsAt) < nowTime
+              ? "completed lecture"
+              : "scheduled lecture",
       })),
       ...course.exams
         .filter((item) => item.startsAt)
@@ -173,7 +199,7 @@ export function deriveCalendarEvents(options: {
           title: item.title,
           courseTitle: course.title,
           startsAt: item.startsAt as string,
-          status: "exam",
+          status: Date.parse(item.startsAt as string) < nowTime ? "completed exam" : "exam",
         })),
     ])
     .filter(
@@ -186,7 +212,17 @@ export function deriveCalendarEvents(options: {
       (event) =>
         options.timeRange === "all" || Date.parse(event.startsAt) >= nowTime,
     )
-    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+    .sort((a, b) => compareCalendarEventsByProximity(a.startsAt, b.startsAt, nowTime));
+}
+
+function compareCalendarEventsByProximity(aStartsAt: string, bStartsAt: string, nowTime: number) {
+  const aTime = Date.parse(aStartsAt);
+  const bTime = Date.parse(bStartsAt);
+  const aFuture = aTime >= nowTime;
+  const bFuture = bTime >= nowTime;
+  if (aFuture && bFuture) return aTime - bTime;
+  if (!aFuture && !bFuture) return bTime - aTime;
+  return aFuture ? -1 : 1;
 }
 
 function hasAddedAt<T extends { addedAt?: string }>(
@@ -195,10 +231,10 @@ function hasAddedAt<T extends { addedAt?: string }>(
   return typeof item.addedAt === "string";
 }
 
-function hasUpdatedAt<T extends { updatedAt?: string }>(
+function hasChangedAt<T extends { addedAt?: string; updatedAt?: string }>(
   item: T,
-): item is T & { updatedAt: string } {
-  return typeof item.updatedAt === "string";
+): item is T & { addedAt: string; updatedAt: string } {
+  return typeof item.addedAt === "string" && typeof item.updatedAt === "string" && item.updatedAt !== item.addedAt;
 }
 
 function byOrder(a: { order: number }, b: { order: number }) {

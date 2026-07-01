@@ -23,6 +23,8 @@ import {
   validateCatalog,
   validateCourse,
   validateRepository,
+  prepareSuggestion,
+  suggestionIntentsForSection,
 } from '../src/domain/index.js'
 
 const testDataRoot = 'tests/data'
@@ -186,7 +188,7 @@ test('Course detail view concentrates tab display derivation', () => {
 
   const view = deriveCourseDetailView(course, Date.parse('2026-12-01T00:00:00Z'))
 
-  assert.deepEqual(view.materialGroups.map((group) => group.type), ['course', 'seminar', 'lab', 'video', 'other'])
+  assert.deepEqual(view.materialGroups.map((group) => group.type), ['course', 'lab'])
   assert(view.assignments.every((assignment) => assignment.status === 'completed'))
   assert(view.courseSessions.some((session) => session.status === 'cancelled'))
   assert(view.exams.some((exam) => exam.materials.every((material) => material.type === 'exam')))
@@ -215,7 +217,7 @@ test('video Materials validate and appear with general Course detail Materials',
   assert.equal(result.valid, true)
   assert.equal(invalidType.valid, false)
   assert.match(invalidType.errors.join('\n'), /invalid Material type/)
-  assert.deepEqual(view.materialGroups.map((group) => group.type), ['course', 'seminar', 'lab', 'video', 'other'])
+  assert.deepEqual(view.materialGroups.map((group) => group.type), ['course', 'lab', 'video'])
   assert(view.materialGroups.find((group) => group.type === 'video')?.materials.some((material) => material.title === 'Lecture Recording'))
 })
 
@@ -223,9 +225,12 @@ test('Activity is derived from addedAt items, filtered by selected context, and 
   const { courses } = loadTestRepositoryData()
   const activity = deriveActivity(courses, context)
 
-  assert.equal(activity[0].text, 'Retake Exam Exam added for Algorithms')
-  assert(activity.some((item) => item.text === 'Cancelled Recurrence Review Lecture added for Algorithms (cancelled)'))
-  assert(activity.every((item) => !item.text.includes('Web Engineering')))
+  assert.deepEqual(
+    { title: activity[0].title, type: activity[0].type, action: activity[0].action, courseTitle: activity[0].courseTitle },
+    { title: 'Retake Exam', type: 'exam', action: 'added', courseTitle: 'Algorithms' },
+  )
+  assert(activity.some((item) => item.title === 'Cancelled Recurrence Review' && item.type === 'lecture' && item.action === 'cancelled'))
+  assert(activity.every((item) => item.courseTitle !== 'Web Engineering'))
 })
 
 test('Activity includes Material update events sorted by event timestamp', () => {
@@ -245,10 +250,24 @@ test('Activity includes Material update events sorted by event timestamp', () =>
 
   const activity = deriveActivity(coursesWithUpdatedMaterial, context)
 
-  assert.equal(activity[0].text, 'Greedy Algorithms Notes Material updated for Algorithms')
+  assert.equal(activity[0].title, 'Greedy Algorithms Notes')
+  assert.equal(activity[0].type, 'material')
+  assert.equal(activity[0].action, 'updated')
   assert.equal(activity[0].occurredAt, '2026-12-31T12:00:00Z')
-  assert(activity.some((item) => item.text === 'Retake Exam Exam added for Algorithms'))
-  assert(activity.every((item) => !item.text.includes('Web Engineering')))
+  assert(activity.some((item) => item.title === 'Retake Exam' && item.type === 'exam'))
+  assert(activity.every((item) => item.courseTitle !== 'Web Engineering'))
+})
+
+test('Activity omits Material update events when updatedAt equals addedAt', () => {
+  const { courses } = loadTestRepositoryData()
+  const activity = deriveActivity(courses, context)
+
+  assert(
+    activity.some((item) => item.title === 'Greedy Algorithms Notes' && item.type === 'material' && item.action === 'added'),
+  )
+  assert(
+    !activity.some((item) => item.title === 'Greedy Algorithms Notes' && item.type === 'material' && item.action === 'updated'),
+  )
 })
 
 test('Calendar derives agenda events without a separate dataset', () => {
@@ -273,6 +292,35 @@ test('Calendar derives agenda events without a separate dataset', () => {
   assert(allEvents.some((event) => event.title === 'Midterm Exam'))
   assert(!allEvents.some((event) => event.title === 'Final Exam'))
   assert(assignmentEvents.every((event) => event.type === 'assignment'))
+})
+
+test('Calendar all-events sorting prioritizes future proximity before past recency', () => {
+  const course = {
+    id: 'calendar-sorting',
+    title: 'Calendar Sorting',
+    professors: ['Prof. Time'],
+    materials: [],
+    assignmentDeadlines: [
+      { id: 'past-far', title: 'Past Far', dueAt: '2026-01-01T10:00:00.000Z', addedAt: '2025-12-01T00:00:00.000Z', updatedAt: '2025-12-01T00:00:00.000Z' },
+      { id: 'past-near', title: 'Past Near', dueAt: '2026-03-01T10:00:00.000Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+      { id: 'future-far', title: 'Future Far', dueAt: '2026-06-01T10:00:00.000Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+      { id: 'future-near', title: 'Future Near', dueAt: '2026-04-01T10:00:00.000Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+    ],
+    courseSessions: [],
+    exams: [],
+    path: { ...context, courseId: 'calendar-sorting' },
+  }
+
+  const events = deriveCalendarEvents({
+    courses: [course],
+    context,
+    eventType: 'all',
+    timeRange: 'all',
+    now: new Date('2026-03-15T00:00:00.000Z'),
+  })
+
+  assert.deepEqual(events.map((event) => event.title), ['Future Near', 'Future Far', 'Past Near', 'Past Far'])
+  assert.equal(events.find((event) => event.title === 'Past Near')?.status, 'completed assignment')
 })
 
 test('Contribution generation blocks errors and preserves warnings in issue and pull request modes', () => {
@@ -317,6 +365,31 @@ test('Contribution generation blocks errors and preserves warnings in issue and 
   assert.match(pullRequest.prTitle ?? '', /add-material/)
   assert.match(pullRequest.prBody ?? '', /Reading List/)
   assert.match(pullRequest.githubLink ?? '', /github.com/)
+})
+
+test('GitHub issue links stay small while issue bodies retain full review data', () => {
+  const repository = loadTestRepositoryData()
+  const issue = prepareGeneratedContribution({
+    repository,
+    now: () => '2026-08-01T10:00:00.000Z',
+    draft: {
+      type: 'add-material',
+      mode: 'issue',
+      path: { ...context, courseId: 'algorithms' },
+      input: {
+        title: 'Dynamic Programming Notes',
+        type: 'course',
+        url: 'https://example.edu/algorithms/dynamic-programming',
+      },
+    },
+  })
+
+  assert.equal(issue.valid, true)
+  assert.match(issue.issueBody ?? '', /Current state/)
+  assert.match(issue.issueBody ?? '', /Updated state/)
+  assert((issue.issueBody ?? '').length > 8000)
+  assert((issue.issueUrl ?? '').length < 1000)
+  assert.doesNotMatch(issue.issueUrl ?? '', /body=/)
 })
 
 test('Generated Contribution payloads derive ids, timestamps, target paths, and review output', () => {
@@ -656,6 +729,120 @@ test('update-material Contributions reject missing targets and invalid Material 
   })
   assert.equal(invalidType.valid, false)
   assert.match(invalidType.errors.join('\n'), /invalid Material type/)
+})
+
+test('Material Suggestions produce student-facing GitHub issue output with maintainer Contribution details', () => {
+  const repository = loadTestRepositoryData()
+  const course = repository.courses.find((item) => item.id === 'algorithms')
+  assert(course)
+
+  const suggestion = prepareSuggestion({
+    repository,
+    course,
+    section: 'materials',
+    intent: 'add-material',
+    input: {
+      title: 'Dynamic Programming Notes',
+      type: 'course',
+      url: 'https://example.edu/algorithms/dynamic-programming',
+    },
+    now: () => '2026-08-01T10:00:00.000Z',
+  })
+
+  assert.equal(suggestion.valid, true)
+  assert.equal(suggestion.issueTitle ?? '', 'Suggestion: Add material to Algorithms')
+  assert.match(suggestion.summary ?? '', /Add material "Dynamic Programming Notes" to Algorithms/)
+  assert.doesNotMatch(suggestion.summary ?? '', /add-material|Contribution type|Target Course Path/)
+  assert.match(suggestion.issueBody ?? '', /^Suggestion summary/m)
+  assert.match(suggestion.issueBody ?? '', /Generated Contribution details for maintainers/)
+  assert.match(suggestion.issueBody ?? '', /Contribution type: add-material/)
+  assert.match(suggestion.issueBody ?? '', /Current state/)
+  assert.match(suggestion.issueBody ?? '', /Diff/)
+  assert.doesNotMatch(suggestion.issueBody ?? '', /UniHub uses GitHub for maintainer review/)
+  assert.match(suggestion.issueUrl ?? '', /github\.com\/David-I7\/unihub\/issues\/new/)
+  assert((suggestion.issueUrl ?? '').length < 1000)
+  assert.doesNotMatch(suggestion.issueUrl ?? '', /body=/)
+  assert.match(decodeURIComponent(suggestion.issueUrl ?? ''), /Suggestion: Add material to Algorithms/)
+})
+
+test('Suggestion options omit Contribution-level update duplicates', () => {
+  assert.deepEqual(suggestionIntentsForSection('materials').map((item) => item.value), [
+    'broken-material-link',
+  ])
+  assert.deepEqual(suggestionIntentsForSection('assignments').map((item) => item.value), [
+    'changed-assignment-deadline',
+  ])
+  assert.deepEqual(suggestionIntentsForSection('lectures').map((item) => item.value), [
+    'cancel-lecture',
+    'changed-lecture-time-location',
+  ])
+  assert.deepEqual(suggestionIntentsForSection('exams').map((item) => item.value), [
+    'changed-exam-date-location',
+    'exam-date-not-announced',
+  ])
+})
+
+test('Suggestions require notes for corrections and support Course page sections', () => {
+  const repository = loadTestRepositoryData()
+  const course = repository.courses.find((item) => item.id === 'algorithms')
+  assert(course)
+
+  const missingNote = prepareSuggestion({
+    repository,
+    course,
+    section: 'materials',
+    intent: 'broken-material-link',
+    input: {
+      materialId: 'alg-course-01',
+      title: 'Greedy Algorithms Notes',
+      url: 'https://example.edu/algorithms/greedy-fixed',
+    },
+  })
+  assert.equal(missingNote.valid, false)
+  assert.match(missingNote.errors.join('\n'), /require a note or source/)
+
+  const suggestions = [
+    prepareSuggestion({
+      repository,
+      course,
+      section: 'assignments',
+      intent: 'add-assignment',
+      input: { title: 'Dynamic Programming Report', dueAt: '2026-09-10T20:00:00.000Z' },
+    }),
+    prepareSuggestion({
+      repository,
+      course,
+      section: 'lectures',
+      intent: 'cancel-lecture',
+      input: {
+        title: 'Greedy Algorithms Seminar',
+        startsAt: '2026-09-12T08:00:00.000Z',
+        endsAt: '2026-09-12T10:00:00.000Z',
+        note: 'Professor announcement on Moodle.',
+      },
+    }),
+    prepareSuggestion({
+      repository,
+      course,
+      section: 'exams',
+      intent: 'exam-date-not-announced',
+      input: { title: 'Final Exam', note: 'The professor removed the date from the syllabus.' },
+    }),
+    prepareSuggestion({
+      repository,
+      course,
+      section: 'course-info',
+      intent: 'fix-course-professors',
+      input: { professorsText: 'Dr. Mara Ionescu, Dr. Ion Popescu', note: 'Updated department course page.' },
+    }),
+  ]
+
+  assert.deepEqual(suggestions.map((suggestion) => suggestion.valid), [true, true, true, true])
+  for (const suggestion of suggestions) {
+    assert.doesNotMatch(suggestion.summary ?? '', /add-assignment-deadline|add-course-session|add-exam|edit-course-metadata/)
+    assert.match(suggestion.issueBody ?? '', /Generated Contribution details for maintainers/)
+    assert.match(suggestion.issueUrl ?? '', /github\.com\/David-I7\/unihub\/issues\/new/)
+  }
 })
 
 test('repositorySchema exposes zod runtime schemas for Catalog and Course data', () => {

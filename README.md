@@ -1,43 +1,45 @@
 # UniHub
 
-UniHub is a static web platform for centralizing university course information in one place. It is designed for students who currently have to check multiple platforms for materials, assignment deadlines, lecture schedules, and exam details.
+UniHub brings university course information into one place, so students do not have to jump between platforms to find materials, deadlines, lectures, and exam details.
 
-The app uses a Microsoft Teams-inspired layout and is intended to be deployed on GitHub Pages.
+It is a static GitHub Pages app with a compact academic dashboard layout.
 
 ## What You Can Do
 
 - Browse courses by academic year, study year, and semester.
 - Open a course to view its materials, assignments, lectures, and exams.
-- See assignment deadlines, lecture dates, and exam dates in a calendar agenda.
-- Check recent activity for newly added course items and updated materials.
-- Contribute missing or corrected information through GitHub issues or pull requests.
+- Use the calendar to see upcoming assignments, lectures, and exams.
+- Check recent activity for new course items and updated materials.
+- Suggest missing or corrected course information for maintainer review.
 
 ## Course Pages
 
-Each course page is organized into four sections:
+Each course page is organized around the things students usually need:
 
-- **Materials**: general course, seminar, lab, video, and other learning resources.
-- **Assignments**: deadlines, descriptions, submission links, grade weights, and assignment materials.
-- **Lectures**: scheduled, cancelled, and completed lecture sessions.
-- **Exams**: exam dates when known, grade weights, locations, and exam materials.
+- **Materials**: course, seminar, lab, video, and other learning resources.
+- **Assignments**: deadlines, descriptions, submission links, grade weights, and related materials.
+- **Lectures**: scheduled, cancelled, and completed sessions.
+- **Exams**: exam dates when known, grade weights, locations, and related materials.
 
-Course cards on the home page show the course title and professor names.
+If something looks missing or wrong, start from the relevant course section and use **Suggest update**.
 
 ## Calendar
 
-The calendar is an agenda-style view of upcoming course events. It is generated from course data, so there is no separate calendar source to maintain.
+The calendar is an agenda-style view generated from course data. It shows:
 
-Calendar events include:
+- Assignment deadlines.
+- Lecture sessions.
+- Exams with known dates.
 
-- Assignment deadlines
-- Lecture sessions
-- Exams with known start dates
+There is no separate calendar database to maintain. Fix the course data, and the calendar follows.
 
-## Contributions
+## Suggestions And Contributions
 
-UniHub stores course information as JSON files under `public/data` in this repository. Because the site is static, the app does not write directly to the repository.
+UniHub stores course information as JSON files under `public/data`. Because the app is static, it does not write directly to the repository.
 
-Contributors can use the contribution page to propose one change at a time:
+For normal student fixes, use **Suggest update** from a course page. UniHub will prepare a GitHub issue for maintainer review.
+
+The **Contribute** page stays available for maintainers and advanced contributors who need to prepare repository-level changes, GitHub issues, or pull request content. It supports:
 
 - Add material
 - Update material
@@ -47,15 +49,15 @@ Contributors can use the contribution page to propose one change at a time:
 - Edit course metadata
 - Add a new course
 
-The contribution page validates the proposed data, then helps contributors either create a GitHub issue or prepare a pull request. Maintainers review and approve contributions before they become part of the official course data.
+Maintainers review suggestions and contributions before they become part of the official course data.
 
 ## Project Scope
 
-The first version focuses on reliable course information and static deployment. It does not include accounts, search, announcements, offline support, a manual dark mode toggle, or direct in-app repository writes.
+The first version focuses on reliable course information and static deployment. It does not include accounts, search, announcements, offline support, in-app suggestion status tracking, or direct in-app repository writes.
 
 ## For Maintainers
 
-Product and architecture notes live in:
+Useful docs:
 
 - `docs/product/data-model.md`
 - `docs/product/ui-design.md`
@@ -63,4 +65,4 @@ Product and architecture notes live in:
 - `docs/adr/`
 - `CONTEXT.md`
 
-Implementation work is tracked under `.scratch/`.
+Implementation work is tracked as local markdown under `.scratch/`.

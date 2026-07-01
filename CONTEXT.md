@@ -64,6 +64,10 @@ _Avoid_: Course status
 A proposed change to the course information maintained in the repository. Contributions are reviewed by maintainers before becoming part of the canonical data.
 _Avoid_: Submission, edit
 
+**Suggestion**:
+A student-facing request to add or correct course information. Suggestions become contributions when the app turns them into maintainer-reviewed repository changes.
+_Avoid_: Contribution, report
+
 **Maintainer**:
 A person trusted to review and approve contributions before they are merged into the repository.
 _Avoid_: Admin, moderator

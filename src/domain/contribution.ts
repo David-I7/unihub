@@ -32,7 +32,7 @@ export type GeneratedContributionDraft = {
 }
 
 const defaultGithubTarget: GithubTarget = {
-  owner: 'example',
+  owner: 'David-I7',
   repo: 'unihub',
   branch: 'main',
 }
@@ -68,6 +68,7 @@ export function prepareContribution(options: {
     type: draft.type,
     mode: draft.mode,
     path: draft.path,
+    currentCourse: targetCourse,
     githubTarget,
   })
 }
@@ -87,6 +88,7 @@ export function prepareGeneratedContribution(options: {
       parsed: generated.parsed,
       type: draft.type,
       mode: draft.mode,
+      currentCatalog: repository.catalog,
       githubTarget,
     })
   }
@@ -109,6 +111,7 @@ export function prepareGeneratedContribution(options: {
       type: draft.type,
       mode: draft.mode,
       path: generated.path,
+      currentCourse: targetCourse,
       githubTarget,
     })
   }
@@ -418,16 +421,29 @@ function prepareReviewOutput(options: {
   type: ContributionType
   mode: 'issue' | 'pull-request'
   path: CoursePath
+  currentCourse?: Course
   githubTarget: GithubTarget
 }): PreparedContribution {
-  const { applied, parsed, type, mode, path, githubTarget } = options
+  const { applied, parsed, type, mode, path, currentCourse, githubTarget } = options
+  const currentJson = JSON.stringify(currentCourse ? repositoryCourseJson(currentCourse) : null, null, 2)
   const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
   const pathText = courseRepositoryPath(path)
+  const diffText = jsonLineDiff(currentJson, changedJson)
   const body = [
     `Contribution type: ${type}`,
     `Target Course Path: ${pathText}`,
     '',
-    'JSON:',
+    'Current state:',
+    '```json',
+    currentJson,
+    '```',
+    '',
+    'Diff:',
+    '```diff',
+    diffText,
+    '```',
+    '',
+    'Updated state:',
     '```json',
     changedJson,
     '```',
@@ -461,15 +477,28 @@ function prepareCatalogReviewOutput(options: {
   parsed: unknown
   type: ContributionType
   mode: 'issue' | 'pull-request'
+  currentCatalog: Catalog
   githubTarget: GithubTarget
 }): PreparedContribution {
-  const { applied, parsed, type, mode, githubTarget } = options
+  const { applied, parsed, type, mode, currentCatalog, githubTarget } = options
+  const currentJson = JSON.stringify(currentCatalog, null, 2)
   const changedJson = JSON.stringify(applied.updatedCatalog, null, 2)
+  const diffText = jsonLineDiff(currentJson, changedJson)
   const body = [
     `Contribution type: ${type}`,
     'Target Catalog File: public/data/catalog.json',
     '',
-    'JSON:',
+    'Current state:',
+    '```json',
+    currentJson,
+    '```',
+    '',
+    'Diff:',
+    '```diff',
+    diffText,
+    '```',
+    '',
+    'Updated state:',
     '```json',
     changedJson,
     '```',
@@ -553,8 +582,28 @@ function repositoryCourseJson(course: Course): Course {
   return repositoryCourse
 }
 
+function jsonLineDiff(before: string, after: string): string {
+  if (before === after) return 'No changes.'
+  const beforeLines = before.split('\n')
+  const afterLines = after.split('\n')
+  const lines: string[] = []
+  const max = Math.max(beforeLines.length, afterLines.length)
+  for (let index = 0; index < max; index += 1) {
+    const beforeLine = beforeLines[index]
+    const afterLine = afterLines[index]
+    if (beforeLine === afterLine) {
+      if (beforeLine !== undefined) lines.push(` ${beforeLine}`)
+      continue
+    }
+    if (beforeLine !== undefined) lines.push(`-${beforeLine}`)
+    if (afterLine !== undefined) lines.push(`+${afterLine}`)
+  }
+  return lines.join('\n')
+}
+
 function githubIssueUrl(target: GithubTarget, title: string, body: string): string {
-  return `https://github.com/${target.owner}/${target.repo}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`
+  void body
+  return `https://github.com/${target.owner}/${target.repo}/issues/new?title=${encodeURIComponent(title)}`
 }
 
 function githubEditUrl(target: GithubTarget, filePath: string): string {
