@@ -65,4 +65,24 @@ export const contributionSchemas: Record<ContributionType, SchemaField[]> = {
     { name: 'courseSessions', type: 'array', required: true, description: 'Must be empty array [].', example: '[]' },
     { name: 'exams', type: 'array', required: true, description: 'Must be empty array [].', example: '[]' },
   ],
+  'add-academic-year': [
+    { name: 'academicYearId', type: 'string', required: true, description: 'Unique academic year identifier.', example: '"2026-2027"' },
+    { name: 'label', type: 'string', required: true, description: 'Display label for the academic year.', example: '"2026-2027"' },
+    { name: 'order', type: 'number', required: false, description: 'Optional sort order. Defaults to the next order.', example: '2' },
+  ],
+  'add-study-year': [
+    { name: 'academicYearId', type: 'string', required: true, description: 'Existing academic year identifier.', example: '"2025-2026"' },
+    { name: 'studyYearId', type: 'string', required: true, description: 'Unique study year identifier inside the academic year.', example: '"year-1"' },
+    { name: 'label', type: 'string', required: true, description: 'Display label for the study year.', example: '"Study Year 1"' },
+    { name: 'order', type: 'number', required: false, description: 'Optional sort order. Defaults to the next order.', example: '1' },
+  ],
+  'add-semester': [
+    { name: 'academicYearId', type: 'string', required: true, description: 'Existing academic year identifier.', example: '"2025-2026"' },
+    { name: 'studyYearId', type: 'string', required: true, description: 'Existing study year identifier.', example: '"year-1"' },
+    { name: 'semesterId', type: 'string', required: true, description: 'Unique semester identifier inside the study year.', example: '"semester-1"' },
+    { name: 'label', type: 'string', required: true, description: 'Display label for the semester.', example: '"Semester 1"' },
+    { name: 'courseId', type: 'string', required: false, description: 'Optional initial course identifier to list in this semester.', example: '"discrete-math"' },
+    { name: 'courseTitle', type: 'string', required: false, description: 'Optional initial course title to list in this semester.', example: '"Discrete Mathematics"' },
+    { name: 'order', type: 'number', required: false, description: 'Optional sort order. Defaults to the next order.', example: '1' },
+  ],
 }

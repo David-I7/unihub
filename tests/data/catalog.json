@@ -6,9 +6,24 @@
       "order": 1,
       "studyYears": [
         {
+          "id": "year-1",
+          "label": "Study Year 1",
+          "order": 1,
+          "semesters": [
+            {
+              "id": "semester-1",
+              "label": "Semester 1",
+              "order": 1,
+              "courses": [
+                { "id": "structuri-algebrice-in-informatica", "title": "Structuri algebrice in informatica" }
+              ]
+            }
+          ]
+        },
+        {
           "id": "year-2",
           "label": "Study Year 2",
-          "order": 1,
+          "order": 2,
           "semesters": [
             {
               "id": "semester-1",

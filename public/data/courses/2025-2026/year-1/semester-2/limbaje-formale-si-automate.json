@@ -1,0 +1,54 @@
+{
+  "id": "limbaje-formale-si-automate",
+  "title": "Limbaje formale si automate",
+  "professors": ["Conf. univ. dr. Monica Tataram"],
+  "materials": [
+    {
+      "id": "materiale-curs",
+      "type": "course",
+      "title": "Materiale curs",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/curs",
+      "addedAt": "2026-07-01T09:08:16.376Z",
+      "updatedAt": "2026-07-01T09:08:16.376Z"
+    },
+    {
+      "id": "exemple-examene",
+      "type": "exam",
+      "title": "Exemple examene",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/examen",
+      "addedAt": "2026-07-01T09:10:27.977Z",
+      "updatedAt": "2026-07-01T09:10:27.977Z"
+    },
+    {
+      "id": "inregistrari-cursuri",
+      "type": "video",
+      "title": "Inregistrari cursuri",
+      "url": "https://youtube.com/playlist?list=PLutQjStBkVhVGg5wtPV6aAR8WR_GFwDeh&si=UKJsF-BcMHjOoZ0Z",
+      "addedAt": "2026-07-01T08:50:00.545Z",
+      "updatedAt": "2026-07-01T08:50:00.545Z"
+    }
+  ],
+  "assignmentDeadlines": [
+    {
+      "id": "tema-lfa",
+      "title": "Tema lfa",
+      "dueAt": "2026-05-30T00:00",
+      "gradeWeight": 33,
+      "materialIds": [],
+      "addedAt": "2026-07-01T09:13:38.210Z",
+      "updatedAt": "2026-07-01T09:13:38.210Z"
+    }
+  ],
+  "courseSessions": [],
+  "exams": [
+    {
+      "id": "examen-scris",
+      "title": "Examen scris",
+      "startsAt": "2026-06-13T10:00",
+      "gradeWeight": 67,
+      "materialIds": ["exemple-examene"],
+      "addedAt": "2026-07-01T09:11:18.827Z",
+      "updatedAt": "2026-07-01T09:11:18.827Z"
+    }
+  ]
+}

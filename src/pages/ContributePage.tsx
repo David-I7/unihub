@@ -30,6 +30,8 @@ export function ContributePage({
   const [courseId, setCourseId] = useState(selectedCourses[0]?.id ?? '')
   const [form, setForm] = useState<FormState>(initialForm('add-new-course'))
   const [clipboardStatus, setClipboardStatus] = useState('')
+  const [viewMode, setViewMode] = useState<'diff' | 'full'>('diff')
+  const targetsCatalog = isCatalogContributionType(type)
   const selectedCourseId = selectedCourses.some((course) => course.id === courseId) ? courseId : selectedCourses[0]?.id ?? ''
   const selectedCourse = selectedCourses.find((course) => course.id === selectedCourseId)
   const result = prepareGeneratedContribution({
@@ -37,18 +39,20 @@ export function ContributePage({
       type,
       mode,
       context,
-      path: type === 'add-new-course' ? undefined : { ...context, courseId: selectedCourseId },
+      path: type === 'add-new-course' || targetsCatalog ? undefined : { ...context, courseId: selectedCourseId },
       input: formToInput(type, form),
     },
     repository: { catalog, courses: loadedCourses },
   })
   const fallbackPath = { ...context, courseId: type === 'add-new-course' ? 'generated-course-id' : selectedCourseId }
   const targetPath = result.path?.academicYearId ? result.path : fallbackPath
+  const targetText = targetsCatalog ? 'public/data/catalog.json' : `${targetPath.academicYearId}/${targetPath.studyYearId}/${targetPath.semesterId}/${targetPath.courseId}`
 
   function changeType(nextType: ContributionType) {
     setType(nextType)
     setForm(initialForm(nextType, selectedCourse))
     setClipboardStatus('')
+    setViewMode('diff')
   }
 
   function updateField(name: string, value: string | string[]) {
@@ -58,7 +62,7 @@ export function ContributePage({
 
   async function copyPullRequestContent() {
     if (!result.valid) return
-    const content = [`Target path: ${targetPath.academicYearId}/${targetPath.studyYearId}/${targetPath.semesterId}/${targetPath.courseId}`, '', result.prTitle, '', result.prBody].join('\n')
+    const content = [`Target path: ${targetText}`, '', result.prTitle, '', result.prBody].join('\n')
     try {
       await navigator.clipboard.writeText(content)
       setClipboardStatus('Pull request content copied.')
@@ -84,6 +88,9 @@ export function ContributePage({
           Contribution task
           <select className={compactFilterSelectClass} value={type} onChange={(event) => changeType(event.target.value as ContributionType)}>
             <option value="add-new-course">Add new Course</option>
+            <option value="add-academic-year">Add Academic Year</option>
+            <option value="add-study-year">Add Study Year</option>
+            <option value="add-semester">Add Semester</option>
             <option value="add-material">Add Material</option>
             <option value="update-material">Update Material</option>
             <option value="add-assignment-deadline">Add Assignment Deadline</option>
@@ -92,7 +99,7 @@ export function ContributePage({
             <option value="edit-course-metadata">Edit Course metadata</option>
           </select>
         </label>
-        {type !== 'add-new-course' && (
+        {type !== 'add-new-course' && !targetsCatalog && (
           <label className={compactFilterLabelClass}>
             Course
             <select className={compactFilterSelectClass} value={selectedCourseId} onChange={(event) => setCourseId(event.target.value)}>
@@ -110,7 +117,7 @@ export function ContributePage({
         <section className={`${panelClass} mt-0 min-w-0 p-4`}>
           <div className="mb-3">
             <h2 className={headingClass}>{taskLabel(type)}</h2>
-            <p className={`m-0 break-all ${mutedTextClass}`}>Target: {targetPath.academicYearId}/{targetPath.studyYearId}/{targetPath.semesterId}/{targetPath.courseId}</p>
+            <p className={`m-0 break-all ${mutedTextClass}`}>Target: {targetText}</p>
           </div>
           <TaskForm type={type} form={form} course={selectedCourse} updateField={updateField} />
           <ValidationPanel result={result} />
@@ -126,14 +133,40 @@ export function ContributePage({
                     <ExternalLink aria-hidden="true" size={16} />
                     Open prefilled GitHub issue
                   </a>
-                  <pre className="max-w-full overflow-auto rounded-md bg-[var(--bg-code)] p-3 whitespace-pre-wrap text-[var(--text-main)] [overflow-wrap:anywhere]">{result.issueBody}</pre>
+                  <div className="mb-3 flex border-b border-[var(--border-color)]">
+                    <button
+                      type="button"
+                      className={`mr-4 pb-1.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer ${
+                        viewMode === 'diff'
+                          ? 'border-[var(--primary)] text-[var(--primary)]'
+                          : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                      onClick={() => setViewMode('diff')}
+                    >
+                      Diff
+                    </button>
+                    <button
+                      type="button"
+                      className={`pb-1.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer ${
+                        viewMode === 'full'
+                          ? 'border-[var(--primary)] text-[var(--primary)]'
+                          : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                      onClick={() => setViewMode('full')}
+                    >
+                      Full JSON
+                    </button>
+                  </div>
+                  <pre className="max-w-full overflow-auto rounded-md bg-[var(--bg-code)] p-3 whitespace-pre-wrap text-[var(--text-main)] [overflow-wrap:anywhere]">
+                    {viewMode === 'diff' ? JSON.stringify(result.parsed, null, 2) : result.changedJson}
+                  </pre>
                 </>
               ) : (
                 <>
                   <h2 className={headingClass}>Pull Request Assist</h2>
-                  <p className="mb-2 break-all text-sm text-[var(--text-muted)]">Target file: public/data/courses/{targetPath.academicYearId}/{targetPath.studyYearId}/{targetPath.semesterId}/{targetPath.courseId}.json</p>
+                  <p className="mb-2 break-all text-sm text-[var(--text-muted)]">Target file: {targetsCatalog ? 'public/data/catalog.json' : `public/data/courses/${targetPath.academicYearId}/${targetPath.studyYearId}/${targetPath.semesterId}/${targetPath.courseId}.json`}</p>
                   <div className="mb-3 flex flex-wrap gap-2">
-                    <button type="button" className="inline-flex items-center gap-2 rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-2.5 py-1 text-[13px] font-semibold text-[var(--text-main)] hover:border-[var(--primary)]" onClick={copyPullRequestContent}>
+                    <button type="button" className="inline-flex items-center gap-2 rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-2.5 py-1 text-[13px] font-semibold text-[var(--text-main)] hover:border-[var(--primary)] cursor-pointer" onClick={copyPullRequestContent}>
                       <Clipboard aria-hidden="true" size={16} />
                       Copy PR content
                     </button>
@@ -143,7 +176,33 @@ export function ContributePage({
                     </a>
                   </div>
                   {clipboardStatus && <p className="mb-3 text-sm text-[var(--text-muted)]">{clipboardStatus}</p>}
-                  <pre className="max-w-full overflow-auto rounded-md bg-[var(--bg-code)] p-3 whitespace-pre-wrap text-[var(--text-main)] [overflow-wrap:anywhere]">{result.prTitle}{'\n\n'}{result.prBody}</pre>
+                  <div className="mb-3 flex border-b border-[var(--border-color)]">
+                    <button
+                      type="button"
+                      className={`mr-4 pb-1.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer ${
+                        viewMode === 'diff'
+                          ? 'border-[var(--primary)] text-[var(--primary)]'
+                          : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                      onClick={() => setViewMode('diff')}
+                    >
+                      Diff
+                    </button>
+                    <button
+                      type="button"
+                      className={`pb-1.5 text-[13px] font-semibold border-b-2 transition-colors cursor-pointer ${
+                        viewMode === 'full'
+                          ? 'border-[var(--primary)] text-[var(--primary)]'
+                          : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-main)]'
+                      }`}
+                      onClick={() => setViewMode('full')}
+                    >
+                      Full JSON
+                    </button>
+                  </div>
+                  <pre className="max-w-full overflow-auto rounded-md bg-[var(--bg-code)] p-3 whitespace-pre-wrap text-[var(--text-main)] [overflow-wrap:anywhere]">
+                    {viewMode === 'diff' ? JSON.stringify(result.parsed, null, 2) : result.changedJson}
+                  </pre>
                 </>
               )}
             </section>
@@ -159,12 +218,47 @@ export function ContributePage({
 }
 
 function TaskForm({ type, form, course, updateField }: { type: ContributionType; form: FormState; course?: LoadedCourse; updateField: (name: string, value: string | string[]) => void }) {
+  if (type === 'add-academic-year') {
+    return (
+      <div className="grid gap-3">
+        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
+        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
+      </div>
+    )
+  }
+
+  if (type === 'add-study-year') {
+    return (
+      <div className="grid gap-3">
+        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
+        <TextField label="Study Year ID (optional)" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
+        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
+      </div>
+    )
+  }
+
+  if (type === 'add-semester') {
+    return (
+      <div className="grid gap-3">
+        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
+        <TextField label="Study Year ID (optional)" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
+        <TextField label="Semester ID (optional)" value={textValue(form.semesterId)} onChange={(value) => updateField('semesterId', value)} />
+        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Initial Course ID (optional)" value={textValue(form.courseId)} onChange={(value) => updateField('courseId', value)} />
+        <TextField label="Initial Course title (optional)" value={textValue(form.courseTitle)} onChange={(value) => updateField('courseTitle', value)} />
+        <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
+      </div>
+    )
+  }
+
   if (type === 'add-new-course') {
     return (
       <div className="grid gap-3">
         <TextField label="Course title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-        <TextField label="Professors" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
-        <TextArea label="Description" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+        <TextField label="Professors (optional)" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
+        <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
       </div>
     )
   }
@@ -184,9 +278,9 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
     return (
       <div className="grid gap-3">
         <SelectField label="Material" value={textValue(form.materialId)} options={(course?.materials ?? []).map((item) => [item.id, `${item.title} (${label(item.type)})`])} onChange={(value) => updateField('materialId', value)} />
-        <TextField label="Title" value={textValue(form.title) || material?.title || ''} onChange={(value) => updateField('title', value)} />
-        <SelectField label="Material type" value={textValue(form.type) || material?.type || 'course'} options={materialTypes.map((item) => [item, label(item)])} onChange={(value) => updateField('type', value)} />
-        <TextField label="External URL" value={textValue(form.url) || material?.url || ''} onChange={(value) => updateField('url', value)} />
+        <TextField label="Title (optional)" value={textValue(form.title) || material?.title || ''} onChange={(value) => updateField('title', value)} />
+        <SelectField label="Material type (optional)" value={textValue(form.type) || material?.type || 'course'} options={materialTypes.map((item) => [item, label(item)])} onChange={(value) => updateField('type', value)} />
+        <TextField label="External URL (optional)" value={textValue(form.url) || material?.url || ''} onChange={(value) => updateField('url', value)} />
       </div>
     )
   }
@@ -196,12 +290,12 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
       <div className="grid gap-3">
         <TextField label="Assignment title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <DateTimeField label="Due date and time" value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
-        <TextArea label="Description" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
-        <TextField label="Submission URL" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
-        <TextField label="Grade Weight" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-        <MultiSelectField label="Assignment Materials" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'assignment').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
-        <TextField label="New assignment Material title" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
-        <TextField label="New assignment Material URL" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
+        <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+        <TextField label="Submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+        <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+        <MultiSelectField label="Assignment Materials (optional)" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'assignment').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
+        <TextField label="New assignment Material title (optional)" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
+        <TextField label="New assignment Material URL (optional)" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
       </div>
     )
   }
@@ -210,11 +304,11 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
     return (
       <div className="grid gap-3">
         <TextField label="Exam title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-        <DateTimeField label="Exam date and time" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
-        <TextField label="Grade Weight" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-        <MultiSelectField label="Exam Materials" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'exam').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
-        <TextField label="New exam Material title" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
-        <TextField label="New exam Material URL" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
+        <DateTimeField label="Exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
+        <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+        <MultiSelectField label="Exam Materials (optional)" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'exam').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
+        <TextField label="New exam Material title (optional)" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
+        <TextField label="New exam Material URL (optional)" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
       </div>
     )
   }
@@ -225,17 +319,17 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
         <TextField label="Session title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <DateTimeField label="Starts at" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
         <DateTimeField label="Ends at" value={textValue(form.endsAt)} onChange={(value) => updateField('endsAt', value)} />
-        <TextField label="Location" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
-        <SelectField label="Status" value={textValue(form.status)} options={[['scheduled', 'Scheduled'], ['cancelled', 'Cancelled']]} onChange={(value) => updateField('status', value)} />
+        <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
+        <SelectField label="Status (optional)" value={textValue(form.status)} options={[['scheduled', 'Scheduled'], ['cancelled', 'Cancelled']]} onChange={(value) => updateField('status', value)} />
       </div>
     )
   }
 
   return (
     <div className="grid gap-3">
-      <TextField label="Course title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
-      <TextField label="Professors" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
-      <TextArea label="Description" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+      <TextField label="Course title (optional)" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
+      <TextField label="Professors (optional)" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
+      <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
     </div>
   )
 }
@@ -300,6 +394,9 @@ function MultiSelectField({ label, value, options, onChange }: { label: string; 
 const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)]'
 
 function initialForm(type: ContributionType, course?: LoadedCourse): FormState {
+  if (type === 'add-academic-year') return { academicYearId: '', label: '', order: '' }
+  if (type === 'add-study-year') return { academicYearId: '', studyYearId: '', label: '', order: '' }
+  if (type === 'add-semester') return { academicYearId: '', studyYearId: '', semesterId: '', label: '', courseId: '', courseTitle: '', order: '' }
   if (type === 'add-material') return { title: '', type: 'course', url: '' }
   if (type === 'update-material') return { materialId: course?.materials[0]?.id ?? '', title: '', type: course?.materials[0]?.type ?? 'course', url: '' }
   if (type === 'add-assignment-deadline') return { title: '', dueAt: '', description: '', submissionUrl: '', gradeWeight: '', materialIds: [], inlineMaterialTitle: '', inlineMaterialUrl: '' }
@@ -313,6 +410,7 @@ function formToInput(type: ContributionType, form: FormState): Record<string, un
   const input: Record<string, unknown> = { ...form }
   if ('professorsText' in input) input.professors = splitList(textValue(form.professorsText))
   if ('gradeWeight' in input && textValue(form.gradeWeight)) input.gradeWeight = Number(textValue(form.gradeWeight))
+  if ('order' in input && textValue(form.order)) input.order = Number(textValue(form.order))
   if ((type === 'add-assignment-deadline' || type === 'add-exam') && textValue(form.inlineMaterialTitle) && textValue(form.inlineMaterialUrl)) {
     input.newMaterials = [{ title: textValue(form.inlineMaterialTitle), url: textValue(form.inlineMaterialUrl) }]
   }
@@ -334,6 +432,9 @@ function splitList(value: string): string[] {
 function taskLabel(type: ContributionType): string {
   return {
     'add-new-course': 'Add New Course',
+    'add-academic-year': 'Add Academic Year',
+    'add-study-year': 'Add Study Year',
+    'add-semester': 'Add Semester',
     'add-material': 'Add Material',
     'update-material': 'Update Material',
     'add-assignment-deadline': 'Add Assignment Deadline',
@@ -345,4 +446,8 @@ function taskLabel(type: ContributionType): string {
 
 function label(value: string): string {
   return value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function isCatalogContributionType(type: ContributionType): boolean {
+  return type === 'add-academic-year' || type === 'add-study-year' || type === 'add-semester'
 }

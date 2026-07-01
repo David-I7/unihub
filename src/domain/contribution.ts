@@ -1,8 +1,8 @@
 import { courseDataFilePath, courseRepositoryPath, findCourse } from './coursePath.js'
 import { fail, hasString, isRecord, stringArray } from './records.js'
 import { loadRepositoryData } from './repository.js'
-import { isMaterialType, isSessionStatus, validateContributionPayload, validateCourse } from './validation.js'
-import type { AssignmentDeadline, ContributionDraft, ContributionType, Course, CourseContext, CoursePath, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
+import { isMaterialType, isSessionStatus, validateCatalog, validateContributionPayload, validateCourse } from './validation.js'
+import type { AssignmentDeadline, Catalog, ContributionDraft, ContributionType, Course, CourseContext, CoursePath, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
 
 export type GithubTarget = {
   owner: string
@@ -18,6 +18,7 @@ export type PreparedContribution = ValidationResult & {
   githubLink?: string
   parsed?: unknown
   updatedCourse?: Course
+  updatedCatalog?: Catalog
   changedJson?: string
   path?: CoursePath
 }
@@ -78,6 +79,17 @@ export function prepareGeneratedContribution(options: {
   now?: () => string
 }): PreparedContribution {
   const { draft, repository, githubTarget = defaultGithubTarget, now = () => new Date().toISOString() } = options
+  if (isCatalogContributionType(draft.type)) {
+    const generated = generateCatalogContribution(draft, repository)
+    if (!generated.valid) return generated
+    return prepareCatalogReviewOutput({
+      applied: generated,
+      parsed: generated.parsed,
+      type: draft.type,
+      mode: draft.mode,
+      githubTarget,
+    })
+  }
   const generated = generateContributionPayload(draft, repository, now())
   if (!generated.valid) return generated
   if ((draft.type === 'add-assignment-deadline' || draft.type === 'add-exam') && Array.isArray(generated.payload)) {
@@ -110,6 +122,74 @@ export function prepareGeneratedContribution(options: {
     repository,
     githubTarget,
   })
+}
+
+function isCatalogContributionType(type: ContributionType): type is 'add-academic-year' | 'add-study-year' | 'add-semester' {
+  return type === 'add-academic-year' || type === 'add-study-year' || type === 'add-semester'
+}
+
+function generateCatalogContribution(
+  draft: GeneratedContributionDraft,
+  repository: RepositorySnapshot,
+): ValidationResult & { updatedCatalog?: Catalog; parsed?: unknown } {
+  const input = draft.input
+  const nextCatalog = structuredClone(repository.catalog) as Catalog
+
+  if (draft.type === 'add-academic-year') {
+    const id = text(input.academicYearId) || slugify(text(input.label) || text(input.title))
+    if (!id) return fail('Academic Year id is required.')
+    if (nextCatalog.academicYears.some((year) => year.id === id)) return fail(`Academic Year '${id}' already exists.`)
+    const nextYear = {
+      id,
+      label: text(input.label) || id,
+      order: number(input.order) ?? nextOrder(nextCatalog.academicYears),
+      studyYears: [],
+    }
+    nextCatalog.academicYears.push(nextYear)
+    return { ...validatedCatalog(nextCatalog), updatedCatalog: nextCatalog, parsed: nextYear }
+  }
+
+  const academicYearId = text(input.academicYearId) || draft.context?.academicYearId || ''
+  const academicYear = nextCatalog.academicYears.find((year) => year.id === academicYearId)
+  if (!academicYear) return fail(`Academic Year '${academicYearId || 'unknown'}' does not exist.`)
+
+  if (draft.type === 'add-study-year') {
+    const id = text(input.studyYearId) || slugify(text(input.label) || text(input.title))
+    if (!id) return fail('Study Year id is required.')
+    if (academicYear.studyYears.some((studyYear) => studyYear.id === id)) return fail(`Study Year '${id}' already exists in Academic Year '${academicYear.id}'.`)
+    const nextStudyYear = {
+      id,
+      label: text(input.label) || id,
+      order: number(input.order) ?? nextOrder(academicYear.studyYears),
+      semesters: [],
+    }
+    academicYear.studyYears.push(nextStudyYear)
+    return { ...validatedCatalog(nextCatalog), updatedCatalog: nextCatalog, parsed: nextStudyYear }
+  }
+
+  const studyYearId = text(input.studyYearId) || draft.context?.studyYearId || ''
+  const studyYear = academicYear.studyYears.find((item) => item.id === studyYearId)
+  if (!studyYear) return fail(`Study Year '${studyYearId || 'unknown'}' does not exist in Academic Year '${academicYear.id}'.`)
+
+  const id = text(input.semesterId) || slugify(text(input.label) || text(input.title))
+  if (!id) return fail('Semester id is required.')
+  if (studyYear.semesters.some((semester) => semester.id === id)) return fail(`Semester '${id}' already exists in Study Year '${studyYear.id}'.`)
+
+  const courseId = text(input.courseId)
+  const courseTitle = text(input.courseTitle)
+  const nextSemester = {
+    id,
+    label: text(input.label) || id,
+    order: number(input.order) ?? nextOrder(studyYear.semesters),
+    ...(courseId && courseTitle ? { courses: [{ id: courseId, title: courseTitle }] } : {}),
+  }
+  studyYear.semesters.push(nextSemester)
+  return { ...validatedCatalog(nextCatalog), updatedCatalog: nextCatalog, parsed: nextSemester }
+}
+
+function validatedCatalog(catalog: Catalog): ValidationResult & { updatedCatalog?: Catalog } {
+  const validation = validateCatalog(catalog)
+  return validation.valid ? { ...validation, updatedCatalog: catalog } : validation
 }
 
 export function applyContribution(
@@ -343,7 +423,6 @@ function prepareReviewOutput(options: {
   const { applied, parsed, type, mode, path, githubTarget } = options
   const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
   const pathText = courseRepositoryPath(path)
-  const warningText = applied.warnings.length ? applied.warnings.map((warning) => `- ${warning}`).join('\n') : 'None'
   const body = [
     `Contribution type: ${type}`,
     `Target Course Path: ${pathText}`,
@@ -352,9 +431,6 @@ function prepareReviewOutput(options: {
     '```json',
     changedJson,
     '```',
-    '',
-    'Validation warnings:',
-    warningText,
   ].join('\n')
 
   if (mode === 'issue') {
@@ -380,6 +456,45 @@ function prepareReviewOutput(options: {
   }
 }
 
+function prepareCatalogReviewOutput(options: {
+  applied: ValidationResult & { updatedCatalog?: Catalog }
+  parsed: unknown
+  type: ContributionType
+  mode: 'issue' | 'pull-request'
+  githubTarget: GithubTarget
+}): PreparedContribution {
+  const { applied, parsed, type, mode, githubTarget } = options
+  const changedJson = JSON.stringify(applied.updatedCatalog, null, 2)
+  const body = [
+    `Contribution type: ${type}`,
+    'Target Catalog File: public/data/catalog.json',
+    '',
+    'JSON:',
+    '```json',
+    changedJson,
+    '```',
+  ].join('\n')
+
+  if (mode === 'issue') {
+    return {
+      ...applied,
+      parsed,
+      changedJson,
+      issueBody: body,
+      issueUrl: githubIssueUrl(githubTarget, `Contribution: ${type}`, body),
+    }
+  }
+
+  return {
+    ...applied,
+    parsed,
+    changedJson,
+    prTitle: `Contribution: ${type} for Catalog`,
+    prBody: body,
+    githubLink: githubEditUrl(githubTarget, 'public/data/catalog.json'),
+  }
+}
+
 function slugify(value: string): string {
   const slug = value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
   return slug || 'item'
@@ -391,6 +506,10 @@ function uniqueId(base: string, used: string[]): string {
   let index = 2
   while (existing.has(`${base}-${index}`)) index += 1
   return `${base}-${index}`
+}
+
+function nextOrder(items: Array<{ order: number }>): number {
+  return items.reduce((max, item) => Math.max(max, item.order), 0) + 1
 }
 
 function usedIds(course: Course): string[] {

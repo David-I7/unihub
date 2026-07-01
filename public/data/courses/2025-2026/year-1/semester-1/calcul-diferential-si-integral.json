@@ -1,0 +1,44 @@
+{
+  "id": "calcul-diferential-si-integral",
+  "title": "Calcul diferential si integral",
+  "professors": ["Lectr. Dr. R. Munteanu"],
+  "materials": [
+    {
+      "id": "materiale-curs",
+      "type": "course",
+      "title": "Materiale curs",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/curs",
+      "addedAt": "2026-07-01T09:08:16.376Z",
+      "updatedAt": "2026-07-01T09:08:16.376Z"
+    },
+    {
+      "id": "exemple-examene",
+      "type": "exam",
+      "title": "Exemple examene",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/examen",
+      "addedAt": "2026-07-01T09:10:27.977Z",
+      "updatedAt": "2026-07-01T09:10:27.977Z"
+    },
+    {
+      "id": "inregistrari-cursuri",
+      "type": "video",
+      "title": "Inregistrari cursuri",
+      "url": "https://youtube.com/playlist?list=PLutQjStBkVhXghinmVbyAjvdrgQAaEl7q&si=d3UQ0Q-5PsP__tdT",
+      "addedAt": "2026-07-01T08:50:00.545Z",
+      "updatedAt": "2026-07-01T08:50:00.545Z"
+    }
+  ],
+  "assignmentDeadlines": [],
+  "courseSessions": [],
+  "exams": [
+    {
+      "id": "examen-scris",
+      "title": "Examen scris",
+      "startsAt": "2026-01-25T12:00",
+      "gradeWeight": 100,
+      "materialIds": ["exemple-examene"],
+      "addedAt": "2026-07-01T09:11:18.827Z",
+      "updatedAt": "2026-07-01T09:11:18.827Z"
+    }
+  ]
+}

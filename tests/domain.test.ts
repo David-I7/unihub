@@ -44,10 +44,16 @@ test('repository data validates and reconstructs Academic Year to Course hierarc
 
   assert.equal(result.valid, true)
   assert.equal(hierarchy.academicYears[0].label, '2025-2026')
-  assert.equal(hierarchy.academicYears[0].studyYears[0].label, 'Study Year 2')
+  assert.equal(hierarchy.academicYears[0].studyYears[0].label, 'Study Year 1')
   assert.equal(hierarchy.academicYears[0].studyYears[0].semesters[0].label, 'Semester 1')
   assert.deepEqual(
     hierarchy.academicYears[0].studyYears[0].semesters[0].courses.map((course) => course.title),
+    ['Structuri algebrice in informatica'],
+  )
+  assert.equal(hierarchy.academicYears[0].studyYears[1].label, 'Study Year 2')
+  assert.equal(hierarchy.academicYears[0].studyYears[1].semesters[0].label, 'Semester 1')
+  assert.deepEqual(
+    hierarchy.academicYears[0].studyYears[1].semesters[0].courses.map((course) => course.title),
     ['Algorithms', 'Databases'],
   )
 })
@@ -294,7 +300,8 @@ test('Contribution generation blocks errors and preserves warnings in issue and 
   })
   assert.equal(issue.valid, true)
   assert.match(issue.issueBody ?? '', /Target Course Path: 2025-2026\/year-2\/semester-1\/algorithms/)
-  assert.match(issue.issueBody ?? '', /date is to be announced/)
+  assert.doesNotMatch(issue.issueBody ?? '', /Validation warnings/)
+  assert.doesNotMatch(issue.issueBody ?? '', /date is to be announced/)
   assert.match(issue.issueUrl ?? '', /github.com/)
 
   const pullRequest = prepareContribution({
@@ -473,6 +480,84 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
   })
   assert.equal(invalidMaterial.valid, false)
   assert.match(invalidMaterial.errors.join('\n'), /invalid Material type|external URL/)
+})
+
+test('Generated Catalog Contributions add academic years, study years, and semesters', () => {
+  const repository = loadTestRepositoryData()
+
+  const academicYear = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-academic-year',
+      mode: 'pull-request',
+      input: {
+        academicYearId: '2026-2027',
+        label: '2026-2027',
+      },
+    },
+  })
+  assert.equal(academicYear.valid, true)
+  assert.match(academicYear.githubLink ?? '', /public\/data\/catalog\.json/)
+  assert.match(academicYear.changedJson ?? '', /2026-2027/)
+  assert.deepEqual(academicYear.parsed, { id: '2026-2027', label: '2026-2027', order: 2, studyYears: [] })
+
+  const studyYear = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-study-year',
+      mode: 'pull-request',
+      input: {
+        academicYearId: '2025-2026',
+        studyYearId: 'year-3',
+        label: 'Study Year 3',
+      },
+    },
+  })
+  assert.equal(studyYear.valid, true)
+  assert.match(studyYear.changedJson ?? '', /"id": "year-3"/)
+  assert.deepEqual(studyYear.parsed, { id: 'year-3', label: 'Study Year 3', order: 3, semesters: [] })
+
+  const semester = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-semester',
+      mode: 'issue',
+      input: {
+        academicYearId: '2025-2026',
+        studyYearId: 'year-1',
+        semesterId: 'semester-2',
+        label: 'Semester 2',
+        courseId: 'analysis',
+        courseTitle: 'Analysis',
+      },
+    },
+  })
+  assert.equal(semester.valid, true)
+  assert.match(semester.issueBody ?? '', /Target Catalog File: public\/data\/catalog\.json/)
+  assert.match(semester.changedJson ?? '', /"id": "semester-2"/)
+  assert.match(semester.changedJson ?? '', /"id": "analysis"/)
+  assert.deepEqual(semester.parsed, {
+    id: 'semester-2',
+    label: 'Semester 2',
+    order: 2,
+    courses: [{ id: 'analysis', title: 'Analysis' }],
+  })
+
+  const duplicate = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-semester',
+      mode: 'issue',
+      input: {
+        academicYearId: '2025-2026',
+        studyYearId: 'year-1',
+        semesterId: 'semester-1',
+        label: 'Semester 1',
+      },
+    },
+  })
+  assert.equal(duplicate.valid, false)
+  assert.match(duplicate.errors.join('\n'), /already exists/)
 })
 
 test('Contribution preparation accepts explicit repository and GitHub adapters', () => {

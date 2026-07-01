@@ -14,7 +14,10 @@ export type ContributionType =
   | "add-exam"
   | "add-course-session"
   | "edit-course-metadata"
-  | "add-new-course";
+  | "add-new-course"
+  | "add-academic-year"
+  | "add-study-year"
+  | "add-semester";
 
 export type CoursePath = {
   academicYearId: string;
