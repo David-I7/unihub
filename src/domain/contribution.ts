@@ -1,8 +1,8 @@
 import { courseDataFilePath, courseRepositoryPath, findCourse } from './coursePath.js'
-import { fail, hasString } from './records.js'
+import { fail, hasString, isRecord, stringArray } from './records.js'
 import { loadRepositoryData } from './repository.js'
-import { validateContributionPayload } from './validation.js'
-import type { AssignmentDeadline, ContributionDraft, ContributionType, Course, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
+import { isMaterialType, isSessionStatus, validateContributionPayload, validateCourse } from './validation.js'
+import type { AssignmentDeadline, ContributionDraft, ContributionType, Course, CourseContext, CoursePath, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
 
 export type GithubTarget = {
   owner: string
@@ -19,6 +19,15 @@ export type PreparedContribution = ValidationResult & {
   parsed?: unknown
   updatedCourse?: Course
   changedJson?: string
+  path?: CoursePath
+}
+
+export type GeneratedContributionDraft = {
+  type: ContributionType
+  mode: "issue" | "pull-request"
+  path?: CoursePath
+  context?: CourseContext
+  input: Record<string, unknown>
 }
 
 const defaultGithubTarget: GithubTarget = {
@@ -52,41 +61,55 @@ export function prepareContribution(options: {
   const applied = applyContribution(draft.type, parsed, targetCourse)
   if (!applied.valid) return { ...applied, parsed }
 
-  const changedJson = JSON.stringify(applied.updatedCourse ?? parsed, null, 2)
-  const pathText = courseRepositoryPath(draft.path)
-  const warningText = applied.warnings.length ? applied.warnings.map((warning) => `- ${warning}`).join('\n') : 'None'
-  const body = [
-    `Contribution type: ${draft.type}`,
-    `Target Course Path: ${pathText}`,
-    '',
-    'JSON:',
-    '```json',
-    changedJson,
-    '```',
-    '',
-    'Validation warnings:',
-    warningText,
-  ].join('\n')
-
-  if (draft.mode === 'issue') {
-    return {
-      ...applied,
-      parsed,
-      changedJson,
-      issueBody: body,
-      issueUrl: githubIssueUrl(githubTarget, `Contribution: ${draft.type}`, body),
-    }
-  }
-
-  const prTitle = `Contribution: ${draft.type} for ${draft.path.courseId}`
-  return {
-    ...applied,
+  return prepareReviewOutput({
+    applied,
     parsed,
-    changedJson,
-    prTitle,
-    prBody: body,
-    githubLink: githubEditUrl(githubTarget, courseDataFilePath(draft.path)),
+    type: draft.type,
+    mode: draft.mode,
+    path: draft.path,
+    githubTarget,
+  })
+}
+
+export function prepareGeneratedContribution(options: {
+  draft: GeneratedContributionDraft
+  repository: RepositorySnapshot
+  githubTarget?: GithubTarget
+  now?: () => string
+}): PreparedContribution {
+  const { draft, repository, githubTarget = defaultGithubTarget, now = () => new Date().toISOString() } = options
+  const generated = generateContributionPayload(draft, repository, now())
+  if (!generated.valid) return generated
+  if ((draft.type === 'add-assignment-deadline' || draft.type === 'add-exam') && Array.isArray(generated.payload)) {
+    const targetCourse = findCourse(repository.courses, generated.path)
+    if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
+    const nextCourse = structuredClone(targetCourse) as Course
+    const materials = generated.payload.filter(isMaterialPayload) as Material[]
+    const courseItems = generated.payload.filter((item) => !isMaterialPayload(item))
+    nextCourse.materials = [...nextCourse.materials, ...materials]
+    if (draft.type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(courseItems as AssignmentDeadline[])]
+    if (draft.type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(courseItems as Exam[])]
+    const validation = validateCourse(nextCourse)
+    if (!validation.valid) return { ...validation, parsed: generated.payload, path: generated.path }
+    return prepareReviewOutput({
+      applied: { ...validation, updatedCourse: nextCourse },
+      parsed: generated.payload,
+      type: draft.type,
+      mode: draft.mode,
+      path: generated.path,
+      githubTarget,
+    })
   }
+  return prepareContribution({
+    draft: {
+      type: draft.type,
+      mode: draft.mode,
+      path: generated.path,
+      payloadText: JSON.stringify(generated.payload),
+    },
+    repository,
+    githubTarget,
+  })
 }
 
 export function applyContribution(
@@ -126,6 +149,290 @@ export function applyContribution(
 }
 
 export const validateContribution = applyContribution
+
+function generateContributionPayload(
+  draft: GeneratedContributionDraft,
+  repository: RepositorySnapshot,
+  timestamp: string,
+): ValidationResult & { path: CoursePath; payload: unknown } {
+  const input = draft.input
+  if (draft.type === 'add-new-course') {
+    if (!draft.context) return { ...fail('Add new Course requires Academic Year, Study Year, and Semester.'), path: emptyPath(), payload: undefined }
+    const title = text(input.title)
+    if (!title) return { ...fail('Course title is required.'), path: emptyPath(), payload: undefined }
+    const courseId = uniqueId(slugify(title), repository.courses.filter((course) => course.path.academicYearId === draft.context?.academicYearId && course.path.studyYearId === draft.context?.studyYearId && course.path.semesterId === draft.context?.semesterId).map((course) => course.id))
+    const path = { ...draft.context, courseId }
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path,
+      payload: {
+        id: courseId,
+        title,
+        professors: stringArray(input.professors),
+        ...(text(input.description) ? { description: text(input.description) } : {}),
+        materials: [],
+        assignmentDeadlines: [],
+        courseSessions: [],
+        exams: [],
+      },
+    }
+  }
+
+  if (!draft.path) return { ...fail('Contribution requires a target Course Path.'), path: emptyPath(), payload: undefined }
+  const targetCourse = findCourse(repository.courses, draft.path)
+  if (!targetCourse) return { ...fail('Existing Course contribution requires a valid target Course.'), path: draft.path, payload: undefined }
+
+  if (draft.type === 'add-material') {
+    const material = generatedMaterial(input, timestamp, usedIds(targetCourse))
+    return material.valid ? { ...material, path: draft.path, payload: material.payload } : { ...material, path: draft.path, payload: undefined }
+  }
+
+  if (draft.type === 'update-material') {
+    const materialId = text(input.materialId)
+    const existing = targetCourse.materials.find((material) => material.id === materialId)
+    if (!existing) return { ...fail(`Material '${materialId || 'unknown'}' does not exist in target Course.`), path: draft.path, payload: undefined }
+    if (input.type !== undefined && !isMaterialType(input.type)) return { ...fail('Contribution has an invalid Material type.'), path: draft.path, payload: undefined }
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path: draft.path,
+      payload: {
+        id: existing.id,
+        type: materialType(input.type, existing.type),
+        title: text(input.title) || existing.title,
+        url: text(input.url) || existing.url,
+        addedAt: existing.addedAt,
+        updatedAt: timestamp,
+      },
+    }
+  }
+
+  if (draft.type === 'add-assignment-deadline') {
+    const materialIds = [...stringArray(input.materialIds)]
+    const newMaterials = generatedInlineMaterials(input.newMaterials, 'assignment', timestamp, usedIds(targetCourse))
+    if (!newMaterials.valid) return { ...newMaterials, path: draft.path, payload: undefined }
+    materialIds.push(...newMaterials.payload.map((material) => material.id))
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path: draft.path,
+      payload: [
+        ...newMaterials.payload,
+        {
+          id: uniqueId(slugify(text(input.title) || 'assignment'), [...usedIds(targetCourse), ...newMaterials.payload.map((material) => material.id)]),
+          title: text(input.title),
+          ...(text(input.description) ? { description: text(input.description) } : {}),
+          dueAt: text(input.dueAt),
+          ...(text(input.submissionUrl) ? { submissionUrl: text(input.submissionUrl) } : {}),
+          ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
+          materialIds,
+          addedAt: timestamp,
+          updatedAt: timestamp,
+        },
+      ],
+    }
+  }
+
+  if (draft.type === 'add-exam') {
+    const materialIds = [...stringArray(input.materialIds)]
+    const newMaterials = generatedInlineMaterials(input.newMaterials, 'exam', timestamp, usedIds(targetCourse))
+    if (!newMaterials.valid) return { ...newMaterials, path: draft.path, payload: undefined }
+    materialIds.push(...newMaterials.payload.map((material) => material.id))
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path: draft.path,
+      payload: [
+        ...newMaterials.payload,
+        {
+          id: uniqueId(slugify(text(input.title) || 'exam'), [...usedIds(targetCourse), ...newMaterials.payload.map((material) => material.id)]),
+          title: text(input.title),
+          ...(text(input.startsAt) ? { startsAt: text(input.startsAt) } : {}),
+          ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
+          materialIds,
+          addedAt: timestamp,
+          updatedAt: timestamp,
+        },
+      ],
+    }
+  }
+
+  if (draft.type === 'add-course-session') {
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path: draft.path,
+      payload: {
+        id: uniqueId(slugify(text(input.title) || 'course-session'), usedIds(targetCourse)),
+        title: text(input.title),
+        startsAt: text(input.startsAt),
+        endsAt: text(input.endsAt),
+        ...(text(input.location) ? { location: text(input.location) } : {}),
+        status: isSessionStatus(input.status) ? input.status : 'scheduled',
+        addedAt: timestamp,
+        updatedAt: timestamp,
+      },
+    }
+  }
+
+  if (draft.type === 'edit-course-metadata') {
+    return {
+      valid: true,
+      errors: [],
+      warnings: [],
+      path: draft.path,
+      payload: {
+        ...(text(input.title) ? { title: text(input.title) } : {}),
+        professors: stringArray(input.professors),
+        ...(text(input.description) ? { description: text(input.description) } : {}),
+      },
+    }
+  }
+
+  return { ...fail(`Unsupported Contribution type: ${draft.type}.`), path: draft.path, payload: undefined }
+}
+
+function generatedMaterial(input: Record<string, unknown>, timestamp: string, used: string[]): ValidationResult & { payload: Material } {
+  if (!isMaterialType(input.type)) {
+    return {
+      ...fail('Contribution has an invalid Material type.'),
+      payload: { id: '', type: 'other', title: '', url: '', addedAt: timestamp, updatedAt: timestamp },
+    }
+  }
+  const type = input.type
+  const material = {
+    id: uniqueId(slugify(text(input.title) || 'material'), used),
+    type,
+    title: text(input.title),
+    url: text(input.url),
+    addedAt: timestamp,
+    updatedAt: timestamp,
+  }
+  return { valid: true, errors: [], warnings: [], payload: material }
+}
+
+function generatedInlineMaterials(value: unknown, type: 'assignment' | 'exam', timestamp: string, used: string[]): ValidationResult & { payload: Material[] } {
+  const items = Array.isArray(value) ? value : []
+  const materials: Material[] = []
+  const errors: string[] = []
+  for (const item of items) {
+    if (!isRecord(item)) {
+      errors.push('Inline Material must be a JSON object.')
+      continue
+    }
+    const generated = generatedMaterial({ ...item, type }, timestamp, [...used, ...materials.map((material) => material.id)])
+    materials.push(generated.payload)
+  }
+  return { valid: errors.length === 0, errors, warnings: [], payload: materials }
+}
+
+function prepareReviewOutput(options: {
+  applied: ValidationResult & { updatedCourse?: Course }
+  parsed: unknown
+  type: ContributionType
+  mode: 'issue' | 'pull-request'
+  path: CoursePath
+  githubTarget: GithubTarget
+}): PreparedContribution {
+  const { applied, parsed, type, mode, path, githubTarget } = options
+  const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
+  const pathText = courseRepositoryPath(path)
+  const warningText = applied.warnings.length ? applied.warnings.map((warning) => `- ${warning}`).join('\n') : 'None'
+  const body = [
+    `Contribution type: ${type}`,
+    `Target Course Path: ${pathText}`,
+    '',
+    'JSON:',
+    '```json',
+    changedJson,
+    '```',
+    '',
+    'Validation warnings:',
+    warningText,
+  ].join('\n')
+
+  if (mode === 'issue') {
+    return {
+      ...applied,
+      parsed,
+      path,
+      changedJson,
+      issueBody: body,
+      issueUrl: githubIssueUrl(githubTarget, `Contribution: ${type}`, body),
+    }
+  }
+
+  const prTitle = `Contribution: ${type} for ${path.courseId}`
+  return {
+    ...applied,
+    parsed,
+    path,
+    changedJson,
+    prTitle,
+    prBody: body,
+    githubLink: githubEditUrl(githubTarget, courseDataFilePath(path)),
+  }
+}
+
+function slugify(value: string): string {
+  const slug = value.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return slug || 'item'
+}
+
+function uniqueId(base: string, used: string[]): string {
+  const existing = new Set(used)
+  if (!existing.has(base)) return base
+  let index = 2
+  while (existing.has(`${base}-${index}`)) index += 1
+  return `${base}-${index}`
+}
+
+function usedIds(course: Course): string[] {
+  return [
+    course.id,
+    ...course.materials.map((item) => item.id),
+    ...course.assignmentDeadlines.map((item) => item.id),
+    ...course.courseSessions.map((item) => item.id),
+    ...course.exams.map((item) => item.id),
+  ]
+}
+
+function text(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function number(value: unknown): number | undefined {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : undefined
+  }
+  return undefined
+}
+
+function materialType(value: unknown, fallback: Material['type']): Material['type'] {
+  return isMaterialType(value) ? value : fallback
+}
+
+function emptyPath(): CoursePath {
+  return { academicYearId: '', studyYearId: '', semesterId: '', courseId: '' }
+}
+
+function isMaterialPayload(value: unknown): value is Material {
+  return isRecord(value) && typeof value.url === 'string' && isMaterialType(value.type)
+}
+
+function repositoryCourseJson(course: Course): Course {
+  const repositoryCourse = { ...(course as Course & { path?: unknown }) }
+  delete repositoryCourse.path
+  return repositoryCourse
+}
 
 function githubIssueUrl(target: GithubTarget, title: string, body: string): string {
   return `https://github.com/${target.owner}/${target.repo}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`

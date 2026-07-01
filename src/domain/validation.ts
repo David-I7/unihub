@@ -10,14 +10,15 @@ const stringField = z.string().min(1)
 const optionalString = z.string().optional()
 const optionalStringArray = z.array(z.string()).optional()
 const optionalNumber = z.number().optional()
+const externalUrl = z.string().url().refine((value) => value.startsWith('http://') || value.startsWith('https://'), 'must be an external URL')
 
 const materialSchema = z.object({
   id: stringField,
   type: materialTypeSchema,
   title: stringField,
-  url: stringField,
-  addedAt: optionalString,
-  updatedAt: optionalString,
+  url: externalUrl,
+  addedAt: stringField,
+  updatedAt: stringField,
 }).passthrough()
 
 const assignmentDeadlineSchema = z.object({
@@ -28,7 +29,8 @@ const assignmentDeadlineSchema = z.object({
   submissionUrl: optionalString,
   gradeWeight: optionalNumber,
   materialIds: optionalStringArray,
-  addedAt: optionalString,
+  addedAt: stringField,
+  updatedAt: stringField,
 }).passthrough()
 
 const courseSessionSchema = z.object({
@@ -38,7 +40,8 @@ const courseSessionSchema = z.object({
   endsAt: stringField,
   location: optionalString,
   status: sessionStatusSchema,
-  addedAt: optionalString,
+  addedAt: stringField,
+  updatedAt: stringField,
 }).passthrough()
 
 const examSchema = z.object({
@@ -47,7 +50,8 @@ const examSchema = z.object({
   startsAt: optionalString,
   gradeWeight: optionalNumber,
   materialIds: optionalStringArray,
-  addedAt: optionalString,
+  addedAt: stringField,
+  updatedAt: stringField,
 }).passthrough()
 
 const semesterCourseSchema = z.object({
@@ -136,7 +140,8 @@ export function validateCourse(course: unknown): ValidationResult {
     const itemId = item.id
     if (ids.has(itemId)) errors.push(`Duplicate local id: ${itemId}.`)
     ids.add(itemId)
-    if (!hasString(item, 'addedAt')) warnings.push(`${itemId} is missing optional addedAt.`)
+    if (!hasString(item, 'addedAt')) errors.push(`${itemId} requires addedAt.`)
+    if (!hasString(item, 'updatedAt')) errors.push(`${itemId} requires updatedAt.`)
   }
 
   const materialsById = new Map(materials.filter((material) => hasString(material, 'id')).map((material) => [material.id, material]))
@@ -239,7 +244,10 @@ export function validateContributionPayload(
     }
 
     if (item.addedAt === undefined && type !== 'edit-course-metadata' && type !== 'update-material') {
-      warnings.push(`${itemId || prefix} is missing optional addedAt.`)
+      errors.push(`${itemId || prefix} requires addedAt.`)
+    }
+    if (item.updatedAt === undefined && type !== 'edit-course-metadata') {
+      errors.push(`${itemId || prefix} requires updatedAt.`)
     }
 
     if (type === 'add-course-session') {
@@ -345,7 +353,10 @@ function rewordCourseSchemaError(error: string): string {
   if (error.includes('Course.exams') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
   if (error.includes('materials') && error.includes('.type')) return `${itemId} has an invalid Material type.`
   if (error.includes('Contribution.type')) return 'Contribution has an invalid Material type.'
+  if ((error.includes('materials') || error.includes('Contribution.url')) && error.includes('external URL')) return `${itemId} Material requires an external URL.`
   if (error.includes('materials') && (error.includes('.title') || error.includes('.url'))) return `${itemId} Material requires title and url.`
+  if (error.includes('.addedAt')) return `${itemId} requires addedAt.`
+  if (error.includes('.updatedAt')) return `${itemId} requires updatedAt.`
   if (error.includes('assignmentDeadlines') && error.includes('.dueAt')) return `${itemId} Assignment Deadline requires dueAt.`
   if (error.includes('courseSessions') && (error.includes('.startsAt') || error.includes('.endsAt'))) return `${itemId} Course Session requires startsAt and endsAt.`
   if (error.includes('courseSessions') && error.includes('.status')) return `${itemId} has an invalid Session Status.`

@@ -21,12 +21,12 @@ type NodeProcess = {
   cwd: () => string
 }
 
-export function loadRepositoryData(): RepositorySnapshot {
+export function loadRepositoryData(dataRoot = 'public/data'): RepositorySnapshot {
   const requireFn = globalThis.nodeRequire
   if (requireFn) {
     return {
-      catalog: loadCatalogNodeSync(requireFn),
-      courses: loadAllCoursesNodeSync(requireFn),
+      catalog: loadCatalogNodeSync(requireFn, dataRoot),
+      courses: loadAllCoursesNodeSync(requireFn, dataRoot),
     }
   }
   throw new Error('Synchronous repository loading is only available in Node.js.')
@@ -40,11 +40,11 @@ export async function loadCatalog(): Promise<Catalog> {
   return (await response.json()) as Catalog
 }
 
-function loadCatalogNodeSync(requireFn: (id: string) => unknown): Catalog {
+function loadCatalogNodeSync(requireFn: (id: string) => unknown, dataRoot = 'public/data'): Catalog {
   const fs = requireFn('node:fs') as NodeFs
   const path = requireFn('node:path') as NodePath
   const processObj = (globalThis as unknown as { process: NodeProcess }).process
-  const filePath = path.join(processObj.cwd(), 'public/data/catalog.json')
+  const filePath = path.join(processObj.cwd(), dataRoot, 'catalog.json')
   return JSON.parse(fs.readFileSync(filePath, 'utf8')) as Catalog
 }
 
@@ -56,13 +56,13 @@ export function loadRepositoryDataForBrowserFallback(): RepositorySnapshot {
 }
 
 // Function to load all courses synchronously in Node.js (for tests)
-function loadAllCoursesNodeSync(requireFn: (id: string) => unknown): LoadedCourse[] {
+function loadAllCoursesNodeSync(requireFn: (id: string) => unknown, dataRoot = 'public/data'): LoadedCourse[] {
   const fs = requireFn('node:fs') as NodeFs
   const path = requireFn('node:path') as NodePath
   const processObj = (globalThis as unknown as { process: NodeProcess }).process
   const cwd = processObj.cwd()
 
-  const coursesDir = path.join(cwd, 'public/data/courses')
+  const coursesDir = path.join(cwd, dataRoot, 'courses')
   const files = getJsonFiles(coursesDir, fs, path)
 
   return files.map((filePath: string) => {

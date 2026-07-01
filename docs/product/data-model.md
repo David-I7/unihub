@@ -60,7 +60,7 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "id": "lecture-1-slides",
       "title": "Lecture 1 Slides",
       "type": "course",
-      "url": "/materials/2025-2026/year-1/semester-1/data-structures/lecture-1.pdf",
+      "url": "https://example.com/data-structures/lecture-1.pdf",
       "addedAt": "2026-03-01T12:00:00+02:00",
       "updatedAt": "2026-03-04T12:00:00+02:00"
     },
@@ -68,19 +68,25 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "id": "lab-2-brief",
       "title": "Lab 2 Brief",
       "type": "assignment",
-      "url": "https://example.com/lab-2.pdf"
+      "url": "https://example.com/lab-2.pdf",
+      "addedAt": "2026-03-10T09:00:00+02:00",
+      "updatedAt": "2026-03-10T09:00:00+02:00"
     },
     {
       "id": "final-example-2025",
       "title": "Final Example Exam 2025",
       "type": "exam",
-      "url": "/materials/2025-2026/year-1/semester-1/data-structures/final-example-2025.pdf"
+      "url": "https://example.com/data-structures/final-example-2025.pdf",
+      "addedAt": "2026-03-10T09:00:00+02:00",
+      "updatedAt": "2026-03-10T09:00:00+02:00"
     },
     {
       "id": "lecture-1-recording",
       "title": "Lecture 1 Recording",
       "type": "video",
-      "url": "https://example.com/lecture-1"
+      "url": "https://example.com/lecture-1",
+      "addedAt": "2026-03-10T09:00:00+02:00",
+      "updatedAt": "2026-03-10T09:00:00+02:00"
     }
   ],
   "assignmentDeadlines": [
@@ -92,17 +98,20 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "submissionUrl": "https://example.com/submit",
       "gradeWeight": 20,
       "materialIds": ["lab-2-brief"],
-      "addedAt": "2026-03-10T09:00:00+02:00"
+      "addedAt": "2026-03-10T09:00:00+02:00",
+      "updatedAt": "2026-03-10T09:00:00+02:00"
     }
   ],
-  "sessions": [
+  "courseSessions": [
     {
       "id": "lecture-1",
       "title": "Lecture 1",
       "startsAt": "2026-03-02T10:00:00+02:00",
       "endsAt": "2026-03-02T12:00:00+02:00",
       "location": "Room A101",
-      "status": "scheduled"
+      "status": "scheduled",
+      "addedAt": "2026-03-01T12:00:00+02:00",
+      "updatedAt": "2026-03-01T12:00:00+02:00"
     }
   ],
   "exams": [
@@ -112,7 +121,9 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "startsAt": "2026-06-12T09:00:00+03:00",
       "location": "Exam Hall 1",
       "gradeWeight": 80,
-      "materialIds": ["final-example-2025"]
+      "materialIds": ["final-example-2025"],
+      "addedAt": "2026-03-10T09:00:00+02:00",
+      "updatedAt": "2026-03-10T09:00:00+02:00"
     }
   ]
 }
@@ -143,6 +154,8 @@ other
 ```
 
 Assignment materials are shown through assignments. Exam materials are shown through exams.
+
+Material `url` values must be external URLs. Repository-relative paths, site-local paths, and uploaded local files are not valid material URLs.
 
 Validation must require assignment `materialIds` to reference `assignment` materials and exam `materialIds` to reference `exam` materials.
 
@@ -175,11 +188,15 @@ Validation should not block totals above `100`. Totals below `100` are allowed w
 
 ## Activity
 
-Activity is derived from optional `addedAt` timestamps on materials, assignment deadlines, lectures, and exams, plus optional `updatedAt` timestamps on materials.
+Materials, assignment deadlines, course sessions, and exams require both `addedAt` and `updatedAt`.
+
+Activity is derived from `addedAt` and `updatedAt` timestamps on materials, assignment deadlines, course sessions, and exams.
 
 The activity bar shows the latest additions and material updates, sorted newest first by the relevant activity timestamp. Material updates should appear as updates rather than as newly added items.
 
-When an existing material changes, maintainers should set or replace the material's `updatedAt` timestamp. `updatedAt` is only for changes to existing materials; new materials use `addedAt`.
+When an existing item changes, maintainers should replace the item's `updatedAt` timestamp. New items set both `addedAt` and `updatedAt` to the creation time.
+
+The contribution UI must not ask contributors to type `addedAt` or `updatedAt`. It should generate both timestamps for new materials, assignment deadlines, course sessions, and exams, and replace `updatedAt` for supported update flows.
 
 ## Data Validation
 
