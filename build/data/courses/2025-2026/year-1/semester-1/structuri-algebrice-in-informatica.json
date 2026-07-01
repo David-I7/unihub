@@ -1,0 +1,44 @@
+{
+  "id": "structuri-algebrice-in-informatica",
+  "title": "Structuri algebrice in informatica",
+  "professors": ["Conf. dr. A. Gica"],
+  "materials": [
+    {
+      "id": "inregistrari-cursuri",
+      "type": "video",
+      "title": "Inregistrari cursuri",
+      "url": "https://youtube.com/playlist?list=PLutQjStBkVhWgjW5NDnIoY6lbkT3ayrSA&si=Sueym3m4MDqrUzNg",
+      "addedAt": "2026-07-01T08:50:00.545Z",
+      "updatedAt": "2026-07-01T08:50:00.545Z"
+    },
+    {
+      "id": "materiale-curs",
+      "type": "course",
+      "title": "Materiale curs",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/curs",
+      "addedAt": "2026-07-01T08:53:20.863Z",
+      "updatedAt": "2026-07-01T08:53:20.863Z"
+    },
+    {
+      "id": "exemple-examene",
+      "type": "exam",
+      "title": "Exemple examene",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/examen",
+      "addedAt": "2026-07-01T08:54:17.574Z",
+      "updatedAt": "2026-07-01T08:54:17.574Z"
+    }
+  ],
+  "assignmentDeadlines": [],
+  "courseSessions": [],
+  "exams": [
+    {
+      "id": "examen-scris",
+      "title": "Examen scris",
+      "startsAt": "2026-02-07T10:00",
+      "gradeWeight": 100,
+      "materialIds": ["exemple-examene"],
+      "addedAt": "2026-07-01T09:01:18.325Z",
+      "updatedAt": "2026-07-01T09:01:18.325Z"
+    }
+  ]
+}

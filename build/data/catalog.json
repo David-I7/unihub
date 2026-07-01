@@ -1,0 +1,215 @@
+{
+  "academicYears": [
+    {
+      "id": "2025-2026",
+      "label": "2025-2026",
+      "order": 1,
+      "studyYears": [
+        {
+          "id": "year-1",
+          "label": "Study Year 1",
+          "order": 1,
+          "semesters": [
+            {
+              "id": "semester-1",
+              "label": "Semester 1",
+              "order": 1,
+              "courses": [
+                {
+                  "id": "arhitectura-sistemelor-de-calcul",
+                  "title": "Arhitectura sistemelor de calcul"
+                },
+                {
+                  "id": "calcul-diferential-si-integral",
+                  "title": "Calcul diferential si integral"
+                },
+                {
+                  "id": "instrumente-si-tehnici-de-baza-in-informatica",
+                  "title": "Instrumente si tehnici de baza in Informatica"
+                },
+                {
+                  "id": "programarea-algoritmilor",
+                  "title": "Programarea algoritmilor"
+                },
+                {
+                  "id": "structuri-algebrice-in-informatica",
+                  "title": "Structuri algebrice in informatica"
+                },
+                {
+                  "id": "tehnici-web",
+                  "title": "Tehnici web"
+                }
+              ]
+            },
+            {
+              "id": "semester-2",
+              "label": "Semester 2",
+              "order": 2,
+              "courses": [
+                {
+                  "id": "baze-de-date",
+                  "title": "Baze de date"
+                },
+                {
+                  "id": "geometrie-si-algebra-liniara",
+                  "title": "Geometrie si algebra liniara"
+                },
+                {
+                  "id": "limbaje-formale-si-automate",
+                  "title": "Limbaje formale si automate"
+                },
+                {
+                  "id": "programare-orientata-pe-obiecte",
+                  "title": "Programare orientata pe obiecte"
+                },
+                {
+                  "id": "structuri-de-date",
+                  "title": "Structuri de date"
+                },
+                {
+                  "id": "logica-matematica-si-computationala",
+                  "title": "Logica matematica si computationala"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "year-2",
+          "label": "Study Year 2",
+          "order": 2,
+          "semesters": [
+            {
+              "id": "semester-1",
+              "label": "Semester 1",
+              "order": 1,
+              "courses": [
+                {
+                  "id": "algorithms",
+                  "title": "Algorithms"
+                },
+                {
+                  "id": "databases",
+                  "title": "Databases"
+                }
+              ]
+            },
+            {
+              "id": "semester-2",
+              "label": "Semester 2",
+              "order": 2,
+              "courses": [
+                {
+                  "id": "web-engineering",
+                  "title": "Web Engineering"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2026-2027",
+      "label": "2026-2027",
+      "order": 2,
+      "studyYears": [
+        {
+          "id": "year-2",
+          "label": "Study Year 2",
+          "order": 2,
+          "semesters": [
+            {
+              "id": "semester-1",
+              "label": "Semester 1",
+              "order": 1,
+              "courses": [
+                {
+                  "id": "algoritmi-fundamentali",
+                  "title": "Algoritmi fundamentali"
+                },
+                {
+                  "id": "dezvoltarea-aplicatiilor-web",
+                  "title": "Dezvoltarea aplicatiilor web"
+                },
+                {
+                  "id": "probabilitati-si-statistica",
+                  "title": "Probabilitati si statistica"
+                },
+                {
+                  "id": "programare-functionala",
+                  "title": "Programare functionala"
+                },
+                {
+                  "id": "sisteme-de-gestiune-a-bazelor-de-date",
+                  "title": "Sisteme de gestiune a bazelor de date"
+                },
+                {
+                  "id": "sisteme-de-operare",
+                  "title": "Sisteme de operare"
+                }
+              ]
+            },
+            {
+              "id": "semester-2",
+              "label": "Semester 2",
+              "order": 2,
+              "courses": [
+                {
+                  "id": "algoritmi-avansati",
+                  "title": "Algoritmi avansati"
+                },
+                {
+                  "id": "fundamentele-limbajelor-de-programare",
+                  "title": "Fundamentele limbajelor de programare"
+                },
+                {
+                  "id": "inteligenta-artificiala",
+                  "title": "Inteligenta artificiala"
+                },
+                {
+                  "id": "metode-de-dezvoltare-software",
+                  "title": "Metode de dezvoltare software"
+                },
+                {
+                  "id": "programare-avansata-pe-obiecte-in-java",
+                  "title": "Programare avansata pe obiecte in Java"
+                },
+                {
+                  "id": "retele-de-calculatoare",
+                  "title": "Retele de calculatoare"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2027-2028",
+      "label": "2027-2028",
+      "order": 3,
+      "studyYears": [
+        {
+          "id": "year-3",
+          "label": "Study Year 3",
+          "order": 3,
+          "semesters": [
+            {
+              "id": "semester-1",
+              "label": "Semester 1",
+              "order": 1,
+              "courses": []
+            },
+            {
+              "id": "semester-2",
+              "label": "Semester 2",
+              "order": 2,
+              "courses": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
