@@ -16,5 +16,5 @@
     "outDir": "dist-test",
     "rootDir": "."
   },
-  "include": ["src/domain/**/*.ts", "public/data/**/*.json", "tests/**/*.ts"]
+  "include": ["src/domain/**/*.ts", "src/lib/**/*.ts", "public/data/**/*.json", "tests/**/*.ts"]
 }

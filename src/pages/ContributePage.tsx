@@ -1,12 +1,15 @@
-import { BookOpen, Clipboard, ExternalLink, FileText, FlaskConical, GraduationCap, PlayCircle, Plus, Trash2, Users } from 'lucide-react'
+import { Clipboard, ExternalLink, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { AcademicContextPicker } from '@/components/AcademicContextPicker'
+import { MaterialTypeIcon } from '@/components/IconBadge'
+import { TextField, DateTimeField, TextArea, SelectField, CompatibleMaterialField } from '@/components/form-fields'
 import { PageHeader } from '@/components/PageHeader'
-import { MultiSelect, Select } from '@/components/ui/select'
+import { Select } from '@/components/ui/select'
 import { compactFilterLabelClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
 import { ValidationPanel } from '@/components/ValidationPanel'
 import type { ContextSelection } from '@/app/academicContext'
 import { prepareGeneratedContribution, selectedContextCourses, type Catalog, type ContributionType, type Hierarchy, type LoadedCourse, type MaterialType } from '@/domain'
+import { textValue, arrayValue, label } from '@/lib/format'
 
 type BatchItem = Record<string, string | string[] | boolean>
 type FormState = Record<string, unknown> & {
@@ -302,7 +305,7 @@ function TaskForm({
               )}
             </div>
             <TextField label="Material title" value={textValue(item.title)} onChange={(value) => updateBatchItem(items, index, 'title', value, updateField)} />
-            <SelectField label="Material type" value={textValue(item.type)} options={materialTypes.map((t) => ({ value: t, label: label(t), icon: materialTypeIcon(t) }))} onChange={(value) => updateBatchItem(items, index, 'type', value, updateField)} />
+            <SelectField label="Material type" value={textValue(item.type)} options={materialTypes.map((t) => ({ value: t, label: label(t), icon: <MaterialTypeIcon type={t} size={15} /> }))} onChange={(value) => updateBatchItem(items, index, 'type', value, updateField)} />
             <TextField label="External URL" value={textValue(item.url)} onChange={(value) => updateBatchItem(items, index, 'url', value, updateField)} />
           </div>
         ))}
@@ -318,7 +321,7 @@ function TaskForm({
     const materialOptions = (course?.materials ?? []).map((item) => ({
       value: item.id,
       label: item.title,
-      icon: materialTypeIcon(item.type),
+      icon: <MaterialTypeIcon type={item.type} size={15} />,
     }))
     const selectedMatId = textValue(form.materialId) || course?.materials[0]?.id || ''
     const material = course?.materials.find((item) => item.id === selectedMatId)
@@ -330,7 +333,7 @@ function TaskForm({
           <Select value={selectedMatId} options={materialOptions} onValueChange={(value) => updateField('materialId', value)} />
         </div>
         <TextField label="Title (optional)" value={textValue(form.title) || material?.title || ''} onChange={(value) => updateField('title', value)} />
-        <SelectField label="Material type (optional)" value={textValue(form.type) || material?.type || 'course'} options={materialTypes.map((t) => ({ value: t, label: label(t), icon: materialTypeIcon(t) }))} onChange={(value) => updateField('type', value)} />
+        <SelectField label="Material type (optional)" value={textValue(form.type) || material?.type || 'course'} options={materialTypes.map((t) => ({ value: t, label: label(t), icon: <MaterialTypeIcon type={t} size={15} /> }))} onChange={(value) => updateField('type', value)} />
         <TextField label="External URL (optional)" value={textValue(form.url) || material?.url || ''} onChange={(value) => updateField('url', value)} />
       </div>
     )
@@ -460,117 +463,7 @@ function updateBatchItem(items: BatchItem[], index: number, field: string, value
   updateField('items', nextItems)
 }
 
-function TextField({ label, placeholder, value, onChange }: { label: string; placeholder?: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <input className={fieldClass} placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  )
-}
 
-function DateTimeField(props: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {props.label}
-      <input type="datetime-local" className={fieldClass} value={props.value} onChange={(event) => props.onChange(event.target.value)} />
-    </label>
-  )
-}
-
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <textarea className={`${fieldClass} min-h-20 resize-y`} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  )
-}
-
-function SelectField({
-  label,
-  value,
-  options,
-  onChange,
-}: {
-  label: string
-  value: string
-  options: (string[] | { value: string; label: string; icon?: React.ReactNode })[]
-  onChange: (value: string) => void
-}) {
-  const formattedOptions = options.map((opt) => {
-    if (Array.isArray(opt)) return { value: opt[0], label: opt[1] }
-    return opt
-  })
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <Select value={value} options={formattedOptions} onValueChange={onChange} />
-    </label>
-  )
-}
-
-function CompatibleMaterialField({
-  label,
-  emptyText,
-  materials,
-  materialType,
-  value,
-  onChange,
-}: {
-  label: string
-  emptyText: string
-  materials: LoadedCourse['materials']
-  materialType: 'assignment' | 'exam'
-  value: string[]
-  onChange: (value: string[]) => void
-}) {
-  const options = materials
-    .filter((material) => material.type === materialType)
-    .map((material) => ({
-      value: material.id,
-      label: material.title,
-      icon: materialTypeIcon(material.type),
-    }))
-
-  if (options.length === 0) {
-    return (
-      <div className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-        <span>{label}</span>
-        <p className={`m-0 rounded-md border border-dashed border-[var(--border-color)] p-3 text-sm font-normal ${mutedTextClass}`}>{emptyText}</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      <span>{label}</span>
-      <MultiSelect value={value} options={options} placeholder={`Select ${materialType} materials...`} onValueChange={onChange} />
-    </div>
-  )
-}
-
-function materialTypeIcon(type: MaterialType) {
-  const size = 15
-  switch (type) {
-    case 'course':
-      return <BookOpen size={size} />
-    case 'seminar':
-      return <Users size={size} />
-    case 'lab':
-      return <FlaskConical size={size} />
-    case 'assignment':
-      return <Clipboard size={size} />
-    case 'exam':
-      return <GraduationCap size={size} />
-    case 'video':
-      return <PlayCircle size={size} />
-    default:
-      return <FileText size={size} />
-  }
-}
-
-const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)] shadow-sm outline-none transition-colors hover:border-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring-color)]'
 
 function initialForm(type: ContributionType, course?: LoadedCourse): FormState {
   if (type === 'add-semester') return { createAcademicYear: false, academicYearId: '', academicYearLabel: '', createStudyYear: false, studyYearId: '', studyYearLabel: '', semesterId: '', label: '', order: '' }
@@ -601,13 +494,7 @@ function formToInput(_type: ContributionType, form: FormState): Record<string, u
   return input
 }
 
-function textValue(value: unknown): string {
-  return typeof value === 'string' ? value : ''
-}
 
-function arrayValue(value: unknown): string[] {
-  return Array.isArray(value) ? (value as string[]) : []
-}
 
 function splitList(value: string): string[] {
   return value.split(',').map((item) => item.trim()).filter(Boolean)
@@ -632,9 +519,7 @@ function taskLabel(type: ContributionType): string {
   }[type]
 }
 
-function label(value: string): string {
-  return value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-}
+
 
 function isCatalogContributionType(type: ContributionType): boolean {
   return type === 'add-academic-year' || type === 'add-study-year' || type === 'add-semester'

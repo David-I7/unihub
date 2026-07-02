@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { BookOpen, Clipboard, FileText, FlaskConical, GraduationCap, PlayCircle, Users } from 'lucide-react'
+import { Award, BookOpen, Clipboard, ClipboardCheck, FileText, FlaskConical, GraduationCap, PlayCircle, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { MaterialType } from '@/domain/types'
 
 export type IconTone = 'material' | 'assignment' | 'lecture' | 'exam' | 'cancelled'
 
@@ -13,6 +14,21 @@ export function IconBadge({ tone, children }: { tone: IconTone; children: ReactN
     cancelled: 'bg-[var(--status-cancelled-bg)] text-[var(--status-cancelled-text)]',
   }
   return <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-lg', tones[tone])}>{children}</span>
+}
+
+const materialTypeIcons: Record<MaterialType, typeof BookOpen> = {
+  course: BookOpen,
+  seminar: Users,
+  lab: FlaskConical,
+  video: PlayCircle,
+  other: FileText,
+  assignment: ClipboardCheck,
+  exam: Award,
+}
+
+export function MaterialTypeIcon({ type, size = 18 }: { type: MaterialType; size?: number }) {
+  const Icon = materialTypeIcons[type] ?? FileText
+  return <Icon aria-hidden="true" size={size} />
 }
 
 export function ItemTypeIcon({ type, size = 18 }: { type: 'material' | 'assignment' | 'lecture' | 'exam' | string; size?: number }) {
@@ -35,3 +51,4 @@ export function ItemTypeIcon({ type, size = 18 }: { type: 'material' | 'assignme
       return <FileText aria-hidden="true" size={size} />
   }
 }
+

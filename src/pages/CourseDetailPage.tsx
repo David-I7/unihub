@@ -1,7 +1,9 @@
-import { Award, BookOpen, CalendarClock, Clipboard, ClipboardCheck, ExternalLink, FileText, FlaskConical, GraduationCap, LinkIcon, MapPin, PlayCircle, Send, Users, X } from 'lucide-react'
+import { CalendarClock, Clipboard, ExternalLink, GraduationCap, LinkIcon, MapPin, Send, Users, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { IconBadge, MaterialTypeIcon } from '@/components/IconBadge'
+import { TextField, DateTimeField, TextArea, SelectField, CompatibleMaterialField } from '@/components/form-fields'
 import { PageHeader } from '@/components/PageHeader'
 import { headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
 import { statusChipClass } from '@/components/statusStyles'
@@ -20,7 +22,7 @@ import {
   type LoadedCourse,
   type Material,
 } from '@/domain'
-import { formatDate, formatTime } from '@/lib/format'
+import { formatDate, formatTime, textValue, arrayValue, label } from '@/lib/format'
 import type { MaterialType, RepositorySnapshot, SuggestionIntent, SuggestionSection } from '@/domain'
 
 type CourseDetailTab = 'about' | 'materials' | 'assignments' | 'lectures' | 'exams'
@@ -543,91 +545,13 @@ function MaterialCard({ material }: { material: CourseDetailView['materialGroups
   )
 }
 
-function MaterialTypeIcon({ type }: { type: MaterialType }) {
-  const icons = {
-    course: BookOpen,
-    seminar: Users,
-    lab: FlaskConical,
-    video: PlayCircle,
-    other: FileText,
-    assignment: ClipboardCheck,
-    exam: Award,
-  }
-  const Icon = icons[type]
-  return <Icon aria-hidden="true" size={18} />
-}
 
-function IconBadge({ tone, children }: { tone: 'material' | 'assignment' | 'lecture' | 'exam' | 'cancelled'; children: ReactNode }) {
-  const tones = {
-    material: 'bg-[var(--status-upcoming-bg)] text-[var(--status-upcoming-text)]',
-    assignment: 'bg-[var(--status-assignment-bg)] text-[var(--status-assignment-text)]',
-    lecture: 'bg-[var(--status-scheduled-bg)] text-[var(--status-scheduled-text)]',
-    exam: 'bg-[var(--status-exam-bg)] text-[var(--status-exam-text)]',
-    cancelled: 'bg-[var(--status-cancelled-bg)] text-[var(--status-cancelled-text)]',
-  }
-  return <span className={cn('grid h-10 w-10 shrink-0 place-items-center rounded-lg', tones[tone])}>{children}</span>
-}
 
 function EmptyState({ children }: { children: ReactNode }) {
   return <p className={`${panelClass} m-0 border-dashed px-4 py-6 text-center ${mutedTextClass}`}>{children}</p>
 }
 
-function TextField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <input className={fieldClass} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  )
-}
 
-function DateTimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <input type="datetime-local" className={fieldClass} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  )
-}
-
-function TextArea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <textarea className={`${fieldClass} min-h-20 resize-y`} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  )
-}
-
-function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[][]; onChange: (value: string) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <Select value={value} options={options.map(([optionValue, optionLabel]) => ({ value: optionValue, label: optionLabel }))} onValueChange={onChange} />
-    </label>
-  )
-}
-
-function MultiSelectField({ label, value, options, onChange }: { label: string; value: string[]; options: string[][]; onChange: (value: string[]) => void }) {
-  return (
-    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
-      {label}
-      <select className={fieldClass} multiple value={value} onChange={(event) => onChange([...event.target.selectedOptions].map((option) => option.value))}>
-        {options.map(([optionValue, optionLabel]) => (
-          <option key={optionValue} value={optionValue}>{optionLabel}</option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
-function CompatibleMaterialField({ label, emptyText, materials, materialType, value, onChange }: { label: string; emptyText: string; materials: Material[]; materialType: 'assignment' | 'exam'; value: string[]; onChange: (value: string[]) => void }) {
-  const options = materials.filter((material) => material.type === materialType).map((material) => [material.id, material.title])
-  if (options.length === 0) return <p className={`m-0 rounded-md border border-dashed border-[var(--border-color)] p-3 text-sm ${mutedTextClass}`}>{emptyText}</p>
-  return <MultiSelectField label={label} value={value} options={options} onChange={onChange} />
-}
-
-const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)] shadow-sm outline-none transition-colors hover:border-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring-color)]'
 
 function sectionIntro(section: SuggestionSection): string {
   return {
@@ -769,22 +693,16 @@ function localDateTimeValue(value: string | undefined): string {
   return value ? value.slice(0, 16) : ''
 }
 
-function textValue(value: string | string[] | undefined): string {
-  return typeof value === 'string' ? value : ''
-}
+
 
 function labelMaterialType(value: string): string {
   return `${value[0].toUpperCase()}${value.slice(1)} Material`
 }
 
-function label(value: string): string {
-  return value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
-}
+
 
 function labelValue(value: string): string {
   return value[0].toUpperCase() + value.slice(1)
 }
 
-function arrayValue(value: string | string[] | undefined): string[] {
-  return Array.isArray(value) ? value : []
-}
+
