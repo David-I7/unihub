@@ -9,19 +9,16 @@ The `Contribute` page is visible in the main navigation, but it is framed as a m
 ```text
 Maintainer contributions
 
-Use this page for repository-level course data changes, advanced corrections, and preparing GitHub issues or pull requests for maintainer review. If you are a student fixing a specific course item, start from that course page and use Suggest update.
+Use this page for repository-level course data changes, advanced corrections, and preparing GitHub issues for maintainer review. If you are a student fixing a specific course item, start from that course page and use Suggest update.
 ```
 
-The contribution page lets users choose:
+The contribution page prepares:
 
 ```text
 Create GitHub issue
-Open pull request
 ```
 
-Both modes are assisted by the UI. The app validates the proposed contribution and generates the target path plus repository JSON behind the scenes.
-
-The advanced `Contribute` page keeps both modes. It defaults to GitHub issue because issue creation is safer for students and semi-technical contributors who arrive there directly. Pull request assist remains available for maintainers and confident contributors.
+The app validates the proposed contribution and generates the target path plus repository JSON behind the scenes. Pull request assist is not part of the product or domain contract.
 
 ## Contribution Tasks
 
@@ -95,7 +92,7 @@ The UI should keep these as suggestion intents and only map them to contribution
 
 When adding or updating an Assignment Deadline or Exam from the student suggestion flow, the form displays existing compatible Materials in a multiselect. Assignment forms show only `assignment` Materials; Exam forms show only `exam` Materials. If no compatible Materials exist, the form should show an empty state that directs the user to add the needed Material first.
 
-After a student fills a suggestion form, the normal suggestion flow shows a human-readable review summary only. It must not show JSON, repository target paths, pull request bodies, or raw contribution type names.
+After a student fills a suggestion form, the normal suggestion flow shows a human-readable review summary only. It must not show JSON, repository target paths, or raw contribution type names.
 
 Example summary:
 
@@ -126,7 +123,7 @@ The handoff action is:
 Continue to GitHub
 ```
 
-The canonical GitHub repository for generated issue and pull request links is:
+The canonical GitHub repository for generated issue links is:
 
 ```text
 https://github.com/David-I7/unihub
@@ -224,7 +221,7 @@ The generated output must create the new Course JSON file and generate the match
 
 Manual path entry should be hidden or treated as advanced.
 
-Catalog-structure contributions require an explicit hierarchy target. `add-study-year`, `add-semester`, and `add-new-course` require `academicYearId`; `add-semester` and `add-new-course` also require `studyYearId`; `add-new-course` also requires `semesterId`. These fields must not be presented as optional in the UI because the Catalog hierarchy cannot be updated unambiguously without them.
+Catalog-structure contributions are authored through Add Semester. Add Semester can optionally create a new Academic Year and/or Study Year in the same contribution when the maintainer explicitly toggles those sections open. New Course creation requires `academicYearId`, `studyYearId`, and `semesterId`. These fields must not be presented as optional in the UI because the Catalog hierarchy cannot be updated unambiguously without them.
 
 Catalog labels and IDs should not be independently typed when one can be derived from the other. The normal flow is label-first: the user enters the label, the UI derives the ID, and the generated ID is shown as secondary text. Maintainers may override the generated ID only in an advanced/moderator flow when the normal derivation is wrong.
 
@@ -260,22 +257,6 @@ The generated JSON is placed directly in the issue body through the GitHub issue
 
 Issues are reviewed and approved by maintainers before data is merged.
 
-## Pull Request Flow
-
-For pull requests, the UI provides:
-
-```text
-Target file path
-Generated file diffs
-Suggested PR title
-Suggested PR body
-GitHub edit/create link when possible
-```
-
-PR bodies follow the same maintainer-facing rule as issue bodies: include the proposed diff and resulting new state only. Because the app is static and unauthenticated, one-click PR creation is not required. The UI should copy the generated JSON and PR body to the clipboard for the pull request assist flow, then send the contributor to the relevant GitHub edit/create link when possible.
-
-Pull request assist links must target canonical `public/data` files. Existing Course and Catalog changes should use GitHub edit links for the target file. New Course creation should use a GitHub create-file link for the new Course JSON file and include the `catalog.json` diff in the copied PR body, because a plain GitHub file URL cannot atomically create the Course file and edit `catalog.json` in one step. The PR assist step should state this limitation explicitly.
-
 ## Validation Behavior
 
 The contribution UI blocks invalid data.
@@ -303,7 +284,6 @@ Warning examples:
 
 ```text
 Grade weights total below 100
-No professors listed
 Exam date not announced
 Course has no materials yet
 ```

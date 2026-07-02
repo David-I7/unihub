@@ -6,7 +6,7 @@ Status: ready-for-agent
 
 Students need Course detail pages to explain what a Course is like, not only list Materials, Assignment Deadlines, Course Sessions, and Exams. Today the Course detail view does not have a dedicated About section for Course description, Material Difficulty, Passing Difficulty, and Grade Breakdown.
 
-Maintainers and contributors also need the Course data model, validation, student Suggestion flow, maintainer Contribution flow, and GitHub handoff output to agree. Several fields are currently ambiguous or stale: Exams should require Grade Weight and support optional location and exam-specific notes, Assignment Deadlines should no longer have a separate submission URL, Academic Year targeting must not be treated as optional in Catalog changes, new Course Contributions must include the Catalog change that makes the Course discoverable, and generated GitHub issue/PR bodies should be review artifacts containing only the diff and resulting state.
+Maintainers and contributors also need the Course data model, validation, student Suggestion flow, maintainer Contribution flow, and GitHub handoff output to agree. Several fields are currently ambiguous or stale: Exams should require Grade Weight and support optional location and exam-specific notes, Assignment Deadlines should no longer have a separate submission URL, Academic Year targeting must not be treated as optional in Catalog changes, new Course Contributions must include the Catalog change that makes the Course discoverable, and generated GitHub issue bodies should be review artifacts containing only the diff and resulting state.
 
 ## Solution
 
@@ -14,7 +14,7 @@ Add a Course About section to Course detail pages. The About section shows Cours
 
 Bring the data model and workflows into sync with that product behavior. Exams require Grade Weight, may include optional location, and may include optional description for exam-specific notes. Assignment Deadline submission details live in the Assignment Deadline description, not in a separate submission URL. Student and maintainer forms for Exams and Assignment Deadlines link existing compatible Materials through a multiselect. Maintainer forms support explicit repeated additions for Materials, Assignment Deadlines, Exams, and Course Sessions.
 
-Generated Contributions should be complete review artifacts. Adding a new Course generates both the new Course state and the matching Catalog diff. GitHub issue and PR bodies contain only the proposed diff and new state. Pull request assist links target canonical public data files and acknowledge that plain GitHub file URLs cannot atomically create a new Course file and edit the Catalog in one step.
+Generated Contributions should be complete review artifacts. Adding a new Course generates both the new Course state and the matching Catalog diff. GitHub issue bodies contain only the proposed diff and new state. Pull request assist is removed from the product and domain contract.
 
 ## User Stories
 
@@ -79,14 +79,9 @@ Generated Contributions should be complete review artifacts. Adding a new Course
 59. As a maintainer, I want new Course Contributions to include the new Course state, so that the Course file can be reviewed.
 60. As a maintainer, I want a new Course Contribution to be considered incomplete without the Catalog update, so that orphaned Course files are not produced.
 61. As a contributor, I want issue bodies to contain only diff and new state, so that maintainers review the actual proposed change.
-62. As a contributor, I want PR bodies to contain only diff and new state, so that pull request review stays focused.
 63. As a student, I want the in-app Suggestion summary to remain human-readable, so that I understand my Suggestion before leaving UniHub.
 64. As a maintainer, I do not want GitHub issue bodies to include validation chatter, so that review is not noisy.
 65. As a maintainer, I do not want GitHub issue bodies to include raw form metadata, so that the review artifact is clean.
-66. As a maintainer, I want pull request assist links to target canonical public data files, so that contributors edit the right source of truth.
-67. As a maintainer, I want existing Course changes to use GitHub edit links, so that pull request assist opens the correct file.
-68. As a maintainer, I want new Course creation to use a GitHub create-file link where possible, so that the contributor starts in the right place.
-69. As a maintainer, I want multi-file PR limitations explained in the PR assist step, so that contributors understand why the Catalog diff must be copied.
 70. As a reviewer, I want repository validation, Contribution validation, and UI generation rules to agree, so that users do not hit avoidable mismatches.
 
 ## Implementation Decisions
@@ -137,12 +132,8 @@ Generated Contributions should be complete review artifacts. Adding a new Course
 - New Course Contributions generate both the new Course state and the Catalog diff that makes the Course discoverable.
 - A new Course Contribution is incomplete if it creates Course data without the corresponding Catalog update.
 - GitHub issue bodies contain only the proposed diff and the resulting new state.
-- GitHub PR bodies contain only the proposed diff and the resulting new state.
 - In-app student Suggestion summaries remain human-readable before GitHub handoff.
-- Pull request assist links target canonical public data files.
-- Existing-file PR assist should use GitHub edit links.
-- New Course PR assist should use a GitHub create-file link for the Course data and include the Catalog diff in copied PR content.
-- PR assist copy should explicitly state that plain GitHub file URLs cannot atomically create one file and edit another.
+- Pull request assist is removed from the Contribution product and domain contract.
 - No ADR is needed for this work because it refines product data and workflow behavior within existing architecture decisions.
 
 ## Testing Decisions
@@ -168,8 +159,6 @@ Generated Contributions should be complete review artifacts. Adding a new Course
 - Contribution validation tests should prove compatible Material References remain enforced for Assignment Deadlines and Exams.
 - Contribution generation tests should prove new Course output includes both Course data and the Catalog change.
 - Contribution generation tests should prove generated issue bodies include only diff and new state.
-- Contribution generation tests should prove generated PR bodies include only diff and new state.
-- Contribution generation tests should prove pull request assist targets canonical public data paths.
 - UI behavior that is hard to cover through domain tests should be checked through route/component-level tests or a lightweight browser verification pass.
 - UI checks should cover Course About visibility, difficulty badge labels/colors, absence of difficulty labels on Home course cards, compatible-Material multiselect filtering, explicit add-another controls, required Catalog target fields, and label-first ID generation.
 - Run the repository test suite after implementation.
@@ -183,7 +172,6 @@ Generated Contributions should be complete review artifacts. Adding a new Course
 - Adding free-form Course-level assignment notes or exam notes outside existing descriptions.
 - Adding per-item Suggestion actions beyond the existing section-level Suggestion model.
 - Supporting direct in-app writes to GitHub or a backend.
-- Supporting one-click atomic multi-file pull request creation from the static app.
 - Adding accounts, maintainer authentication, or in-app Suggestion status tracking.
 - Changing Course Path semantics.
 - Changing existing Course Session status values.
@@ -195,4 +183,4 @@ Generated Contributions should be complete review artifacts. Adding a new Course
 
 The domain glossary and product docs have already been updated with the settled terminology and workflow rules. Existing Course JSON under the repository's Course data fixtures has also been migrated to include explicit `unknown` difficulty fields.
 
-This PRD intentionally builds on existing ADRs for GitHub-native Contributions, zod validation, public canonical data, and student Suggestions as the contextual front door. Implementation should treat those ADRs as constraints rather than reopen them.
+This PRD intentionally builds on existing ADRs for issue-only Contribution handoff, zod validation, public canonical data, and student Suggestions as the contextual front door. Implementation should treat those ADRs as constraints rather than reopen them.

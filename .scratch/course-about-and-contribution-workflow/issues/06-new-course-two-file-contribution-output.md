@@ -8,11 +8,15 @@ Status: ready-for-agent
 
 ## What to build
 
-Make new Course Contributions complete. Creating a Course generates valid Course JSON, including default `unknown` difficulty values, and the matching Catalog diff that adds the Course to the selected Semester. A generated new Course Contribution is incomplete if it does not include both the Course file state and the Catalog update.
+Make new Course Contributions complete. Creating a Course generates valid Course JSON, including at least one professor, default `unknown` difficulty values, and the matching Catalog diff that adds the Course to the selected Semester. A generated new Course Contribution is incomplete if it does not include both the Course file state and the Catalog update.
 
 ## Acceptance criteria
 
 - [ ] New Course generation includes Course ID, title, professors, optional description, Material Difficulty, Passing Difficulty, and empty child arrays.
+- [ ] New Course generation requires at least one professor.
+- [ ] Repository Course validation rejects canonical Course records with an empty professor list.
+- [ ] The New Course form labels professors as required, not optional.
+- [ ] The New Course professor field placeholder tells maintainers that multiple professors are separated with commas.
 - [ ] New Course generation defaults Material Difficulty and Passing Difficulty to `unknown` unless the user selects different values.
 - [ ] New Course generation targets the canonical public Course data path.
 - [ ] New Course generation produces a Catalog diff that adds the Course under the selected Semester.

@@ -223,4 +223,4 @@ The contribution UI must not ask contributors to type `addedAt` or `updatedAt`. 
 
 ## Data Validation
 
-The repo validates catalog data, course data, and contribution payloads with zod schemas. The same validation rules are used by CI/development checks and by the contribution UI before generating GitHub issues or pull request instructions. Zod owns runtime validation; existing TypeScript domain types may remain unless schema inference clearly reduces duplication. After equivalent zod schemas are in place and tests pass, legacy JSON Schema files should be removed so there is only one validation source.
+The repo validates catalog data, course data, and contribution payloads with zod schemas. The same validation rules are used by CI/development checks and by the contribution UI before generating GitHub issues. Zod owns runtime validation; existing TypeScript domain types may remain unless schema inference clearly reduces duplication. After equivalent zod schemas are in place and tests pass, legacy JSON Schema files should be removed so there is only one validation source.

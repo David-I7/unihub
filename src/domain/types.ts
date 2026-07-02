@@ -42,7 +42,7 @@ export type Catalog = {
         id: string;
         label: string;
         order: number;
-        courses?: Array<{ id: string }>;
+        courses?: Array<{ id: string; title?: string }>;
       }>;
     }>;
   }>;
