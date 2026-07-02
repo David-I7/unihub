@@ -1,4 +1,5 @@
-import { Award, BookOpen, CalendarClock, ClipboardCheck, Pencil, Plus, XCircle } from 'lucide-react'
+import { Pencil, Plus, XCircle } from 'lucide-react'
+import { IconBadge, ItemTypeIcon } from '@/components/IconBadge'
 import { deriveActivity } from '@/domain'
 import { formatDate } from '@/lib/format'
 import { headingClass, mutedTextClass, panelClass } from './styles'
@@ -10,9 +11,9 @@ export function ActivityPanel({ activity }: { activity: ReturnType<typeof derive
       <h2 className={headingClass}>Activity</h2>
       {activity.map((item) => (
         <article key={item.id} className="flex gap-3 border-t border-[var(--border-color)] py-3">
-          <span className={`mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg ${activityTypeClass(item.type)}`}>
-            <ActivityTypeIcon type={item.type} />
-          </span>
+          <IconBadge tone={item.type === 'lecture' ? 'lecture' : item.type}>
+            <ItemTypeIcon type={item.type} size={18} />
+          </IconBadge>
           <div className="min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <time className="text-xs text-[var(--color-time)]">{formatDate(item.occurredAt)}</time>
@@ -30,17 +31,6 @@ export function ActivityPanel({ activity }: { activity: ReturnType<typeof derive
   )
 }
 
-function ActivityTypeIcon({ type }: { type: ReturnType<typeof deriveActivity>[number]['type'] }) {
-  const icons = {
-    material: BookOpen,
-    assignment: ClipboardCheck,
-    lecture: CalendarClock,
-    exam: Award,
-  }
-  const Icon = icons[type]
-  return <Icon aria-hidden="true" size={18} />
-}
-
 function ActivityActionIcon({ action }: { action: ReturnType<typeof deriveActivity>[number]['action'] }) {
   const icons = {
     added: Plus,
@@ -49,15 +39,6 @@ function ActivityActionIcon({ action }: { action: ReturnType<typeof deriveActivi
   }
   const Icon = icons[action]
   return <Icon aria-hidden="true" size={12} />
-}
-
-function activityTypeClass(type: ReturnType<typeof deriveActivity>[number]['type']) {
-  return {
-    material: 'bg-[var(--status-upcoming-bg)] text-[var(--status-upcoming-text)]',
-    assignment: 'bg-[var(--status-assignment-bg)] text-[var(--status-assignment-text)]',
-    lecture: 'bg-[var(--status-scheduled-bg)] text-[var(--status-scheduled-text)]',
-    exam: 'bg-[var(--status-exam-bg)] text-[var(--status-exam-text)]',
-  }[type]
 }
 
 function activityActionTone(action: ReturnType<typeof deriveActivity>[number]['action']): StatusTone {

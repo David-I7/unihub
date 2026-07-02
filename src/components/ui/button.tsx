@@ -3,13 +3,13 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)]',
-        outline: 'border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-main)] hover:border-[var(--primary)]',
-        ghost: 'text-[var(--text-main)] hover:bg-[var(--bg-rail-hover)]',
+        default: 'bg-[var(--primary)] text-white hover:bg-[var(--primary-hover)] shadow-sm',
+        outline: 'border border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-main)] hover:border-[var(--primary)] hover:text-[var(--primary)] shadow-sm',
+        ghost: 'text-[var(--text-main)] hover:bg-[var(--bg-rail-hover)] hover:text-[var(--primary)]',
       },
       size: {
         default: 'h-10 px-4 py-2',

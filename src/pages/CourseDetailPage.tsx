@@ -146,11 +146,10 @@ function AssignmentsTab({ view, onSuggest }: { view: CourseDetailView; onSuggest
       {view.assignments.map((assignment) => (
         <article key={assignment.id} className={`${panelClass} grid gap-3 px-4 py-3.5`}>
           <div className="flex items-start gap-3">
-            <IconBadge tone="assignment"><ClipboardCheck aria-hidden="true" size={20} /></IconBadge>
+            <IconBadge tone="assignment"><Clipboard aria-hidden="true" size={20} /></IconBadge>
             <div className="min-w-0">
               <h2 className={headingClass}>{assignment.title}</h2>
               <div className="flex flex-wrap gap-2">
-                <span className={statusChipClass(assignment.status === 'completed' ? 'completed' : 'upcoming')}>{assignment.status}</span>
                 <span className={statusChipClass('assignment')}>Due {formatDate(assignment.dueAt)}</span>
                 {assignment.gradeWeight !== undefined && <span className={statusChipClass('scheduled')}>{assignment.gradeWeight}% Grade Weight</span>}
               </div>
@@ -180,7 +179,7 @@ function LecturesTab({ view, onSuggest }: { view: CourseDetailView; onSuggest: (
       {view.courseSessions.map((session) => (
         <article key={session.id} className={`${panelClass} grid gap-3 px-4 py-3.5`}>
           <div className="flex items-start gap-3">
-            <IconBadge tone={session.status === 'cancelled' ? 'cancelled' : 'lecture'}><GraduationCap aria-hidden="true" size={20} /></IconBadge>
+            <IconBadge tone={session.status === 'cancelled' ? 'cancelled' : 'lecture'}><Users aria-hidden="true" size={20} /></IconBadge>
             <div className="min-w-0">
               <h2 className={headingClass}>{session.title}</h2>
               <div className="flex flex-wrap gap-2">
@@ -218,7 +217,7 @@ function ExamsTab({ view, onSuggest }: { view: CourseDetailView; onSuggest: () =
       {view.exams.map((exam) => (
         <article key={exam.id} className={`${panelClass} grid gap-3 px-4 py-3.5`}>
           <div className="flex items-start gap-3">
-            <IconBadge tone="exam"><Award aria-hidden="true" size={20} /></IconBadge>
+            <IconBadge tone="exam"><GraduationCap aria-hidden="true" size={20} /></IconBadge>
             <div className="min-w-0">
               <h2 className={headingClass}>{exam.title}</h2>
               <div className="flex flex-wrap gap-2">
@@ -301,7 +300,7 @@ function SuggestionPanel({
             <h2 id="suggestion-dialog-title" className={headingClass}>Suggest update</h2>
             <p className={`m-0 ${mutedTextClass}`}>{sectionIntro(section)}</p>
           </div>
-          <Button type="button" variant="ghost" size="icon" aria-label="Close suggestion flow" onClick={onClose}>
+          <Button type="button" variant="ghost" size="icon" aria-label="Close suggestion flow" className="transition-transform hover:rotate-90 hover:scale-110 duration-200 cursor-pointer" onClick={onClose}>
             <X aria-hidden="true" size={18} />
           </Button>
         </div>

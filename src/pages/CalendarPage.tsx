@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AcademicContextPicker } from '@/components/AcademicContextPicker'
+import { IconBadge, ItemTypeIcon } from '@/components/IconBadge'
 import { PageHeader } from '@/components/PageHeader'
 import { Select } from '@/components/ui/select'
 import { compactFilterLabelClass, headingClass, mutedTextClass, pageClass, panelClass } from '@/components/styles'
@@ -79,11 +80,20 @@ export function CalendarPage({
       <div className="grid gap-3">
         {events.map((event) => (
           <article key={event.id} className={`${panelClass} grid grid-cols-[150px_1fr] items-start gap-4 px-4 py-3.5 max-[820px]:grid-cols-1 max-[820px]:gap-1`}>
-            <time className="mb-1 block text-xs text-[var(--color-time)]">{formatDate(event.startsAt)}</time>
+            <div className="flex flex-col gap-2 max-[820px]:flex-row max-[820px]:items-center max-[820px]:justify-between">
+              <time className="block text-xs text-[var(--color-time)] max-[820px]:order-2">{formatDate(event.startsAt)}</time>
+              <div className="max-[820px]:order-1">
+                <IconBadge tone={event.status.includes('cancelled') ? 'cancelled' : event.type}>
+                  <ItemTypeIcon type={event.type} size={18} />
+                </IconBadge>
+              </div>
+            </div>
             <div>
               <h2 className={headingClass}>{event.title}</h2>
               <p className={`m-0 mb-2 ${mutedTextClass}`}>{event.courseTitle}</p>
-              <span className={statusChipClass(eventStatusTone(event.status))}>{event.status}</span>
+              <span className={statusChipClass(eventStatusTone(event.status))}>
+                {cleanStatusLabel(event.status)}
+              </span>
             </div>
           </article>
         ))}
@@ -91,4 +101,8 @@ export function CalendarPage({
       </div>
     </div>
   )
+}
+
+function cleanStatusLabel(status: string): string {
+  return status.replace(/ (exam|assignment|lecture)$/, '')
 }

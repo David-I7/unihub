@@ -452,7 +452,7 @@ test('GitHub issue links stay small while issue bodies retain full review data',
   })
 
   assert.equal(issue.valid, true)
-  assert.match(issue.issueBody ?? '', /Current state/)
+  assert.match(issue.issueBody ?? '', /Diff/)
   assert.match(issue.issueBody ?? '', /Updated state/)
   assert((issue.issueBody ?? '').length > 8000)
   assert((issue.issueUrl ?? '').length < 1000)
