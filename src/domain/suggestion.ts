@@ -1,4 +1,5 @@
 import { prepareGeneratedContribution, type GithubTarget } from './contribution.js'
+import { isRecord } from './records.js'
 import type { ContributionType, LoadedCourse, RepositorySnapshot, ValidationResult } from './types.js'
 
 export type SuggestionSection = 'course-info' | 'materials' | 'assignments' | 'lectures' | 'exams'
@@ -344,6 +345,14 @@ export function prepareSuggestion(options: {
   now?: () => string
 }): PreparedSuggestion {
   const { repository, course, intent, input, githubTarget = defaultGithubTarget, now } = options
+
+  if (Array.isArray(input) || (isRecord(input) && Array.isArray((input as Record<string, unknown>).items))) {
+    return {
+      valid: false,
+      errors: ['Student Suggestions only support single items.'],
+      warnings: [],
+    }
+  }
 
   const handler = suggestionHandlers[intent]
   if (!handler) {

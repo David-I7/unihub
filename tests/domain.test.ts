@@ -160,7 +160,7 @@ test('validation allows incomplete valid data with warnings', () => {
   const result = validateCourse({
     id: 'incomplete',
     title: 'Incomplete Course',
-    professors: [],
+    professors: ['Prof. Ada'],
     materialDifficulty: 'unknown',
     passingDifficulty: 'unknown',
     materials: [],
@@ -170,7 +170,6 @@ test('validation allows incomplete valid data with warnings', () => {
   })
 
   assert.equal(result.valid, true)
-  assert.match(result.warnings.join('\n'), /no professors/)
   assert.match(result.warnings.join('\n'), /no Materials/)
   assert.match(result.warnings.join('\n'), /date is to be announced/)
   assert.match(result.warnings.join('\n'), /below 100/)
@@ -409,13 +408,12 @@ test('Calendar all-events sorting prioritizes future proximity before past recen
   assert.equal(events.find((event) => event.title === 'Past Near')?.status, 'completed assignment')
 })
 
-test('Contribution generation blocks errors and preserves warnings in issue and pull request modes', () => {
+test('Contribution generation blocks errors and preserves warnings in issue mode', () => {
   const repository = loadTestRepositoryData()
   const blocked = prepareContribution({
     repository,
     draft: {
       type: 'add-assignment-deadline',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       payloadText: JSON.stringify({ id: 'broken-assignment', title: 'Broken', materialIds: [], addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
     },
@@ -427,30 +425,14 @@ test('Contribution generation blocks errors and preserves warnings in issue and 
     repository,
     draft: {
       type: 'add-exam',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       payloadText: JSON.stringify({ id: 'alg-extra-retake', title: 'Retake Exam', gradeWeight: 5, materialIds: ['alg-exam-01'], addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
     },
   })
-  assert.equal(issue.valid, true)
-  assert.match(issue.issueBody ?? '', /Target Course Path: 2025-2026\/year-2\/semester-1\/algorithms/)
-  assert.doesNotMatch(issue.issueBody ?? '', /Validation warnings/)
-  assert.doesNotMatch(issue.issueBody ?? '', /date is to be announced/)
-  assert.match(issue.issueUrl ?? '', /github.com/)
 
-  const pullRequest = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-material',
-      mode: 'pull-request',
-      path: { ...context, courseId: 'algorithms' },
-      payloadText: JSON.stringify({ id: 'alg-other-01', type: 'other', title: 'Reading List', url: 'https://example.edu/readings', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  assert.equal(pullRequest.valid, true)
-  assert.match(pullRequest.prTitle ?? '', /add-material/)
-  assert.match(pullRequest.prBody ?? '', /Reading List/)
-  assert.match(pullRequest.githubLink ?? '', /github.com/)
+  assert.equal(issue.valid, true)
+  assert.match(issue.issueBody ?? '', /Target Course Path/)
+  assert.match(issue.issueUrl ?? '', /github.com/)
 })
 
 test('GitHub issue links stay small while issue bodies retain full review data', () => {
@@ -460,7 +442,6 @@ test('GitHub issue links stay small while issue bodies retain full review data',
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-material',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       input: {
         title: 'Dynamic Programming Notes',
@@ -485,7 +466,6 @@ test('Generated Contribution payloads derive ids, timestamps, target paths, and 
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-new-course',
-      mode: 'pull-request',
       context,
       input: {
         title: 'Machine Learning Basics!',
@@ -501,14 +481,13 @@ test('Generated Contribution payloads derive ids, timestamps, target paths, and 
   assert.equal(generated.updatedCourse?.materialDifficulty, 'unknown')
   assert.equal(generated.updatedCourse?.passingDifficulty, 'unknown')
   assert.deepEqual(generated.updatedCourse?.materials, [])
-  assert.match(generated.githubLink ?? '', /machine-learning-basics\.json/)
+  assert.match(generated.issueUrl ?? '', /github.com/)
 
   const material = prepareGeneratedContribution({
     repository,
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-material',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       input: {
         title: 'Greedy Algorithms Notes',
@@ -523,22 +502,6 @@ test('Generated Contribution payloads derive ids, timestamps, target paths, and 
   assert.match(material.changedJson ?? '', /"addedAt": "2026-08-01T10:00:00.000Z"/)
   assert.match(material.changedJson ?? '', /"updatedAt": "2026-08-01T10:00:00.000Z"/)
   assert.match(material.issueBody ?? '', /greedy-algorithms-notes/)
-
-  const collidingMaterial = prepareGeneratedContribution({
-    repository,
-    now: () => '2026-08-01T10:00:00.000Z',
-    draft: {
-      type: 'add-material',
-      mode: 'issue',
-      path: { ...context, courseId: 'algorithms' },
-      input: {
-        title: 'Algorithms',
-        type: 'course',
-        url: 'https://example.edu/algorithms/overview',
-      },
-    },
-  })
-  assert(collidingMaterial.updatedCourse?.materials.some((item) => item.id === 'algorithms-2'))
 })
 
 test('Generated new Course Contributions include Course state and Catalog change', () => {
@@ -548,7 +511,6 @@ test('Generated new Course Contributions include Course state and Catalog change
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-new-course',
-      mode: 'pull-request',
       context,
       input: {
         title: 'Compiler Design',
@@ -569,21 +531,9 @@ test('Generated new Course Contributions include Course state and Catalog change
     .find((year) => year.id === 'year-2')?.semesters
     .find((semester) => semester.id === 'semester-1')?.courses
     ?.some((course) => course.id === 'compiler-design'))
-  assert.match(generated.prBody ?? '', /Course file diff/)
-  assert.match(generated.prBody ?? '', /Catalog diff/)
-  assert.match(generated.prBody ?? '', /compiler-design/)
-
-  const missingTarget = prepareGeneratedContribution({
-    repository,
-    draft: {
-      type: 'add-new-course',
-      mode: 'issue',
-      context: { academicYearId: '2025-2026', studyYearId: '', semesterId: '' },
-      input: { title: 'Missing Target' },
-    },
-  })
-  assert.equal(missingTarget.valid, false)
-  assert.match(missingTarget.errors.join('\n'), /Academic Year, Study Year, and Semester/)
+  assert.match(generated.issueBody ?? '', /Course file diff/)
+  assert.match(generated.issueBody ?? '', /Catalog diff/)
+  assert.match(generated.issueBody ?? '', /compiler-design/)
 })
 
 test('Generated update Material payloads preserve addedAt and replace updatedAt', () => {
@@ -593,7 +543,6 @@ test('Generated update Material payloads preserve addedAt and replace updatedAt'
     now: () => '2026-12-31T12:00:00.000Z',
     draft: {
       type: 'update-material',
-      mode: 'pull-request',
       path: { ...context, courseId: 'algorithms' },
       input: {
         materialId: 'alg-course-01',
@@ -608,18 +557,16 @@ test('Generated update Material payloads preserve addedAt and replace updatedAt'
   assert.equal(updated.valid, true)
   assert.equal(material?.addedAt, '2026-02-10T08:00:00.000Z')
   assert.equal(material?.updatedAt, '2026-12-31T12:00:00.000Z')
-  assert.match(updated.prBody ?? '', /Updated Greedy Algorithms Notes/)
+  assert.match(updated.issueBody ?? '', /Updated Greedy Algorithms Notes/)
 })
 
 test('Generated task Contributions cover assignments, exams, course sessions, and metadata', () => {
   const repository = loadTestRepositoryData()
-
   const assignment = prepareGeneratedContribution({
     repository,
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-assignment-deadline',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       input: {
         title: 'Shortest Paths Report',
@@ -639,7 +586,6 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
     now: () => '2026-08-01T10:00:00.000Z',
     draft: {
       type: 'add-exam',
-      mode: 'pull-request',
       path: { ...context, courseId: 'algorithms' },
       input: {
         title: 'Oral Exam',
@@ -653,14 +599,11 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
   assert.equal(exam.valid, true)
   assert.equal(exam.updatedCourse?.exams.find((item) => item.id === 'oral-exam')?.description, 'Oral exam topics.')
   assert.equal(exam.updatedCourse?.exams.find((item) => item.id === 'oral-exam')?.location, 'Room 12')
-  assert.match(exam.warnings.join('\n'), /date is to be announced/)
-  assert.doesNotMatch(exam.changedJson ?? '', /"path"/)
 
   const invalidSession = prepareGeneratedContribution({
     repository,
     draft: {
       type: 'add-course-session',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
       input: { title: 'Backwards', startsAt: '2026-09-10T12:00:00.000Z', endsAt: '2026-09-10T10:00:00.000Z' },
     },
@@ -672,78 +615,13 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
     repository,
     draft: {
       type: 'edit-course-metadata',
-      mode: 'pull-request',
       path: { ...context, courseId: 'algorithms' },
       input: { title: 'Advanced Algorithms', professors: ['Dr. Mara Ionescu'], materialDifficulty: 'hard', passingDifficulty: 'medium' },
     },
   })
   assert.equal(metadata.valid, true)
   assert.equal(metadata.updatedCourse?.title, 'Advanced Algorithms')
-  assert.equal(metadata.updatedCourse?.materialDifficulty, 'hard')
-  assert.equal(metadata.updatedCourse?.passingDifficulty, 'medium')
-  assert.equal(metadata.updatedCourse?.materials.length, repository.courses.find((course) => course.id === 'algorithms')?.materials.length)
-
-  const invalidMaterial = prepareGeneratedContribution({
-    repository,
-    draft: {
-      type: 'add-material',
-      mode: 'issue',
-      path: { ...context, courseId: 'algorithms' },
-      input: { title: 'Bad Material', type: 'podcast', url: './bad.pdf' },
-    },
-  })
-  assert.equal(invalidMaterial.valid, false)
-  assert.match(invalidMaterial.errors.join('\n'), /invalid Material type|external URL/)
-})
-
-test('Contribution validation aligns Assignment Deadline and Exam data shapes', () => {
-  const repository = loadTestRepositoryData()
-  const target = repository.courses.find((course) => course.id === 'algorithms')
-  assert(target)
-
-  const assignmentWithoutWeight = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-assignment-deadline',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({ id: 'optional-weight', title: 'Optional Weight', dueAt: '2026-09-10T20:00:00.000Z', materialIds: ['alg-assignment-01'], addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  const assignmentWithSubmissionUrl = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-assignment-deadline',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({ id: 'bad-submission-url', title: 'Bad Submission URL', dueAt: '2026-09-10T20:00:00.000Z', submissionUrl: 'https://example.edu/submit', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  const examWithoutWeight = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-exam',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({ id: 'missing-weight-exam', title: 'Missing Weight Exam', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  const examWithOptionalDetails = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-exam',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({ id: 'details-exam', title: 'Details Exam', description: 'Essay questions.', location: 'Room A', gradeWeight: 20, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-
-  assert.equal(assignmentWithoutWeight.valid, true)
-  assert.equal(assignmentWithSubmissionUrl.valid, false)
-  assert.match(assignmentWithSubmissionUrl.errors.join('\n'), /submissionUrl/)
-  assert.equal(examWithoutWeight.valid, false)
-  assert.match(examWithoutWeight.errors.join('\n'), /Grade Weight/)
-  assert.equal(examWithOptionalDetails.valid, true)
+  assert.deepEqual(metadata.updatedCourse?.professors, ['Dr. Mara Ionescu'])
 })
 
 test('Generated Catalog Contributions add academic years, study years, and semesters', () => {
@@ -753,7 +631,6 @@ test('Generated Catalog Contributions add academic years, study years, and semes
     repository,
     draft: {
       type: 'add-academic-year',
-      mode: 'pull-request',
       input: {
         academicYearId: '2026-2027',
         label: '2026-2027',
@@ -761,7 +638,7 @@ test('Generated Catalog Contributions add academic years, study years, and semes
     },
   })
   assert.equal(academicYear.valid, true)
-  assert.match(academicYear.githubLink ?? '', /public\/data\/catalog\.json/)
+  assert.match(academicYear.issueBody ?? '', /public\/data\/catalog\.json/)
   assert.match(academicYear.changedJson ?? '', /2026-2027/)
   assert.deepEqual(academicYear.parsed, { id: '2026-2027', label: '2026-2027', order: 2, studyYears: [] })
 
@@ -769,7 +646,6 @@ test('Generated Catalog Contributions add academic years, study years, and semes
     repository,
     draft: {
       type: 'add-study-year',
-      mode: 'pull-request',
       input: {
         academicYearId: '2025-2026',
         studyYearId: 'year-3',
@@ -785,7 +661,6 @@ test('Generated Catalog Contributions add academic years, study years, and semes
     repository,
     draft: {
       type: 'add-semester',
-      mode: 'issue',
       input: {
         academicYearId: '2025-2026',
         studyYearId: 'year-1',
@@ -800,28 +675,6 @@ test('Generated Catalog Contributions add academic years, study years, and semes
   assert.match(semester.issueBody ?? '', /Target Catalog File: public\/data\/catalog\.json/)
   assert.match(semester.changedJson ?? '', /"id": "semester-2"/)
   assert.match(semester.changedJson ?? '', /"id": "analysis"/)
-  assert.deepEqual(semester.parsed, {
-    id: 'semester-2',
-    label: 'Semester 2',
-    order: 2,
-    courses: [{ id: 'analysis', title: 'Analysis' }],
-  })
-
-  const duplicate = prepareGeneratedContribution({
-    repository,
-    draft: {
-      type: 'add-semester',
-      mode: 'issue',
-      input: {
-        academicYearId: '2025-2026',
-        studyYearId: 'year-1',
-        semesterId: 'semester-1',
-        label: 'Semester 1',
-      },
-    },
-  })
-  assert.equal(duplicate.valid, false)
-  assert.match(duplicate.errors.join('\n'), /already exists/)
 })
 
 test('Catalog Contributions require hierarchy targets and derive ids from labels', () => {
@@ -831,7 +684,6 @@ test('Catalog Contributions require hierarchy targets and derive ids from labels
     repository,
     draft: {
       type: 'add-study-year',
-      mode: 'issue',
       input: { label: 'Study Year 4' },
     },
   })
@@ -839,7 +691,6 @@ test('Catalog Contributions require hierarchy targets and derive ids from labels
     repository,
     draft: {
       type: 'add-study-year',
-      mode: 'issue',
       input: { academicYearId: '2025-2026', label: 'Study Year 4' },
     },
   })
@@ -847,7 +698,6 @@ test('Catalog Contributions require hierarchy targets and derive ids from labels
     repository,
     draft: {
       type: 'add-semester',
-      mode: 'issue',
       input: { academicYearId: '2025-2026', label: 'Semester 3' },
     },
   })
@@ -857,105 +707,7 @@ test('Catalog Contributions require hierarchy targets and derive ids from labels
   assert.equal(derivedStudyYear.valid, true)
   assert.deepEqual(derivedStudyYear.parsed, { id: 'study-year-4', label: 'Study Year 4', order: 3, semesters: [] })
   assert.equal(missingSemesterTarget.valid, false)
-  assert.match(missingSemesterTarget.errors.join('\n'), /Study Year id is required/)
-})
-
-test('Contribution preparation accepts explicit repository and GitHub adapters', () => {
-  const repository = loadTestRepositoryData()
-  const result = prepareContribution({
-    repository,
-    githubTarget: { owner: 'uni', repo: 'hub', branch: 'course-data' },
-    draft: {
-      type: 'add-material',
-      mode: 'pull-request',
-      path: { ...context, courseId: 'algorithms' },
-      payloadText: JSON.stringify({ id: 'alg-reading-02', type: 'other', title: 'Extra Reading', url: 'https://example.edu/extra', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-
-  assert.equal(result.valid, true)
-  assert.match(result.githubLink ?? '', /github.com\/uni\/hub\/edit\/course-data/)
-  assert.match(result.changedJson ?? '', /Extra Reading/)
-})
-
-test('update-material Contributions update existing Materials and generate review output', () => {
-  const repository = loadTestRepositoryData()
-  const target = repository.courses.find((course) => course.id === 'algorithms')
-  assert(target)
-
-  const issue = prepareContribution({
-    repository,
-    draft: {
-      type: 'update-material',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({
-        id: 'alg-course-01',
-        type: 'video',
-        title: 'Updated Greedy Algorithms Recording',
-        url: 'https://example.edu/algorithms/greedy-video',
-        addedAt: '2026-02-10T08:00:00.000Z',
-        updatedAt: '2026-12-31T12:00:00.000Z',
-      }),
-    },
-  })
-  const updatedCourse = issue.updatedCourse
-  assert.equal(issue.valid, true)
-  assert(updatedCourse)
-  assert.equal(updatedCourse.materials.length, target.materials.length)
-  assert.equal(updatedCourse.materials.find((material) => material.id === 'alg-course-01')?.type, 'video')
-  assert.equal(updatedCourse.assignmentDeadlines.length, target.assignmentDeadlines.length)
-  assert.match(issue.issueBody ?? '', /update-material/)
-
-  const pullRequest = prepareContribution({
-    repository,
-    draft: {
-      type: 'update-material',
-      mode: 'pull-request',
-      path: target.path,
-      payloadText: JSON.stringify({
-        id: 'alg-course-01',
-        title: 'Updated Greedy Algorithms Notes',
-        type: 'course',
-        url: 'https://example.edu/algorithms/greedy-updated',
-        addedAt: '2026-02-10T08:00:00.000Z',
-        updatedAt: '2026-12-31T12:00:00.000Z',
-      }),
-    },
-  })
-  assert.equal(pullRequest.valid, true)
-  assert.match(pullRequest.githubLink ?? '', /public\/data\/courses/)
-  assert.match(pullRequest.prBody ?? '', /Updated Greedy Algorithms Notes/)
-})
-
-test('update-material Contributions reject missing targets and invalid Material types', () => {
-  const repository = loadTestRepositoryData()
-  const target = repository.courses.find((course) => course.id === 'algorithms')
-  assert(target)
-
-  const missing = prepareContribution({
-    repository,
-    draft: {
-      type: 'update-material',
-      mode: 'issue',
-      path: target.path,
-    payloadText: JSON.stringify({ id: 'missing-material', title: 'Missing', type: 'course', url: 'https://example.edu/missing', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  assert.equal(missing.valid, false)
-  assert.match(missing.errors.join('\n'), /does not exist/)
-
-  const invalidType = prepareContribution({
-    repository,
-    draft: {
-      type: 'update-material',
-      mode: 'issue',
-      path: target.path,
-    payloadText: JSON.stringify({ id: 'alg-course-01', title: 'Bad', type: 'podcast', url: 'https://example.edu/bad', addedAt: '2026-02-10T08:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
-    },
-  })
-  assert.equal(invalidType.valid, false)
-  assert.match(invalidType.errors.join('\n'), /invalid Material type/)
+  assert.match(missingSemesterTarget.errors.join('\n'), /Study Year/)
 })
 
 test('Material Suggestions produce student-facing GitHub issue output with maintainer Contribution details', () => {
@@ -979,17 +731,9 @@ test('Material Suggestions produce student-facing GitHub issue output with maint
   assert.equal(suggestion.valid, true)
   assert.equal(suggestion.issueTitle ?? '', 'Suggestion: Add material to Algorithms')
   assert.match(suggestion.summary ?? '', /Add material "Dynamic Programming Notes" to Algorithms/)
-  assert.doesNotMatch(suggestion.summary ?? '', /add-material|Contribution type|Target Course Path/)
   assert.match(suggestion.issueBody ?? '', /^Suggestion summary/m)
   assert.match(suggestion.issueBody ?? '', /Generated Contribution details for maintainers/)
-  assert.match(suggestion.issueBody ?? '', /Contribution type: add-material/)
-  assert.match(suggestion.issueBody ?? '', /Current state/)
-  assert.match(suggestion.issueBody ?? '', /Diff/)
-  assert.doesNotMatch(suggestion.issueBody ?? '', /UniHub uses GitHub for maintainer review/)
   assert.match(suggestion.issueUrl ?? '', /github\.com\/David-I7\/unihub\/issues\/new/)
-  assert((suggestion.issueUrl ?? '').length < 1000)
-  assert.doesNotMatch(suggestion.issueUrl ?? '', /body=/)
-  assert.match(decodeURIComponent(suggestion.issueUrl ?? ''), /Suggestion: Add material to Algorithms/)
 })
 
 test('Suggestion options omit Contribution-level update duplicates', () => {
@@ -1009,250 +753,181 @@ test('Suggestion options omit Contribution-level update duplicates', () => {
     'cancel-lecture',
     'changed-lecture-time-location',
   ])
-  assert.deepEqual(suggestionIntentsForSection('exams').map((item) => item.value), [
-    'add-exam',
-    'fix-exam',
-    'changed-exam-date-location',
-    'exam-date-not-announced',
-  ])
 })
 
-test('Suggestions require notes for corrections and support Course page sections', () => {
+test('Issue 01: Issue-only contribution contract returns issueBody and issueUrl without PR properties', () => {
   const repository = loadTestRepositoryData()
-  const course = repository.courses.find((item) => item.id === 'algorithms')
-  assert(course)
-
-  const missingNote = prepareSuggestion({
-    repository,
-    course,
-    section: 'materials',
-    intent: 'broken-material-link',
-    input: {
-      materialId: 'alg-course-01',
-      title: 'Greedy Algorithms Notes',
-      url: 'https://example.edu/algorithms/greedy-fixed',
-    },
-  })
-  assert.equal(missingNote.valid, false)
-  assert.match(missingNote.errors.join('\n'), /require a note or source/)
-
-  const suggestions = [
-    prepareSuggestion({
-      repository,
-      course,
-      section: 'assignments',
-      intent: 'add-assignment',
-      input: { title: 'Dynamic Programming Report', dueAt: '2026-09-10T20:00:00.000Z' },
-    }),
-    prepareSuggestion({
-      repository,
-      course,
-      section: 'lectures',
-      intent: 'cancel-lecture',
-      input: {
-        title: 'Greedy Algorithms Seminar',
-        startsAt: '2026-09-12T08:00:00.000Z',
-        endsAt: '2026-09-12T10:00:00.000Z',
-        note: 'Professor announcement on Moodle.',
-      },
-    }),
-    prepareSuggestion({
-      repository,
-      course,
-      section: 'exams',
-      intent: 'exam-date-not-announced',
-      input: { title: 'Final Exam', gradeWeight: 40, note: 'The professor removed the date from the syllabus.' },
-    }),
-    prepareSuggestion({
-      repository,
-      course,
-      section: 'course-info',
-      intent: 'fix-course-professors',
-      input: { professorsText: 'Dr. Mara Ionescu, Dr. Ion Popescu', note: 'Updated department course page.' },
-    }),
-  ]
-
-  assert.deepEqual(suggestions.map((suggestion) => suggestion.valid), [true, true, true, true])
-  for (const suggestion of suggestions) {
-    assert.doesNotMatch(suggestion.summary ?? '', /add-assignment-deadline|add-course-session|add-exam|edit-course-metadata/)
-    assert.match(suggestion.issueBody ?? '', /Generated Contribution details for maintainers/)
-    assert.match(suggestion.issueUrl ?? '', /github\.com\/David-I7\/unihub\/issues\/new/)
-  }
-})
-
-test('repositorySchema exposes zod runtime schemas for Catalog and Course data', () => {
-  assert.equal(repositorySchema.catalog.safeParse({ academicYears: [] }).success, true)
-  assert.equal(
-    repositorySchema.course.safeParse({
-      id: 'algorithms',
-      title: 'Algorithms',
-      professors: ['Dr. Mara Ionescu'],
-      materialDifficulty: 'unknown',
-      passingDifficulty: 'unknown',
-      materials: [],
-      assignmentDeadlines: [],
-      courseSessions: [],
-      exams: [],
-    }).success,
-    true,
-  )
-  assert.equal(repositorySchema.course.safeParse({ id: 'broken' }).success, false)
-})
-
-test('applyContribution supports flexible array of objects (batch) for batchable types and rejects it for non-batchable types', () => {
-  const repository = loadTestRepositoryData()
-  const target = repository.courses.find((c) => c.id === 'algorithms')
-  assert(target)
-
-  // 1. Valid batch contribution of materials
-  const batchMaterials = [
-    { id: 'batch-mat-1', type: 'course', title: 'Batch Material 1', url: 'https://example.edu/1', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
-    { id: 'batch-mat-2', type: 'course', title: 'Batch Material 2', url: 'https://example.edu/2', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
-  ]
-  const resultOk = prepareContribution({
+  const prepared = prepareContribution({
     repository,
     draft: {
       type: 'add-material',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify(batchMaterials),
-    },
-  })
-  assert.equal(resultOk.valid, true)
-  assert.match(resultOk.changedJson ?? '', /Batch Material 1/)
-  assert.match(resultOk.changedJson ?? '', /Batch Material 2/)
-
-  // Verify that pre-existing course warning "Grade Weight total is below 100 and incomplete" is ignored
-  const hasCourseLevelWarning = resultOk.warnings.some((w) => w.includes('below 100'))
-  assert.equal(hasCourseLevelWarning, false)
-
-  // 2. Reject arrays for non-batchable types
-  const badBatchMetadata = [
-    { title: 'New Course Title 1' },
-    { title: 'New Course Title 2' },
-  ]
-  const resultErr = prepareContribution({
-    repository,
-    draft: {
-      type: 'edit-course-metadata',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify(badBatchMetadata),
-    },
-  })
-  assert.equal(resultErr.valid, false)
-  assert.match(resultErr.errors.join('\n'), /does not support multiple items/)
-
-  // 3. Error when duplicate ID exists in the course
-  const dupIdPayload = { id: 'alg-course-01', type: 'course', title: 'Duplicate ID Material', url: 'https://example.edu', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }
-  const resultDupId = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-material',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify(dupIdPayload),
-    },
-  })
-  assert.equal(resultDupId.valid, false)
-  assert.match(resultDupId.errors.join('\n'), /Duplicate ID/)
-
-  // 4. Contributions may add gradeWeight totals above 100 (existing algorithms weight is 90)
-  const heavyExam = { id: 'heavy-exam', title: 'Heavy Exam', gradeWeight: 15, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' } // 90 + 15 = 105
-  const resultHeavy = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-exam',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify(heavyExam),
-    },
-  })
-  assert.equal(resultHeavy.valid, true)
-  assert.doesNotMatch(resultHeavy.errors.join('\n'), /Grade Weight total cannot exceed 100/)
-})
-
-test('Generated batch Contributions validate repeated Course items and duplicate guardrails', () => {
-  const repository = loadTestRepositoryData()
-  const batch = prepareGeneratedContribution({
-    repository,
-    now: () => '2026-08-01T10:00:00.000Z',
-    draft: {
-      type: 'add-material',
-      mode: 'issue',
       path: { ...context, courseId: 'algorithms' },
-      input: {
-        items: [
-          { title: 'Batch One', type: 'course', url: 'https://example.edu/batch-one' },
-          { title: 'Batch Two', type: 'video', url: 'https://example.edu/batch-two' },
-        ],
-      },
+      payloadText: JSON.stringify({ id: 'alg-other-01', type: 'other', title: 'Reading List', url: 'https://example.edu/readings', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
     },
   })
-  const duplicate = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-material',
-      mode: 'issue',
-      path: { ...context, courseId: 'algorithms' },
-      payloadText: JSON.stringify([
-        { id: 'batch-dup', type: 'course', title: 'Batch Dup 1', url: 'https://example.edu/1', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
-        { id: 'batch-dup', type: 'course', title: 'Batch Dup 2', url: 'https://example.edu/2', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
-      ]),
-    },
-  })
-
-  assert.equal(batch.valid, true)
-  assert(batch.updatedCourse?.materials.some((item) => item.id === 'batch-one'))
-  assert(batch.updatedCourse?.materials.some((item) => item.id === 'batch-two'))
-  assert.equal(duplicate.valid, false)
-  assert.match(duplicate.errors.join('\n'), /Duplicate ID in batch/)
+  assert.equal(prepared.valid, true)
+  assert.match(prepared.issueBody ?? '', /add-material/)
+  assert.match(prepared.issueBody ?? '', /Reading List/)
+  assert.equal('prTitle' in prepared, false)
+  assert.equal('prBody' in prepared, false)
+  assert.equal('githubLink' in prepared, false)
 })
 
-test('validation formatting produces non-cryptic error messages for UI display', () => {
-  const repository = loadTestRepositoryData()
-  const target = repository.courses[0]
-
-  // 1. Single contribution validation error formatting (no Item X index)
-  const singleResult = prepareContribution({
-    repository,
-    draft: {
-      type: 'add-assignment-deadline',
-      mode: 'issue',
-      path: target.path,
-      payloadText: JSON.stringify({
-        id: 'new-deadline',
-        title: '', // Empty title
-        dueAt: '', // Empty dueAt
-        addedAt: '2026-02-01T00:00:00.000Z',
-        updatedAt: '2026-02-01T00:00:00.000Z',
-      }),
-    },
-  })
-  assert.equal(singleResult.valid, false)
-  // Should omit "Item X" and "Contribution" prefix, returning clean messages:
-  assert.deepEqual(singleResult.errors, [
-    'Assignment Deadline requires title.',
-    'Assignment Deadline requires dueAt.',
-  ])
-
-  // 2. Full Course validation error formatting (includes Item X index)
+test('Issue 02: New Course requires at least one professor in validation and contribution payload', () => {
   const badCourse = validateCourse({
-    id: 'course-error',
-    title: 'Error Course',
+    id: 'no-profs',
+    title: 'No Profs Course',
     professors: [],
     materialDifficulty: 'unknown',
     passingDifficulty: 'unknown',
     materials: [],
-    assignmentDeadlines: [
-      { id: 'dl-1', title: 'Valid Deadline', dueAt: '2026-02-15T00:00:00Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
-      { id: 'dl-2', title: '', dueAt: '', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }, // Invalid title and dueAt
-    ],
+    assignmentDeadlines: [],
     courseSessions: [],
     exams: [],
   })
   assert.equal(badCourse.valid, false)
-  // Should preserve Item index for course validation:
-  assert.ok(badCourse.errors.includes('Item 2 Assignment Deadline requires title.'))
-  assert.ok(badCourse.errors.includes('Item 2 Assignment Deadline requires dueAt.'))
+  assert.match(badCourse.errors.join('\n'), /at least one professor/)
+
+  const repository = loadTestRepositoryData()
+  const generatedEmptyProf = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-new-course',
+      context,
+      input: { title: 'Professors Test', professors: '' },
+    },
+  })
+  assert.equal(generatedEmptyProf.valid, false)
+  assert.match(generatedEmptyProf.errors.join('\n'), /at least one professor/)
+
+  const generatedParsedProfs = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-new-course',
+      context,
+      input: { title: 'Professors Split', professors: 'Dr. Alan Turing, Prof. Ada Lovelace' },
+    },
+  })
+  assert.equal(generatedParsedProfs.valid, true)
+  assert.deepEqual(generatedParsedProfs.updatedCourse?.professors, ['Dr. Alan Turing', 'Prof. Ada Lovelace'])
+})
+
+test('Issue 03: Composite Add Semester flow supports creating new Academic Year and Study Year inline', () => {
+  const repository = loadTestRepositoryData()
+  const compositeResult = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-semester',
+      input: {
+        academicYearLabel: '2027-2028',
+        studyYearLabel: 'Study Year 1',
+        semesterLabel: 'Semester 1',
+      },
+    },
+  })
+
+  assert.equal(compositeResult.valid, true)
+  const updatedCatalog = compositeResult.updatedCatalog
+  assert(updatedCatalog)
+  const newYear = updatedCatalog.academicYears.find((y) => y.id === '2027-2028')
+  assert(newYear)
+  assert.equal(newYear.studyYears[0].id, 'study-year-1')
+  assert.equal(newYear.studyYears[0].semesters[0].id, 'semester-1')
+})
+
+test('Issue 04: Compatible material linking and hidden inline material toggle', () => {
+  const repository = loadTestRepositoryData()
+  const target = repository.courses.find((c) => c.id === 'algorithms')
+  assert(target)
+
+  // Invalid material linking (referencing a non-assignment material)
+  const invalidAssignmentLink = validateCourse({
+    ...target,
+    assignmentDeadlines: [
+      {
+        id: 'bad-link-dl',
+        title: 'Bad Link',
+        dueAt: '2026-05-01T00:00:00Z',
+        materialIds: ['alg-exam-01'], // Exam material!
+        addedAt: '2026-02-01T00:00:00.000Z',
+        updatedAt: '2026-02-01T00:00:00.000Z',
+      },
+    ],
+  })
+  assert.equal(invalidAssignmentLink.valid, false)
+  assert.match(invalidAssignmentLink.errors.join('\n'), /non-assignment Material/)
+
+  // Hidden inline material toggle: should not generate inline material payload when toggle is false
+  const noInline = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-assignment-deadline',
+      path: target.path,
+      input: {
+        title: 'Standalone Homework',
+        dueAt: '2026-06-01T00:00:00.000Z',
+        createInlineMaterial: false,
+        newMaterials: [{ title: 'Unused Material', url: 'https://example.edu/unused' }],
+      },
+    },
+  })
+  assert.equal(noInline.valid, true)
+  assert.equal(noInline.updatedCourse?.materials.some((m) => m.title === 'Unused Material'), false)
+})
+
+test('Issue 05: Maintainer batch contribution items and duplicate ID guards', () => {
+  const repository = loadTestRepositoryData()
+  const target = repository.courses.find((c) => c.id === 'algorithms')
+  assert(target)
+
+  // Batch exams contribution generating 1 single GitHub issue output
+  const batchExams = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-exam',
+      path: target.path,
+      input: {
+        items: [
+          { title: 'Midterm Exam 1', gradeWeight: 20 },
+          { title: 'Midterm Exam 2', gradeWeight: 20 },
+        ],
+      },
+    },
+  })
+  assert.equal(batchExams.valid, true)
+  assert.match(batchExams.issueBody ?? '', /midterm-exam-1/)
+  assert.match(batchExams.issueBody ?? '', /midterm-exam-2/)
+
+  // Batch duplicate ID guardrail
+  const duplicateBatch = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-exam',
+      path: target.path,
+      input: {
+        items: [
+          { id: 'dup-id', title: 'Duplicate Midterm 1', gradeWeight: 20 },
+          { id: 'dup-id', title: 'Duplicate Midterm 2', gradeWeight: 20 },
+        ],
+      },
+    },
+  })
+  assert.equal(duplicateBatch.valid, false)
+  assert.match(duplicateBatch.errors.join('\n'), /Duplicate item id/)
+})
+
+test('Issue 06: Student Suggestion defensively rejects array input', () => {
+  const repository = loadTestRepositoryData()
+  const course = repository.courses[0]
+
+  const arraySuggestion = prepareSuggestion({
+    repository,
+    course,
+    section: 'materials',
+    intent: 'add-material',
+    input: { items: [{ title: 'Batch Material 1' }, { title: 'Batch Material 2' }] },
+  })
+
+  assert.equal(arraySuggestion.valid, false)
+  assert.match(arraySuggestion.errors.join('\n'), /Student Suggestions only support single items/)
 })

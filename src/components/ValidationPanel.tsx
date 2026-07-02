@@ -18,7 +18,7 @@ export function ValidationPanel({ result }: { result: PreparedContribution }) {
     >
       {hasErrors && (
         <>
-          <h2 className={headingClass}>Validation Blocked</h2>
+          <h2 className={headingClass}>Failed to validate</h2>
           {result.errors.map((error) => (
             <p key={error} className="m-0 text-[var(--text-main)]">{error}</p>
           ))}

@@ -1,4 +1,4 @@
-import { courseDataFilePath, courseRepositoryPath, findCourse } from './coursePath.js'
+import { courseRepositoryPath, findCourse } from './coursePath.js'
 import { fail, hasString, isRecord, stringArray } from './records.js'
 import { loadRepositoryData } from './repository.js'
 import { isDifficulty, isMaterialType, isSessionStatus, validateCatalog, validateContributionPayload, validateCourse } from './validation.js'
@@ -13,9 +13,6 @@ export type GithubTarget = {
 export type PreparedContribution = ValidationResult & {
   issueBody?: string
   issueUrl?: string
-  prTitle?: string
-  prBody?: string
-  githubLink?: string
   parsed?: unknown
   updatedCourse?: Course
   updatedCatalog?: Catalog
@@ -25,7 +22,7 @@ export type PreparedContribution = ValidationResult & {
 
 export type GeneratedContributionDraft = {
   type: ContributionType
-  mode: "issue" | "pull-request"
+  mode?: "issue" | "pull-request"
   path?: CoursePath
   context?: CourseContext
   input: Record<string, unknown>
@@ -55,11 +52,11 @@ class ContributionProcessor {
 
   processCourseContribution(options: {
     type: ContributionType
-    mode: "issue" | "pull-request"
+    mode?: "issue" | "pull-request"
     path: CoursePath
     payload: unknown
   }): PreparedContribution {
-    const { type, mode, path, payload } = options
+    const { type, path, payload } = options
     const targetCourse = findCourse(this.repository.courses, path)
 
     const applied = this.applyToCourse(type, payload, targetCourse)
@@ -69,7 +66,6 @@ class ContributionProcessor {
       applied,
       parsed: payload,
       type,
-      mode,
       path,
       currentCourse: targetCourse,
     })
@@ -117,11 +113,11 @@ class ContributionProcessor {
     applied: ValidationResult & { updatedCourse?: Course }
     parsed: unknown
     type: ContributionType
-    mode: 'issue' | 'pull-request'
+    mode?: 'issue' | 'pull-request'
     path: CoursePath
     currentCourse?: Course
   }): PreparedContribution {
-    const { applied, parsed, type, mode, path, currentCourse } = options
+    const { applied, parsed, type, path, currentCourse } = options
     const currentJson = JSON.stringify(currentCourse ? repositoryCourseJson(currentCourse) : null, null, 2)
     const changedJson = JSON.stringify(applied.updatedCourse ? repositoryCourseJson(applied.updatedCourse) : parsed, null, 2)
     const pathText = courseRepositoryPath(path)
@@ -146,26 +142,13 @@ class ContributionProcessor {
       '```',
     ].join('\n')
 
-    if (mode === 'issue') {
-      return {
-        ...applied,
-        parsed,
-        path,
-        changedJson,
-        issueBody: body,
-        issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
-      }
-    }
-
-    const prTitle = `Contribution: ${type} for ${path.courseId}`
     return {
       ...applied,
       parsed,
       path,
       changedJson,
-      prTitle,
-      prBody: body,
-      githubLink: githubEditUrl(this.githubTarget, courseDataFilePath(path)),
+      issueBody: body,
+      issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
     }
   }
 
@@ -173,9 +156,9 @@ class ContributionProcessor {
     applied: ValidationResult & { updatedCatalog?: Catalog }
     parsed: unknown
     type: ContributionType
-    mode: 'issue' | 'pull-request'
+    mode?: 'issue' | 'pull-request'
   }): PreparedContribution {
-    const { applied, parsed, type, mode } = options
+    const { applied, parsed, type } = options
     const currentJson = JSON.stringify(this.repository.catalog, null, 2)
     const changedJson = JSON.stringify(applied.updatedCatalog, null, 2)
     const diffText = jsonLineDiff(currentJson, changedJson)
@@ -199,23 +182,12 @@ class ContributionProcessor {
       '```',
     ].join('\n')
 
-    if (mode === 'issue') {
-      return {
-        ...applied,
-        parsed,
-        changedJson,
-        issueBody: body,
-        issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
-      }
-    }
-
     return {
       ...applied,
       parsed,
       changedJson,
-      prTitle: `Contribution: ${type} for Catalog`,
-      prBody: body,
-      githubLink: githubEditUrl(this.githubTarget, 'public/data/catalog.json'),
+      issueBody: body,
+      issueUrl: githubIssueUrl(this.githubTarget, `Contribution: ${type}`, body),
     }
   }
 }
@@ -311,7 +283,13 @@ export function prepareGeneratedContribution(options: {
     if (draft.type === 'add-assignment-deadline') nextCourse.assignmentDeadlines = [...nextCourse.assignmentDeadlines, ...(courseItems as AssignmentDeadline[])]
     if (draft.type === 'add-exam') nextCourse.exams = [...nextCourse.exams, ...(courseItems as Exam[])]
     const validation = validateCourse(nextCourse)
-    if (!validation.valid) return { ...validation, parsed: generated.payload, path: generated.path }
+    if (!validation.valid) {
+      const isSingleNewItem = courseItems.length === 1
+      const cleanedErrors = isSingleNewItem
+        ? validation.errors.map((err) => err.replace(/^Item \d+ /, ''))
+        : validation.errors
+      return { ...validation, errors: cleanedErrors, parsed: generated.payload, path: generated.path }
+    }
 
     return processor.formatCourseReview({
       applied: { ...validation, updatedCourse: nextCourse },
@@ -356,12 +334,12 @@ function generateCatalogContribution(
     return { ...validatedCatalog(nextCatalog), updatedCatalog: nextCatalog, parsed: nextYear }
   }
 
-  const academicYearId = text(input.academicYearId) || draft.context?.academicYearId || ''
-  if (!academicYearId) return fail('Academic Year id is required.')
-  const academicYear = nextCatalog.academicYears.find((year) => year.id === academicYearId)
-  if (!academicYear) return fail(`Academic Year '${academicYearId || 'unknown'}' does not exist.`)
-
   if (draft.type === 'add-study-year') {
+    const academicYearId = text(input.academicYearId) || draft.context?.academicYearId || ''
+    if (!academicYearId) return fail('Academic Year id is required.')
+    const academicYear = nextCatalog.academicYears.find((year) => year.id === academicYearId)
+    if (!academicYear) return fail(`Academic Year '${academicYearId || 'unknown'}' does not exist.`)
+
     const id = text(input.studyYearId) || slugify(text(input.label) || text(input.title))
     if (!id) return fail('Study Year id is required.')
     if (academicYear.studyYears.some((studyYear) => studyYear.id === id)) return fail(`Study Year '${id}' already exists in Academic Year '${academicYear.id}'.`)
@@ -375,21 +353,75 @@ function generateCatalogContribution(
     return { ...validatedCatalog(nextCatalog), updatedCatalog: nextCatalog, parsed: nextStudyYear }
   }
 
-  const studyYearId = text(input.studyYearId) || draft.context?.studyYearId || ''
-  if (!studyYearId) return fail('Study Year id is required.')
-  const studyYear = academicYear.studyYears.find((item) => item.id === studyYearId)
+  // draft.type === 'add-semester'
+  const academicYearPayload = isRecord(input.academicYear) ? input.academicYear : undefined
+  const createAcademicYear = Boolean(input.createAcademicYear || academicYearPayload)
+
+  let academicYearId = text(input.academicYearId) || (academicYearPayload ? text(academicYearPayload.id) : '') || draft.context?.academicYearId || ''
+  let academicYearLabel = academicYearPayload ? text(academicYearPayload.label) : text(input.academicYearLabel)
+  if (!academicYearId && academicYearLabel) {
+    academicYearId = slugify(academicYearLabel)
+  }
+
+  let academicYear = nextCatalog.academicYears.find((year) => year.id === academicYearId)
+
+  if (createAcademicYear || (academicYearLabel && !academicYear)) {
+    if (!academicYearLabel && !academicYearId) return fail('Academic Year label is required for new Academic Year.')
+    if (!academicYearId) academicYearId = slugify(academicYearLabel)
+    if (!academicYear) {
+      academicYear = {
+        id: academicYearId,
+        label: academicYearLabel || academicYearId,
+        order: (academicYearPayload ? number(academicYearPayload.order) : number(input.academicYearOrder)) ?? nextOrder(nextCatalog.academicYears),
+        studyYears: [],
+      }
+      nextCatalog.academicYears.push(academicYear)
+    }
+  }
+
+  if (!academicYear) return fail(`Academic Year '${academicYearId || 'unknown'}' does not exist.`)
+
+  const studyYearPayload = isRecord(input.studyYear) ? input.studyYear : undefined
+  const createStudyYear = Boolean(input.createStudyYear || studyYearPayload)
+
+  let studyYearId = text(input.studyYearId) || (studyYearPayload ? text(studyYearPayload.id) : '') || draft.context?.studyYearId || ''
+  let studyYearLabel = studyYearPayload ? text(studyYearPayload.label) : text(input.studyYearLabel)
+  if (!studyYearId && studyYearLabel) {
+    studyYearId = slugify(studyYearLabel)
+  }
+
+  let studyYear = academicYear.studyYears.find((item) => item.id === studyYearId)
+
+  if (createStudyYear || (studyYearLabel && !studyYear)) {
+    if (!studyYearLabel && !studyYearId) return fail('Study Year label is required for new Study Year.')
+    if (!studyYearId) studyYearId = slugify(studyYearLabel)
+    if (!studyYear) {
+      studyYear = {
+        id: studyYearId,
+        label: studyYearLabel || studyYearId,
+        order: (studyYearPayload ? number(studyYearPayload.order) : number(input.studyYearOrder)) ?? nextOrder(academicYear.studyYears),
+        semesters: [],
+      }
+      academicYear.studyYears.push(studyYear)
+    }
+  }
+
   if (!studyYear) return fail(`Study Year '${studyYearId || 'unknown'}' does not exist in Academic Year '${academicYear.id}'.`)
 
-  const id = text(input.semesterId) || slugify(text(input.label) || text(input.title))
-  if (!id) return fail('Semester id is required.')
-  if (studyYear.semesters.some((semester) => semester.id === id)) return fail(`Semester '${id}' already exists in Study Year '${studyYear.id}'.`)
+  const semesterPayload = isRecord(input.semester) ? input.semester : undefined
+  const semesterLabel = (semesterPayload ? text(semesterPayload.label) : '') || text(input.label) || text(input.semesterLabel) || text(input.title)
+  const semesterId = text(input.semesterId) || (semesterPayload ? text(semesterPayload.id) : '') || slugify(semesterLabel)
+  if (!semesterId) return fail('Semester id is required.')
+  if (studyYear.semesters.some((semester) => semester.id === semesterId)) {
+    return fail(`Semester '${semesterId}' already exists in Study Year '${studyYear.id}'.`)
+  }
 
   const courseId = text(input.courseId)
   const courseTitle = text(input.courseTitle)
   const nextSemester = {
-    id,
-    label: text(input.label) || id,
-    order: number(input.order) ?? nextOrder(studyYear.semesters),
+    id: semesterId,
+    label: semesterLabel || semesterId,
+    order: (semesterPayload ? number(semesterPayload.order) : number(input.order)) ?? nextOrder(studyYear.semesters),
     ...(courseId && courseTitle ? { courses: [{ id: courseId, title: courseTitle }] } : {}),
   }
   studyYear.semesters.push(nextSemester)
@@ -418,13 +450,13 @@ function addCourseToCatalog(catalog: Catalog, path: CoursePath, title: string): 
 function formatNewCourseReview(options: {
   validation: ValidationResult
   parsed: Course
-  mode: 'issue' | 'pull-request'
+  mode?: 'issue' | 'pull-request'
   path: CoursePath
   currentCatalog: Catalog
   updatedCatalog?: Catalog
   githubTarget: GithubTarget
 }): PreparedContribution {
-  const { validation, parsed, mode, path, currentCatalog, updatedCatalog, githubTarget } = options
+  const { validation, parsed, path, currentCatalog, updatedCatalog, githubTarget } = options
   const emptyCourseJson = JSON.stringify(null, null, 2)
   const courseJson = JSON.stringify(repositoryCourseJson(parsed), null, 2)
   const currentCatalogJson = JSON.stringify(currentCatalog, null, 2)
@@ -453,19 +485,6 @@ function formatNewCourseReview(options: {
     '```',
   ].join('\n')
 
-  if (mode === 'issue') {
-    return {
-      ...validation,
-      parsed,
-      path,
-      updatedCourse: parsed,
-      updatedCatalog,
-      changedJson: courseJson,
-      issueBody: body,
-      issueUrl: githubIssueUrl(githubTarget, `Contribution: add-new-course`, body),
-    }
-  }
-
   return {
     ...validation,
     parsed,
@@ -473,13 +492,8 @@ function formatNewCourseReview(options: {
     updatedCourse: parsed,
     updatedCatalog,
     changedJson: courseJson,
-    prTitle: `Contribution: add-new-course for ${path.courseId}`,
-    prBody: [
-      body,
-      '',
-      'GitHub cannot atomically create the Course file and edit Catalog from one plain file URL; create the Course file with the link, then use this copied PR content for the Catalog diff.',
-    ].join('\n'),
-    githubLink: githubCreateUrl(githubTarget, courseDataFilePath(path), courseJson),
+    issueBody: body,
+    issueUrl: githubIssueUrl(githubTarget, `Contribution: add-new-course`, body),
   }
 }
 
@@ -493,6 +507,15 @@ function generateContributionPayload(
     if (!draft.context?.academicYearId || !draft.context.studyYearId || !draft.context.semesterId) return { ...fail('Add new Course requires Academic Year, Study Year, and Semester.'), path: emptyPath(), payload: undefined }
     const title = text(input.title)
     if (!title) return { ...fail('Course title is required.'), path: emptyPath(), payload: undefined }
+
+    const professorsRaw = input.professors
+    const professors = typeof professorsRaw === 'string'
+      ? professorsRaw.split(',').map((p) => p.trim()).filter(Boolean)
+      : stringArray(professorsRaw)
+    if (professors.length === 0) {
+      return { ...fail('New Course requires at least one professor.'), path: emptyPath(), payload: undefined }
+    }
+
     const courseId = uniqueId(slugify(title), repository.courses.filter((course) => course.path.academicYearId === draft.context?.academicYearId && course.path.studyYearId === draft.context?.studyYearId && course.path.semesterId === draft.context?.semesterId).map((course) => course.id))
     const path = { ...draft.context, courseId }
     return {
@@ -503,7 +526,7 @@ function generateContributionPayload(
       payload: {
         id: courseId,
         title,
-        professors: stringArray(input.professors),
+        professors,
         ...(text(input.description) ? { description: text(input.description) } : {}),
         materialDifficulty: isDifficulty(input.materialDifficulty) ? input.materialDifficulty : 'unknown',
         passingDifficulty: isDifficulty(input.passingDifficulty) ? input.passingDifficulty : 'unknown',
@@ -520,20 +543,37 @@ function generateContributionPayload(
   if (!targetCourse) return { ...fail('Existing Course contribution requires a valid target Course.'), path: draft.path, payload: undefined }
 
   if (draft.type === 'add-material') {
-    if (Array.isArray(input.items)) {
-      const generated = []
-      const used = [...usedIds(targetCourse)]
-      for (const item of input.items) {
-        const material = generatedMaterial(isRecord(item) ? item : {}, timestamp, used)
-        generated.push(material)
-        if (material.payload.id) used.push(material.payload.id)
+    const items = Array.isArray(input.items) ? input.items : [input]
+    const generated = []
+    const used = [...usedIds(targetCourse)]
+    const seenIds = new Set<string>()
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = isRecord(items[index]) ? items[index] : {}
+      const material = generatedMaterial(item, timestamp, used)
+      if (material.payload.id) {
+        if (seenIds.has(material.payload.id)) {
+          return { ...fail(`Duplicate item id '${material.payload.id}' in batch.`), path: draft.path, payload: undefined }
+        }
+        seenIds.add(material.payload.id)
+        used.push(material.payload.id)
       }
-      const errors = generated.flatMap((item) => item.errors)
-      const payload = generated.map((item) => item.payload)
-      return errors.length === 0 ? { valid: true, errors: [], warnings: [], path: draft.path, payload } : { valid: false, errors, warnings: [], path: draft.path, payload }
+      generated.push(material)
     }
-    const material = generatedMaterial(input, timestamp, usedIds(targetCourse))
-    return material.valid ? { ...material, path: draft.path, payload: material.payload } : { ...material, path: draft.path, payload: undefined }
+
+    const errors: string[] = []
+    const isBatch = items.length > 1
+    generated.forEach((item, index) => {
+      item.errors.forEach((err) => {
+        const itemTitle = item.payload.title || item.payload.id || `item ${index + 1}`
+        errors.push(isBatch ? `Item #${index + 1} (${itemTitle}): ${err}` : err)
+      })
+    })
+
+    const payload = generated.map((item) => item.payload)
+    return errors.length === 0
+      ? { valid: true, errors: [], warnings: [], path: draft.path, payload: isBatch ? payload : payload[0] }
+      : { valid: false, errors, warnings: [], path: draft.path, payload: undefined }
   }
 
   if (draft.type === 'update-material') {
@@ -558,75 +598,184 @@ function generateContributionPayload(
   }
 
   if (draft.type === 'add-assignment-deadline') {
-    const materialIds = [...stringArray(input.materialIds)]
-    const newMaterials = generatedInlineMaterials(input.newMaterials, 'assignment', timestamp, usedIds(targetCourse))
-    if (!newMaterials.valid) return { ...newMaterials, path: draft.path, payload: undefined }
-    materialIds.push(...newMaterials.payload.map((material) => material.id))
-    return {
-      valid: true,
-      errors: [],
-      warnings: [],
-      path: draft.path,
-      payload: [
+    const items = Array.isArray(input.items) ? input.items : [input]
+    const allPayloads: unknown[] = []
+    const used = [...usedIds(targetCourse)]
+    const seenIds = new Set<string>()
+    const errors: string[] = []
+    const isBatch = items.length > 1
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = isRecord(items[index]) ? items[index] : {}
+      const materialIds = [...stringArray(item.materialIds)]
+      const inlineEnabled = item.createInlineMaterial !== false && item.hasInlineMaterial !== false
+      const shouldInline = inlineEnabled && (Boolean(item.createInlineMaterial || item.hasInlineMaterial) || (Array.isArray(item.newMaterials) && item.newMaterials.length > 0))
+      const newMaterials = shouldInline
+        ? generatedInlineMaterials(item.newMaterials, 'assignment', timestamp, used)
+        : { valid: true, errors: [], warnings: [], payload: [] }
+
+      if (!newMaterials.valid) {
+        newMaterials.errors.forEach((err) => errors.push(isBatch ? `Item #${index + 1}: ${err}` : err))
+        continue
+      }
+
+      newMaterials.payload.forEach((mat) => {
+        if (mat.id) {
+          if (seenIds.has(mat.id)) errors.push(`Duplicate item id '${mat.id}' in batch.`)
+          seenIds.add(mat.id)
+          used.push(mat.id)
+        }
+      })
+      materialIds.push(...newMaterials.payload.map((mat) => mat.id))
+
+      const title = text(item.title)
+      const assignmentId = uniqueId(slugify(title || 'assignment'), used)
+      if (seenIds.has(assignmentId)) {
+        errors.push(`Duplicate item id '${assignmentId}' in batch.`)
+      }
+      seenIds.add(assignmentId)
+      used.push(assignmentId)
+
+      if (!title) {
+        const itemMsg = 'Title is required.'
+        errors.push(isBatch ? `Item #${index + 1} (${assignmentId}): ${itemMsg}` : itemMsg)
+      }
+      if (!text(item.dueAt)) {
+        const itemMsg = 'Due date is required.'
+        errors.push(isBatch ? `Item #${index + 1} (${assignmentId}): ${itemMsg}` : itemMsg)
+      }
+
+      allPayloads.push(
         ...newMaterials.payload,
         {
-          id: uniqueId(slugify(text(input.title) || 'assignment'), [...usedIds(targetCourse), ...newMaterials.payload.map((material) => material.id)]),
-          title: text(input.title),
-          ...(text(input.description) ? { description: text(input.description) } : {}),
-          dueAt: text(input.dueAt),
-          ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
+          id: assignmentId,
+          title,
+          ...(text(item.description) ? { description: text(item.description) } : {}),
+          dueAt: text(item.dueAt),
+          ...(number(item.gradeWeight) !== undefined ? { gradeWeight: number(item.gradeWeight) } : {}),
           materialIds,
           addedAt: timestamp,
           updatedAt: timestamp,
         },
-      ],
+      )
     }
+
+    return errors.length === 0
+      ? { valid: true, errors: [], warnings: [], path: draft.path, payload: allPayloads }
+      : { valid: false, errors, warnings: [], path: draft.path, payload: undefined }
   }
 
   if (draft.type === 'add-exam') {
-    const materialIds = [...stringArray(input.materialIds)]
-    const newMaterials = generatedInlineMaterials(input.newMaterials, 'exam', timestamp, usedIds(targetCourse))
-    if (!newMaterials.valid) return { ...newMaterials, path: draft.path, payload: undefined }
-    materialIds.push(...newMaterials.payload.map((material) => material.id))
-    return {
-      valid: true,
-      errors: [],
-      warnings: [],
-      path: draft.path,
-      payload: [
+    const items = Array.isArray(input.items) ? input.items : [input]
+    const allPayloads: unknown[] = []
+    const used = [...usedIds(targetCourse)]
+    const seenIds = new Set<string>()
+    const errors: string[] = []
+    const isBatch = items.length > 1
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = isRecord(items[index]) ? items[index] : {}
+      const materialIds = [...stringArray(item.materialIds)]
+      const inlineEnabled = item.createInlineMaterial !== false && item.hasInlineMaterial !== false
+      const shouldInline = inlineEnabled && (Boolean(item.createInlineMaterial || item.hasInlineMaterial) || (Array.isArray(item.newMaterials) && item.newMaterials.length > 0))
+      const newMaterials = shouldInline
+        ? generatedInlineMaterials(item.newMaterials, 'exam', timestamp, used)
+        : { valid: true, errors: [], warnings: [], payload: [] }
+
+      if (!newMaterials.valid) {
+        newMaterials.errors.forEach((err) => errors.push(isBatch ? `Item #${index + 1}: ${err}` : err))
+        continue
+      }
+
+      newMaterials.payload.forEach((mat) => {
+        if (mat.id) {
+          if (seenIds.has(mat.id)) errors.push(`Duplicate item id '${mat.id}' in batch.`)
+          seenIds.add(mat.id)
+          used.push(mat.id)
+        }
+      })
+      materialIds.push(...newMaterials.payload.map((mat) => mat.id))
+
+      const title = text(item.title)
+      const explicitId = text(item.id)
+      if (explicitId && seenIds.has(explicitId)) {
+        errors.push(`Duplicate item id '${explicitId}' in batch.`)
+      }
+      const examId = explicitId || uniqueId(slugify(title || 'exam'), used)
+      if (!explicitId && seenIds.has(examId)) {
+        errors.push(`Duplicate item id '${examId}' in batch.`)
+      }
+      seenIds.add(examId)
+      used.push(examId)
+
+      if (!title) {
+        const itemMsg = 'Exam requires title.'
+        errors.push(isBatch ? `Item #${index + 1} (${examId}): ${itemMsg}` : itemMsg)
+      }
+      if (number(item.gradeWeight) === undefined) {
+        const itemMsg = 'Exam requires Grade Weight.'
+        errors.push(isBatch ? `Item #${index + 1} (${examId}): ${itemMsg}` : itemMsg)
+      }
+
+      allPayloads.push(
         ...newMaterials.payload,
         {
-          id: uniqueId(slugify(text(input.title) || 'exam'), [...usedIds(targetCourse), ...newMaterials.payload.map((material) => material.id)]),
-          title: text(input.title),
-          ...(text(input.startsAt) ? { startsAt: text(input.startsAt) } : {}),
-          ...(text(input.description) ? { description: text(input.description) } : {}),
-          ...(text(input.location) ? { location: text(input.location) } : {}),
-          ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
+          id: examId,
+          title,
+          ...(text(item.startsAt) ? { startsAt: text(item.startsAt) } : {}),
+          ...(text(item.description) ? { description: text(item.description) } : {}),
+          ...(text(item.location) ? { location: text(item.location) } : {}),
+          ...(number(item.gradeWeight) !== undefined ? { gradeWeight: number(item.gradeWeight) } : {}),
           materialIds,
           addedAt: timestamp,
           updatedAt: timestamp,
         },
-      ],
+      )
     }
+
+    return errors.length === 0
+      ? { valid: true, errors: [], warnings: [], path: draft.path, payload: allPayloads }
+      : { valid: false, errors, warnings: [], path: draft.path, payload: undefined }
   }
 
   if (draft.type === 'add-course-session') {
-    return {
-      valid: true,
-      errors: [],
-      warnings: [],
-      path: draft.path,
-      payload: {
-        id: uniqueId(slugify(text(input.title) || 'course-session'), usedIds(targetCourse)),
-        title: text(input.title),
-        startsAt: text(input.startsAt),
-        endsAt: text(input.endsAt),
-        ...(text(input.location) ? { location: text(input.location) } : {}),
-        status: isSessionStatus(input.status) ? input.status : 'scheduled',
+    const items = Array.isArray(input.items) ? input.items : [input]
+    const allPayloads: unknown[] = []
+    const used = [...usedIds(targetCourse)]
+    const seenIds = new Set<string>()
+    const errors: string[] = []
+    const isBatch = items.length > 1
+
+    for (let index = 0; index < items.length; index += 1) {
+      const item = isRecord(items[index]) ? items[index] : {}
+      const title = text(item.title)
+      const sessionId = uniqueId(slugify(title || 'course-session'), used)
+      if (seenIds.has(sessionId)) {
+        errors.push(`Duplicate item id '${sessionId}' in batch.`)
+      }
+      seenIds.add(sessionId)
+      used.push(sessionId)
+
+      if (!title) {
+        const itemMsg = 'Title is required.'
+        errors.push(isBatch ? `Item #${index + 1} (${sessionId}): ${itemMsg}` : itemMsg)
+      }
+
+      allPayloads.push({
+        id: sessionId,
+        title,
+        startsAt: text(item.startsAt),
+        endsAt: text(item.endsAt),
+        ...(text(item.location) ? { location: text(item.location) } : {}),
+        status: isSessionStatus(item.status) ? item.status : 'scheduled',
         addedAt: timestamp,
         updatedAt: timestamp,
-      },
+      })
     }
+
+    return errors.length === 0
+      ? { valid: true, errors: [], warnings: [], path: draft.path, payload: isBatch ? allPayloads : allPayloads[0] }
+      : { valid: false, errors, warnings: [], path: draft.path, payload: undefined }
   }
 
   if (draft.type === 'edit-course-metadata') {
@@ -762,16 +911,4 @@ function jsonLineDiff(before: string, after: string): string {
 function githubIssueUrl(target: GithubTarget, title: string, body: string): string {
   void body
   return `https://github.com/${target.owner}/${target.repo}/issues/new?title=${encodeURIComponent(title)}`
-}
-
-function githubEditUrl(target: GithubTarget, filePath: string): string {
-  return `https://github.com/${target.owner}/${target.repo}/edit/${target.branch}/${filePath}`
-}
-
-function githubCreateUrl(target: GithubTarget, filePath: string, value: string): string {
-  const normalized = filePath.replace(/^public\//, '')
-  const slashIndex = normalized.lastIndexOf('/')
-  const directory = slashIndex >= 0 ? normalized.slice(0, slashIndex) : ''
-  const filename = slashIndex >= 0 ? normalized.slice(slashIndex + 1) : normalized
-  return `https://github.com/${target.owner}/${target.repo}/new/${target.branch}/${directory}?filename=${encodeURIComponent(filename)}&value=${encodeURIComponent(value)}`
 }

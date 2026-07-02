@@ -135,7 +135,7 @@ export type RepositorySnapshot = {
 
 export type ContributionDraft = {
   type: ContributionType;
-  mode: "issue" | "pull-request";
+  mode?: "issue" | "pull-request";
   path: CoursePath;
   payloadText: string;
 };

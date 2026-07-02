@@ -125,7 +125,7 @@ export function validateCourse(course: unknown): ValidationResult {
   const result = courseSchema.safeParse(course)
   const errors = result.success ? [] : result.error.issues.map((issue) => zodIssueToMessage(issue)).map((error) => rewordCourseSchemaError(error))
 
-  if (Array.isArray(course.professors) && course.professors.length === 0) warnings.push('Course has no professors.')
+  if (Array.isArray(course.professors) && course.professors.length === 0) errors.push('Course must have at least one professor.')
 
   const materials = arrayOfRecords(course.materials)
   const assignments = arrayOfRecords(course.assignmentDeadlines)

@@ -21,6 +21,14 @@
       "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/examen",
       "addedAt": "2026-07-01T09:10:27.977Z",
       "updatedAt": "2026-07-01T09:10:27.977Z"
+    },
+    {
+      "id": "materiale-mips",
+      "type": "lab",
+      "title": "Materiale mips",
+      "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/laborator",
+      "addedAt": "2026-07-01T09:10:27.977Z",
+      "updatedAt": "2026-07-01T09:10:27.977Z"
     }
   ],
   "assignmentDeadlines": [
