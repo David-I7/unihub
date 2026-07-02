@@ -2,8 +2,21 @@
   "id": "baze-de-date",
   "title": "Baze de date",
   "professors": ["Lect. univ. dr. Iulia Banu - Demergian"],
+  "materialDifficulty": "easy",
+  "passingDifficulty": "easy",
+  "description": "Nota la aceasta materie se obtine pe baza prezentarii proiectului. Nu faceti un proiect complex daca nu stiti foarte bine ce ati scris acolo, deoarece o sa fiti intrebati exact din partea complexa.\n\nCa sa luati 5, trebuie sa stiti sa faceti niste selecturi pe proiectul vostru in timpul prezentarii.",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],
-  "exams": []
+  "exams": [
+    {
+      "id": "prezentare-proiect",
+      "title": "Prezentare proiect",
+      "gradeWeight": 100,
+      "materialIds": [],
+      "addedAt": "2026-07-01T09:11:18.827Z",
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Prezentarea se poate sustine online sau fizic. Daca nu stapaniti materia foarte bine, va sugerez sa mergeti fizic, deoarece aveti sanse mai mari sa treceti."
+    }
+  ]
 }

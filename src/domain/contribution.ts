@@ -1,7 +1,7 @@
 import { courseDataFilePath, courseRepositoryPath, findCourse } from './coursePath.js'
 import { fail, hasString, isRecord, stringArray } from './records.js'
 import { loadRepositoryData } from './repository.js'
-import { isMaterialType, isSessionStatus, validateCatalog, validateContributionPayload, validateCourse } from './validation.js'
+import { isDifficulty, isMaterialType, isSessionStatus, validateCatalog, validateContributionPayload, validateCourse } from './validation.js'
 import type { AssignmentDeadline, Catalog, ContributionDraft, ContributionType, Course, CourseContext, CoursePath, CourseSession, Exam, Material, RepositorySnapshot, ValidationResult } from './types.js'
 
 export type GithubTarget = {
@@ -106,6 +106,8 @@ class ContributionProcessor {
       nextCourse.title = String(singlePayload.title ?? nextCourse.title)
       nextCourse.professors = Array.isArray(singlePayload.professors) ? singlePayload.professors.map(String) : nextCourse.professors
       nextCourse.description = hasString(singlePayload, 'description') ? singlePayload.description : nextCourse.description
+      nextCourse.materialDifficulty = isDifficulty(singlePayload.materialDifficulty) ? singlePayload.materialDifficulty : nextCourse.materialDifficulty
+      nextCourse.passingDifficulty = isDifficulty(singlePayload.passingDifficulty) ? singlePayload.passingDifficulty : nextCourse.passingDifficulty
     }
 
     return { ...validation, updatedCourse: nextCourse }
@@ -282,6 +284,23 @@ export function prepareGeneratedContribution(options: {
   const generated = generateContributionPayload(draft, repository, now())
   if (!generated.valid) return generated
 
+  if (draft.type === 'add-new-course') {
+    const targetCourse = generated.payload as Course
+    const catalogUpdate = addCourseToCatalog(repository.catalog, generated.path, targetCourse.title)
+    if (!catalogUpdate.valid) return { ...catalogUpdate, parsed: targetCourse, path: generated.path }
+    const courseValidation = validateCourse(targetCourse)
+    if (!courseValidation.valid) return { ...courseValidation, parsed: targetCourse, path: generated.path }
+    return formatNewCourseReview({
+      validation: courseValidation,
+      parsed: targetCourse,
+      mode: draft.mode,
+      path: generated.path,
+      currentCatalog: repository.catalog,
+      updatedCatalog: catalogUpdate.updatedCatalog,
+      githubTarget,
+    })
+  }
+
   if ((draft.type === 'add-assignment-deadline' || draft.type === 'add-exam') && Array.isArray(generated.payload)) {
     const targetCourse = findCourse(repository.courses, generated.path)
     if (!targetCourse) return fail('Existing Course contribution requires a valid target Course.')
@@ -338,6 +357,7 @@ function generateCatalogContribution(
   }
 
   const academicYearId = text(input.academicYearId) || draft.context?.academicYearId || ''
+  if (!academicYearId) return fail('Academic Year id is required.')
   const academicYear = nextCatalog.academicYears.find((year) => year.id === academicYearId)
   if (!academicYear) return fail(`Academic Year '${academicYearId || 'unknown'}' does not exist.`)
 
@@ -356,6 +376,7 @@ function generateCatalogContribution(
   }
 
   const studyYearId = text(input.studyYearId) || draft.context?.studyYearId || ''
+  if (!studyYearId) return fail('Study Year id is required.')
   const studyYear = academicYear.studyYears.find((item) => item.id === studyYearId)
   if (!studyYear) return fail(`Study Year '${studyYearId || 'unknown'}' does not exist in Academic Year '${academicYear.id}'.`)
 
@@ -380,6 +401,88 @@ function validatedCatalog(catalog: Catalog): ValidationResult & { updatedCatalog
   return validation.valid ? { ...validation, updatedCatalog: catalog } : validation
 }
 
+function addCourseToCatalog(catalog: Catalog, path: CoursePath, title: string): ValidationResult & { updatedCatalog?: Catalog } {
+  const nextCatalog = structuredClone(catalog) as Catalog
+  const academicYear = nextCatalog.academicYears.find((item) => item.id === path.academicYearId)
+  if (!academicYear) return fail(`Academic Year '${path.academicYearId || 'unknown'}' does not exist.`)
+  const studyYear = academicYear.studyYears.find((item) => item.id === path.studyYearId)
+  if (!studyYear) return fail(`Study Year '${path.studyYearId || 'unknown'}' does not exist in Academic Year '${academicYear.id}'.`)
+  const semester = studyYear.semesters.find((item) => item.id === path.semesterId)
+  if (!semester) return fail(`Semester '${path.semesterId || 'unknown'}' does not exist in Study Year '${studyYear.id}'.`)
+  const courses = semester.courses ?? []
+  if (courses.some((course) => course.id === path.courseId)) return fail(`Course '${path.courseId}' already exists in Semester '${semester.id}'.`)
+  semester.courses = [...courses, { id: path.courseId, title }]
+  return validatedCatalog(nextCatalog)
+}
+
+function formatNewCourseReview(options: {
+  validation: ValidationResult
+  parsed: Course
+  mode: 'issue' | 'pull-request'
+  path: CoursePath
+  currentCatalog: Catalog
+  updatedCatalog?: Catalog
+  githubTarget: GithubTarget
+}): PreparedContribution {
+  const { validation, parsed, mode, path, currentCatalog, updatedCatalog, githubTarget } = options
+  const emptyCourseJson = JSON.stringify(null, null, 2)
+  const courseJson = JSON.stringify(repositoryCourseJson(parsed), null, 2)
+  const currentCatalogJson = JSON.stringify(currentCatalog, null, 2)
+  const changedCatalogJson = JSON.stringify(updatedCatalog, null, 2)
+  const courseDiff = jsonLineDiff(emptyCourseJson, courseJson)
+  const catalogDiff = jsonLineDiff(currentCatalogJson, changedCatalogJson)
+  const body = [
+    'Course file diff:',
+    '```diff',
+    courseDiff,
+    '```',
+    '',
+    'Course file new state:',
+    '```json',
+    courseJson,
+    '```',
+    '',
+    'Catalog diff:',
+    '```diff',
+    catalogDiff,
+    '```',
+    '',
+    'Catalog new state:',
+    '```json',
+    changedCatalogJson,
+    '```',
+  ].join('\n')
+
+  if (mode === 'issue') {
+    return {
+      ...validation,
+      parsed,
+      path,
+      updatedCourse: parsed,
+      updatedCatalog,
+      changedJson: courseJson,
+      issueBody: body,
+      issueUrl: githubIssueUrl(githubTarget, `Contribution: add-new-course`, body),
+    }
+  }
+
+  return {
+    ...validation,
+    parsed,
+    path,
+    updatedCourse: parsed,
+    updatedCatalog,
+    changedJson: courseJson,
+    prTitle: `Contribution: add-new-course for ${path.courseId}`,
+    prBody: [
+      body,
+      '',
+      'GitHub cannot atomically create the Course file and edit Catalog from one plain file URL; create the Course file with the link, then use this copied PR content for the Catalog diff.',
+    ].join('\n'),
+    githubLink: githubCreateUrl(githubTarget, courseDataFilePath(path), courseJson),
+  }
+}
+
 function generateContributionPayload(
   draft: GeneratedContributionDraft,
   repository: RepositorySnapshot,
@@ -387,7 +490,7 @@ function generateContributionPayload(
 ): ValidationResult & { path: CoursePath; payload: unknown } {
   const input = draft.input
   if (draft.type === 'add-new-course') {
-    if (!draft.context) return { ...fail('Add new Course requires Academic Year, Study Year, and Semester.'), path: emptyPath(), payload: undefined }
+    if (!draft.context?.academicYearId || !draft.context.studyYearId || !draft.context.semesterId) return { ...fail('Add new Course requires Academic Year, Study Year, and Semester.'), path: emptyPath(), payload: undefined }
     const title = text(input.title)
     if (!title) return { ...fail('Course title is required.'), path: emptyPath(), payload: undefined }
     const courseId = uniqueId(slugify(title), repository.courses.filter((course) => course.path.academicYearId === draft.context?.academicYearId && course.path.studyYearId === draft.context?.studyYearId && course.path.semesterId === draft.context?.semesterId).map((course) => course.id))
@@ -402,6 +505,8 @@ function generateContributionPayload(
         title,
         professors: stringArray(input.professors),
         ...(text(input.description) ? { description: text(input.description) } : {}),
+        materialDifficulty: isDifficulty(input.materialDifficulty) ? input.materialDifficulty : 'unknown',
+        passingDifficulty: isDifficulty(input.passingDifficulty) ? input.passingDifficulty : 'unknown',
         materials: [],
         assignmentDeadlines: [],
         courseSessions: [],
@@ -415,6 +520,18 @@ function generateContributionPayload(
   if (!targetCourse) return { ...fail('Existing Course contribution requires a valid target Course.'), path: draft.path, payload: undefined }
 
   if (draft.type === 'add-material') {
+    if (Array.isArray(input.items)) {
+      const generated = []
+      const used = [...usedIds(targetCourse)]
+      for (const item of input.items) {
+        const material = generatedMaterial(isRecord(item) ? item : {}, timestamp, used)
+        generated.push(material)
+        if (material.payload.id) used.push(material.payload.id)
+      }
+      const errors = generated.flatMap((item) => item.errors)
+      const payload = generated.map((item) => item.payload)
+      return errors.length === 0 ? { valid: true, errors: [], warnings: [], path: draft.path, payload } : { valid: false, errors, warnings: [], path: draft.path, payload }
+    }
     const material = generatedMaterial(input, timestamp, usedIds(targetCourse))
     return material.valid ? { ...material, path: draft.path, payload: material.payload } : { ...material, path: draft.path, payload: undefined }
   }
@@ -457,7 +574,6 @@ function generateContributionPayload(
           title: text(input.title),
           ...(text(input.description) ? { description: text(input.description) } : {}),
           dueAt: text(input.dueAt),
-          ...(text(input.submissionUrl) ? { submissionUrl: text(input.submissionUrl) } : {}),
           ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
           materialIds,
           addedAt: timestamp,
@@ -483,6 +599,8 @@ function generateContributionPayload(
           id: uniqueId(slugify(text(input.title) || 'exam'), [...usedIds(targetCourse), ...newMaterials.payload.map((material) => material.id)]),
           title: text(input.title),
           ...(text(input.startsAt) ? { startsAt: text(input.startsAt) } : {}),
+          ...(text(input.description) ? { description: text(input.description) } : {}),
+          ...(text(input.location) ? { location: text(input.location) } : {}),
           ...(number(input.gradeWeight) !== undefined ? { gradeWeight: number(input.gradeWeight) } : {}),
           materialIds,
           addedAt: timestamp,
@@ -521,6 +639,8 @@ function generateContributionPayload(
         ...(text(input.title) ? { title: text(input.title) } : {}),
         professors: stringArray(input.professors),
         ...(text(input.description) ? { description: text(input.description) } : {}),
+        ...(isDifficulty(input.materialDifficulty) ? { materialDifficulty: input.materialDifficulty } : {}),
+        ...(isDifficulty(input.passingDifficulty) ? { passingDifficulty: input.passingDifficulty } : {}),
       },
     }
   }
@@ -646,4 +766,12 @@ function githubIssueUrl(target: GithubTarget, title: string, body: string): stri
 
 function githubEditUrl(target: GithubTarget, filePath: string): string {
   return `https://github.com/${target.owner}/${target.repo}/edit/${target.branch}/${filePath}`
+}
+
+function githubCreateUrl(target: GithubTarget, filePath: string, value: string): string {
+  const normalized = filePath.replace(/^public\//, '')
+  const slashIndex = normalized.lastIndexOf('/')
+  const directory = slashIndex >= 0 ? normalized.slice(0, slashIndex) : ''
+  const filename = slashIndex >= 0 ? normalized.slice(slashIndex + 1) : normalized
+  return `https://github.com/${target.owner}/${target.repo}/new/${target.branch}/${directory}?filename=${encodeURIComponent(filename)}&value=${encodeURIComponent(value)}`
 }

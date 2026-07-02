@@ -1,7 +1,11 @@
 {
   "id": "structuri-algebrice-in-informatica",
   "title": "Structuri algebrice in informatica",
-  "professors": ["Conf. dr. A. Gica"],
+  "professors": [
+    "Conf. dr. A. Gica"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

@@ -121,7 +121,6 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
       title: text(input.title),
       dueAt: text(input.dueAt),
       description: text(input.description),
-      submissionUrl: text(input.submissionUrl),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -138,7 +137,6 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
       title: text(input.title),
       dueAt: text(input.dueAt),
       description: text(input.description),
-      submissionUrl: text(input.submissionUrl),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -155,7 +153,6 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
       title: text(input.title),
       dueAt: text(input.dueAt),
       description: text(input.description),
-      submissionUrl: text(input.submissionUrl),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -235,6 +232,8 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     buildInput: (input) => ({
       title: text(input.title),
       startsAt: text(input.startsAt),
+      description: text(input.description),
+      location: text(input.location),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -250,6 +249,8 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     buildInput: (input) => ({
       title: text(input.title),
       startsAt: text(input.startsAt),
+      description: text(input.description),
+      location: text(input.location),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -265,6 +266,8 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     buildInput: (input) => ({
       title: text(input.title),
       startsAt: text(input.startsAt),
+      description: text(input.description),
+      location: text(input.location),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -280,6 +283,8 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     buildInput: (input) => ({
       title: text(input.title),
       startsAt: '',
+      description: text(input.description),
+      location: text(input.location),
       gradeWeight: number(input.gradeWeight),
       materialIds: stringArray(input.materialIds),
     }),
@@ -290,7 +295,7 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     section: 'course-info',
     contributionType: 'edit-course-metadata',
     requiresNote: true,
-    showInSectionOptions: false,
+    showInSectionOptions: true,
     issueTitleAction: 'Fix Course title',
     buildInput: (input, course) => ({
       title: text(input.title),
@@ -304,7 +309,7 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     section: 'course-info',
     contributionType: 'edit-course-metadata',
     requiresNote: true,
-    showInSectionOptions: false,
+    showInSectionOptions: true,
     issueTitleAction: 'Fix Course professors',
     buildInput: (input, course) => ({
       title: course.title,
@@ -318,7 +323,7 @@ const suggestionHandlers: Record<SuggestionIntent, SuggestionIntentHandler> = {
     section: 'course-info',
     contributionType: 'edit-course-metadata',
     requiresNote: true,
-    showInSectionOptions: false,
+    showInSectionOptions: true,
     issueTitleAction: 'Fix Course description',
     buildInput: (input, course) => ({
       title: course.title,
@@ -424,6 +429,9 @@ function handlerOptionLabel(intent: SuggestionIntent): string {
     'fix-exam': 'Update exam',
     'changed-exam-date-location': 'Report changed exam date/location',
     'exam-date-not-announced': 'Report exam date not announced',
+    'fix-course-title': 'Fix Course title',
+    'fix-course-professors': 'Fix Course professors',
+    'fix-course-description': 'Fix Course description',
   }
   return labels[intent] || intent
 }

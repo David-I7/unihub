@@ -93,6 +93,8 @@ Exams:
 
 The UI should keep these as suggestion intents and only map them to contribution types inside the app. When an intent changes existing canonical information, the suggestion requires a note or source.
 
+When adding or updating an Assignment Deadline or Exam from the student suggestion flow, the form displays existing compatible Materials in a multiselect. Assignment forms show only `assignment` Materials; Exam forms show only `exam` Materials. If no compatible Materials exist, the form should show an empty state that directs the user to add the needed Material first.
+
 After a student fills a suggestion form, the normal suggestion flow shows a human-readable review summary only. It must not show JSON, repository target paths, pull request bodies, or raw contribution type names.
 
 Example summary:
@@ -141,20 +143,14 @@ Suggestion: Add material to Algorithms
 Example issue body:
 
 ```text
-Course: Algorithms
-Suggestion: Add missing material
+Diff:
+...
 
-Title: Lecture 4 recording
-Type: Video
-Link: https://example.edu/lecture-4
-Source: Posted in Teams by the professor
-
-Generated contribution:
-- Type: add-material
-- Target: public/data/courses/2025-2026/year-2/semester-1/algorithms.json
+New state:
+...
 ```
 
-The generated contribution section exists for maintainers. The student-facing summary remains the primary content.
+Generated GitHub issue bodies are maintainer-facing review artifacts. They should contain only the proposed diff and the resulting new state, without validation chatter, warnings, raw form metadata, or explanatory prose. The student-facing summary remains in the in-app suggestion review step before GitHub handoff.
 
 UniHub does not track student suggestion status in-app for v1. After the GitHub handoff, GitHub is the review and status surface.
 
@@ -178,7 +174,20 @@ Edit course metadata
 Add new course
 ```
 
-The contribution page should present task-shaped forms instead of storage-shaped JSON editing. Contributors fill in domain fields such as course title, exam date, material link, grade weight, and professor names. The UI generates local IDs, timestamps, empty arrays, target paths, JSON snippets, and full updated course JSON.
+The contribution page should present task-shaped forms instead of storage-shaped JSON editing. Contributors fill in domain fields such as course title, course description, Material Difficulty, Passing Difficulty, exam date, material link, grade weight, and professor names. The UI generates local IDs, timestamps, empty arrays, target paths, JSON snippets, and full updated course JSON.
+
+Task-shaped forms that can link Materials should use the same compatible-Material multiselect rule as student suggestions. The maintainer flow should make repeated additions explicit with actions such as `Add another material`, `Add another assignment`, `Add another exam`, or `Add another lecture` where batch creation is supported.
+
+Batch creation is supported for repeated Course items:
+
+```text
+materials
+assignmentDeadlines
+exams
+courseSessions
+```
+
+Batch creation is not part of metadata edits, new Course creation, Academic Year creation, Study Year creation, or Semester creation because those changes are structurally singular and should stay easy to review.
 
 Whole-course JSON editing is not part of the normal v1 flow. Raw JSON should not be visible on the contribution page.
 
@@ -202,9 +211,22 @@ For new course contributions, users choose:
 Academic Year -> Study Year -> Semester
 ```
 
-and enter the new course title, professors, and optional description. The app derives the course ID from the title and uses it for both the course file path and the course `id`.
+and enter the new course title, professors, optional description, Material Difficulty, and Passing Difficulty. The app derives the course ID from the title and uses it for both the course file path and the course `id`. Difficulty fields are shown with `unknown` preselected so the generated Course JSON is valid even when the real difficulty is not known yet.
+
+Adding a new Course is always a two-file contribution:
+
+```text
+public/data/courses/{academicYearId}/{studyYearId}/{semesterId}/{courseId}.json
+public/data/catalog.json
+```
+
+The generated output must create the new Course JSON file and generate the matching `catalog.json` diff that adds the Course to the selected Semester. A new Course contribution is incomplete if the Course file exists but the Catalog hierarchy does not reference it.
 
 Manual path entry should be hidden or treated as advanced.
+
+Catalog-structure contributions require an explicit hierarchy target. `add-study-year`, `add-semester`, and `add-new-course` require `academicYearId`; `add-semester` and `add-new-course` also require `studyYearId`; `add-new-course` also requires `semesterId`. These fields must not be presented as optional in the UI because the Catalog hierarchy cannot be updated unambiguously without them.
+
+Catalog labels and IDs should not be independently typed when one can be derived from the other. The normal flow is label-first: the user enters the label, the UI derives the ID, and the generated ID is shown as secondary text. Maintainers may override the generated ID only in an advanced/moderator flow when the normal derivation is wrong.
 
 ## Generated Fields
 
@@ -230,11 +252,8 @@ New items set both `addedAt` and `updatedAt` to the creation time.
 The UI opens a prefilled GitHub issue containing:
 
 ```text
-Contribution type
-Target path
-Generated JSON snippet or full updated JSON
-Validation result
-Warnings, when present
+Diff
+New state
 ```
 
 The generated JSON is placed directly in the issue body through the GitHub issue link. The contribution page should not show contributors a JSON editor or require them to copy JSON for the issue flow.
@@ -247,12 +266,15 @@ For pull requests, the UI provides:
 
 ```text
 Target file path
+Generated file diffs
 Suggested PR title
 Suggested PR body
 GitHub edit/create link when possible
 ```
 
-Because the app is static and unauthenticated, one-click PR creation is not required. The UI should copy the generated JSON and PR body to the clipboard for the pull request assist flow, then send the contributor to the relevant GitHub edit/create link when possible.
+PR bodies follow the same maintainer-facing rule as issue bodies: include the proposed diff and resulting new state only. Because the app is static and unauthenticated, one-click PR creation is not required. The UI should copy the generated JSON and PR body to the clipboard for the pull request assist flow, then send the contributor to the relevant GitHub edit/create link when possible.
+
+Pull request assist links must target canonical `public/data` files. Existing Course and Catalog changes should use GitHub edit links for the target file. New Course creation should use a GitHub create-file link for the new Course JSON file and include the `catalog.json` diff in the copied PR body, because a plain GitHub file URL cannot atomically create the Course file and edit `catalog.json` in one step. The PR assist step should state this limitation explicitly.
 
 ## Validation Behavior
 

@@ -1,7 +1,11 @@
 {
   "id": "inteligenta-artificiala",
   "title": "Inteligenta artificiala",
-  "professors": ["Prof. univ.dr. Denis Enachescu"],
+  "professors": [
+    "Prof. univ.dr. Denis Enachescu"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

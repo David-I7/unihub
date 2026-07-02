@@ -2,8 +2,30 @@
   "id": "tehnici-web",
   "title": "Tehnici web",
   "professors": ["Irina Ciocan"],
+  "description": "Nota la aceasta materie se poate obtine in doua moduri:\n\n1. Daca obtineti nota 10 doar din prezentarea proiectului personal, atunci nu mai trebuie sa va prezentati la examen.\n2. Daca nu obtineti nota 10 din prezentare, trebuie sa aveti minimum 5 la prezentarea proiectului si minimum 5 la examen, care va fi pe baza proiectului prezentat la curs.\n\nNota: dupa ce terminati cursul, profesoara nu va va mai raspunde la mesaje pana cu o saptamana inainte de sesiune.",
+  "materialDifficulty": "medium",
+  "passingDifficulty": "hard",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],
-  "exams": []
+  "exams": [
+    {
+      "id": "examen-pe-calculator",
+      "title": "Examen pe calculator",
+      "gradeWeight": 30,
+      "materialIds": [],
+      "addedAt": "2026-07-01T09:11:18.827Z",
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Puteti veni cu latopul personal"
+    },
+    {
+      "id": "prezentare-proiect",
+      "title": "Prezentare proiect",
+      "gradeWeight": 70,
+      "materialIds": [],
+      "addedAt": "2026-07-01T09:11:18.827Z",
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Prezentarea se va sustine online. Trebuie sa luat jumatate din punctaj ca sa intrati in examenul pe calculator"
+    }
+  ]
 }

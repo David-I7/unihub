@@ -1,8 +1,12 @@
 {
   "id": "algorithms",
   "title": "Algorithms",
-  "professors": ["Dr. Mara Ionescu"],
+  "professors": [
+    "Dr. Mara Ionescu"
+  ],
   "description": "Algorithm design, correctness, and complexity.",
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [
     {
       "id": "alg-course-01",
@@ -43,9 +47,10 @@
       "title": "Graph Traversal Report",
       "description": "Submit a short report and implementation archive.",
       "dueAt": "2026-03-15T21:59:00.000Z",
-      "submissionUrl": "https://example.edu/submit/alg-a1",
       "gradeWeight": 20,
-      "materialIds": ["alg-assignment-01"],
+      "materialIds": [
+        "alg-assignment-01"
+      ],
       "addedAt": "2026-02-18T09:10:00.000Z",
       "updatedAt": "2026-02-18T09:10:00.000Z"
     }
@@ -78,7 +83,9 @@
       "title": "Midterm Exam",
       "startsAt": "2026-04-20T09:00:00.000Z",
       "gradeWeight": 30,
-      "materialIds": ["alg-exam-01"],
+      "materialIds": [
+        "alg-exam-01"
+      ],
       "addedAt": "2026-03-01T08:00:00.000Z",
       "updatedAt": "2026-03-01T08:00:00.000Z"
     },
@@ -86,7 +93,9 @@
       "id": "alg-final",
       "title": "Final Exam",
       "gradeWeight": 40,
-      "materialIds": ["alg-exam-01"],
+      "materialIds": [
+        "alg-exam-01"
+      ],
       "addedAt": "2026-03-10T08:00:00.000Z",
       "updatedAt": "2026-03-10T08:00:00.000Z"
     },
@@ -94,7 +103,10 @@
       "id": "alg-retake",
       "title": "Retake Exam",
       "startsAt": "2026-07-20T09:00:00.000Z",
-      "materialIds": ["alg-exam-01"],
+      "gradeWeight": 5,
+      "materialIds": [
+        "alg-exam-01"
+      ],
       "addedAt": "2026-06-20T08:00:00.000Z",
       "updatedAt": "2026-06-20T08:00:00.000Z"
     }

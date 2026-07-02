@@ -1,7 +1,11 @@
 {
   "id": "sisteme-de-gestiune-a-bazelor-de-date",
   "title": "Sisteme de gestiune a bazelor de date",
-  "professors": ["Lect. dr. L. Vasile"],
+  "professors": [
+    "Lect. dr. L. Vasile"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

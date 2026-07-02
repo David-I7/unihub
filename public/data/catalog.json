@@ -16,28 +16,22 @@
               "order": 1,
               "courses": [
                 {
-                  "id": "arhitectura-sistemelor-de-calcul",
-                  "title": "Arhitectura sistemelor de calcul"
+                  "id": "arhitectura-sistemelor-de-calcul"
                 },
                 {
-                  "id": "calcul-diferential-si-integral",
-                  "title": "Calcul diferential si integral"
+                  "id": "calcul-diferential-si-integral"
                 },
                 {
-                  "id": "instrumente-si-tehnici-de-baza-in-informatica",
-                  "title": "Instrumente si tehnici de baza in Informatica"
+                  "id": "instrumente-si-tehnici-de-baza-in-informatica"
                 },
                 {
-                  "id": "programarea-algoritmilor",
-                  "title": "Programarea algoritmilor"
+                  "id": "programarea-algoritmilor"
                 },
                 {
-                  "id": "structuri-algebrice-in-informatica",
-                  "title": "Structuri algebrice in informatica"
+                  "id": "structuri-algebrice-in-informatica"
                 },
                 {
-                  "id": "tehnici-web",
-                  "title": "Tehnici web"
+                  "id": "tehnici-web"
                 }
               ]
             },
@@ -47,61 +41,22 @@
               "order": 2,
               "courses": [
                 {
-                  "id": "baze-de-date",
-                  "title": "Baze de date"
+                  "id": "baze-de-date"
                 },
                 {
-                  "id": "geometrie-si-algebra-liniara",
-                  "title": "Geometrie si algebra liniara"
+                  "id": "geometrie-si-algebra-liniara"
                 },
                 {
-                  "id": "limbaje-formale-si-automate",
-                  "title": "Limbaje formale si automate"
+                  "id": "limbaje-formale-si-automate"
                 },
                 {
-                  "id": "programare-orientata-pe-obiecte",
-                  "title": "Programare orientata pe obiecte"
+                  "id": "programare-orientata-pe-obiecte"
                 },
                 {
-                  "id": "structuri-de-date",
-                  "title": "Structuri de date"
+                  "id": "structuri-de-date"
                 },
                 {
-                  "id": "logica-matematica-si-computationala",
-                  "title": "Logica matematica si computationala"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "year-2",
-          "label": "Study Year 2",
-          "order": 2,
-          "semesters": [
-            {
-              "id": "semester-1",
-              "label": "Semester 1",
-              "order": 1,
-              "courses": [
-                {
-                  "id": "algorithms",
-                  "title": "Algorithms"
-                },
-                {
-                  "id": "databases",
-                  "title": "Databases"
-                }
-              ]
-            },
-            {
-              "id": "semester-2",
-              "label": "Semester 2",
-              "order": 2,
-              "courses": [
-                {
-                  "id": "web-engineering",
-                  "title": "Web Engineering"
+                  "id": "logica-matematica-si-computationala"
                 }
               ]
             }
@@ -125,28 +80,22 @@
               "order": 1,
               "courses": [
                 {
-                  "id": "algoritmi-fundamentali",
-                  "title": "Algoritmi fundamentali"
+                  "id": "algoritmi-fundamentali"
                 },
                 {
-                  "id": "dezvoltarea-aplicatiilor-web",
-                  "title": "Dezvoltarea aplicatiilor web"
+                  "id": "dezvoltarea-aplicatiilor-web"
                 },
                 {
-                  "id": "probabilitati-si-statistica",
-                  "title": "Probabilitati si statistica"
+                  "id": "probabilitati-si-statistica"
                 },
                 {
-                  "id": "programare-functionala",
-                  "title": "Programare functionala"
+                  "id": "programare-functionala"
                 },
                 {
-                  "id": "sisteme-de-gestiune-a-bazelor-de-date",
-                  "title": "Sisteme de gestiune a bazelor de date"
+                  "id": "sisteme-de-gestiune-a-bazelor-de-date"
                 },
                 {
-                  "id": "sisteme-de-operare",
-                  "title": "Sisteme de operare"
+                  "id": "sisteme-de-operare"
                 }
               ]
             },
@@ -156,28 +105,22 @@
               "order": 2,
               "courses": [
                 {
-                  "id": "algoritmi-avansati",
-                  "title": "Algoritmi avansati"
+                  "id": "algoritmi-avansati"
                 },
                 {
-                  "id": "fundamentele-limbajelor-de-programare",
-                  "title": "Fundamentele limbajelor de programare"
+                  "id": "fundamentele-limbajelor-de-programare"
                 },
                 {
-                  "id": "inteligenta-artificiala",
-                  "title": "Inteligenta artificiala"
+                  "id": "inteligenta-artificiala"
                 },
                 {
-                  "id": "metode-de-dezvoltare-software",
-                  "title": "Metode de dezvoltare software"
+                  "id": "metode-de-dezvoltare-software"
                 },
                 {
-                  "id": "programare-avansata-pe-obiecte-in-java",
-                  "title": "Programare avansata pe obiecte in Java"
+                  "id": "programare-avansata-pe-obiecte-in-java"
                 },
                 {
-                  "id": "retele-de-calculatoare",
-                  "title": "Retele de calculatoare"
+                  "id": "retele-de-calculatoare"
                 }
               ]
             }

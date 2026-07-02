@@ -53,6 +53,8 @@ Course title
 Professor names
 ```
 
+Course cards do not show Material Difficulty or Passing Difficulty. Difficulty labels appear only in the Course detail About section.
+
 Desktop shows Activity as a right-side panel. Mobile shows Activity below the course grid.
 
 Activity shows the latest additions with `addedAt` and Material updates with `updatedAt`, filtered to the selected academic year, study year, and semester.
@@ -64,8 +66,22 @@ Course detail pages show:
 ```text
 Course title
 Professors
+About section
 Tabs
 ```
+
+The About section shows the Course description, Material Difficulty, Passing Difficulty, and a Grade Breakdown derived from known Assignment Deadline and Exam percentages. Assignment notes and exam notes are not repeated in About; they appear in the Assignments and Exams tabs through each item's description.
+
+Material Difficulty and Passing Difficulty are color-coded status badges:
+
+```text
+easy -> green
+medium -> amber
+hard -> red
+unknown -> neutral gray
+```
+
+Missing difficulty values should display as `unknown`.
 
 Tabs:
 
@@ -98,11 +114,12 @@ Title
 Due date
 Grade weight, when known
 Description, when present
-Submission URL, when present
 Linked assignment materials
 ```
 
 Assignment status is derived from `dueAt`, for example upcoming, due soon, or past.
+
+Assignment suggestion and contribution forms use a multiselect for linked Materials and only list Materials with type `assignment`.
 
 ### Lectures
 
@@ -126,10 +143,13 @@ Exam cards display:
 ```text
 Title
 Start date/time, when known
+Description, when present
 Location, when present
-Grade weight, when known
+Grade weight
 Linked exam materials
 ```
+
+Exam suggestion and contribution forms use a multiselect for linked Materials and only list Materials with type `exam`.
 
 ## Calendar
 

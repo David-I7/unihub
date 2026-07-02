@@ -1,4 +1,4 @@
-import { Clipboard, ExternalLink } from 'lucide-react'
+import { Clipboard, ExternalLink, Plus } from 'lucide-react'
 import { useState } from 'react'
 import { AcademicContextPicker } from '@/components/AcademicContextPicker'
 import { PageHeader } from '@/components/PageHeader'
@@ -11,6 +11,7 @@ import { prepareGeneratedContribution, selectedContextCourses, type Catalog, typ
 type FormState = Record<string, string | string[]>
 
 const materialTypes: MaterialType[] = ['course', 'seminar', 'lab', 'assignment', 'exam', 'video', 'other']
+const difficultyOptions = ['unknown', 'easy', 'medium', 'hard'].map((item) => [item, label(item)])
 
 export function ContributePage({
   context,
@@ -263,8 +264,8 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
   if (type === 'add-academic-year') {
     return (
       <div className="grid gap-3">
-        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
-        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Label" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Generated Academic Year ID" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
         <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
       </div>
     )
@@ -273,9 +274,9 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
   if (type === 'add-study-year') {
     return (
       <div className="grid gap-3">
-        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
-        <TextField label="Study Year ID (optional)" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
-        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Academic Year ID" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
+        <TextField label="Label" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Generated Study Year ID" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
         <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
       </div>
     )
@@ -284,10 +285,10 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
   if (type === 'add-semester') {
     return (
       <div className="grid gap-3">
-        <TextField label="Academic Year ID (optional)" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
-        <TextField label="Study Year ID (optional)" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
-        <TextField label="Semester ID (optional)" value={textValue(form.semesterId)} onChange={(value) => updateField('semesterId', value)} />
-        <TextField label="Label (optional)" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Academic Year ID" value={textValue(form.academicYearId)} onChange={(value) => updateField('academicYearId', value)} />
+        <TextField label="Study Year ID" value={textValue(form.studyYearId)} onChange={(value) => updateField('studyYearId', value)} />
+        <TextField label="Label" value={textValue(form.label)} onChange={(value) => updateField('label', value)} />
+        <TextField label="Generated Semester ID" value={textValue(form.semesterId)} onChange={(value) => updateField('semesterId', value)} />
         <TextField label="Initial Course ID (optional)" value={textValue(form.courseId)} onChange={(value) => updateField('courseId', value)} />
         <TextField label="Initial Course title (optional)" value={textValue(form.courseTitle)} onChange={(value) => updateField('courseTitle', value)} />
         <TextField label="Order (optional)" value={textValue(form.order)} onChange={(value) => updateField('order', value)} />
@@ -301,6 +302,8 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
         <TextField label="Course title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <TextField label="Professors (optional)" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
         <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+        <SelectField label="Material Difficulty" value={textValue(form.materialDifficulty)} options={difficultyOptions} onChange={(value) => updateField('materialDifficulty', value)} />
+        <SelectField label="Passing Difficulty" value={textValue(form.passingDifficulty)} options={difficultyOptions} onChange={(value) => updateField('passingDifficulty', value)} />
       </div>
     )
   }
@@ -311,6 +314,7 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
         <TextField label="Material title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <SelectField label="Material type" value={textValue(form.type)} options={materialTypes.map((item) => [item, label(item)])} onChange={(value) => updateField('type', value)} />
         <TextField label="External URL" value={textValue(form.url)} onChange={(value) => updateField('url', value)} />
+        <AddAnotherButton label="Add another material" />
       </div>
     )
   }
@@ -332,12 +336,12 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
       <div className="grid gap-3">
         <TextField label="Assignment title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <DateTimeField label="Due date and time" value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
-        <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
-        <TextField label="Submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+        <TextArea label="Description and submission instructions (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
         <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-        <MultiSelectField label="Assignment Materials (optional)" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'assignment').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
+        <CompatibleMaterialField label="Assignment Materials (optional)" emptyText="Add the needed assignment Material first." materials={course?.materials ?? []} materialType="assignment" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
         <TextField label="New assignment Material title (optional)" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
         <TextField label="New assignment Material URL (optional)" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
+        <AddAnotherButton label="Add another assignment" />
       </div>
     )
   }
@@ -347,10 +351,13 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
       <div className="grid gap-3">
         <TextField label="Exam title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
         <DateTimeField label="Exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
-        <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
-        <MultiSelectField label="Exam Materials (optional)" value={arrayValue(form.materialIds)} options={(course?.materials ?? []).filter((item) => item.type === 'exam').map((item) => [item.id, item.title])} onChange={(value) => updateField('materialIds', value)} />
+        <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+        <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
+        <TextField label="Grade Weight" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+        <CompatibleMaterialField label="Exam Materials (optional)" emptyText="Add the needed exam Material first." materials={course?.materials ?? []} materialType="exam" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
         <TextField label="New exam Material title (optional)" value={textValue(form.inlineMaterialTitle)} onChange={(value) => updateField('inlineMaterialTitle', value)} />
         <TextField label="New exam Material URL (optional)" value={textValue(form.inlineMaterialUrl)} onChange={(value) => updateField('inlineMaterialUrl', value)} />
+        <AddAnotherButton label="Add another exam" />
       </div>
     )
   }
@@ -363,6 +370,7 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
         <DateTimeField label="Ends at" value={textValue(form.endsAt)} onChange={(value) => updateField('endsAt', value)} />
         <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
         <SelectField label="Status (optional)" value={textValue(form.status)} options={[['scheduled', 'Scheduled'], ['cancelled', 'Cancelled']]} onChange={(value) => updateField('status', value)} />
+        <AddAnotherButton label="Add another lecture" />
       </div>
     )
   }
@@ -372,6 +380,8 @@ function TaskForm({ type, form, course, updateField }: { type: ContributionType;
       <TextField label="Course title (optional)" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
       <TextField label="Professors (optional)" value={textValue(form.professorsText)} onChange={(value) => updateField('professorsText', value)} />
       <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+      <SelectField label="Material Difficulty" value={textValue(form.materialDifficulty)} options={difficultyOptions} onChange={(value) => updateField('materialDifficulty', value)} />
+      <SelectField label="Passing Difficulty" value={textValue(form.passingDifficulty)} options={difficultyOptions} onChange={(value) => updateField('passingDifficulty', value)} />
     </div>
   )
 }
@@ -427,6 +437,21 @@ function MultiSelectField({ label, value, options, onChange }: { label: string; 
   )
 }
 
+function CompatibleMaterialField({ label, emptyText, materials, materialType, value, onChange }: { label: string; emptyText: string; materials: LoadedCourse['materials']; materialType: 'assignment' | 'exam'; value: string[]; onChange: (value: string[]) => void }) {
+  const options = materials.filter((material) => material.type === materialType).map((material) => [material.id, material.title])
+  if (options.length === 0) return <p className={`m-0 rounded-md border border-dashed border-[var(--border-color)] p-3 text-sm ${mutedTextClass}`}>{emptyText}</p>
+  return <MultiSelectField label={label} value={value} options={options} onChange={onChange} />
+}
+
+function AddAnotherButton({ label }: { label: string }) {
+  return (
+    <button type="button" className="inline-flex w-fit items-center gap-2 rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-2.5 py-1 text-[13px] font-semibold text-[var(--text-main)] hover:border-[var(--primary)]">
+      <Plus aria-hidden="true" size={14} />
+      {label}
+    </button>
+  )
+}
+
 const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)] shadow-sm outline-none transition-colors hover:border-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring-color)]'
 
 function initialForm(type: ContributionType, course?: LoadedCourse): FormState {
@@ -435,11 +460,11 @@ function initialForm(type: ContributionType, course?: LoadedCourse): FormState {
   if (type === 'add-semester') return { academicYearId: '', studyYearId: '', semesterId: '', label: '', courseId: '', courseTitle: '', order: '' }
   if (type === 'add-material') return { title: '', type: 'course', url: '' }
   if (type === 'update-material') return { materialId: course?.materials[0]?.id ?? '', title: '', type: course?.materials[0]?.type ?? 'course', url: '' }
-  if (type === 'add-assignment-deadline') return { title: '', dueAt: '', description: '', submissionUrl: '', gradeWeight: '', materialIds: [], inlineMaterialTitle: '', inlineMaterialUrl: '' }
-  if (type === 'add-exam') return { title: '', startsAt: '', gradeWeight: '', materialIds: [], inlineMaterialTitle: '', inlineMaterialUrl: '' }
+  if (type === 'add-assignment-deadline') return { title: '', dueAt: '', description: '', gradeWeight: '', materialIds: [], inlineMaterialTitle: '', inlineMaterialUrl: '' }
+  if (type === 'add-exam') return { title: '', startsAt: '', description: '', location: '', gradeWeight: '', materialIds: [], inlineMaterialTitle: '', inlineMaterialUrl: '' }
   if (type === 'add-course-session') return { title: '', startsAt: '', endsAt: '', location: '', status: 'scheduled' }
-  if (type === 'edit-course-metadata') return { title: course?.title ?? '', professorsText: course?.professors.join(', ') ?? '', description: course?.description ?? '' }
-  return { title: '', professorsText: '', description: '' }
+  if (type === 'edit-course-metadata') return { title: course?.title ?? '', professorsText: course?.professors.join(', ') ?? '', description: course?.description ?? '', materialDifficulty: course?.materialDifficulty ?? 'unknown', passingDifficulty: course?.passingDifficulty ?? 'unknown' }
+  return { title: '', professorsText: '', description: '', materialDifficulty: 'unknown', passingDifficulty: 'unknown' }
 }
 
 function formToInput(type: ContributionType, form: FormState): Record<string, unknown> {

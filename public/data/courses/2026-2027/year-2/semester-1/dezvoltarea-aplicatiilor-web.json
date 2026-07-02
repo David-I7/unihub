@@ -1,7 +1,11 @@
 {
   "id": "dezvoltarea-aplicatiilor-web",
   "title": "Dezvoltarea aplicatiilor web",
-  "professors": ["Lect. Dr. L. Vasile"],
+  "professors": [
+    "Lect. Dr. L. Vasile"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

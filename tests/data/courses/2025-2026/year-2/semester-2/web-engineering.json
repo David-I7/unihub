@@ -1,8 +1,12 @@
 {
   "id": "web-engineering",
   "title": "Web Engineering",
-  "professors": ["Dr. Elena Pavel"],
+  "professors": [
+    "Dr. Elena Pavel"
+  ],
   "description": "Modern frontend architecture and delivery.",
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [
     {
       "id": "web-course-01",

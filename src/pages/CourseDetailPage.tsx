@@ -23,7 +23,7 @@ import {
 import { formatDate, formatTime } from '@/lib/format'
 import type { MaterialType, RepositorySnapshot, SuggestionIntent, SuggestionSection } from '@/domain'
 
-type CourseDetailTab = 'materials' | 'assignments' | 'lectures' | 'exams'
+type CourseDetailTab = 'about' | 'materials' | 'assignments' | 'lectures' | 'exams'
 type SuggestionTarget = SuggestionSection | null
 type SuggestionForm = Record<string, string | string[]>
 
@@ -31,7 +31,7 @@ export function CourseDetailPage({ loadedCourses, catalog }: { loadedCourses: Lo
   const params = useParams()
   const path = coursePathFromRouteParams(params)
   const course = path ? findCourse(loadedCourses, path) : undefined
-  const [tab, setTab] = useState<CourseDetailTab>('materials')
+  const [tab, setTab] = useState<CourseDetailTab>('about')
   const [nowTime] = useState(() => Date.now())
   const [suggestionTarget, setSuggestionTarget] = useState<SuggestionTarget>(null)
 
@@ -57,13 +57,13 @@ export function CourseDetailPage({ loadedCourses, catalog }: { loadedCourses: Lo
           onClose={() => setSuggestionTarget(null)}
         />
       )}
-      <div className="mb-4 flex gap-1.5 border-b border-[var(--border-color)]" role="tablist">
-        {(['materials', 'assignments', 'lectures', 'exams'] as const).map((item) => (
+      <div className="scrollbar-hidden mb-4 flex max-w-full gap-1.5 overflow-x-auto overflow-y-hidden border-b border-[var(--border-color)]" role="tablist">
+        {(['about', 'materials', 'assignments', 'lectures', 'exams'] as const).map((item) => (
           <button
             key={item}
             type="button"
             className={cn(
-              'cursor-pointer border-0 border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-[inherit] text-[var(--text-tab-inactive)] transition-colors hover:text-[var(--text-main)]',
+              'shrink-0 cursor-pointer border-0 border-b-[3px] border-transparent bg-transparent px-3 py-2.5 font-[inherit] text-[var(--text-tab-inactive)] transition-colors hover:text-[var(--text-main)]',
               tab === item && 'border-[var(--primary)] font-bold text-[var(--text-main)]',
             )}
             onClick={() => setTab(item)}
@@ -72,10 +72,31 @@ export function CourseDetailPage({ loadedCourses, catalog }: { loadedCourses: Lo
           </button>
         ))}
       </div>
+      {tab === 'about' && <AboutTab view={view} onSuggest={() => setSuggestionTarget('course-info')} />}
       {tab === 'materials' && <MaterialsTab view={view} onSuggest={() => setSuggestionTarget('materials')} />}
       {tab === 'assignments' && <AssignmentsTab view={view} onSuggest={() => setSuggestionTarget('assignments')} />}
       {tab === 'lectures' && <LecturesTab view={view} onSuggest={() => setSuggestionTarget('lectures')} />}
       {tab === 'exams' && <ExamsTab view={view} onSuggest={() => setSuggestionTarget('exams')} />}
+    </div>
+  )
+}
+
+function AboutTab({ view, onSuggest }: { view: CourseDetailView; onSuggest: () => void }) {
+  return (
+    <div className="grid gap-3">
+      <SectionHeading title="About" onSuggest={onSuggest} />
+      <section className={`${panelClass} grid gap-4 p-4`}>
+        {view.about.description && (
+          <div
+            className={`m-0 whitespace-pre-line ${mutedTextClass}`}
+            dangerouslySetInnerHTML={{ __html: view.about.description }}
+          />
+        )}
+        <div className="flex flex-wrap gap-2">
+          <DifficultyBadge label="Material Difficulty" value={view.about.materialDifficulty} />
+          <DifficultyBadge label="Passing Difficulty" value={view.about.passingDifficulty} />
+        </div>
+      </section>
       <GradeBreakdown view={view} />
     </div>
   )
@@ -135,13 +156,7 @@ function AssignmentsTab({ view, onSuggest }: { view: CourseDetailView; onSuggest
               </div>
             </div>
           </div>
-          <p className={`m-0 ${mutedTextClass}`}>{assignment.description}</p>
-          {assignment.submissionUrl && (
-            <a href={assignment.submissionUrl} target="_blank" className="inline-flex w-fit items-center gap-2 rounded-md bg-[var(--primary)] px-3 py-2 text-sm font-semibold !text-white no-underline transition-colors hover:bg-[var(--primary-hover)]">
-              <ExternalLink aria-hidden="true" size={16} />
-              Open submission
-            </a>
-          )}
+          {assignment.description && <p className={`m-0 ${mutedTextClass}`}>{assignment.description}</p>}
           <LinkedMaterials materials={assignment.materials} />
         </article>
       ))}
@@ -208,10 +223,12 @@ function ExamsTab({ view, onSuggest }: { view: CourseDetailView; onSuggest: () =
               <h2 className={headingClass}>{exam.title}</h2>
               <div className="flex flex-wrap gap-2">
                 <span className={statusChipClass('exam')}>{exam.startsAt ? formatDate(exam.startsAt) : 'Date to be announced'}</span>
-                {exam.gradeWeight !== undefined && <span className={statusChipClass('scheduled')}>{exam.gradeWeight}% Grade Weight</span>}
+                <span className={statusChipClass('scheduled')}>{exam.gradeWeight}% Grade Weight</span>
+                {exam.location && <span className={statusChipClass('scheduled')}><MapPin aria-hidden="true" size={13} />{exam.location}</span>}
               </div>
             </div>
           </div>
+          {exam.description && <p className={`m-0 ${mutedTextClass}`}>{exam.description}</p>}
           <LinkedMaterials materials={exam.materials} />
         </article>
       ))}
@@ -394,18 +411,18 @@ function SuggestionFields({
           <>
             <TextField label="Assignment title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
             <DateTimeField label="Due date and time" value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
-            <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
-            <TextField label="Submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+            <TextArea label="Description and submission instructions (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
             <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+            <CompatibleMaterialField label="Linked assignment Materials (optional)" emptyText="Add an assignment Material first to link it here." materials={course.materials} materialType="assignment" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
           </>
         ) : (
           <>
             <SelectField label="Assignment" value={textValue(form.assignmentId)} options={assignmentOptions} onChange={(value) => applySelectedAssignment(value, course.assignmentDeadlines, updateField)} />
             <TextField label="Correct title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
             <DateTimeField label={intent === 'changed-assignment-deadline' ? 'Correct/changed due date and time' : 'Correct due date and time'} value={textValue(form.dueAt)} onChange={(value) => updateField('dueAt', value)} />
-            {intent !== 'changed-assignment-deadline' && <TextArea label="Correct description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />}
-            <TextField label="Correct submission URL (optional)" value={textValue(form.submissionUrl)} onChange={(value) => updateField('submissionUrl', value)} />
+            {intent !== 'changed-assignment-deadline' && <TextArea label="Correct description and submission instructions (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />}
             <TextField label="Correct grade weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+            <CompatibleMaterialField label="Linked assignment Materials (optional)" emptyText="Add an assignment Material first to link it here." materials={course.materials} materialType="assignment" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
             <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />
           </>
         )}
@@ -445,14 +462,20 @@ function SuggestionFields({
         <>
           <TextField label="Exam title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
           <DateTimeField label="Exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />
-          <TextField label="Grade Weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          <TextArea label="Description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+          <TextField label="Location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
+          <TextField label="Grade Weight" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          <CompatibleMaterialField label="Linked exam Materials (optional)" emptyText="Add an exam Material first to link it here." materials={course.materials} materialType="exam" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
         </>
       ) : (
         <>
           <SelectField label="Exam" value={textValue(form.examId)} options={examOptions} onChange={(value) => applySelectedExam(value, course.exams, updateField)} />
           <TextField label="Correct title" value={textValue(form.title)} onChange={(value) => updateField('title', value)} />
           {intent !== 'exam-date-not-announced' && <DateTimeField label="Correct exam date and time (optional)" value={textValue(form.startsAt)} onChange={(value) => updateField('startsAt', value)} />}
-          <TextField label="Correct grade weight (optional)" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          <TextArea label="Correct description (optional)" value={textValue(form.description)} onChange={(value) => updateField('description', value)} />
+          <TextField label="Correct location (optional)" value={textValue(form.location)} onChange={(value) => updateField('location', value)} />
+          <TextField label="Correct grade weight" value={textValue(form.gradeWeight)} onChange={(value) => updateField('gradeWeight', value)} />
+          <CompatibleMaterialField label="Linked exam Materials (optional)" emptyText="Add an exam Material first to link it here." materials={course.materials} materialType="exam" value={arrayValue(form.materialIds)} onChange={(value) => updateField('materialIds', value)} />
           <TextArea label="Note or source" value={textValue(form.note)} onChange={(value) => updateField('note', value)} />
         </>
       )}
@@ -474,6 +497,16 @@ function GradeBreakdown({ view }: { view: CourseDetailView }) {
       </strong>
     </section>
   )
+}
+
+function DifficultyBadge({ label, value }: { label: string; value: CourseDetailView['about']['materialDifficulty'] }) {
+  const tones = {
+    easy: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    medium: 'bg-amber-50 text-amber-800 border-amber-200',
+    hard: 'bg-red-50 text-red-700 border-red-200',
+    unknown: 'bg-gray-100 text-gray-700 border-gray-200',
+  }
+  return <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${tones[value]}`}>{label}: {labelValue(value)}</span>
 }
 
 function LinkedMaterials({ materials }: { materials: CourseDetailView['assignments'][number]['materials'] }) {
@@ -576,6 +609,25 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   )
 }
 
+function MultiSelectField({ label, value, options, onChange }: { label: string; value: string[]; options: string[][]; onChange: (value: string[]) => void }) {
+  return (
+    <label className="grid gap-1 text-sm font-semibold text-[var(--text-main)]">
+      {label}
+      <select className={fieldClass} multiple value={value} onChange={(event) => onChange([...event.target.selectedOptions].map((option) => option.value))}>
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>{optionLabel}</option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function CompatibleMaterialField({ label, emptyText, materials, materialType, value, onChange }: { label: string; emptyText: string; materials: Material[]; materialType: 'assignment' | 'exam'; value: string[]; onChange: (value: string[]) => void }) {
+  const options = materials.filter((material) => material.type === materialType).map((material) => [material.id, material.title])
+  if (options.length === 0) return <p className={`m-0 rounded-md border border-dashed border-[var(--border-color)] p-3 text-sm ${mutedTextClass}`}>{emptyText}</p>
+  return <MultiSelectField label={label} value={value} options={options} onChange={onChange} />
+}
+
 const fieldClass = 'w-full rounded-md border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-2 text-sm text-[var(--text-main)] shadow-sm outline-none transition-colors hover:border-[var(--primary)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--ring-color)]'
 
 function sectionIntro(section: SuggestionSection): string {
@@ -611,15 +663,15 @@ function initialSuggestionForm(section: SuggestionSection, intent: SuggestionInt
   }
   if (section === 'assignments') {
     const assignment = course.assignmentDeadlines[0]
-    if (intent === 'add-assignment') return { title: '', dueAt: '', description: '', submissionUrl: '', gradeWeight: '' }
+    if (intent === 'add-assignment') return { title: '', dueAt: '', description: '', gradeWeight: '', materialIds: [] }
     return {
       assignmentId: assignment?.id ?? '',
       itemTitle: assignment?.title ?? '',
       title: assignment?.title ?? '',
       dueAt: localDateTimeValue(assignment?.dueAt),
       description: assignment?.description ?? '',
-      submissionUrl: assignment?.submissionUrl ?? '',
       gradeWeight: assignment?.gradeWeight?.toString() ?? '',
+      materialIds: assignment?.materialIds ?? [],
       note: '',
     }
   }
@@ -637,13 +689,16 @@ function initialSuggestionForm(section: SuggestionSection, intent: SuggestionInt
     }
   }
   const exam = course.exams[0]
-  if (intent === 'add-exam') return { title: '', startsAt: '', gradeWeight: '' }
+  if (intent === 'add-exam') return { title: '', startsAt: '', description: '', location: '', gradeWeight: '', materialIds: [] }
   return {
     examId: exam?.id ?? '',
     itemTitle: exam?.title ?? '',
     title: exam?.title ?? '',
     startsAt: localDateTimeValue(exam?.startsAt),
+    description: exam?.description ?? '',
+    location: exam?.location ?? '',
     gradeWeight: exam?.gradeWeight?.toString() ?? '',
+    materialIds: exam?.materialIds ?? [],
     note: '',
   }
 }
@@ -685,8 +740,8 @@ function applySelectedAssignment(assignmentId: string, assignments: LoadedCourse
   updateField('title', assignment?.title ?? '')
   updateField('dueAt', localDateTimeValue(assignment?.dueAt))
   updateField('description', assignment?.description ?? '')
-  updateField('submissionUrl', assignment?.submissionUrl ?? '')
   updateField('gradeWeight', assignment?.gradeWeight?.toString() ?? '')
+  updateField('materialIds', assignment?.materialIds ?? [])
 }
 
 function applySelectedLecture(lectureId: string, lectures: LoadedCourse['courseSessions'], updateField: (name: string, value: string | string[]) => void) {
@@ -705,7 +760,10 @@ function applySelectedExam(examId: string, exams: LoadedCourse['exams'], updateF
   updateField('itemTitle', exam?.title ?? '')
   updateField('title', exam?.title ?? '')
   updateField('startsAt', localDateTimeValue(exam?.startsAt))
+  updateField('description', exam?.description ?? '')
+  updateField('location', exam?.location ?? '')
   updateField('gradeWeight', exam?.gradeWeight?.toString() ?? '')
+  updateField('materialIds', exam?.materialIds ?? [])
 }
 
 function localDateTimeValue(value: string | undefined): string {
@@ -722,4 +780,12 @@ function labelMaterialType(value: string): string {
 
 function label(value: string): string {
   return value.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function labelValue(value: string): string {
+  return value[0].toUpperCase() + value.slice(1)
+}
+
+function arrayValue(value: string | string[] | undefined): string[] {
+  return Array.isArray(value) ? value : []
 }

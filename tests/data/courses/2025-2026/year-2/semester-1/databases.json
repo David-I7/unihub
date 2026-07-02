@@ -1,8 +1,12 @@
 {
   "id": "databases",
   "title": "Databases",
-  "professors": ["Prof. Andrei Pop"],
+  "professors": [
+    "Prof. Andrei Pop"
+  ],
   "description": "Relational modeling, SQL, and transactions.",
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [
     {
       "id": "db-course-01",

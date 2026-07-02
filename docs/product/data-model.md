@@ -49,12 +49,29 @@ from `catalog.json` and the course file paths.
 
 Course IDs are unique within their semester. Material, assignment, exam, and lecture IDs are unique within their course.
 
+The course-level `description`, `materialDifficulty`, and `passingDifficulty` fields feed the Course detail About section. Assignment-specific notes belong in the Assignment Deadline `description`; exam-specific notes belong in the Exam `description`.
+
+Course metadata edits may update `title`, `professors`, `description`, `materialDifficulty`, and `passingDifficulty`.
+
+`materialDifficulty` and `passingDifficulty` use the controlled values:
+
+```text
+easy
+medium
+hard
+unknown
+```
+
+Course records require both difficulty fields. Existing Course records should be migrated with explicit `unknown` values for both difficulty fields when the real values are not known. New Course generation should also default both fields to `unknown` until a contributor provides more specific values. Validation must reject missing difficulty fields and values outside the controlled vocabulary.
+
 ```json
 {
   "id": "data-structures",
   "title": "Data Structures",
   "professors": ["Dr. Ana Popescu", "Dr. Mihai Ionescu"],
   "description": "Optional course description.",
+  "materialDifficulty": "medium",
+  "passingDifficulty": "hard",
   "materials": [
     {
       "id": "lecture-1-slides",
@@ -94,8 +111,7 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "id": "lab-2",
       "title": "Lab 2",
       "dueAt": "2026-03-18T23:59:00+02:00",
-      "description": "Submit the completed lab report as a PDF.",
-      "submissionUrl": "https://example.com/submit",
+      "description": "Submit the completed lab report as a PDF. Submission details are part of this description.",
       "gradeWeight": 20,
       "materialIds": ["lab-2-brief"],
       "addedAt": "2026-03-10T09:00:00+02:00",
@@ -119,6 +135,7 @@ Course IDs are unique within their semester. Material, assignment, exam, and lec
       "id": "final-exam",
       "title": "Final Exam",
       "startsAt": "2026-06-12T09:00:00+03:00",
+      "description": "Minimum 5 required on the final exam.",
       "location": "Exam Hall 1",
       "gradeWeight": 80,
       "materialIds": ["final-example-2025"],
@@ -163,9 +180,13 @@ Validation must require assignment `materialIds` to reference `assignment` mater
 
 Assignments require `dueAt` as an ISO datetime with offset.
 
+Assignment Deadlines may include `description` for assignment-specific notes and submission instructions. They do not have a separate `submissionUrl`; submission details belong in the description. `gradeWeight` remains optional because not every assignment deadline contributes directly to the final grade.
+
 Lectures require `startsAt` and `endsAt` as ISO datetimes with offsets. `endsAt` must be after `startsAt`.
 
 Exams may omit `startsAt` when the date is not announced. Exams do not have `endsAt`.
+
+Exams require `gradeWeight`. Exams may include `description` for exam-specific notes and `location` for the room, building, or meeting link.
 
 The app displays datetimes as represented by the stored values and should not introduce a separate fixed university timezone.
 
@@ -185,6 +206,8 @@ cancelled
 Assignments and exams may have `gradeWeight` as a percentage number. Grade weights may exceed `100` when the professor's grading policy allows it. The schema allows incomplete grading data.
 
 Validation should not block totals above `100`. Totals below `100` are allowed with a warning because they may indicate incomplete grading data.
+
+The Course detail About section shows a Grade Breakdown derived from Assignment Deadline and Exam `gradeWeight` values. The breakdown shows the known percentages only; grading policy notes stay in the Course, Assignment Deadline, or Exam descriptions.
 
 ## Activity
 

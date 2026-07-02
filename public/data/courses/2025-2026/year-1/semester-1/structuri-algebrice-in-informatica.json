@@ -2,6 +2,9 @@
   "id": "structuri-algebrice-in-informatica",
   "title": "Structuri algebrice in informatica",
   "professors": ["Conf. dr. A. Gica"],
+  "description": "La sfarsitul fiecarei lectii, se va da un test pentru puncte bonus la examen, pe baza lucrurilor discutate. Din fiecare test se poate obtine maximum 0.8p bonus, pentru un total de 3.2p.\n\nNota: este usor sa treceti la aceasta materia asta daca primiti puncte bonus😉",
+  "materialDifficulty": "medium",
+  "passingDifficulty": "medium",
   "materials": [
     {
       "id": "inregistrari-cursuri",
@@ -38,7 +41,8 @@
       "gradeWeight": 100,
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:01:18.325Z",
-      "updatedAt": "2026-07-01T09:01:18.325Z"
+      "updatedAt": "2026-07-01T09:01:18.325Z",
+      "description": "Nu aveti voie cu materiale scrise de mana la examen"
     }
   ]
 }

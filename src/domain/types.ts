@@ -7,6 +7,7 @@ export type MaterialType =
   | "video"
   | "other";
 export type SessionStatus = "scheduled" | "cancelled";
+export type Difficulty = "easy" | "medium" | "hard" | "unknown";
 export type ContributionType =
   | "add-material"
   | "update-material"
@@ -37,7 +38,12 @@ export type Catalog = {
       id: string;
       label: string;
       order: number;
-      semesters: Array<{ id: string; label: string; order: number }>;
+      semesters: Array<{
+        id: string;
+        label: string;
+        order: number;
+        courses?: Array<{ id: string }>;
+      }>;
     }>;
   }>;
 };
@@ -56,7 +62,6 @@ export type AssignmentDeadline = {
   title: string;
   description?: string;
   dueAt: string;
-  submissionUrl?: string;
   gradeWeight?: number;
   materialIds?: string[];
   addedAt: string;
@@ -78,7 +83,9 @@ export type Exam = {
   id: string;
   title: string;
   startsAt?: string;
-  gradeWeight?: number;
+  description?: string;
+  location?: string;
+  gradeWeight: number;
   materialIds?: string[];
   addedAt: string;
   updatedAt: string;
@@ -89,6 +96,8 @@ export type Course = {
   title: string;
   professors: string[];
   description?: string;
+  materialDifficulty: Difficulty;
+  passingDifficulty: Difficulty;
   materials: Material[];
   assignmentDeadlines: AssignmentDeadline[];
   courseSessions: CourseSession[];

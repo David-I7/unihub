@@ -114,11 +114,55 @@ test('Course item validation requires timestamps and external Material URLs', ()
   assert.match(localUrl.errors.join('\n'), /external URL/)
 })
 
+test('Course validation requires controlled Material and Passing Difficulty values', () => {
+  const valid = validateCourse({
+    id: 'difficulty-contract',
+    title: 'Difficulty Contract',
+    professors: ['Prof. Ada'],
+    description: 'A course with explicit unknown difficulty.',
+    materialDifficulty: 'unknown',
+    passingDifficulty: 'unknown',
+    materials: [],
+    assignmentDeadlines: [],
+    courseSessions: [],
+    exams: [],
+  })
+  const missing = validateCourse({
+    id: 'missing-difficulty',
+    title: 'Missing Difficulty',
+    professors: ['Prof. Ada'],
+    materials: [],
+    assignmentDeadlines: [],
+    courseSessions: [],
+    exams: [],
+  })
+  const invalid = validateCourse({
+    id: 'invalid-difficulty',
+    title: 'Invalid Difficulty',
+    professors: ['Prof. Ada'],
+    materialDifficulty: 'brutal',
+    passingDifficulty: 'easy',
+    materials: [],
+    assignmentDeadlines: [],
+    courseSessions: [],
+    exams: [],
+  })
+
+  assert.equal(valid.valid, true)
+  assert.equal(missing.valid, false)
+  assert.match(missing.errors.join('\n'), /Material Difficulty/)
+  assert.match(missing.errors.join('\n'), /Passing Difficulty/)
+  assert.equal(invalid.valid, false)
+  assert.match(invalid.errors.join('\n'), /Material Difficulty/)
+})
+
 test('validation allows incomplete valid data with warnings', () => {
   const result = validateCourse({
     id: 'incomplete',
     title: 'Incomplete Course',
     professors: [],
+    materialDifficulty: 'unknown',
+    passingDifficulty: 'unknown',
     materials: [],
     assignmentDeadlines: [],
     courseSessions: [],
@@ -137,6 +181,8 @@ test('validation accepts Grade Weight totals above 100 while warning below 100 t
     id: 'overweight',
     title: 'Overweight Course',
     professors: ['Prof. Ada'],
+    materialDifficulty: 'unknown',
+    passingDifficulty: 'unknown',
     materials: [],
     assignmentDeadlines: [{ id: 'assignment', title: 'Assignment', dueAt: '2026-03-15T21:59:00.000Z', gradeWeight: 80, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }],
     courseSessions: [],
@@ -146,6 +192,8 @@ test('validation accepts Grade Weight totals above 100 while warning below 100 t
     id: 'incomplete-weights',
     title: 'Incomplete Weights',
     professors: ['Prof. Ada'],
+    materialDifficulty: 'unknown',
+    passingDifficulty: 'unknown',
     materials: [],
     assignmentDeadlines: [{ id: 'assignment', title: 'Assignment', dueAt: '2026-03-15T21:59:00.000Z', gradeWeight: 40, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }],
     courseSessions: [],
@@ -193,6 +241,42 @@ test('Course detail view concentrates tab display derivation', () => {
   assert(view.courseSessions.some((session) => session.status === 'cancelled'))
   assert(view.exams.some((exam) => exam.materials.every((material) => material.type === 'exam')))
   assert.equal(view.gradeBreakdown.total > 0, true)
+})
+
+test('Course detail view derives About content without duplicating item notes', () => {
+  const course = {
+    id: 'about-course',
+    title: 'About Course',
+    professors: ['Prof. Ada'],
+    description: 'Course-level description.',
+    materialDifficulty: 'medium' as const,
+    passingDifficulty: 'hard' as const,
+    materials: [],
+    assignmentDeadlines: [
+      { id: 'assignment-with-weight', title: 'Project', description: 'Project instructions.', dueAt: '2026-03-15T21:59:00.000Z', gradeWeight: 35, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+      { id: 'assignment-without-weight', title: 'Practice', description: 'Practice notes.', dueAt: '2026-03-20T21:59:00.000Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+    ],
+    courseSessions: [],
+    exams: [
+      { id: 'final', title: 'Final Exam', description: 'Bring ID.', location: 'Room 10', gradeWeight: 65, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+    ],
+    path: { ...context, courseId: 'about-course' },
+  }
+
+  const view = deriveCourseDetailView(course, Date.parse('2026-02-01T00:00:00Z'))
+
+  assert.deepEqual(view.about, {
+    description: 'Course-level description.',
+    materialDifficulty: 'medium',
+    passingDifficulty: 'hard',
+  })
+  assert.deepEqual(view.gradeBreakdown.items, [
+    { title: 'Project', weight: 35, type: 'assignment' },
+    { title: 'Final Exam', weight: 65, type: 'exam' },
+  ])
+  assert.doesNotMatch(JSON.stringify(view.about), /Project instructions|Bring ID/)
+  assert.equal(view.exams[0].description, 'Bring ID.')
+  assert.equal(view.exams[0].location, 'Room 10')
 })
 
 test('video Materials validate and appear with general Course detail Materials', () => {
@@ -299,6 +383,8 @@ test('Calendar all-events sorting prioritizes future proximity before past recen
     id: 'calendar-sorting',
     title: 'Calendar Sorting',
     professors: ['Prof. Time'],
+    materialDifficulty: 'unknown' as const,
+    passingDifficulty: 'unknown' as const,
     materials: [],
     assignmentDeadlines: [
       { id: 'past-far', title: 'Past Far', dueAt: '2026-01-01T10:00:00.000Z', addedAt: '2025-12-01T00:00:00.000Z', updatedAt: '2025-12-01T00:00:00.000Z' },
@@ -412,6 +498,8 @@ test('Generated Contribution payloads derive ids, timestamps, target paths, and 
   assert.equal(generated.valid, true)
   assert.equal(generated.path?.courseId, 'machine-learning-basics')
   assert.equal(generated.updatedCourse?.id, 'machine-learning-basics')
+  assert.equal(generated.updatedCourse?.materialDifficulty, 'unknown')
+  assert.equal(generated.updatedCourse?.passingDifficulty, 'unknown')
   assert.deepEqual(generated.updatedCourse?.materials, [])
   assert.match(generated.githubLink ?? '', /machine-learning-basics\.json/)
 
@@ -451,6 +539,51 @@ test('Generated Contribution payloads derive ids, timestamps, target paths, and 
     },
   })
   assert(collidingMaterial.updatedCourse?.materials.some((item) => item.id === 'algorithms-2'))
+})
+
+test('Generated new Course Contributions include Course state and Catalog change', () => {
+  const repository = loadTestRepositoryData()
+  const generated = prepareGeneratedContribution({
+    repository,
+    now: () => '2026-08-01T10:00:00.000Z',
+    draft: {
+      type: 'add-new-course',
+      mode: 'pull-request',
+      context,
+      input: {
+        title: 'Compiler Design',
+        professors: ['Dr. Grace Hopper'],
+        materialDifficulty: 'hard',
+        passingDifficulty: 'medium',
+      },
+    },
+  })
+
+  assert.equal(generated.valid, true)
+  assert.equal(generated.updatedCourse?.id, 'compiler-design')
+  assert.equal(generated.updatedCourse?.materialDifficulty, 'hard')
+  assert.equal(generated.updatedCourse?.passingDifficulty, 'medium')
+  assert(generated.updatedCatalog?.academicYears.some((year) => year.id === '2025-2026'))
+  assert(generated.updatedCatalog?.academicYears
+    .find((year) => year.id === '2025-2026')?.studyYears
+    .find((year) => year.id === 'year-2')?.semesters
+    .find((semester) => semester.id === 'semester-1')?.courses
+    ?.some((course) => course.id === 'compiler-design'))
+  assert.match(generated.prBody ?? '', /Course file diff/)
+  assert.match(generated.prBody ?? '', /Catalog diff/)
+  assert.match(generated.prBody ?? '', /compiler-design/)
+
+  const missingTarget = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-new-course',
+      mode: 'issue',
+      context: { academicYearId: '2025-2026', studyYearId: '', semesterId: '' },
+      input: { title: 'Missing Target' },
+    },
+  })
+  assert.equal(missingTarget.valid, false)
+  assert.match(missingTarget.errors.join('\n'), /Academic Year, Study Year, and Semester/)
 })
 
 test('Generated update Material payloads preserve addedAt and replace updatedAt', () => {
@@ -498,6 +631,7 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
   })
   assert.equal(assignment.valid, true)
   assert(assignment.updatedCourse?.assignmentDeadlines.some((item) => item.id === 'shortest-paths-report'))
+  assert.equal('submissionUrl' in (assignment.updatedCourse?.assignmentDeadlines.find((item) => item.id === 'shortest-paths-report') ?? {}), false)
   assert(assignment.updatedCourse?.materials.some((item) => item.id === 'shortest-paths-starter' && item.type === 'assignment'))
 
   const exam = prepareGeneratedContribution({
@@ -509,11 +643,16 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
       path: { ...context, courseId: 'algorithms' },
       input: {
         title: 'Oral Exam',
+        description: 'Oral exam topics.',
+        location: 'Room 12',
+        gradeWeight: 10,
         materialIds: ['alg-exam-01'],
       },
     },
   })
   assert.equal(exam.valid, true)
+  assert.equal(exam.updatedCourse?.exams.find((item) => item.id === 'oral-exam')?.description, 'Oral exam topics.')
+  assert.equal(exam.updatedCourse?.exams.find((item) => item.id === 'oral-exam')?.location, 'Room 12')
   assert.match(exam.warnings.join('\n'), /date is to be announced/)
   assert.doesNotMatch(exam.changedJson ?? '', /"path"/)
 
@@ -535,11 +674,13 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
       type: 'edit-course-metadata',
       mode: 'pull-request',
       path: { ...context, courseId: 'algorithms' },
-      input: { title: 'Advanced Algorithms', professors: ['Dr. Mara Ionescu'] },
+      input: { title: 'Advanced Algorithms', professors: ['Dr. Mara Ionescu'], materialDifficulty: 'hard', passingDifficulty: 'medium' },
     },
   })
   assert.equal(metadata.valid, true)
   assert.equal(metadata.updatedCourse?.title, 'Advanced Algorithms')
+  assert.equal(metadata.updatedCourse?.materialDifficulty, 'hard')
+  assert.equal(metadata.updatedCourse?.passingDifficulty, 'medium')
   assert.equal(metadata.updatedCourse?.materials.length, repository.courses.find((course) => course.id === 'algorithms')?.materials.length)
 
   const invalidMaterial = prepareGeneratedContribution({
@@ -553,6 +694,56 @@ test('Generated task Contributions cover assignments, exams, course sessions, an
   })
   assert.equal(invalidMaterial.valid, false)
   assert.match(invalidMaterial.errors.join('\n'), /invalid Material type|external URL/)
+})
+
+test('Contribution validation aligns Assignment Deadline and Exam data shapes', () => {
+  const repository = loadTestRepositoryData()
+  const target = repository.courses.find((course) => course.id === 'algorithms')
+  assert(target)
+
+  const assignmentWithoutWeight = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-assignment-deadline',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify({ id: 'optional-weight', title: 'Optional Weight', dueAt: '2026-09-10T20:00:00.000Z', materialIds: ['alg-assignment-01'], addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
+    },
+  })
+  const assignmentWithSubmissionUrl = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-assignment-deadline',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify({ id: 'bad-submission-url', title: 'Bad Submission URL', dueAt: '2026-09-10T20:00:00.000Z', submissionUrl: 'https://example.edu/submit', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
+    },
+  })
+  const examWithoutWeight = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-exam',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify({ id: 'missing-weight-exam', title: 'Missing Weight Exam', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
+    },
+  })
+  const examWithOptionalDetails = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-exam',
+      mode: 'issue',
+      path: target.path,
+      payloadText: JSON.stringify({ id: 'details-exam', title: 'Details Exam', description: 'Essay questions.', location: 'Room A', gradeWeight: 20, addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' }),
+    },
+  })
+
+  assert.equal(assignmentWithoutWeight.valid, true)
+  assert.equal(assignmentWithSubmissionUrl.valid, false)
+  assert.match(assignmentWithSubmissionUrl.errors.join('\n'), /submissionUrl/)
+  assert.equal(examWithoutWeight.valid, false)
+  assert.match(examWithoutWeight.errors.join('\n'), /Grade Weight/)
+  assert.equal(examWithOptionalDetails.valid, true)
 })
 
 test('Generated Catalog Contributions add academic years, study years, and semesters', () => {
@@ -631,6 +822,42 @@ test('Generated Catalog Contributions add academic years, study years, and semes
   })
   assert.equal(duplicate.valid, false)
   assert.match(duplicate.errors.join('\n'), /already exists/)
+})
+
+test('Catalog Contributions require hierarchy targets and derive ids from labels', () => {
+  const repository = loadTestRepositoryData()
+
+  const missingStudyYearTarget = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-study-year',
+      mode: 'issue',
+      input: { label: 'Study Year 4' },
+    },
+  })
+  const derivedStudyYear = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-study-year',
+      mode: 'issue',
+      input: { academicYearId: '2025-2026', label: 'Study Year 4' },
+    },
+  })
+  const missingSemesterTarget = prepareGeneratedContribution({
+    repository,
+    draft: {
+      type: 'add-semester',
+      mode: 'issue',
+      input: { academicYearId: '2025-2026', label: 'Semester 3' },
+    },
+  })
+
+  assert.equal(missingStudyYearTarget.valid, false)
+  assert.match(missingStudyYearTarget.errors.join('\n'), /Academic Year id is required/)
+  assert.equal(derivedStudyYear.valid, true)
+  assert.deepEqual(derivedStudyYear.parsed, { id: 'study-year-4', label: 'Study Year 4', order: 3, semesters: [] })
+  assert.equal(missingSemesterTarget.valid, false)
+  assert.match(missingSemesterTarget.errors.join('\n'), /Study Year id is required/)
 })
 
 test('Contribution preparation accepts explicit repository and GitHub adapters', () => {
@@ -834,7 +1061,7 @@ test('Suggestions require notes for corrections and support Course page sections
       course,
       section: 'exams',
       intent: 'exam-date-not-announced',
-      input: { title: 'Final Exam', note: 'The professor removed the date from the syllabus.' },
+      input: { title: 'Final Exam', gradeWeight: 40, note: 'The professor removed the date from the syllabus.' },
     }),
     prepareSuggestion({
       repository,
@@ -860,6 +1087,8 @@ test('repositorySchema exposes zod runtime schemas for Catalog and Course data',
       id: 'algorithms',
       title: 'Algorithms',
       professors: ['Dr. Mara Ionescu'],
+      materialDifficulty: 'unknown',
+      passingDifficulty: 'unknown',
       materials: [],
       assignmentDeadlines: [],
       courseSessions: [],
@@ -943,6 +1172,43 @@ test('applyContribution supports flexible array of objects (batch) for batchable
   assert.doesNotMatch(resultHeavy.errors.join('\n'), /Grade Weight total cannot exceed 100/)
 })
 
+test('Generated batch Contributions validate repeated Course items and duplicate guardrails', () => {
+  const repository = loadTestRepositoryData()
+  const batch = prepareGeneratedContribution({
+    repository,
+    now: () => '2026-08-01T10:00:00.000Z',
+    draft: {
+      type: 'add-material',
+      mode: 'issue',
+      path: { ...context, courseId: 'algorithms' },
+      input: {
+        items: [
+          { title: 'Batch One', type: 'course', url: 'https://example.edu/batch-one' },
+          { title: 'Batch Two', type: 'video', url: 'https://example.edu/batch-two' },
+        ],
+      },
+    },
+  })
+  const duplicate = prepareContribution({
+    repository,
+    draft: {
+      type: 'add-material',
+      mode: 'issue',
+      path: { ...context, courseId: 'algorithms' },
+      payloadText: JSON.stringify([
+        { id: 'batch-dup', type: 'course', title: 'Batch Dup 1', url: 'https://example.edu/1', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+        { id: 'batch-dup', type: 'course', title: 'Batch Dup 2', url: 'https://example.edu/2', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },
+      ]),
+    },
+  })
+
+  assert.equal(batch.valid, true)
+  assert(batch.updatedCourse?.materials.some((item) => item.id === 'batch-one'))
+  assert(batch.updatedCourse?.materials.some((item) => item.id === 'batch-two'))
+  assert.equal(duplicate.valid, false)
+  assert.match(duplicate.errors.join('\n'), /Duplicate ID in batch/)
+})
+
 test('validation formatting produces non-cryptic error messages for UI display', () => {
   const repository = loadTestRepositoryData()
   const target = repository.courses[0]
@@ -975,6 +1241,8 @@ test('validation formatting produces non-cryptic error messages for UI display',
     id: 'course-error',
     title: 'Error Course',
     professors: [],
+    materialDifficulty: 'unknown',
+    passingDifficulty: 'unknown',
     materials: [],
     assignmentDeadlines: [
       { id: 'dl-1', title: 'Valid Deadline', dueAt: '2026-02-15T00:00:00Z', addedAt: '2026-02-01T00:00:00.000Z', updatedAt: '2026-02-01T00:00:00.000Z' },

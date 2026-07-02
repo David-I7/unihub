@@ -2,6 +2,8 @@
   "id": "geometrie-si-algebra-liniara",
   "title": "Geometrie si algebra liniara",
   "professors": ["Asist univ. dr. Halanay Andrei"],
+  "materialDifficulty": "medium",
+  "passingDifficulty": "medium",
   "materials": [
     {
       "id": "materiale-curs",
@@ -36,6 +38,7 @@
       "title": "Examen scris",
       "startsAt": "2026-06-21T10:00",
       "gradeWeight": 100,
+      "description": "Aveti voie cu materiale scrise de mana la examen",
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:11:18.827Z",
       "updatedAt": "2026-07-01T09:11:18.827Z"

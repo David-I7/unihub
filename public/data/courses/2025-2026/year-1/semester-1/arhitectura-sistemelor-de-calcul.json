@@ -2,6 +2,9 @@
   "id": "arhitectura-sistemelor-de-calcul",
   "title": "Arhitectura sistemelor de calcul",
   "professors": ["Lect. Dr. D. Dragulici"],
+  "description": "Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.",
+  "materialDifficulty": "hard",
+  "passingDifficulty": "easy",
   "materials": [
     {
       "id": "materiale-curs",
@@ -40,7 +43,8 @@
       "gradeWeight": 40,
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:11:18.827Z",
-      "updatedAt": "2026-07-01T09:11:18.827Z"
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Aveti voie cu materiale scrise de mana la examen"
     }
   ]
 }

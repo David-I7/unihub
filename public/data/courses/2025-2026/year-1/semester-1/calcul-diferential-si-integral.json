@@ -2,6 +2,8 @@
   "id": "calcul-diferential-si-integral",
   "title": "Calcul diferential si integral",
   "professors": ["Lectr. Dr. R. Munteanu"],
+  "materialDifficulty": "medium",
+  "passingDifficulty": "medium",
   "materials": [
     {
       "id": "materiale-curs",
@@ -38,7 +40,8 @@
       "gradeWeight": 100,
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:11:18.827Z",
-      "updatedAt": "2026-07-01T09:11:18.827Z"
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Nu aveti voie cu materiale scrise de mana la examen"
     }
   ]
 }

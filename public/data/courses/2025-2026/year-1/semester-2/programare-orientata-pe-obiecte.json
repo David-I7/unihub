@@ -3,8 +3,11 @@
   "title": "Programare orientata pe obiecte",
   "professors": [
     "Lect. univ. dr. Mihail Cherciu",
-    "Lect. univ. dr. Dumitru Drăgulici"
+    "Lect. univ. dr. Dumitru Dragulici"
   ],
+  "description": "Nota se obtine pe baza unui proiect. Daca alegeti sa il trimiteti domnului M. Cherciu, atunci va trebui sa il prezentati timp de 3-5 minute.",
+  "materialDifficulty": "easy",
+  "passingDifficulty": "easy",
   "materials": [
     {
       "id": "materiale-curs",
@@ -15,8 +18,8 @@
       "updatedAt": "2026-07-01T09:08:16.376Z"
     },
     {
-      "id": "lista-priecte",
-      "type": "exam",
+      "id": "lista-proiecte",
+      "type": "assignment",
       "title": "Lista proiecte",
       "url": "https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/POO/teme",
       "addedAt": "2026-07-01T09:10:27.977Z",

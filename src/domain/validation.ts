@@ -1,10 +1,11 @@
 import { z } from 'zod'
 import { courseRepositoryPath } from './coursePath.js'
 import { arrayOfRecords, fail, hasString, isRecord, stringArray } from './records.js'
-import type { LoadedCourse, MaterialType, SessionStatus, ValidationResult, Course } from './types.js'
+import type { Difficulty, LoadedCourse, MaterialType, SessionStatus, ValidationResult, Course } from './types.js'
 
 const materialTypeSchema = z.enum(['course', 'seminar', 'lab', 'assignment', 'exam', 'video', 'other'])
 const sessionStatusSchema = z.enum(['scheduled', 'cancelled'])
+const difficultySchema = z.enum(['easy', 'medium', 'hard', 'unknown'])
 
 const stringField = z.string().min(1)
 const optionalString = z.string().optional()
@@ -26,7 +27,6 @@ const assignmentDeadlineSchema = z.object({
   title: stringField,
   description: optionalString,
   dueAt: stringField,
-  submissionUrl: optionalString,
   gradeWeight: optionalNumber,
   materialIds: optionalStringArray,
   addedAt: stringField,
@@ -48,7 +48,9 @@ const examSchema = z.object({
   id: stringField,
   title: stringField,
   startsAt: optionalString,
-  gradeWeight: optionalNumber,
+  description: optionalString,
+  location: optionalString,
+  gradeWeight: z.number(),
   materialIds: optionalStringArray,
   addedAt: stringField,
   updatedAt: stringField,
@@ -56,7 +58,7 @@ const examSchema = z.object({
 
 const semesterCourseSchema = z.object({
   id: stringField,
-  title: stringField,
+  title: stringField.optional(),
 }).passthrough()
 
 const catalogSemesterSchema = z.object({
@@ -89,6 +91,8 @@ const courseSchema = z.object({
   title: stringField,
   professors: z.array(z.string()),
   description: optionalString,
+  materialDifficulty: difficultySchema,
+  passingDifficulty: difficultySchema,
   materials: z.array(materialSchema),
   assignmentDeadlines: z.array(assignmentDeadlineSchema),
   courseSessions: z.array(courseSessionSchema),
@@ -99,6 +103,8 @@ const editCourseMetadataSchema = z.object({
   title: stringField.optional(),
   professors: z.array(z.string()).optional(),
   description: optionalString,
+  materialDifficulty: difficultySchema.optional(),
+  passingDifficulty: difficultySchema.optional(),
 }).passthrough()
 
 export const repositorySchema = {
@@ -202,6 +208,10 @@ export function isSessionStatus(value: unknown): value is SessionStatus {
   return sessionStatusSchema.safeParse(value).success
 }
 
+export function isDifficulty(value: unknown): value is Difficulty {
+  return difficultySchema.safeParse(value).success
+}
+
 export function validateContributionPayload(
   type: string,
   payload: unknown,
@@ -257,9 +267,16 @@ export function validateContributionPayload(
     }
 
     if (type === 'add-exam') {
+      if (!hasString(item, 'gradeWeight') && typeof item.gradeWeight !== 'number') {
+        errors.push(`${prefix} Exam requires Grade Weight.`)
+      }
       if (!hasString(item, 'startsAt')) {
         warnings.push(`${itemId || prefix} Exam date is to be announced.`)
       }
+    }
+
+    if (type === 'add-assignment-deadline' && 'submissionUrl' in item) {
+      errors.push(`${prefix} Assignment Deadline must put submission instructions in description, not submissionUrl.`)
     }
 
     if (targetCourse && itemId) {
@@ -350,6 +367,8 @@ function rewordCourseSchemaError(error: string, type?: string): string {
   if (error.includes('Course.id')) return 'Course requires id.'
   if (error.includes('Course.title')) return 'Course requires title.'
   if (error.includes('Course.professors')) return 'Course requires professors.'
+  if (error.includes('materialDifficulty')) return 'Course requires Material Difficulty with easy, medium, hard, or unknown.'
+  if (error.includes('passingDifficulty')) return 'Course requires Passing Difficulty with easy, medium, hard, or unknown.'
   if (error.includes('Course.materials') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
   if (error.includes('Course.assignmentDeadlines') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
   if (error.includes('Course.courseSessions') && !error.includes('.')) return 'Course requires materials, assignmentDeadlines, courseSessions, and exams arrays.'
@@ -379,6 +398,7 @@ function rewordCourseSchemaError(error: string, type?: string): string {
 
   if (isExam) {
     if (error.includes('title')) return `${subject}Exam requires title.`
+    if (error.includes('gradeWeight')) return `${subject}Exam requires Grade Weight.`
   }
 
   if (error.includes('addedAt')) return `${itemId} requires addedAt.`

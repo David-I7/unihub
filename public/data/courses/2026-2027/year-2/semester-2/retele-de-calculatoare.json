@@ -1,7 +1,11 @@
 {
   "id": "retele-de-calculatoare",
   "title": "Retele de calculatoare",
-  "professors": ["Prof. univ. dr. Horia Georgescu"],
+  "professors": [
+    "Prof. univ. dr. Horia Georgescu"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

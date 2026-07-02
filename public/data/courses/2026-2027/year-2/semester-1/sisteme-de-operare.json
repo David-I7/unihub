@@ -1,7 +1,11 @@
 {
   "id": "sisteme-de-operare",
   "title": "Sisteme de operare",
-  "professors": ["Lect. Dr. D. Dragulici"],
+  "professors": [
+    "Lect. Dr. D. Dragulici"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

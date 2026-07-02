@@ -1,7 +1,10 @@
 {
   "id": "instrumente-si-tehnici-de-baza-in-informatica",
-  "title": "Instrumente si tehnici de baza in Informatică",
+  "title": "Instrumente si tehnici de baza in Informatica",
   "professors": ["Lect. Dr. D. Dragulici"],
+  "description": "Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.",
+  "materialDifficulty": "medium",
+  "passingDifficulty": "easy",
   "materials": [
     {
       "id": "materiale-curs",
@@ -40,7 +43,8 @@
       "gradeWeight": 40,
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:11:18.827Z",
-      "updatedAt": "2026-07-01T09:11:18.827Z"
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Aveti voie cu materiale scrise de mana la examen"
     }
   ]
 }

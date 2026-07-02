@@ -1,7 +1,11 @@
 {
   "id": "programare-avansata-pe-obiecte-in-java",
   "title": "Programare avansata pe obiecte in Java",
-  "professors": ["Conf.univ. dr. Radu Boriga"],
+  "professors": [
+    "Conf.univ. dr. Radu Boriga"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],

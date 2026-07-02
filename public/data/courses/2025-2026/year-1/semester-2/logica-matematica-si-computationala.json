@@ -1,7 +1,10 @@
 {
   "id": "logica-matematica-si-computationala",
   "title": "Logica matematica si computationala",
-  "professors": ["Conf. univ. dr. Claudia Mureșan"],
+  "professors": ["Conf. univ. dr. Claudia Muresan"],
+  "materialDifficulty": "hard",
+  "passingDifficulty": "easy",
+  "description": "Daca faceti temele colective, porniti din start cu nota 4. Trebuie sa luati doar 0.5p la examen ca sa treceti.",
   "materials": [
     {
       "id": "materiale-curs",
@@ -41,7 +44,8 @@
       "gradeWeight": 70,
       "materialIds": ["exemple-examene"],
       "addedAt": "2026-07-01T09:11:18.827Z",
-      "updatedAt": "2026-07-01T09:11:18.827Z"
+      "updatedAt": "2026-07-01T09:11:18.827Z",
+      "description": "Aveti voie cu materiale scrise de mana la examen"
     }
   ]
 }

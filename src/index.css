@@ -193,6 +193,14 @@ body {
   margin: 0;
 }
 
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
 a {
   color: inherit;
 }

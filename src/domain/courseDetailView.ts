@@ -1,8 +1,13 @@
-import type { LoadedCourse, Material, MaterialType } from './types.js'
+import type { Difficulty, LoadedCourse, Material, MaterialType } from './types.js'
 
 const generalMaterialTypes: MaterialType[] = ['course', 'seminar', 'lab', 'video', 'other']
 
 export type CourseDetailView = {
+  about: {
+    description?: string
+    materialDifficulty: Difficulty
+    passingDifficulty: Difficulty
+  }
   materialGroups: Array<{ type: MaterialType; label: string; materials: Material[] }>
   assignments: Array<{
     id: string
@@ -10,7 +15,6 @@ export type CourseDetailView = {
     description?: string
     dueAt: string
     status: 'completed' | 'upcoming'
-    submissionUrl?: string
     gradeWeight?: number
     materials: Material[]
   }>
@@ -26,11 +30,13 @@ export type CourseDetailView = {
     id: string
     title: string
     startsAt?: string
-    gradeWeight?: number
+    description?: string
+    location?: string
+    gradeWeight: number
     materials: Material[]
   }>
   gradeBreakdown: {
-    items: Array<{ title: string; weight: number }>
+    items: Array<{ title: string; weight: number; type: 'assignment' | 'exam' }>
     total: number
     incomplete: boolean
   }
@@ -38,6 +44,11 @@ export type CourseDetailView = {
 
 export function deriveCourseDetailView(course: LoadedCourse, nowTime: number): CourseDetailView {
   return {
+    about: {
+      description: course.description,
+      materialDifficulty: course.materialDifficulty,
+      passingDifficulty: course.passingDifficulty,
+    },
     materialGroups: generalMaterialTypes
       .map((type) => ({
         type,
@@ -53,7 +64,6 @@ export function deriveCourseDetailView(course: LoadedCourse, nowTime: number): C
         description: assignment.description,
         dueAt: assignment.dueAt,
         status: Date.parse(assignment.dueAt) < nowTime ? 'completed' : 'upcoming',
-        submissionUrl: assignment.submissionUrl,
         gradeWeight: assignment.gradeWeight,
         materials: resolveMaterials(course, assignment.materialIds, 'assignment'),
       })),
@@ -73,6 +83,8 @@ export function deriveCourseDetailView(course: LoadedCourse, nowTime: number): C
         id: exam.id,
         title: exam.title,
         startsAt: exam.startsAt,
+        description: exam.description,
+        location: exam.location,
         gradeWeight: exam.gradeWeight,
         materials: resolveMaterials(course, exam.materialIds, 'exam'),
       })),
@@ -87,8 +99,8 @@ function resolveMaterials(course: LoadedCourse, materialIds: string[] | undefine
 
 function deriveGradeBreakdown(course: LoadedCourse) {
   const items = [
-    ...course.assignmentDeadlines.filter((item) => item.gradeWeight !== undefined).map((item) => ({ title: item.title, weight: item.gradeWeight as number })),
-    ...course.exams.filter((item) => item.gradeWeight !== undefined).map((item) => ({ title: item.title, weight: item.gradeWeight as number })),
+    ...course.assignmentDeadlines.filter((item) => item.gradeWeight !== undefined).map((item) => ({ title: item.title, weight: item.gradeWeight as number, type: 'assignment' as const })),
+    ...course.exams.map((item) => ({ title: item.title, weight: item.gradeWeight, type: 'exam' as const })),
   ]
   const total = items.reduce((sum, item) => sum + item.weight, 0)
   return { items, total, incomplete: total < 100 }

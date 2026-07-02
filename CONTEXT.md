@@ -29,16 +29,24 @@ A dated item shown on the calendar, derived from course data. Calendar events ar
 _Avoid_: Event, reminder
 
 **Assignment Deadline**:
-The due date for course work that students are expected to submit. An assignment deadline may reference the materials needed to complete it and may count toward the course grade.
+The due date for course work that students are expected to submit. An assignment deadline may reference the materials needed to complete it and may count toward the course grade, but grading is optional.
 _Avoid_: Homework, task
 
 **Exam**:
-A course assessment that may have a start date and time or may be announced later. A course may have multiple exams.
+A course assessment with a required grade weight. Its start date, location, and exam-specific notes may be announced later.
 _Avoid_: Test, final
 
 **Grade Weight**:
 The numeric percentage an assignment deadline or exam counts toward the final course grade. Grade weights may exceed 100 when a professor's grading policy allows bonus or overweighted components.
 _Avoid_: Exam type, partial
+
+**Material Difficulty**:
+The course-level estimate of how hard the learning materials are to understand and keep up with. It uses a small controlled vocabulary so it can be compared and color-coded consistently.
+_Avoid_: Material rating, content difficulty
+
+**Passing Difficulty**:
+The course-level estimate of how hard it is to earn a passing grade in the course. It uses the same controlled vocabulary as Material Difficulty so it can be compared and color-coded consistently.
+_Avoid_: Course difficulty, exam difficulty
 
 **Material**:
 A learning resource attached to a course. Materials have a type: course, seminar, lab, assignment, exam, video, or other.

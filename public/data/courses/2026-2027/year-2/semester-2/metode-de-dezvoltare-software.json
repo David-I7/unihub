@@ -1,7 +1,11 @@
 {
   "id": "metode-de-dezvoltare-software",
   "title": "Metode de dezvoltare software",
-  "professors": ["Conf. univ. dr. Cristian Kevorhian"],
+  "professors": [
+    "Conf. univ. dr. Cristian Kevorhian"
+  ],
+  "materialDifficulty": "unknown",
+  "passingDifficulty": "unknown",
   "materials": [],
   "assignmentDeadlines": [],
   "courseSessions": [],
