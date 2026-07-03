@@ -22,8 +22,8 @@ const materialTypeIcons: Record<MaterialType, typeof BookOpen> = {
   lab: FlaskConical,
   video: PlayCircle,
   other: FileText,
-  assignment: ClipboardCheck,
-  exam: Award,
+  assignment: Clipboard,
+  exam: GraduationCap,
 }
 
 export function MaterialTypeIcon({ type, size = 18 }: { type: MaterialType; size?: number }) {
