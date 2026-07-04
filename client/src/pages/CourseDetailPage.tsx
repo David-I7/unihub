@@ -643,8 +643,12 @@ function suggestionInput(section: SuggestionSection, intent: SuggestionIntent, f
   return input
 }
 
-function materialTypeOptions(): string[][] {
-  return (['course', 'seminar', 'lab', 'assignment', 'exam', 'video', 'other'] as MaterialType[]).map((item) => [item, label(item)])
+function materialTypeOptions() {
+  return (['course', 'seminar', 'lab', 'assignment', 'exam', 'video', 'other'] as MaterialType[]).map((t) => ({
+    value: t,
+    label: label(t),
+    icon: <MaterialTypeIcon type={t} size={15} />,
+  }))
 }
 
 function applySelectedMaterial(materialId: string, materials: Material[], updateField: (name: string, value: string | string[]) => void) {

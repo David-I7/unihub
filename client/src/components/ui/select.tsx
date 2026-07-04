@@ -2,6 +2,8 @@ import * as React from 'react'
 import { Check, ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
+
 export type SelectOption = {
   value: string
   label: string
@@ -47,7 +49,7 @@ export function Select({
     }
   }, [isOpen])
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen || !rootRef.current) return
     const updateAlignment = () => {
       if (!rootRef.current) return
@@ -74,7 +76,7 @@ export function Select({
   }, [isOpen])
 
   return (
-    <div ref={rootRef} className={cn('relative inline-block min-w-0', selectSize === 'default' ? 'w-full' : '', className)}>
+    <div ref={rootRef} className={cn('relative inline-block h-fit min-w-0', selectSize === 'default' ? 'w-full' : '', className)}>
       <button
         type="button"
         className={cn(
@@ -175,7 +177,7 @@ export function MultiSelect({
     }
   }, [isOpen])
 
-  React.useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!isOpen || !rootRef.current) return
     const updateAlignment = () => {
       if (!rootRef.current) return
@@ -215,7 +217,7 @@ export function MultiSelect({
   }
 
   return (
-    <div ref={rootRef} className={cn('relative inline-block min-w-0', selectSize === 'default' ? 'w-full' : '', className)}>
+    <div ref={rootRef} className={cn('relative inline-block h-fit min-w-0', selectSize === 'default' ? 'w-full' : '', className)}>
       <button
         type="button"
         className={cn(
