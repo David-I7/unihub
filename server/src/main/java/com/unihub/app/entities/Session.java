@@ -1,12 +1,18 @@
 package com.unihub.app.entities;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "sessions", uniqueConstraints = {@UniqueConstraint(columnNames = "refresh_token", name = "unique_refresh_token")})
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
 public class Session {
 
     @Id
