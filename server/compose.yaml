@@ -15,11 +15,5 @@ services:
     volumes:
       - 'postgres-data:/var/lib/postgresql'
 
-  adminer:
-    image: adminer:latest
-    restart: unless-stopped
-    ports:
-      - "3000:8080"
-
 volumes:
   postgres-data:
