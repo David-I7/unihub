@@ -2,9 +2,12 @@ spring:
   application:
     name: app
 
+  config:
+    import: file:.env[.properties]
+
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     show-sql: true
 
   liquibase:
@@ -27,3 +30,10 @@ spring:
 logging:
   level:
     org.springframework.security: debug
+
+
+app:
+  session:
+    secret: ${SESSION_SECRET}
+    access-token-expiration-ms: ${SESSION_ACCESS_TOKEN_EXPIRATION_MS}
+    refresh-token-expiration-ms: ${SESSION_REFRESH_TOKEN_EXPIRATION_MS}
