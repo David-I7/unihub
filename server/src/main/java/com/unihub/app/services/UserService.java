@@ -18,7 +18,7 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public User create(User user){
+    public User register(User user){
         Optional<User> existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getEmail());
 
         if(existingUser.isPresent()){
@@ -34,4 +34,17 @@ public class UserService {
     }
 
 
+    public User login(User user) {
+        Optional<User> existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getEmail());
+
+        if(existingUser.isEmpty()){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found");
+        }
+
+        if(!passwordEncoder.matches(user.getPassword(),existingUser.get().getPassword())){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Incorrect password");
+        }
+
+        return existingUser.get();
+    }
 }
