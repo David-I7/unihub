@@ -1,8 +1,6 @@
 package com.unihub.app.dto.auth;
 
-
-import com.unihub.app.validation.Username;
-import jakarta.validation.constraints.Email;
+import com.unihub.app.validation.UsernameOrEmail;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -10,22 +8,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@UsernameOrEmail
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class LocalRegisterRequestDto {
+public class LocalUsernameOrEmailLoginRequestDto {
 
-    @Email
-    @NotBlank
     private String email;
 
-    @NotBlank
-    @Username
     private String username;
 
     @NotBlank
     @Size(min = 8, max = 100)
     private String password;
-
 }
