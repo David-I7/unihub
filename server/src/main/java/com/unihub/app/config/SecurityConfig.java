@@ -37,9 +37,9 @@ public class SecurityConfig {
             .oauth2Login(login-> {
                         login
                                 .authorizationEndpoint(config -> config.baseUri("/api/v1/auth/oauth2/authorization"))
-                                .redirectionEndpoint( config-> config.baseUri("/api/v1/auth/login/oauth2/callback/*"))
-                                .successHandler(null)
-                                .failureHandler(null);
+                                .redirectionEndpoint( config-> config.baseUri("/api/v1/auth/login/oauth2/callback/*"));
+//                                .successHandler(null)
+//                                .failureHandler(null);
             });
 
         return http.build();

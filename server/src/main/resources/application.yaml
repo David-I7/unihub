@@ -2,6 +2,10 @@ spring:
   application:
     name: app
 
+  mvc:
+    problemdetails:
+      enabled: true
+
   config:
     import: file:.env[.properties]
 
@@ -36,7 +40,7 @@ app:
   jwt:
     secret: ${SESSION_SECRET}
   session:
-    access-token-expiration-sec: ${SESSION_ACCESS_TOKEN_EXPIRATION_MS}
-    refresh-token-expiration-sec: ${SESSION_REFRESH_TOKEN_EXPIRATION_MS}
+    access-token-expiration-sec: ${SESSION_ACCESS_TOKEN_EXPIRATION_SEC}
+    refresh-token-expiration-sec: ${SESSION_REFRESH_TOKEN_EXPIRATION_SEC}
 
   is-development: ${IS_DEVELOPMENT:false}

@@ -18,7 +18,7 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public void create(User user){
+    public User create(User user){
         Optional<User> existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getEmail());
 
         if(existingUser.isPresent()){
@@ -29,7 +29,8 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
+
+        return userRepository.save(user);
     }
 
 
