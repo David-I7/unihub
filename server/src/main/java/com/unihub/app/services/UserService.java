@@ -1,13 +1,19 @@
 package com.unihub.app.services;
 
-import com.unihub.app.entities.User;
+import com.unihub.app.entities.auth.AuthProvider;
+import com.unihub.app.entities.auth.User;
+import com.unihub.app.entities.auth.UserIdentity;
 import com.unihub.app.repositories.UserRepository;
+import com.unihub.app.utils.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -18,33 +24,172 @@ public class UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    public User register(User user){
-        Optional<User> existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getEmail());
+    private final UserIdentityService userIdentityService;
 
-        if(existingUser.isPresent()){
-            boolean sameEmail = user.getEmail().equals(existingUser.get().getEmail());
-            boolean sameUsername = user.getUsername().equals(existingUser.get().getUsername());
-            String message = sameUsername && sameEmail ? "Username and email are already taken" : sameUsername ? "Username is taken" : "Email is taken";
-            throw new ResponseStatusException(HttpStatus.CONFLICT,message);
+    @Transactional
+    public User register(User user) {
+        List<User> existingUsers = userRepository.findByUsernameOrEmail(
+                user.getUsername(),
+                user.getEmail()
+        );
+
+        if (!existingUsers.isEmpty()) {
+            if (existingUsers.size() > 1) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username and email are already taken");
+            }
+            User existingUser = existingUsers.get(0);
+            boolean sameUsername = user.getUsername() != null && user.getUsername().equals(existingUser.getUsername());
+
+            String message = sameUsername
+                      ? "Username is already taken"
+                      : "Email is already taken";
+
+            throw new ResponseStatusException(HttpStatus.CONFLICT, message);
         }
+
+        OffsetDateTime now = OffsetDateTime.now();
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        UserIdentity localIdentity = UserIdentity.builder()
+                .user(savedUser)
+                .provider(AuthProvider.LOCAL)
+                .providerSubject(savedUser.getEmail())
+                .providerEmail(savedUser.getEmail())
+                .createdAt(now)
+                .build();
+
+        userIdentityService.save(localIdentity);
+
+        return savedUser;
     }
 
+    @Transactional
+    public User registerOrLoginWithProvider(AuthProvider provider, String providerSubject, String providerEmail) {
+        if (provider == AuthProvider.LOCAL) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Use local registration or login for LOCAL provider"
+            );
+        }
+
+        if (providerSubject == null || providerSubject.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provider subject is required");
+        }
+
+        if (providerEmail == null || providerEmail.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provider email is required");
+        }
+
+        Optional<UserIdentity> existingIdentity = userIdentityService.findByProviderAndProviderSubject(
+                provider,
+                providerSubject
+        );
+
+        if (existingIdentity.isPresent()) {
+            return existingIdentity.get().getUser();
+        }
+
+        Optional<User> existingUser = userRepository.findByEmail(providerEmail);
+
+        if (existingUser.isPresent()) {
+            UserIdentity userIdentity = buildProviderIdentity(
+                    existingUser.get(),
+                    provider,
+                    providerSubject,
+                    providerEmail
+            );
+
+            userIdentityService.save(userIdentity);
+
+            return existingUser.get();
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        User newUser = User.builder()
+                .email(providerEmail)
+                .username(generateUsernameFromEmail(providerEmail))
+                .password(null)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+
+        User savedUser = userRepository.save(newUser);
+
+        UserIdentity userIdentity = buildProviderIdentity(
+                savedUser,
+                provider,
+                providerSubject,
+                providerEmail
+        );
+
+        userIdentityService.save(userIdentity);
+
+        return savedUser;
+    }
+
+    private UserIdentity buildProviderIdentity(
+            User user,
+            AuthProvider provider,
+            String providerSubject,
+            String providerEmail
+    ) {
+        return UserIdentity.builder()
+                .user(user)
+                .provider(provider)
+                .providerSubject(providerSubject)
+                .providerEmail(providerEmail)
+                .createdAt(OffsetDateTime.now())
+                .build();
+    }
+
+    private String generateUsernameFromEmail(String email) {
+        String baseUsername = email.substring(0, email.indexOf("@"))
+                .replaceAll("[^a-zA-Z0-9_]", "_");
+
+        if (baseUsername.isBlank()) {
+            baseUsername = "user";
+        }
+
+        String username = baseUsername;
+        int randomInt = Random.randomInt(1, 1000);
+
+        while (userRepository.findByUsername(username).isPresent()) {
+            username = baseUsername + "_" + randomInt;
+            randomInt = Random.randomInt(1, 1000);
+        }
+
+        return username;
+    }
 
     public User login(User user) {
-        Optional<User> existingUser = userRepository.findByUsernameOrEmail(user.getUsername(),user.getEmail());
+        List<User> existingUser = userRepository.findByUsernameOrEmail(
+                user.getUsername(),
+                user.getEmail()
+        );
 
-        if(existingUser.isEmpty()){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found");
+        if (existingUser.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
-        if(!passwordEncoder.matches(user.getPassword(),existingUser.get().getPassword())){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Incorrect password");
+        User savedUser = existingUser.get(0);
+
+        if (savedUser.getPassword() == null || savedUser.getPassword().isBlank()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "This account does not have a password. Login using a third-party provider and set a password to use this feature."
+            );
         }
 
-        return existingUser.get();
+        if (!passwordEncoder.matches(user.getPassword(), savedUser.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
+        }
+
+        return savedUser;
     }
 }

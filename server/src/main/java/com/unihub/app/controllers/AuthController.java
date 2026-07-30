@@ -4,11 +4,13 @@ import com.unihub.app.domain.JwtSession;
 import com.unihub.app.dto.auth.LocalRegisterRequestDto;
 import com.unihub.app.dto.auth.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.dto.auth.SessionResponseDto;
-import com.unihub.app.entities.User;
+import com.unihub.app.entities.auth.AuthProvider;
+import com.unihub.app.entities.auth.User;
 import com.unihub.app.services.SessionService;
 import com.unihub.app.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -26,16 +28,19 @@ public class AuthController {
     private final SessionService sessionService;
 
     @PostMapping("/login/local")
-    public String login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request, @CookieValue(value = "refreshToken",required = false) String refreshToken){
+    public ResponseEntity<?> login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request){
         User user = User.builder()
                 .email(request.getEmail())
                 .username(request.getUsername())
                 .password(request.getPassword())
                 .build();
 
-        var session = sessionService.login(user);
+        var loggedInUser = userService.login(user);
+        var session = sessionService.createSession(loggedInUser);
 
-        return "login";
+        return ResponseEntity.ok()
+                .header("Set-Cookie",session.cookie().toString())
+                .body(new SessionResponseDto(session.userDto(),session.accessToken()));
     }
 
     @PostMapping("/register/local")
@@ -46,13 +51,21 @@ public class AuthController {
                 .password(request.getPassword())
                 .build();
 
-        user = userService.register(user);
-
-        JwtSession session = sessionService.createSession(user);
+        var registeredUser = userService.register(user);
+        JwtSession session = sessionService.createSession(registeredUser);
 
         return ResponseEntity.ok()
                 .header("Set-Cookie",session.cookie().toString())
                 .body(new SessionResponseDto(session.userDto(),session.accessToken()));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@CookieValue("refreshToken") String refreshToken){
+        ResponseCookie expiredCookie = sessionService.logout(refreshToken);
+
+        return ResponseEntity
+                .ok()
+                .header("Set-Cookie",expiredCookie.toString())
+                .build();
+    }
 }

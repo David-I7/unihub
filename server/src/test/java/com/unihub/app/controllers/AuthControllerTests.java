@@ -3,7 +3,7 @@ package com.unihub.app.controllers;
 import com.unihub.app.config.SecurityConfig;
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.dto.auth.LocalRegisterRequestDto;
-import com.unihub.app.entities.User;
+import com.unihub.app.entities.auth.User;
 import com.unihub.app.mappers.ObjectErrorMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.SessionRepository;
@@ -11,7 +11,7 @@ import com.unihub.app.repositories.UserRepository;
 import com.unihub.app.services.JwtService;
 import com.unihub.app.services.SessionService;
 import com.unihub.app.services.UserService;
-import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +31,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 
 @WebMvcTest(AuthController.class)
 @EnableConfigurationProperties(SessionProperties.class)
@@ -58,7 +59,7 @@ public class AuthControllerTests {
             Then: 200 ok is returned
             """)
     public void testLocalRegister1() throws Exception {
-        when(userRepository.findByUsernameOrEmail(anyString(),anyString())).thenReturn(Optional.empty());
+        //when(userRepository.findByUsernameOrEmail(anyString(),anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
                     User user = invocation.getArgument(0, User.class);
