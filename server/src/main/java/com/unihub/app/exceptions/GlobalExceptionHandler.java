@@ -2,8 +2,10 @@ package com.unihub.app.exceptions;
 
 import com.unihub.app.dto.validation.ConstraintValidationDto;
 import com.unihub.app.mappers.ObjectErrorMapper;
+import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +19,16 @@ import java.util.List;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
+@Slf4j
 public class GlobalExceptionHandler {
 
     private final ObjectErrorMapper objectErrorMapper;
 
+    private final ProblemDetailUtil problemDetailUtil;
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleValidationException(HttpServletRequest request, MethodArgumentNotValidException e){
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-        problemDetail.setInstance(URI.create(request.getRequestURI()));
-        problemDetail.setType(URI.create("about:blank"));
-        problemDetail.setTitle(HttpStatus.BAD_REQUEST.toString());
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.BAD_REQUEST,request.getRequestURI());
 
         List<ConstraintValidationDto> validationDtos =
                 e.getAllErrors().stream()
@@ -44,16 +46,23 @@ public class GlobalExceptionHandler {
 
         if(e.getCookieName().equals("refreshToken")){
             problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-            problemDetail.setTitle(HttpStatus.UNAUTHORIZED.toString());
+            problemDetail.setTitle(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         }else{
             problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-            problemDetail.setTitle(HttpStatus.BAD_REQUEST.toString());
+            problemDetail.setTitle(HttpStatus.BAD_REQUEST.getReasonPhrase());
         }
 
         problemDetail.setInstance(URI.create(request.getRequestURI()));
         problemDetail.setType(URI.create("about:blank"));
         problemDetail.setDetail(e.getBody().getDetail());
 
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ProblemDetail> handleAllExceptions(HttpServletRequest request, Exception e){
+        log.error("Exception occurred: {}",e.getMessage(),e);
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.INTERNAL_SERVER_ERROR,request.getRequestURI());
         return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
     }
 }

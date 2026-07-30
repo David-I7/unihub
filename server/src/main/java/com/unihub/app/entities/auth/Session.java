@@ -1,4 +1,4 @@
-package com.unihub.app.entities;
+package com.unihub.app.entities.auth;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,7 +32,6 @@ public class Session {
     @Column(name = "revoked", nullable = false)
     private boolean revoked;
 
-    @Column(name = "revoked_reason")
-    private SessionRevokeReason revokedReason;
-
+    @Column(name = "initial_session_id", nullable = true)
+    private UUID initialSessionId;
 }

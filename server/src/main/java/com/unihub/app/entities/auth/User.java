@@ -1,4 +1,4 @@
-package com.unihub.app.entities;
+package com.unihub.app.entities.auth;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,7 +30,7 @@ public class User {
     @Column(nullable = false, name = "created_at")
     private OffsetDateTime createdAt;
 
-    @Column(nullable = false, name = "created_at")
+    @Column(nullable = false, name = "updated_at")
     private OffsetDateTime updatedAt;
 
 }

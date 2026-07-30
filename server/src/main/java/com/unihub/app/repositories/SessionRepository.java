@@ -1,8 +1,7 @@
 package com.unihub.app.repositories;
 
 
-import com.unihub.app.entities.Session;
-import com.unihub.app.entities.SessionRevokeReason;
+import com.unihub.app.entities.auth.Session;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,9 +24,17 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
     @Modifying
     @Query("""
             UPDATE Session s
-            SET s.revoked = true, s.revokedReason = :revokedReason
-            WHERE s.user.id = :userId and s.refreshToken <> :refreshToken
+            SET s.revoked = true
+            WHERE s.initialSessionId = :initialSessionId or s.id = :initialSessionId
             """)
-    int revokeOtherRefreshTokens(UUID userId, String refreshToken, SessionRevokeReason revokedReason);
+    int revokeSessionFamily(UUID initialSessionId);
+
+    @Modifying
+    @Query("""
+            UPDATE Session s
+            SET s.revoked = true
+            WHERE s.refreshToken = :refreshToken
+            """)
+    int revokeSession(String refreshToken);
 
 }
