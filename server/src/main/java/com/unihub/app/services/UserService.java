@@ -15,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +70,11 @@ public class UserService {
     }
 
     @Transactional
+    public void delete(UUID userId) {
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
     public User registerOrLoginWithProvider(AuthProvider provider, String providerSubject, String providerEmail) {
         if (provider == AuthProvider.LOCAL) {
             throw new ResponseStatusException(
@@ -91,7 +97,11 @@ public class UserService {
         );
 
         if (existingIdentity.isPresent()) {
-            return existingIdentity.get().getUser();
+            User user =  existingIdentity.get().getUser();
+            // trigger user loading
+            user.getEmail();
+            user.getUsername();
+            return user;
         }
 
         Optional<User> existingUser = userRepository.findByEmail(providerEmail);
@@ -130,7 +140,7 @@ public class UserService {
 
         userIdentityService.save(userIdentity);
 
-        return savedUser;
+        return newUser;
     }
 
     private UserIdentity buildProviderIdentity(

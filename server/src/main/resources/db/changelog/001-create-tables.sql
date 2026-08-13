@@ -1,7 +1,7 @@
 --liquibase formatted sql
 --changeset David:001
 
-CREATE EXTENSION pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE USERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

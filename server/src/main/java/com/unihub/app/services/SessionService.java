@@ -3,7 +3,6 @@ package com.unihub.app.services;
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.domain.JwtSession;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.entities.auth.AuthProvider;
 import com.unihub.app.entities.auth.Session;
 import com.unihub.app.entities.auth.User;
 import com.unihub.app.exceptions.InvalidJwtTokenException;
@@ -12,15 +11,21 @@ import com.unihub.app.repositories.SessionRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -35,21 +40,21 @@ public class SessionService {
 
     private final UserMapper userMapper;
 
-    private final UserService userService;
-
     private final JwtService jwtService;
 
     private final SessionRepository sessionRepository;
 
+    public static enum SessionStatus{
+        ACTIVE,REVOKED,MALFORMED,EXPIRED,INVALID,ROTATE_REQUIRED,ABSENT
+    }
 
-    private ResponseCookie createSessionCookie(String refreshToken) {
-        return ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(!isDevelopment)
-                .path("/api/v1/auth")
-                .maxAge(Duration.ofSeconds(sessionProperties.refreshTokenExpirationSec()))
-                .sameSite(isDevelopment ? "Lax" : "Strict")
-                .build();
+    public SessionStatus validateRefreshTokenSession(HttpServletRequest request, HttpServletResponse response){
+        return _validateRefreshTokenSession(request,response).sessionStatus();
+    }
+
+    @Transactional
+    public JwtSession createSession(User user) {
+        return _createSession(user, null);
     }
 
     public ResponseCookie clearSessionCookie() {
@@ -57,78 +62,26 @@ public class SessionService {
         return cookie.mutate().maxAge(0).build();
     }
 
-    private String createAccessToken(User user) {
-        return jwtService.generateToken(user.getId().toString(),
-                Map.of("email", user.getEmail(), "username", user.getUsername()),
-                sessionProperties.accessTokenExpirationSec());
-    }
+    @Transactional
+    public JwtSession refreshSession(HttpServletRequest request, HttpServletResponse response){
+        SessionAndSessionStatus sessionAndSessionStatusStatus = _validateRefreshTokenSession(request,response);
+        SessionStatus sessionStatus = sessionAndSessionStatusStatus.sessionStatus();
+        Session session = sessionAndSessionStatusStatus.session();
 
-    private String createRefreshToken(User user) {
-        return jwtService.generateToken(user.getId().toString(),
-                Map.of(),
-                sessionProperties.refreshTokenExpirationSec());
-    }
+        if(sessionStatus != SessionStatus.ACTIVE && sessionStatus != SessionStatus.ROTATE_REQUIRED && sessionStatus != SessionStatus.ABSENT){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
+        } else if (sessionStatus == SessionStatus.ABSENT) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token found.");
+        }
 
-    public JwtSession createSession(User user) {
-        String refreshToken = createRefreshToken(user);
+        if(sessionStatus == SessionStatus.ROTATE_REQUIRED){
+            return rotateSession(session);
+        }
 
-        OffsetDateTime sessionExpiresAt = OffsetDateTime.now().plusSeconds(sessionProperties.refreshTokenExpirationSec());
-
-        var session = Session.builder()
-                .expiresAt(sessionExpiresAt)
-                .refreshToken(refreshToken)
-                .user(user)
-                .build();
-
-        sessionRepository.save(session);
-
+        // Generate a new access token
+        User user = session.getUser();
         String accessToken = createAccessToken(user);
-
-        return new JwtSession(userMapper.toDto(user), accessToken, createSessionCookie(refreshToken));
-    }
-
-
-    public SessionStatus getSessionStatus(String refreshToken) {
-        Session session = null;
-        try {
-            jwtService.parseClaims(refreshToken);
-            session = getSession(refreshToken);
-            if (session == null) return SessionStatus.INVALID;
-
-            if (!session.isRevoked()) return SessionStatus.ACTIVE;
-            else {
-                // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
-                sessionRepository.revokeSessionFamily(session.getInitialSessionId());
-            }return SessionStatus.REVOKED;
-        } catch (InvalidJwtTokenException e) {
-           if(e.getCause() instanceof ExpiredJwtException) {
-                session = getSession(refreshToken);
-                if(session != null && session.isRevoked()){
-                    // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
-                    sessionRepository.revokeSessionFamily(session.getInitialSessionId());
-                    return SessionStatus.REVOKED;
-                }else if (session != null && !session.isRevoked()){
-                    session.setRevoked(true);
-                    sessionRepository.save(session);
-                    return SessionStatus.EXPIRED;
-                }else return SessionStatus.INVALID;
-            }else if (e.getCause() instanceof MalformedJwtException){
-                return SessionStatus.MALFORMED;
-            }else {
-                return SessionStatus.INVALID;
-            }
-        }catch (Exception e){
-            return SessionStatus.INVALID;
-        }
-    }
-
-
-    private Claims decodeToken(String token){
-        try{
-            return jwtService.parseClaims(token);
-        }catch (InvalidJwtTokenException e){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,e.getMessage());
-        }
+        return new JwtSession(userMapper.toDto(user), accessToken, null);
     }
 
     public UserDto parseAccessToken(String accessToken){
@@ -144,22 +97,148 @@ public class SessionService {
         }
     }
 
-    public ResponseCookie logout(String refreshToken){
-        Session session = getSession(refreshToken);
-        session.setRevoked(true);
+    @Transactional
+    public ResponseCookie logout(HttpServletRequest request, HttpServletResponse response){
+        SessionAndSessionStatus sessionAndSessionStatusStatus = _validateRefreshTokenSession(request, response);
+        SessionStatus sessionStatus = sessionAndSessionStatusStatus.sessionStatus();
+        Session session = sessionAndSessionStatusStatus.session();
+
+        if(sessionStatus != SessionStatus.ACTIVE && sessionStatus != SessionStatus.ROTATE_REQUIRED && sessionStatus != SessionStatus.ABSENT){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
+        } else if (sessionStatus == SessionStatus.ABSENT) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token found.");
+        }
+
         sessionRepository.revokeSessionFamily(session.getInitialSessionId());
-        sessionRepository.save(session);
 
         return clearSessionCookie();
     }
 
+    private ResponseCookie createSessionCookie(String refreshToken) {
+        return ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(!isDevelopment)
+                .path("/api/v1/auth")
+                .maxAge(Duration.ofSeconds(sessionProperties.refreshTokenExpirationSec()))
+                .sameSite(isDevelopment ? "Lax" : "Strict")
+                .build();
+    }
+
+    private String createAccessToken(User user) {
+        return jwtService.generateToken(user.getId().toString(),
+                Map.of("email", user.getEmail(), "username", user.getUsername()),
+                sessionProperties.accessTokenExpirationSec());
+    }
+
+    private String createRefreshToken(User user) {
+        return jwtService.generateToken(user.getId().toString(),
+                Map.of(),
+                sessionProperties.refreshTokenExpirationSec());
+    }
+
+    private JwtSession _createSession(User user, UUID initialSessionId) {
+        String refreshToken = createRefreshToken(user);
+
+        OffsetDateTime sessionExpiresAt = OffsetDateTime.now().plusSeconds(sessionProperties.refreshTokenExpirationSec());
+
+        var session = Session.builder()
+                .expiresAt(sessionExpiresAt)
+                .refreshToken(refreshToken)
+                .initialSessionId(initialSessionId)
+                .user(user)
+                .build();
+
+        sessionRepository.save(session);
+
+        String accessToken = createAccessToken(user);
+
+        return new JwtSession(userMapper.toDto(user), accessToken, createSessionCookie(refreshToken));
+    }
+
+    private JwtSession rotateSession(Session oldSession){
+        oldSession.setRevoked(true);
+        sessionRepository.save(oldSession);
+        return _createSession(oldSession.getUser(), oldSession.getInitialSessionId() == null ? oldSession.getId() : oldSession.getInitialSessionId());
+    }
+
+    private SessionAndSessionStatus getSessionAndSessionStatus(String refreshToken){
+        Session session = null;
+        try {
+            jwtService.parseClaims(refreshToken);
+            session = getSession(refreshToken);
+            if (session == null) return new SessionAndSessionStatus(session, SessionStatus.INVALID);
+
+            if (!session.isRevoked()) {
+                if(session.getExpiresAt().isAfter(OffsetDateTime.now().minusSeconds(sessionProperties.refreshTokenRotateWindowSec()))){
+                    return new SessionAndSessionStatus(session, SessionStatus.ROTATE_REQUIRED);
+                }
+                return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
+            }
+            else {
+                // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
+                sessionRepository.revokeSessionFamily(session.getInitialSessionId());
+            }return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
+        } catch (InvalidJwtTokenException e) {
+            if(e.getCause() instanceof ExpiredJwtException) {
+                session = getSession(refreshToken);
+                if(session != null && session.isRevoked()){
+                    // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
+                    sessionRepository.revokeSessionFamily(session.getInitialSessionId());
+                    return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
+                }else if (session != null && !session.isRevoked()){
+                    session.setRevoked(true);
+                    sessionRepository.save(session);
+                    return new SessionAndSessionStatus(session, SessionStatus.EXPIRED);
+                }else return new SessionAndSessionStatus(session, SessionStatus.INVALID);
+            }else if (e.getCause() instanceof MalformedJwtException){
+                return new SessionAndSessionStatus(session, SessionStatus.MALFORMED);
+            }else {
+                return new SessionAndSessionStatus(session, SessionStatus.INVALID);
+            }
+        }catch (Exception e){
+            return new SessionAndSessionStatus(null, SessionStatus.INVALID);
+        }
+    }
+
+    private Claims decodeToken(String token){
+        try{
+            return jwtService.parseClaims(token);
+        }catch (InvalidJwtTokenException e){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,e.getMessage());
+        }
+    }
 
     private Session getSession(String refreshToken){
         return sessionRepository.findByRefreshToken(refreshToken).orElse(null);
     }
 
-    public static enum SessionStatus{
-        ACTIVE,REVOKED,MALFORMED,EXPIRED,INVALID
+    private SessionAndSessionStatus _validateRefreshTokenSession(HttpServletRequest request, HttpServletResponse response){
+        Cookie refreshToken = null;
+        if(request.getCookies() != null){
+            refreshToken = Arrays.stream(request.getCookies()).filter(cookie->cookie.getName().equals("refreshToken")).findFirst().orElse(null);
+        }
+
+        String path = request.getServletPath();
+        SessionAndSessionStatus sessionAndSessionStatus = new SessionAndSessionStatus(null, SessionStatus.ABSENT);
+        if(refreshToken != null){
+            sessionAndSessionStatus = getSessionAndSessionStatus(refreshToken.getValue());
+            SessionStatus sessionStatus = sessionAndSessionStatus.sessionStatus();
+
+            if(sessionStatus == SessionStatus.REVOKED || sessionStatus == SessionStatus.EXPIRED || sessionStatus == SessionStatus.MALFORMED || sessionStatus == SessionStatus.INVALID){
+                response.setHeader(HttpHeaders.SET_COOKIE,clearSessionCookie().toString());
+
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
+            }
+
+            if(sessionStatus == SessionStatus.ACTIVE || sessionStatus == SessionStatus.ROTATE_REQUIRED){
+                if(path != null && !path.startsWith("/api/v1/auth/refresh") && !path.startsWith("/api/v1/auth/logout")){
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"User is already authenticated.");
+                }
+            }
+        }
+        return sessionAndSessionStatus;
     }
 
+    private record SessionAndSessionStatus(Session session, SessionStatus sessionStatus){
+    }
 }
