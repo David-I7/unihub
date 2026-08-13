@@ -42,5 +42,7 @@ app:
   session:
     access-token-expiration-sec: ${SESSION_ACCESS_TOKEN_EXPIRATION_SEC}
     refresh-token-expiration-sec: ${SESSION_REFRESH_TOKEN_EXPIRATION_SEC}
+    refresh-token-rotate-window-sec: ${SESSION_REFRESH_TOKEN_ROTATE_WINDOW_SEC}
 
   is-development: ${IS_DEVELOPMENT:false}
+  client-origin: ${CLIENT_ORIGIN:http://localhost:5173}

@@ -7,6 +7,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -17,18 +19,26 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final SessionService sessionService;
 
     private final UserService userService;
 
+    @Value("${app.is-development}")
+    private boolean isDevelopment;
+
+    @Value("${app.client-origin}")
+    private String clientOrigin;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
         var principal = token.getPrincipal();
-        String origin = ServletUriComponentsBuilder
+        String origin = isDevelopment ? clientOrigin :
+            ServletUriComponentsBuilder
                 .fromCurrentContextPath()
                 .build()
                 .toUriString();
@@ -42,10 +52,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             var session = sessionService.createSession(user);
 
             response.setHeader("Set-Cookie",session.cookie().toString());
-            response.sendRedirect(origin + "/ouath2/success");
+            response.sendRedirect(origin + "/oauth2/success");
 
         }catch (Exception e){
-            response.sendRedirect(origin + "/oauth2/error");
+            log.error("Error occurred during OAuth2 authentication", e);
+            response.sendRedirect(origin + "/oauth2/failure");
         }
     }
 }
