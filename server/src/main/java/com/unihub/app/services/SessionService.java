@@ -169,7 +169,7 @@ public class SessionService {
             if (session == null) return new SessionAndSessionStatus(session, SessionStatus.INVALID);
 
             if (!session.isRevoked()) {
-                if(session.getExpiresAt().isAfter(OffsetDateTime.now().minusSeconds(sessionProperties.refreshTokenRotateWindowSec()))){
+                if(session.getExpiresAt().isBefore(OffsetDateTime.now().plusSeconds(sessionProperties.refreshTokenRotateWindowSec()))){
                     return new SessionAndSessionStatus(session, SessionStatus.ROTATE_REQUIRED);
                 }
                 return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
@@ -218,7 +218,7 @@ public class SessionService {
             refreshToken = Arrays.stream(request.getCookies()).filter(cookie->cookie.getName().equals("refreshToken")).findFirst().orElse(null);
         }
 
-        String path = request.getServletPath();
+        String path = request.getRequestURI();
         SessionAndSessionStatus sessionAndSessionStatus = new SessionAndSessionStatus(null, SessionStatus.ABSENT);
         if(refreshToken != null){
             sessionAndSessionStatus = getSessionAndSessionStatus(refreshToken.getValue());

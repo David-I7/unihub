@@ -12,12 +12,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.net.URI;
 import java.util.List;
 
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RequiredArgsConstructor
 @Slf4j
 public class GlobalExceptionHandler {
@@ -56,6 +60,14 @@ public class GlobalExceptionHandler {
         problemDetail.setType(URI.create("about:blank"));
         problemDetail.setDetail(e.getBody().getDetail());
 
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ProblemDetail> handleResponseStatusException(HttpServletRequest request, ResponseStatusException e){
+        HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(status, request.getRequestURI());
+        problemDetail.setDetail(e.getReason());
         return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
     }
 
