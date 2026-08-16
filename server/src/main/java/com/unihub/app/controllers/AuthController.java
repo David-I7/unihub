@@ -84,17 +84,6 @@ public class AuthController {
         return responseEntity;
     }
 
-//    @DeleteMapping("/delete-user")
-//    public ResponseEntity<?> deleteUser(HttpServletRequest request, HttpServletResponse response){
-//        ResponseCookie expiredCookie = sessionService.logout(request, response);
-//
-//        userService.delete(session.userDto().id());
-//
-//        return ResponseEntity.ok()
-//                .header("Set-Cookie", expiredCookie.toString())
-//                .build();
-//    }
-
     private String getOrigin(){
         return ServletUriComponentsBuilder
                 .fromCurrentContextPath()
