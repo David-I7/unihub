@@ -26,6 +26,9 @@ public class Course {
     @Column(nullable = false)
     private String name;
 
+    @Column(name="abbreviation", nullable = false, length = 4)
+    private String abbreviation;
+
     @ManyToOne
     @JoinColumn(name = "community_id")
     private Community community;

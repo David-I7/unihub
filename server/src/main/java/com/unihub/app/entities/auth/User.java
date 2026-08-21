@@ -1,5 +1,6 @@
 package com.unihub.app.entities.auth;
 
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.resources.Community;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,14 +30,15 @@ public class User {
 
     private String password;
 
+    @OneToOne
+    @JoinColumn(name = "role_id")
+    private Role role;
+
     @Column(nullable = false, name = "created_at")
     private OffsetDateTime createdAt;
 
     @Column(nullable = false, name = "updated_at")
     private OffsetDateTime updatedAt;
-
-    @ManyToMany(mappedBy = "members")
-    private List<Community> communities;
 
     @Override
     public String toString() {

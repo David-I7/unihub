@@ -22,7 +22,7 @@ public class Post {
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private String title;
 
     @Column(nullable = false)
     private String description;
@@ -31,8 +31,8 @@ public class Post {
     private int likesCount;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @ManyToOne
     @JoinColumn(name = "course_offering_id")

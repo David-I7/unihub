@@ -23,7 +23,7 @@ public class Resource {
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private String title;
 
     @Column
     private String description;
@@ -33,8 +33,8 @@ public class Resource {
     private Folder folder;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @Column(nullable = false, name = "created_at")
     private OffsetDateTime createdAt;

@@ -36,16 +36,15 @@ public class Community {
     @OneToMany(mappedBy = "community")
     private List<StudyYear> studyYears;
 
+    @OneToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
+
     @OneToMany(mappedBy = "community")
     private List<Course> courses;
 
-    @ManyToMany
-    @JoinTable(
-            name = "community_members",
-            joinColumns = @JoinColumn(name = "community_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private List<User> members;
+    @OneToMany(mappedBy = "community")
+    private List<CommunityMember> communityMembers;
 
     @PrePersist
     private void prePersist() {

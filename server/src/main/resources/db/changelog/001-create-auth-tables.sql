@@ -3,11 +3,30 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+CREATE TABLE ROLES(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text not null UNIQUE,
+    description text
+);
+
+CREATE TABLE PERMISSIONS(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name text not null UNIQUE,
+    description text
+);
+
+CREATE TABLE ROLE_PERMISSIONS(
+    role_id UUID not null references ROLES(id) on delete cascade,
+    permission_id UUID not null references PERMISSIONS(id) on delete cascade,
+    PRIMARY KEY (role_id, permission_id)
+);
+
 CREATE TABLE USERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email text not null UNIQUE,
     username text not null UNIQUE,
     password text default null,
+    role_id UUID not null references ROLES(id),
     created_at timestamptz default now(),
     updated_at timestamptz default now()
 );

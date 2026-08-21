@@ -1,5 +1,6 @@
 package com.unihub.app.entities.content;
 
+import com.unihub.app.entities.auth.User;
 import com.unihub.app.entities.resources.CourseOffering;
 import jakarta.persistence.*;
 import lombok.*;
@@ -31,6 +32,10 @@ public class Folder {
     @OneToMany
     @JoinColumn(name = "parent_folder_id")
     private List<Folder> subfolders;
+
+    @ManyToOne
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 
     @OneToMany(mappedBy = "folder")
     private List<Resource> resources;

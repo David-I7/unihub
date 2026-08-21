@@ -34,6 +34,9 @@ public class CourseOffering {
     @JoinColumn(name = "study_year_id", nullable = false)
     private StudyYear studyYear;
 
+    @Column(nullable = false)
+    private int semester;
+
     @ManyToMany(mappedBy = "coursesTaught")
     private List<Teacher> teachers;
 
