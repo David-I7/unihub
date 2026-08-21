@@ -26,7 +26,7 @@ public class Lecture extends Resource{
     @Column(name = "end_time", nullable = false)
     private OffsetDateTime endTime;
 
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private LectureLocation location;

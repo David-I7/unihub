@@ -38,33 +38,16 @@ CREATE TABLE COMMUNITIES(
     name text not null UNIQUE,
     description text not null,
     members_count int not null default 0,
+    owner_id UUID REFERENCES USERS(id),
     created_at timestamptz not null default now()
-);
-
-CREATE TABLE ROLES(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name text not null UNIQUE,
-    description text
-);
-
-CREATE TABLE PERMISSIONS(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name text not null UNIQUE,
-    description text
-);
-
-CREATE TABLE ROLE_PERMISSIONS(
-    role_id UUID not null references ROLES(id) on delete cascade,
-    permission_id UUID not null references PERMISSIONS(id) on delete cascade,
-    PRIMARY KEY (role_id, permission_id)
 );
 
 CREATE TABLE COMMUNITY_MEMBERS(
    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
    user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
+   role_id UUID not null REFERENCES ROLES(id),
    PRIMARY KEY (community_id, user_id)
 );
-
 
 CREATE TYPE STUDY_YEAR_NAME AS ENUM(
   'Year 1', 'Year 2', 'Year 3'
@@ -81,6 +64,7 @@ CREATE TABLE STUDY_YEARS(
 CREATE TABLE COURSES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null,
+    abbreviation text not null,
     community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     UNIQUE (community_id, name)
@@ -105,6 +89,7 @@ CREATE TABLE COURSE_OFFERING_TEACHERS(
 CREATE TABLE FOLDERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null,
+    owner_id UUID REFERENCES USERS(id) ON DELETE set null,
     course_offering_id int REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE,
     parent_folder_id UUID REFERENCES FOLDERS(id) on delete cascade,
     created_at timestamptz not null default now()
@@ -112,12 +97,12 @@ CREATE TABLE FOLDERS(
 
 CREATE TABLE POSTS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES USERS(id),
-    course_offering_id int REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE,
+    owner_id UUID not null REFERENCES USERS(id),
+    course_offering_id int not null REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     likes_count int not null default 0,
-    name text not null,
+    title text not null,
     description text not null
 );
 
@@ -129,14 +114,13 @@ CREATE TABLE POST_LIKES(
 
 CREATE TABLE RESOURCES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
+    folder_id UUID not null REFERENCES FOLDERS(id) ON DELETE CASCADE,
+    owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
-    name text not null,
+    title text not null,
     description text
 );
-
 
 CREATE TABLE MATERIALS(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE
