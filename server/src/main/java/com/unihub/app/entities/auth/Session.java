@@ -34,4 +34,16 @@ public class Session {
 
     @Column(name = "initial_session_id", nullable = true)
     private UUID initialSessionId;
+
+    @Override
+    public String toString() {
+        return "Session{" +
+                "id=" + id +
+                ", refreshToken='" + refreshToken + '\'' +
+                ", user=" + user +
+                ", expiresAt=" + expiresAt +
+                ", revoked=" + revoked +
+                ", initialSessionId=" + initialSessionId +
+                '}';
+    }
 }

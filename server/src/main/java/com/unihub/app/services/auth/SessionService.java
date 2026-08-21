@@ -1,4 +1,4 @@
-package com.unihub.app.services;
+package com.unihub.app.services.auth;
 
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.domain.JwtSession;
@@ -7,7 +7,8 @@ import com.unihub.app.entities.auth.Session;
 import com.unihub.app.entities.auth.User;
 import com.unihub.app.exceptions.InvalidJwtTokenException;
 import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.SessionRepository;
+import com.unihub.app.repositories.auth.SessionRepository;
+import com.unihub.app.services.JwtService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;

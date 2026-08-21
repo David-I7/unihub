@@ -1,13 +1,11 @@
-package com.unihub.app.services;
+package com.unihub.app.services.auth;
 
-import com.unihub.app.entities.auth.AuthProvider;
+import com.unihub.app.domain.AuthProvider;
 import com.unihub.app.entities.auth.User;
 import com.unihub.app.entities.auth.UserIdentity;
-import com.unihub.app.repositories.UserIdentityRepository;
+import com.unihub.app.repositories.auth.UserIdentityRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 import java.util.Set;

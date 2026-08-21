@@ -1,5 +1,6 @@
 package com.unihub.app.entities.auth;
 
+import com.unihub.app.domain.AuthProvider;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,4 +43,16 @@ public class UserIdentity {
 
     @Column(nullable = false, name = "created_at")
     private OffsetDateTime createdAt;
+
+    @Override
+    public String toString() {
+        return "UserIdentity{" +
+                "id=" + id +
+                ", user=" + user +
+                ", provider=" + provider +
+                ", providerSubject='" + providerSubject + '\'' +
+                ", providerEmail='" + providerEmail + '\'' +
+                ", createdAt=" + createdAt +
+                '}';
+    }
 }

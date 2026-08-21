@@ -1,4 +1,4 @@
-package com.unihub.app.entities.auth;
+package com.unihub.app.domain;
 
 public enum AuthProvider {
     GOOGLE,LOCAL
