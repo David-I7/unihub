@@ -14,6 +14,11 @@ spring:
       ddl-auto: validate
     show-sql: true
 
+  datasource:
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+    url: jdbc:postgresql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}
+
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yml
@@ -34,7 +39,6 @@ spring:
 logging:
   level:
     org.springframework.security: debug
-
 
 app:
   jwt:

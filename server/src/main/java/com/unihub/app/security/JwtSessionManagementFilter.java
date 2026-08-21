@@ -1,7 +1,7 @@
 package com.unihub.app.security;
 
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.services.SessionService;
+import com.unihub.app.services.auth.SessionService;
 import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
-import java.util.Arrays;
 
 
 @Component

@@ -1,6 +1,6 @@
-package com.unihub.app.repositories;
+package com.unihub.app.repositories.auth;
 
-import com.unihub.app.entities.auth.AuthProvider;
+import com.unihub.app.domain.AuthProvider;
 import com.unihub.app.entities.auth.User;
 import com.unihub.app.entities.auth.UserIdentity;
 import org.springframework.data.jpa.repository.JpaRepository;

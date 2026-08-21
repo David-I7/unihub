@@ -1,4 +1,4 @@
-package com.unihub.app.repositories;
+package com.unihub.app.repositories.auth;
 
 
 import com.unihub.app.entities.auth.Session;
