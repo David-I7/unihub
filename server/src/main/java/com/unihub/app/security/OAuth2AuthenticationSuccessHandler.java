@@ -1,6 +1,6 @@
 package com.unihub.app.security;
 
-import com.unihub.app.domain.AuthProvider;
+import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.services.auth.SessionService;
 import com.unihub.app.services.auth.UserService;
 import jakarta.servlet.ServletException;
