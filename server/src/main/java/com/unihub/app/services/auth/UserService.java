@@ -1,9 +1,9 @@
 package com.unihub.app.services.auth;
 
-import com.unihub.app.domain.AuthProvider;
-import com.unihub.app.entities.auth.User;
-import com.unihub.app.entities.auth.UserIdentity;
-import com.unihub.app.repositories.auth.UserRepository;
+import com.unihub.app.entities.authentication.AuthProvider;
+import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.authentication.UserIdentity;
+import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.utils.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

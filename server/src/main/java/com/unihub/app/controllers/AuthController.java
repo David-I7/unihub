@@ -4,7 +4,7 @@ import com.unihub.app.domain.JwtSession;
 import com.unihub.app.dto.auth.LocalRegisterRequestDto;
 import com.unihub.app.dto.auth.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.dto.auth.SessionResponseDto;
-import com.unihub.app.entities.auth.User;
+import com.unihub.app.entities.authentication.User;
 import com.unihub.app.services.auth.SessionService;
 import com.unihub.app.services.auth.UserService;
 import jakarta.servlet.http.HttpServletRequest;

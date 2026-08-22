@@ -1,7 +1,7 @@
 package com.unihub.app.mappers;
 
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.entities.auth.User;
+import com.unihub.app.entities.authentication.User;
 import org.springframework.stereotype.Component;
 
 @Component
