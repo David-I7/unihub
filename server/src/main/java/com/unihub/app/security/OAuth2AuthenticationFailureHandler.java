@@ -28,7 +28,12 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
                         .build()
                         .toUriString();
 
-        response.sendRedirect(origin + "/oauth2/failure");
+        response.sendRedirect(origin + "/oauth2/failure?provider=" + extractProvider(request));
+    }
 
+    private String extractProvider(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        // /login/oauth2/code/google
+        return uri.substring(uri.lastIndexOf('/') + 1).toUpperCase();
     }
 }

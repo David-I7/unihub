@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type usePopupProps = {
   url?: string | URL;
@@ -10,7 +10,8 @@ type usePopupProps = {
 };
 
 export const AUTH_CHANNEL_NAME = {
-  OAUTH2: "unihub-oauth" as const,
+  GOOGLE_OAUTH2: "unihub-google-oauth" as const,
+  GITHUB_OAUTH2: "unihub-github-oauth" as const,
 };
 
 export const usePopup = ({

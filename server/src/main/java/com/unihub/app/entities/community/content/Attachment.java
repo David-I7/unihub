@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import org.springframework.data.domain.Persistable;
+
 import java.util.UUID;
 
 
@@ -15,7 +17,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Attachment{
+public class Attachment {
 
     @Id
     private UUID id;
@@ -29,11 +31,6 @@ public class Attachment{
     @Column(name = "attachment_type", nullable = false)
     private AttachmentType attachmentType;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "id", nullable = false)
-    @MapsId
-    private Resource resource;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id", insertable = false, updatable = false)
     private MaterialFile materialFile;
@@ -41,5 +38,6 @@ public class Attachment{
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id", insertable = false, updatable = false)
     private MaterialLink materialLink;
+
 
 }

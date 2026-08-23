@@ -761,7 +761,7 @@ SELECT '28a48535-ba57-5f18-862d-f4862a3fa70c'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('28a48535-ba57-5f18-862d-f4862a3fa70c'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '35f6d7f5-545b-51a6-acaa-175d69b0de5c'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -773,7 +773,7 @@ SELECT '69d7f429-257f-5ae9-84fb-326071702854'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('69d7f429-257f-5ae9-84fb-326071702854'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '8f364c62-916c-5141-a410-e13dff33084f'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -785,7 +785,7 @@ SELECT '335dd8a4-0208-56c7-a644-17c4d7fcbce3'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('335dd8a4-0208-56c7-a644-17c4d7fcbce3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ITBI/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, 'a4c30f75-f9f5-5b28-a277-848dfede830b'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ITBI/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -793,7 +793,7 @@ SELECT '2b1e5deb-1cfc-5ad8-80e0-c9048dab4ec3'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('2b1e5deb-1cfc-5ad8-80e0-c9048dab4ec3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/PA/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '57e22219-d5c7-5e9b-a607-4d5a2b4b5c31'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/PA/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -805,7 +805,7 @@ SELECT 'b1bbfe9b-ace7-55dc-be82-c2d83af64d11'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('b1bbfe9b-ace7-55dc-be82-c2d83af64d11'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, 'eb35afe4-3f24-52f6-95a6-3157e22afca2'::uuid, id, '2026-07-01 08:54:17.574+00', '2026-07-01 08:54:17.574+00' FROM users;
+SELECT '6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 08:54:17.574+00', '2026-07-01 08:54:17.574+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -813,7 +813,7 @@ SELECT 'f9e3d720-0489-536a-9bdd-323da2775e16'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('f9e3d720-0489-536a-9bdd-323da2775e16'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Algebra%20Liniara/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '1fc619ee-1f40-5de8-aede-961ede74cff6'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Algebra%20Liniara/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -825,7 +825,7 @@ SELECT '71b86357-d0d7-55c2-99a8-1f4e37d4d844'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('71b86357-d0d7-55c2-99a8-1f4e37d4d844'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, 'ae7c4151-809c-5a61-99de-fa17c865bbc1'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -837,7 +837,7 @@ SELECT '4897f70b-0165-5a44-8a66-9f7e51008d03'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('4897f70b-0165-5a44-8a66-9f7e51008d03'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LMC/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '6c2459ac-96f0-5662-979a-33f0c103244e'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LMC/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -845,7 +845,7 @@ SELECT '6d3c949e-eaff-592c-9f29-de71fa8fd490'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('6d3c949e-eaff-592c-9f29-de71fa8fd490'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/POO/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'Lista proiecte', 'ATTACHMENT', NULL, 'a3531d08-6838-5581-a366-ff7d0342fa00'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'Lista proiecte', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/POO/teme', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -853,7 +853,7 @@ SELECT 'c003a1fb-9a27-549d-bc98-ddcd44971ab6'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('c003a1fb-9a27-549d-bc98-ddcd44971ab6'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Structuri%20de%20date/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'Exemple examene', 'ATTACHMENT', NULL, '8aa82ca0-1c94-535b-a59b-17855ff147b8'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Structuri%20de%20date/examen', 'GITHUB');
 
 -- Insert Exams (Resources + Exams)

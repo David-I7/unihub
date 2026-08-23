@@ -1,206 +1,135 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  font: 16px/1.45 system-ui, "Segoe UI", Roboto, sans-serif;
-  color: #151922;
-  background: #f6f7f9;
-  --bg-app: #f6f7f9;
-  --bg-card: #fff;
-  --bg-rail: #252932;
-  --bg-rail-hover: #3a404c;
-  --bg-option-hover: #f1f5f9;
-  --bg-option-selected: #e6f2f1;
-  --color-rail-text: #cfd4dc;
-  --color-rail-text-active: #fff;
-  --ring-color: rgb(63 111 107 / 0.22);
-  --border-color: #dfe4eb;
-  --text-main: #151922;
-  --text-muted: #5d6675;
-  --text-label: #394150;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
   --primary: #3f6f6b;
-  --primary-hover: #2d625e;
-  --bg-tab-active: #151922;
-  --text-tab-inactive: #4a5565;
-  --validation-ok-border: #8ac0a0;
-  --validation-ok-bg: #f4fbf6;
-  --validation-err-border: #d58d8d;
-  --validation-err-bg: #fff7f7;
-  --bg-code: #f2f4f7;
-  --color-time: #7c8797;
-  --status-cancelled-bg: #fff1f2;
-  --status-cancelled-border: #fecdd3;
-  --status-cancelled-text: #be123c;
-  --status-completed-bg: #ecfdf3;
-  --status-completed-border: #bbf7d0;
-  --status-completed-text: #15803d;
-  --status-scheduled-bg: #f1f5f9;
-  --status-scheduled-border: #cbd5e1;
-  --status-scheduled-text: #475569;
-  --status-upcoming-bg: #eff6ff;
-  --status-upcoming-border: #bfdbfe;
-  --status-upcoming-text: #1d4ed8;
-  --status-exam-bg: #faf5ff;
-  --status-exam-border: #e9d5ff;
-  --status-exam-text: #7e22ce;
-  --status-assignment-bg: #fffbeb;
-  --status-assignment-border: #fde68a;
-  --status-assignment-text: #b45309;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: #3f6f6b;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg-app: #0f172a;
-    --bg-card: #1e293b;
-    --bg-rail: #0f172a;
-    --bg-rail-hover: #1e293b;
-    --bg-option-hover: #334155;
-    --bg-option-selected: #123b3a;
-    --color-rail-text: #cbd5e1;
-    --color-rail-text-active: #f8fafc;
-    --ring-color: rgb(20 184 166 / 0.28);
-    --border-color: #334155;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-label: #cbd5e1;
-    --primary: #0d9488;
-    --primary-hover: #0f766e;
-    --bg-tab-active: #f8fafc;
-    --text-tab-inactive: #94a3b8;
-    --validation-ok-border: #059669;
-    --validation-ok-bg: #064e3b;
-    --validation-err-border: #dc2626;
-    --validation-err-bg: #450a0a;
-    --bg-code: #1e293b;
-    --color-time: #64748b;
-    --status-cancelled-bg: #450a0a;
-    --status-cancelled-border: #991b1b;
-    --status-cancelled-text: #fecaca;
-    --status-completed-bg: #052e16;
-    --status-completed-border: #166534;
-    --status-completed-text: #bbf7d0;
-    --status-scheduled-bg: #1e293b;
-    --status-scheduled-border: #475569;
-    --status-scheduled-text: #cbd5e1;
-    --status-upcoming-bg: #172554;
-    --status-upcoming-border: #1d4ed8;
-    --status-upcoming-text: #bfdbfe;
-    --status-exam-bg: #3b0764;
-    --status-exam-border: #7e22ce;
-    --status-exam-text: #e9d5ff;
-    --status-assignment-bg: #451a03;
-    --status-assignment-border: #92400e;
-    --status-assignment-text: #fde68a;
-  }
-}
-
-[data-theme="dark"] {
-  --bg-app: #0f172a;
-  --bg-card: #1e293b;
-  --bg-rail: #0f172a;
-  --bg-rail-hover: #1e293b;
-  --bg-option-hover: #334155;
-  --bg-option-selected: #123b3a;
-  --color-rail-text: #cbd5e1;
-  --color-rail-text-active: #f8fafc;
-  --ring-color: rgb(20 184 166 / 0.28);
-  --border-color: #334155;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-label: #cbd5e1;
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
   --primary: #0d9488;
-  --primary-hover: #0f766e;
-  --bg-tab-active: #f8fafc;
-  --text-tab-inactive: #94a3b8;
-  --validation-ok-border: #059669;
-  --validation-ok-bg: #064e3b;
-  --validation-err-border: #dc2626;
-  --validation-err-bg: #450a0a;
-  --bg-code: #1e293b;
-  --color-time: #64748b;
-  --status-cancelled-bg: #450a0a;
-  --status-cancelled-border: #991b1b;
-  --status-cancelled-text: #fecaca;
-  --status-completed-bg: #052e16;
-  --status-completed-border: #166534;
-  --status-completed-text: #bbf7d0;
-  --status-scheduled-bg: #1e293b;
-  --status-scheduled-border: #475569;
-  --status-scheduled-text: #cbd5e1;
-  --status-upcoming-bg: #172554;
-  --status-upcoming-border: #1d4ed8;
-  --status-upcoming-text: #bfdbfe;
-  --status-exam-bg: #3b0764;
-  --status-exam-border: #7e22ce;
-  --status-exam-text: #e9d5ff;
-  --status-assignment-bg: #451a03;
-  --status-assignment-border: #92400e;
-  --status-assignment-text: #fde68a;
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
-[data-theme="light"] {
-  --bg-app: #f6f7f9;
-  --bg-card: #fff;
-  --bg-rail: #252932;
-  --bg-rail-hover: #3a404c;
-  --bg-option-hover: #f1f5f9;
-  --bg-option-selected: #e6f2f1;
-  --color-rail-text: #cfd4dc;
-  --color-rail-text-active: #fff;
-  --ring-color: rgb(63 111 107 / 0.22);
-  --border-color: #dfe4eb;
-  --text-main: #151922;
-  --text-muted: #5d6675;
-  --text-label: #394150;
-  --primary: #3f6f6b;
-  --primary-hover: #2d625e;
-  --bg-tab-active: #151922;
-  --text-tab-inactive: #4a5565;
-  --validation-ok-border: #8ac0a0;
-  --validation-ok-bg: #f4fbf6;
-  --validation-err-border: #d58d8d;
-  --validation-err-bg: #fff7f7;
-  --bg-code: #f2f4f7;
-  --color-time: #7c8797;
-  --status-cancelled-bg: #fff1f2;
-  --status-cancelled-border: #fecdd3;
-  --status-cancelled-text: #be123c;
-  --status-completed-bg: #ecfdf3;
-  --status-completed-border: #bbf7d0;
-  --status-completed-text: #15803d;
-  --status-scheduled-bg: #f1f5f9;
-  --status-scheduled-border: #cbd5e1;
-  --status-scheduled-text: #475569;
-  --status-upcoming-bg: #eff6ff;
-  --status-upcoming-border: #bfdbfe;
-  --status-upcoming-text: #1d4ed8;
-  --status-exam-bg: #faf5ff;
-  --status-exam-border: #e9d5ff;
-  --status-exam-text: #7e22ce;
-  --status-assignment-bg: #fffbeb;
-  --status-assignment-border: #fde68a;
-  --status-assignment-text: #b45309;
+@theme inline {
+  --font-poppins: "Poppins", sans-serif;
+  --font-heading: var(--font-poppins);
+  --font-sans: "Inter Variable", sans-serif;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-.scrollbar-hidden {
-  scrollbar-width: none;
-}
-
-.scrollbar-hidden::-webkit-scrollbar {
-  display: none;
-}
-
-a {
-  color: inherit;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

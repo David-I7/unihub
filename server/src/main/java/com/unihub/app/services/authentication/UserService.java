@@ -1,4 +1,4 @@
-package com.unihub.app.services.auth;
+package com.unihub.app.services.authentication;
 
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;
@@ -99,14 +99,15 @@ public class UserService {
         if (existingIdentity.isPresent()) {
             User user =  existingIdentity.get().getUser();
             // trigger user loading
-            user.getEmail();
-            user.getUsername();
+            //user.getEmail();
+            //user.getUsername();
             return user;
         }
 
         Optional<User> existingUser = userRepository.findByEmail(providerEmail);
 
         if (existingUser.isPresent()) {
+            // A user that has an account is logging in with a different provider
             UserIdentity userIdentity = buildProviderIdentity(
                     existingUser.get(),
                     provider,
