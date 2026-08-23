@@ -1,7 +1,7 @@
 package com.unihub.app.security;
 
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.services.auth.SessionService;
+import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

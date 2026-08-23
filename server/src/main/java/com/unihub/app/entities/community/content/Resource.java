@@ -26,8 +26,8 @@ public class Resource {
     @Column
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "folder_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
     private Folder folder;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

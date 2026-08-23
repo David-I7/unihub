@@ -25,32 +25,44 @@ public class UsernameOrEmailValidator implements ConstraintValidator<UsernameOrE
                         isEmailMethod(method))
                 .toArray(Method[]::new);
 
-        if(methods.length == 0){ return false;}
+        if(methods.length != 2){ return false;}
 
-        for(Method method : methods){
-            try{
-                if(method.canAccess(value)) {
-                    if (isUsernameMethod(method)) {
-                        var username = method.invoke(value);
+        var usernameMethod = Arrays.stream(methods).filter(this::isUsernameMethod).findFirst().orElseThrow();
+        var emailMethod = Arrays.stream(methods).filter(this::isEmailMethod).findFirst().orElseThrow();
 
-                        if(username instanceof String usernameStr && usernameValidator.isValid(usernameStr, context)){
-                            return true;
-                        }
-
-                    }else if (isEmailMethod(method)) {
-                        var email = method.invoke(value);
-
-                        if(email instanceof String emailStr && emailValidator.isValid(emailStr, context)){
-                            return true;
-                        }
-                    }
-                }
-            }catch (ReflectiveOperationException e) {
-                return false;
-            }
+        if (!usernameMethod.canAccess(value) || !emailMethod.canAccess(value)) {
+            return false;
         }
 
-        return false;
+        try{
+            var username = usernameMethod.invoke(value);
+            var email = emailMethod.invoke(value);
+
+            if(username == null && email == null){
+                setCustomMessage(context, "Either username or email must be provided.");
+                return false;
+            }
+
+            if (username != null && email != null) {
+                setCustomMessage(context, "Only one of username or email should be provided.");
+                return false;
+            }
+
+            if (username != null) {
+                if (username instanceof String usernameStr && usernameValidator.isValid(usernameStr, context)) {
+                    return true;
+                }
+                return false;
+            }else {
+                if (email instanceof String emailStr && emailValidator.isValid(emailStr, context)) {
+                    return true;
+                }
+                setCustomMessage(context, "Invalid email format.");
+                return false;
+            }
+        }catch (ReflectiveOperationException e) {
+            return false;
+        }
     }
 
     private boolean isEmailMethod(Method method){
@@ -59,5 +71,11 @@ public class UsernameOrEmailValidator implements ConstraintValidator<UsernameOrE
 
     private boolean isUsernameMethod(Method method){
         return method.getName().equals("getUsername") || method.getName().equals("username");
+    }
+
+    private void setCustomMessage(ConstraintValidatorContext context, String message) {
+        context.disableDefaultConstraintViolation();
+        context.buildConstraintViolationWithTemplate(message)
+                .addConstraintViolation();
     }
 }

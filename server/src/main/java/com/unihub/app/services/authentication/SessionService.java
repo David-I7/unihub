@@ -1,4 +1,4 @@
-package com.unihub.app.services.auth;
+package com.unihub.app.services.authentication;
 
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.domain.JwtSession;

@@ -1,10 +1,10 @@
-import GoogleLogin from "@/features/auth/components/GoogleLogin";
+import { LoginForm } from "@/features/auth/components/LoginForm";
 
 export default function HomePage() {
   return (
     <section>
       <h1>Home Page</h1>
-      <GoogleLogin />
+      <LoginForm />
     </section>
   );
 }

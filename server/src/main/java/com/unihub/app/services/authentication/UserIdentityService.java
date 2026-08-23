@@ -1,4 +1,4 @@
-package com.unihub.app.services.auth;
+package com.unihub.app.services.authentication;
 
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;

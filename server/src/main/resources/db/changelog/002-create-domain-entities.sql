@@ -113,12 +113,12 @@ CREATE TABLE POST_LIKES(
 );
 
 CREATE TYPE RESOURCE_TYPE AS ENUM(
-  'MATERIAL_FILE','MATERIAL_LINK', 'ASSIGNMENT', 'EXAM', 'LECTURE', 'ATTACHMENT'
+  'MATERIAL_FILE','MATERIAL_LINK', 'ASSIGNMENT', 'EXAM', 'LECTURE'
 );
 
 CREATE TABLE RESOURCES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    folder_id UUID not null REFERENCES FOLDERS(id) ON DELETE CASCADE,
+    folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
     owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),

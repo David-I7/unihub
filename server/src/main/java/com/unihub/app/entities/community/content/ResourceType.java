@@ -1,5 +1,5 @@
 package com.unihub.app.entities.community.content;
 
 public enum ResourceType {
-    MATERIAL_FILE, MATERIAL_LINK, ASSIGNMENT, ATTACHMENT, EXAM, LECTURE
+    MATERIAL_FILE, MATERIAL_LINK, ASSIGNMENT, EXAM, LECTURE
 }

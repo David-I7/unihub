@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.net.URI;
 import java.util.List;
@@ -68,6 +70,20 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.valueOf(e.getStatusCode().value());
         ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(status, request.getRequestURI());
         problemDetail.setDetail(e.getReason());
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNoResourceFoundException(HttpServletRequest request, NoResourceFoundException e){
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.NOT_FOUND, request.getRequestURI());
+        problemDetail.setDetail("Resource not found");
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(HttpServletRequest request, HttpMessageNotReadableException e){
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.BAD_REQUEST, request.getRequestURI());
+        problemDetail.setDetail("Invalid request body");
         return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
     }
 
