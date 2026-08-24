@@ -1,4 +1,4 @@
-import { GraduationCap, Users, Home } from "lucide-react";
+import { GraduationCap, Users, Home, CalendarDays } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,7 +24,7 @@ const coreNavItems = [
   },
   {
     title: "Communities",
-    url: "/proto/communities",
+    url: "/communities",
     icon: Users,
   },
   {
@@ -32,11 +32,11 @@ const coreNavItems = [
     url: "/teachers",
     icon: GraduationCap,
   },
-  // {
-  //   title: "Calendar & Deadlines",
-  //   url: "/calendar",
-  //   icon: CalendarDays,
-  // },
+  {
+    title: "Calendar",
+    url: "/calendar",
+    icon: CalendarDays,
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

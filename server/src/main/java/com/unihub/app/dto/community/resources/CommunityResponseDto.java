@@ -13,6 +13,8 @@ public record CommunityResponseDto(
     String description,
     int memberCount,
     OffsetDateTime createdAt,
-    OwnerDto owner
+    OwnerDto owner,
+    String backgroundColor,
+    boolean verified
 ) {
 }

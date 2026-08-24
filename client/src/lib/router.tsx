@@ -3,6 +3,7 @@ import AppLayout from "../components/layouts/AppLayout";
 import HandleOAuthFailurePage from "../pages/HandleOAuth2FailurePage";
 import HandleOAuthSuccessPage from "../pages/HandleOAuthSuccessPage";
 import HomePage from "../pages/HomePage";
+import CommunitiesPage from "../pages/CommunitiesPage";
 import {
   LoginForm,
   RegisterForm,
@@ -47,19 +48,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/communities",
-        element: <ProtoCommunitiesListPage />,
-      },
-      {
-        path: "/communities/:communityId",
-        element: <ProtoCommunityPage />,
-      },
-      {
-        path: "/communities/:communityId/year/:yearId",
-        element: <ProtoStudyYearPage />,
-      },
-      {
-        path: "/communities/:communityId/year/:yearId/course/:courseOfferingId",
-        element: <ProtoCoursePage />,
+        element: <CommunitiesPage />,
       },
       {
         path: "/oauth2/failure",

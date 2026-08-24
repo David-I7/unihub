@@ -1,4 +1,4 @@
-package com.unihub.app.services.community;
+package com.unihub.app.services.community.resources;
 
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.mappers.community.CommunityMapper;

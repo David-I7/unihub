@@ -1,4 +1,4 @@
-package com.unihub.app.controllers;
+package com.unihub.app.controllers.authentication;
 
 import com.unihub.app.domain.JwtSession;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;

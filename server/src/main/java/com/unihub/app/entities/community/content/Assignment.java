@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -24,13 +23,6 @@ public class Assignment {
 
     @Column(name = "estimated_duration_minutes")
     private Integer estimatedDurationMinutes;
-
-    @Column(name = "grade_weight")
-    private float gradeWeight;
-
-    @OneToMany
-    @JoinColumn(name = "parent_resource_id", referencedColumnName = "id", insertable = false, updatable = false)
-    private List<Attachment> attachments;
 
     @OneToOne(optional = false)
     @JoinColumn(name = "id", nullable = false)

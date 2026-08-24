@@ -1,9 +1,9 @@
-package com.unihub.app.controllers;
+package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.services.community.CommunityService;
+import com.unihub.app.services.community.resources.CommunityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -16,7 +16,9 @@ public class CommunityMapper {
                 community.getDescription(),
                 community.getMemberCount(),
                 community.getCreatedAt(),
-                new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername())
+                new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()),
+                community.getBackgroundColor(),
+                community.isVerified()
         );
     }
 
@@ -27,6 +29,8 @@ public class CommunityMapper {
                 .description(communityResponseDto.description())
                 .memberCount(communityResponseDto.memberCount())
                 .createdAt(communityResponseDto.createdAt())
+                .backgroundColor(communityResponseDto.backgroundColor())
+                .verified(communityResponseDto.verified())
                 .owner(User.builder()
                         .id(communityResponseDto.owner().id())
                         .username(communityResponseDto.owner().username())

@@ -1,21 +1,18 @@
 package com.unihub.app.entities.community.resources;
 
+import com.unihub.app.entities.community.content.CourseOfferingPost;
 import com.unihub.app.entities.community.content.Folder;
-import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.globalResources.Teacher;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
 @Entity
-@Table(
-        name = "course_offerings",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"course_id", "study_year_id"})
-        }
-)
+@Table(name = "course_offerings")
 @Builder
 @Getter
 @Setter
@@ -38,14 +35,31 @@ public class CourseOffering {
     @Column(nullable = false)
     private int semester;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
+
+    @Column(name = "credit_points", nullable = false)
+    private int creditPoints;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "passing_difficulty", nullable = false)
+    private Difficulty passingDifficulty;
+
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "material_difficulty", nullable = false)
+    private Difficulty materialDifficulty;
+
     @ManyToMany(mappedBy = "coursesTaught")
     private List<Teacher> teachers;
 
     @OneToMany(mappedBy = "courseOffering")
-    private List<Post> posts;
+    private List<CourseOfferingPost> posts;
 
-    @Column(name = "created_at",nullable = false)
-    private OffsetDateTime  createdAt;
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
 
     @OneToMany(mappedBy = "courseOffering")
     private List<Folder> folders;

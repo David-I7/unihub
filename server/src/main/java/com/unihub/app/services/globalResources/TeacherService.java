@@ -1,4 +1,4 @@
-package com.unihub.app.services.resources;
+package com.unihub.app.services.globalResources;
 
 import com.unihub.app.entities.globalResources.Teacher;
 import com.unihub.app.repositories.globalResources.TeacherRepository;

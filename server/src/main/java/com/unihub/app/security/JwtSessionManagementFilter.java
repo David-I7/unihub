@@ -57,7 +57,13 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
         // Extract user from access token
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+        if(authHeader == null){
+            // Allow anonymous access to resources
+            filterChain.doFilter(request,response);
+            return;
+        }
+
+        if( !authHeader.startsWith("Bearer ")){
             problemDetailUtil.writeProblemDetail(request,response, HttpStatus.UNAUTHORIZED, "Authorization header is missing or invalid.");
             return;
         }

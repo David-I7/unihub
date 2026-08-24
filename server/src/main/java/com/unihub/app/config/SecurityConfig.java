@@ -40,6 +40,7 @@ public class SecurityConfig {
             .authorizeHttpRequests((authorize) ->
                 authorize
                     .requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers(HttpMethod.GET,"/api/v1/communities/**").permitAll()
                     .anyRequest().authenticated())
             .oauth2Login(login-> {
                         login

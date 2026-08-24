@@ -1,10 +1,9 @@
-import { Button } from "@/components/ui/button";
-import { Logout, useAuthStore } from "@/features/auth/";
-import { useNavigate } from "react-router";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 export default function HomePage() {
-  const user = useAuthStore((state) => state.user);
-
-  const navigate = useNavigate();
-  return <section></section>;
+  return (
+    <section>
+      <ColorPicker />
+    </section>
+  );
 }

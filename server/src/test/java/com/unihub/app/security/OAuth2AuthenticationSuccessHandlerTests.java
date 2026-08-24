@@ -3,7 +3,7 @@ package com.unihub.app.security;
 import com.unihub.app.config.AppConfig;
 import com.unihub.app.config.SecurityConfig;
 import com.unihub.app.config.SessionProperties;
-import com.unihub.app.controllers.AuthController;
+import com.unihub.app.controllers.authentication.AuthController;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;

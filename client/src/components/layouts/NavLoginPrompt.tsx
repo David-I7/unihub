@@ -87,8 +87,7 @@ export function NavLoginPrompt() {
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Sign in to connect with teachers, join communities, and access course
-        resources.
+        Sign in to join communities, shared resources, and rate teachers.
       </p>
 
       <div className="grid grid-cols-2 gap-2 pt-1">

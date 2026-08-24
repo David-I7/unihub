@@ -4,6 +4,8 @@ export type Community = {
   description: string;
   memberCount: number;
   createdAt: string;
+  backgroundColor: string;
+  verified: boolean;
   owner: {
     id: string;
     username: string;
