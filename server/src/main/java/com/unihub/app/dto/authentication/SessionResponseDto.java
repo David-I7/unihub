@@ -1,4 +1,4 @@
-package com.unihub.app.dto.auth;
+package com.unihub.app.dto.authentication;
 
 import com.unihub.app.dto.UserDto;
 

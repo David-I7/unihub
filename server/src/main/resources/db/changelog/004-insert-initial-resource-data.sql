@@ -40,7 +40,7 @@ INSERT INTO teachers (first_name,last_name) VALUES
 
 -- Insert Community
 INSERT INTO communities (id, name, description, members_count,owner_id, created_at)
-SELECT gen_random_uuid(), 'FMI - Informatica ID', 'Comunitatea studentilor FMI Informatica ID', 0, id, now()
+SELECT gen_random_uuid(), 'FMI - Informatica ID', 'Comunitatea studentilor FMI Informatica ID', 1, id, now()
 FROM users
 WHERE username = 'iosub_david';
 

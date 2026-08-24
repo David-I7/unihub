@@ -46,6 +46,7 @@ CREATE TABLE COMMUNITY_MEMBERS(
    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
    user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
    role_id UUID not null REFERENCES ROLES(id),
+   joined_at timestamptz not null default now(),
    PRIMARY KEY (community_id, user_id)
 );
 
@@ -70,6 +71,10 @@ CREATE TABLE COURSES(
     UNIQUE (community_id, name)
 );
 
+CREATE TYPE DIFFICULTY AS ENUM (
+  'EASY', 'MEDIUM', 'HARD'
+);
+
 CREATE TABLE COURSE_OFFERINGS(
     id serial PRIMARY KEY,
     course_id UUID REFERENCES COURSES(id) ON DELETE CASCADE,
@@ -77,6 +82,9 @@ CREATE TABLE COURSE_OFFERINGS(
     semester int not null check (semester in (1,2)),
     description text,
     created_at timestamptz not null default now(),
+    credit_points int not null,
+    passing_difficulty DIFFICULTY not null,
+    material_difficulty DIFFICULTY not null,
     UNIQUE (course_id, study_year_id)
 );
 
@@ -95,15 +103,31 @@ CREATE TABLE FOLDERS(
     created_at timestamptz not null default now()
 );
 
+CREATE TYPE COMMUNICATION_CHANNEL AS ENUM(
+  'COURSE_OFFERING', 'COMMUNITY', 'GENERAL'
+);
+
 CREATE TABLE POSTS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID not null REFERENCES USERS(id),
     course_offering_id int not null REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE,
+    channel COMMUNICATION_CHANNEL not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     likes_count int not null default 0,
+    pinned boolean not null default false,
     title text not null,
     description text not null
+);
+
+CREATE TABLE COMMENTS(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID not null REFERENCES USERS(id),
+    post_id UUID not null REFERENCES POSTS(id) ON DELETE CASCADE,
+    created_at timestamptz not null default now(),
+    channel COMMUNICATION_CHANNEL not null,
+    updated_at timestamptz not null default now(),
+    content text not null
 );
 
 CREATE TABLE POST_LIKES(
@@ -112,13 +136,41 @@ CREATE TABLE POST_LIKES(
     PRIMARY KEY (post_id, user_id)
 );
 
+CREATE TABLE COMMUNITY_POSTS(
+    post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
+    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE
+);
+
+CREATE TABLE COMMUNITY_COMMENT(
+    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
+    community_post_id UUID REFERENCES COMMUNITY_POSTS(id) ON DELETE CASCADE
+);
+
+CREATE TABLE COURSE_OFFERING_POSTS(
+    post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
+    course_offering_id UUID REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE
+);
+
+CREATE TABLE COURSE_OFFERING_COMMENT(
+    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
+    course_offering_post_id UUID REFERENCES COURSE_OFFERING_POSTS(id) ON DELETE CASCADE
+);
+
+CREATE TABLE GENERAL_POSTS(
+    post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
+);
+
+CREATE TABLE GENERAL_COMMENT(
+    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
+);
+
 CREATE TYPE RESOURCE_TYPE AS ENUM(
   'MATERIAL_FILE','MATERIAL_LINK', 'ASSIGNMENT', 'EXAM', 'LECTURE'
 );
 
 CREATE TABLE RESOURCES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
+    folder_id UUID not null REFERENCES FOLDERS(id) ON DELETE CASCADE,
     owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -126,7 +178,6 @@ CREATE TABLE RESOURCES(
     type RESOURCE_TYPE not null,
     description text
 );
-
 
 CREATE TABLE MATERIAL_FILES(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
@@ -170,16 +221,29 @@ CREATE TABLE LECTURES(
     location LECTURE_LOCATION
 );
 
-CREATE TYPE ATTACHMENT_TYPE AS ENUM(
-  'MATERIAL_FILE', 'MATERIAL_LINK'
-);
-
 CREATE TABLE ATTACHMENTS(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
     parent_resource_id UUID NOT NULL REFERENCES RESOURCES(id) ON DELETE CASCADE,
-    attachment_type ATTACHMENT_TYPE NOT NULL
+    resource_type RESOURCE_TYPE NOT NULL
 );
 
+CREATE TABLE community_announcements (
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     community_id UUID NOT NULL REFERENCES communities(id) ON DELETE CASCADE,
+     author_id UUID NOT NULL REFERENCES users(id),
+     title TEXT NOT NULL,
+     content TEXT NOT NULL,
+     is_pinned BOOLEAN NOT NULL DEFAULT false,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+     likes_count int not null default 0,
+);
+
+CREATE TABLE POST_LIKES(
+    post_id UUID REFERENCES POSTS(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES USERS(id),
+    PRIMARY KEY (post_id, user_id)
+);
 
 
 

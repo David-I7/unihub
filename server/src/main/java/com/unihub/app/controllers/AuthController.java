@@ -1,9 +1,9 @@
 package com.unihub.app.controllers;
 
 import com.unihub.app.domain.JwtSession;
-import com.unihub.app.dto.auth.LocalRegisterRequestDto;
-import com.unihub.app.dto.auth.LocalUsernameOrEmailLoginRequestDto;
-import com.unihub.app.dto.auth.SessionResponseDto;
+import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
+import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
+import com.unihub.app.dto.authentication.SessionResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserService;
