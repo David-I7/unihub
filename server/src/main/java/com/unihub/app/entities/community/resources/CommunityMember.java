@@ -5,6 +5,8 @@ import com.unihub.app.entities.authorization.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.OffsetDateTime;
+
 @Entity
 @Table(name = "community_members")
 @Builder
@@ -31,4 +33,13 @@ public class CommunityMember {
     @OneToOne
     private Role role;
 
+    @Column(name = "joined_at", nullable = false)
+    private OffsetDateTime joinedAt;
+
+    @PrePersist
+    private void prePersist() {
+        if (joinedAt == null) {
+            joinedAt = OffsetDateTime.now();
+        }
+    }
 }

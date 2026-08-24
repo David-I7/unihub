@@ -13,21 +13,21 @@ import GithubLogin from "./GithubLogin";
 import GoogleLogin from "./GoogleLogin";
 import { useNavigate } from "react-router";
 import { useLoginForm } from "../hooks/useLoginForm";
-import { useCallback } from "react";
+import useProviderForm from "../hooks/useProviderForm";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
-
-  const handleSuccess = useCallback(() => {
-    navigate("/");
-  }, [navigate]);
-
-  const handleProvderFailure = useCallback(() => {
-    navigate("/login");
-  }, [navigate]);
+  const {
+    handleSuccess: handleProviderSuccess,
+    handleFailure,
+    handleOpen,
+    error: providerLoginError,
+    activeProvider,
+    handleClose,
+  } = useProviderForm();
 
   const {
     errors,
@@ -37,7 +37,7 @@ export function LoginForm({
     isLoading,
     serverError,
     isInvalid,
-  } = useLoginForm({ onSuccess: handleSuccess });
+  } = useLoginForm();
 
   return (
     <form
@@ -104,10 +104,28 @@ export function LoginForm({
 
         <FieldGroup>
           <Field>
-            <GoogleLogin />
+            <GoogleLogin
+              onOpen={() => handleOpen("GOOGLE")}
+              onSuccess={handleProviderSuccess}
+              onFailure={handleFailure}
+              onClose={handleClose}
+              disabled={activeProvider !== null}
+            />
+            {providerLoginError && providerLoginError.provider === "GOOGLE" && (
+              <FieldError errors={[{ message: providerLoginError.message }]} />
+            )}
           </Field>
           <Field>
-            <GithubLogin />
+            <GithubLogin
+              onOpen={() => handleOpen("GITHUB")}
+              onSuccess={handleProviderSuccess}
+              onFailure={handleFailure}
+              onClose={handleClose}
+              disabled={activeProvider !== null}
+            />
+            {providerLoginError && providerLoginError.provider === "GITHUB" && (
+              <FieldError errors={[{ message: providerLoginError.message }]} />
+            )}
           </Field>
           <FieldDescription className="text-center">
             Don&apos;t have an account?{" "}

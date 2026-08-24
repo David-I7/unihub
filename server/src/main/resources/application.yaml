@@ -35,6 +35,13 @@ spring:
               - profile
               - email
             redirect-uri: "{baseUrl}/api/v1/auth/oauth2/code/{registrationId}"
+          github:
+            clientId: ${GITHUB_OAUTH2_CLIENT_ID}
+            clientSecret: ${GITHUB_OAUTH2_CLIENT_SECRET}
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: "{baseUrl}/api/v1/auth/oauth2/code/{registrationId}"
 
 logging:
   level:

@@ -110,9 +110,13 @@ public class SessionService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token found.");
         }
 
-        sessionRepository.revokeSessionFamily(session.getInitialSessionId());
+        sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
 
         return clearSessionCookie();
+    }
+
+    private UUID getSessionFamilyId(Session session) {
+        return session.getInitialSessionId() == null ? session.getId() : session.getInitialSessionId();
     }
 
     private ResponseCookie createSessionCookie(String refreshToken) {
@@ -159,7 +163,7 @@ public class SessionService {
     private JwtSession rotateSession(Session oldSession){
         oldSession.setRevoked(true);
         sessionRepository.save(oldSession);
-        return _createSession(oldSession.getUser(), oldSession.getInitialSessionId() == null ? oldSession.getId() : oldSession.getInitialSessionId());
+        return _createSession(oldSession.getUser(), getSessionFamilyId(oldSession));
     }
 
     private SessionAndSessionStatus getSessionAndSessionStatus(String refreshToken){
@@ -177,14 +181,14 @@ public class SessionService {
             }
             else {
                 // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
-                sessionRepository.revokeSessionFamily(session.getInitialSessionId());
+                sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
             }return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
         } catch (InvalidJwtTokenException e) {
             if(e.getCause() instanceof ExpiredJwtException) {
                 session = getSession(refreshToken);
                 if(session != null && session.isRevoked()){
                     // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
-                    sessionRepository.revokeSessionFamily(session.getInitialSessionId());
+                    sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
                     return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
                 }else if (session != null && !session.isRevoked()){
                     session.setRevoked(true);

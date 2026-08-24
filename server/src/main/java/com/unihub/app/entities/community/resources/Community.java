@@ -24,6 +24,12 @@ public class Community {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "background_color", nullable = false)
+    private String backgroundColor;
+
+    @Column(nullable = false)
+    private boolean verified;
+
     @Column(name = "description", nullable = false)
     private String description;
 

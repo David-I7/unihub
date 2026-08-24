@@ -5,10 +5,9 @@ import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 import queryClient from "@/lib/queryClient";
 
-const BASE_PROVIDER_URL = BASE_URL + "oauth2/authorization/";
+const BASE_PROVIDER_URL = BASE_URL + "auth/oauth2/authorization/";
 export const GOOGLE_LOGIN_URL = BASE_PROVIDER_URL + "google";
 export const GITHUB_LOGIN_URL = BASE_PROVIDER_URL + "github";
-
 export const login = async (
   loginRequest: LoginRequest,
 ): Promise<RefreshResponse> => {

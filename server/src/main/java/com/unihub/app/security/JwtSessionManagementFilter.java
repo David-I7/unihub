@@ -57,7 +57,13 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
         // Extract user from access token
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
-        if(authHeader == null || !authHeader.startsWith("Bearer ")){
+        if(authHeader == null){
+            // Allow anonymous access to resources
+            filterChain.doFilter(request,response);
+            return;
+        }
+
+        if( !authHeader.startsWith("Bearer ")){
             problemDetailUtil.writeProblemDetail(request,response, HttpStatus.UNAUTHORIZED, "Authorization header is missing or invalid.");
             return;
         }
@@ -73,11 +79,6 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
     }
 
     private boolean shouldAuthenticatePath(String path){
-        return !(path.startsWith("/api/v1/auth/register")
-                || path.startsWith("/api/v1/auth/login")
-                || path.startsWith("/api/v1/auth/oauth2")
-                || path.equals("/api/v1/auth/logout")
-                || path.equals("/api/v1/auth/refresh")
-                || path.startsWith("/api/v1/auth/oauth2/authorization"));
+        return !path.startsWith("/api/v1/auth");
     }
 }

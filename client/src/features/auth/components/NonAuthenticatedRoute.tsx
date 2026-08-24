@@ -8,7 +8,7 @@ export default function NonAuthenticatedRoute({
 }) {
   const user = useAuthStore((state) => state.user);
 
-  if (user) {
+  if (user !== null) {
     return <Navigate to="/" replace />;
   }
 

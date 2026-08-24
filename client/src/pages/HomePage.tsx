@@ -1,10 +1,9 @@
-import { LoginForm } from "@/features/auth/components/LoginForm";
+import { ColorPicker } from "@/components/ui/color-picker";
 
 export default function HomePage() {
   return (
     <section>
-      <h1>Home Page</h1>
-      <LoginForm />
+      <ColorPicker />
     </section>
   );
 }

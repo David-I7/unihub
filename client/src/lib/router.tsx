@@ -1,13 +1,21 @@
 import { createBrowserRouter } from "react-router";
-import HomePage from "../pages/HomePage";
 import AppLayout from "../components/layouts/AppLayout";
 import HandleOAuthFailurePage from "../pages/HandleOAuth2FailurePage";
 import HandleOAuthSuccessPage from "../pages/HandleOAuthSuccessPage";
+import HomePage from "../pages/HomePage";
+import CommunitiesPage from "../pages/CommunitiesPage";
 import {
   LoginForm,
   RegisterForm,
   NonAuthenticatedRoute,
 } from "@/features/auth";
+import {
+  ProtoHomePage,
+  ProtoCommunitiesListPage,
+  ProtoCommunityPage,
+  ProtoStudyYearPage,
+  ProtoCoursePage,
+} from "@/features/prototypes";
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +25,30 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />,
+      },
+      {
+        path: "/proto",
+        element: <ProtoHomePage />,
+      },
+      {
+        path: "/proto/communities",
+        element: <ProtoCommunitiesListPage />,
+      },
+      {
+        path: "/proto/communities/:communityId",
+        element: <ProtoCommunityPage />,
+      },
+      {
+        path: "/proto/communities/:communityId/year/:yearId",
+        element: <ProtoStudyYearPage />,
+      },
+      {
+        path: "/proto/communities/:communityId/year/:yearId/course/:courseOfferingId",
+        element: <ProtoCoursePage />,
+      },
+      {
+        path: "/communities",
+        element: <CommunitiesPage />,
       },
       {
         path: "/oauth2/failure",

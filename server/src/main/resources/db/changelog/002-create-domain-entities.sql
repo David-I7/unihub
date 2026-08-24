@@ -39,6 +39,8 @@ CREATE TABLE COMMUNITIES(
     description text not null,
     members_count int not null default 0,
     owner_id UUID REFERENCES USERS(id),
+    background_color text not null default '#2563eb',
+    verified boolean not null default false,
     created_at timestamptz not null default now()
 );
 
@@ -46,6 +48,7 @@ CREATE TABLE COMMUNITY_MEMBERS(
    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
    user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
    role_id UUID not null REFERENCES ROLES(id),
+   joined_at timestamptz not null default now(),
    PRIMARY KEY (community_id, user_id)
 );
 
@@ -70,14 +73,21 @@ CREATE TABLE COURSES(
     UNIQUE (community_id, name)
 );
 
+CREATE TYPE DIFFICULTY AS ENUM (
+  'EASY', 'MEDIUM', 'HARD'
+);
+
 CREATE TABLE COURSE_OFFERINGS(
     id serial PRIMARY KEY,
     course_id UUID REFERENCES COURSES(id) ON DELETE CASCADE,
     study_year_id int REFERENCES STUDY_YEARS(id) ON DELETE CASCADE,
     semester int not null check (semester in (1,2)),
+    active boolean not null default true,
     description text,
     created_at timestamptz not null default now(),
-    UNIQUE (course_id, study_year_id)
+    credit_points int not null default 5,
+    passing_difficulty DIFFICULTY not null default 'MEDIUM',
+    material_difficulty DIFFICULTY not null default 'MEDIUM'
 );
 
 CREATE TABLE COURSE_OFFERING_TEACHERS(
@@ -95,21 +105,55 @@ CREATE TABLE FOLDERS(
     created_at timestamptz not null default now()
 );
 
+CREATE TYPE COMMUNICATION_CHANNEL AS ENUM(
+  'COURSE_OFFERING', 'COMMUNITY', 'GENERAL'
+);
+
 CREATE TABLE POSTS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID not null REFERENCES USERS(id),
-    course_offering_id int not null REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE,
+    channel COMMUNICATION_CHANNEL not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     likes_count int not null default 0,
+    pinned boolean not null default false,
     title text not null,
     description text not null
+);
+
+CREATE TABLE COMMENTS(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID not null REFERENCES USERS(id),
+    post_id UUID not null REFERENCES POSTS(id) ON DELETE CASCADE,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    content text not null
 );
 
 CREATE TABLE POST_LIKES(
     post_id UUID REFERENCES POSTS(id) ON DELETE CASCADE,
     user_id UUID REFERENCES USERS(id),
     PRIMARY KEY (post_id, user_id)
+);
+
+CREATE TABLE COMMUNITY_POSTS(
+    post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
+    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE
+);
+
+CREATE TABLE COMMUNITY_COMMENT(
+    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
+    community_post_id UUID REFERENCES COMMUNITY_POSTS(post_id) ON DELETE CASCADE
+);
+
+CREATE TABLE COURSE_OFFERING_POSTS(
+    post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
+    course_offering_id int REFERENCES COURSE_OFFERINGS(id) ON DELETE CASCADE
+);
+
+CREATE TABLE COURSE_OFFERING_COMMENT(
+    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
+    course_offering_post_id UUID REFERENCES COURSE_OFFERING_POSTS(post_id) ON DELETE CASCADE
 );
 
 CREATE TYPE RESOURCE_TYPE AS ENUM(
@@ -126,7 +170,6 @@ CREATE TABLE RESOURCES(
     type RESOURCE_TYPE not null,
     description text
 );
-
 
 CREATE TABLE MATERIAL_FILES(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
@@ -148,15 +191,13 @@ CREATE TABLE MATERIAL_LINKS(
 CREATE TABLE ASSIGNMENTS(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
     due_date timestamptz not null,
-    estimated_duration_minutes int,
-    grade_weight real not null default 0 check (grade_weight between 0 and 100)
+    estimated_duration_minutes int
 );
 
 CREATE TABLE EXAMS(
     id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
     scheduled_date timestamptz not null,
-    estimated_duration_minutes int,
-    grade_weight real not null check (grade_weight between 0 and 100)
+    estimated_duration_minutes int
 );
 
 CREATE TYPE LECTURE_LOCATION AS ENUM(
@@ -168,16 +209,6 @@ CREATE TABLE LECTURES(
     start_time timestamptz not null,
     end_time timestamptz not null,
     location LECTURE_LOCATION
-);
-
-CREATE TYPE ATTACHMENT_TYPE AS ENUM(
-  'MATERIAL_FILE', 'MATERIAL_LINK'
-);
-
-CREATE TABLE ATTACHMENTS(
-    id UUID PRIMARY KEY REFERENCES RESOURCES(id) ON DELETE CASCADE,
-    parent_resource_id UUID NOT NULL REFERENCES RESOURCES(id) ON DELETE CASCADE,
-    attachment_type ATTACHMENT_TYPE NOT NULL
 );
 
 

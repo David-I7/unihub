@@ -3,9 +3,9 @@ package com.unihub.app.controllers;
 import com.unihub.app.config.AppConfig;
 import com.unihub.app.config.SecurityConfig;
 import com.unihub.app.config.SessionProperties;
-import com.unihub.app.dto.auth.LocalRegisterRequestDto;
-import com.unihub.app.dto.auth.LocalUsernameOrEmailLoginRequestDto;
-import com.unihub.app.exceptions.GlobalExceptionHandler;
+import com.unihub.app.controllers.authentication.AuthController;
+import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
+import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
@@ -17,12 +17,17 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.security.JwtSessionManagementFilter;
 import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
 import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
+import com.unihub.app.security.OAuth2ProviderUserInfoExtractor;
 import com.unihub.app.services.JwtService;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserIdentityService;
 import com.unihub.app.services.authentication.UserService;
+import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.http.Cookie;
+import com.unihub.app.entities.authorization.Role;
+import com.unihub.app.repositories.authorization.RoleRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +61,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         SecurityConfig.class,
         OAuth2AuthenticationFailureHandler.class,
         OAuth2AuthenticationSuccessHandler.class,
+        OAuth2ProviderUserInfoExtractor.class,
+        RoleService.class,
         JwtSessionManagementFilter.class,
         SessionService.class,
         UserService.class,
@@ -63,8 +70,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         UserMapper.class,
         UserIdentityService.class,
         ObjectErrorMapper.class,
-        ProblemDetailUtil.class,
-        GlobalExceptionHandler.class
+        ProblemDetailUtil.class
 })
 public class AuthControllerTests {
 
@@ -93,6 +99,15 @@ public class AuthControllerTests {
 
     @MockitoBean
     private UserIdentityRepository userIdentityRepository;
+
+    @MockitoBean
+    private RoleRepository roleRepository;
+
+    @BeforeEach
+    public void setUp() {
+        when(roleRepository.findByName(anyString()))
+                .thenReturn(Optional.of(Role.builder().name("USER").build()));
+    }
 
     // =========================================================================
     // POST /api/v1/auth/register/local
@@ -506,6 +521,37 @@ public class AuthControllerTests {
                 .andExpect(cookie().maxAge("refreshToken", 0));
 
         verify(sessionRepository).revokeSessionFamily(initialSessionId);
+    }
+
+    @Test
+    @DisplayName("""
+            Given: authenticated user with active initial session (null initialSessionId)
+            When: /logout endpoint is called
+            Then: 200 ok is returned, cookie is cleared, and session family is revoked using session.getId()
+            """)
+    public void testLogout_Success_InitialSession() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID sessionId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("user@gmail.com").username("user").build();
+        String token = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
+
+        Session session = Session.builder()
+                .id(sessionId)
+                .initialSessionId(null)
+                .user(user)
+                .refreshToken(token)
+                .revoked(false)
+                .expiresAt(OffsetDateTime.now().plusDays(5))
+                .build();
+
+        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(session));
+
+        mockMvc.perform(post(BASE_URL + "/logout")
+                        .cookie(new Cookie("refreshToken", token)))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
+
+        verify(sessionRepository).revokeSessionFamily(sessionId);
     }
 
     @Test

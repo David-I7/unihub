@@ -39,8 +39,8 @@ INSERT INTO teachers (first_name,last_name) VALUES
 ('Diana','Ionita');
 
 -- Insert Community
-INSERT INTO communities (id, name, description, members_count,owner_id, created_at)
-SELECT gen_random_uuid(), 'FMI - Informatica ID', 'Comunitatea studentilor FMI Informatica ID', 0, id, now()
+INSERT INTO communities (id, name, description, members_count,owner_id, created_at, verified)
+SELECT gen_random_uuid(), 'FMI - Informatica ID', 'Comunitatea studentilor FMI Informatica ID', 1, id, now(), true
 FROM users
 WHERE username = 'iosub_david';
 
@@ -761,7 +761,7 @@ SELECT '28a48535-ba57-5f18-862d-f4862a3fa70c'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('28a48535-ba57-5f18-862d-f4862a3fa70c'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'eb68cae4-f8ef-5276-970d-7f5761d64057'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ASC/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -773,7 +773,7 @@ SELECT '69d7f429-257f-5ae9-84fb-326071702854'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('69d7f429-257f-5ae9-84fb-326071702854'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'a9e68b16-84c5-5698-8dd0-da7c73bcbe75'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/CDI/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -785,7 +785,7 @@ SELECT '335dd8a4-0208-56c7-a644-17c4d7fcbce3'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('335dd8a4-0208-56c7-a644-17c4d7fcbce3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ITBI/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'cc4ef83c-4cde-5974-9147-2728d60d9adb'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/ITBI/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -793,7 +793,7 @@ SELECT '2b1e5deb-1cfc-5ad8-80e0-c9048dab4ec3'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('2b1e5deb-1cfc-5ad8-80e0-c9048dab4ec3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/PA/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'c9cef1c1-3f4a-518a-92eb-3b6f482c6f4d'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/PA/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -805,7 +805,7 @@ SELECT 'b1bbfe9b-ace7-55dc-be82-c2d83af64d11'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('b1bbfe9b-ace7-55dc-be82-c2d83af64d11'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 08:54:17.574+00', '2026-07-01 08:54:17.574+00' FROM users;
+SELECT '6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'bb8e35b3-4c5d-533b-af0c-77d0213ce534'::uuid, id, '2026-07-01 08:54:17.574+00', '2026-07-01 08:54:17.574+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%201/SAIF/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -813,7 +813,7 @@ SELECT 'f9e3d720-0489-536a-9bdd-323da2775e16'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('f9e3d720-0489-536a-9bdd-323da2775e16'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Algebra%20Liniara/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, '2822d7db-1b2a-5dbb-b08f-e894f82f0590'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Algebra%20Liniara/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -825,7 +825,7 @@ SELECT '71b86357-d0d7-55c2-99a8-1f4e37d4d844'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('71b86357-d0d7-55c2-99a8-1f4e37d4d844'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, '0dcfccad-987a-5fd6-be57-104d2740c9f8'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LFA/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -837,7 +837,7 @@ SELECT '4897f70b-0165-5a44-8a66-9f7e51008d03'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('4897f70b-0165-5a44-8a66-9f7e51008d03'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LMC/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, '7f8d88c0-9a96-5231-ada6-cafe37ad65f8'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/LMC/examen', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -845,7 +845,7 @@ SELECT '6d3c949e-eaff-592c-9f29-de71fa8fd490'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('6d3c949e-eaff-592c-9f29-de71fa8fd490'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/POO/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'Lista proiecte', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT 'ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'Lista proiecte', 'MATERIAL_LINK', NULL, '6d95a562-5b21-57e6-96a3-783fbce44137'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/POO/teme', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
@@ -853,92 +853,79 @@ SELECT 'c003a1fb-9a27-549d-bc98-ddcd44971ab6'::uuid, 'Materiale curs', 'MATERIAL
 INSERT INTO material_links (id, url, link_type) VALUES ('c003a1fb-9a27-549d-bc98-ddcd44971ab6'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Structuri%20de%20date/curs', 'GITHUB');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, NULL, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
+SELECT '12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'Exemple examene', 'MATERIAL_LINK', NULL, 'e4e35737-598f-5778-a0ed-0bfb05e07197'::uuid, id, '2026-07-01 09:10:27.977+00', '2026-07-01 09:10:27.977+00' FROM users;
 INSERT INTO material_links (id, url, link_type) VALUES ('12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Structuri%20de%20date/examen', 'GITHUB');
 
 -- Insert Exams (Resources + Exams)
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '35a42333-1447-52fd-a99a-873257c56963'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', 'eb68cae4-f8ef-5276-970d-7f5761d64057'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('35a42333-1447-52fd-a99a-873257c56963'::uuid, '2026-01-20 18:00:00+00', 40);
+SELECT '35a42333-1447-52fd-a99a-873257c56963'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('35a42333-1447-52fd-a99a-873257c56963'::uuid, '2026-01-20 18:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', 'a9e68b16-84c5-5698-8dd0-da7c73bcbe75'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, '2026-01-25 12:00:00+00', 100);
+SELECT '15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, '2026-01-25 12:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', 'cc4ef83c-4cde-5974-9147-2728d60d9adb'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, '2026-01-25 12:00:00+00', 40);
+SELECT 'a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, '2026-01-25 12:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', 'c9cef1c1-3f4a-518a-92eb-3b6f482c6f4d'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, '2026-01-31 10:00:00+00', 100);
+SELECT '1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, '2026-01-31 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', 'bb8e35b3-4c5d-533b-af0c-77d0213ce534'::uuid, id, '2026-07-01 09:01:18.325+00', '2026-07-01 09:01:18.325+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, '2026-02-07 10:00:00+00', 100);
+SELECT 'bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:01:18.325+00', '2026-07-01 09:01:18.325+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, '2026-02-07 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'd75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, 'Examen pe calculator', 'EXAM', 'Puteti veni cu latopul personal', 'af2fec30-b46e-5459-bec1-5d4f776b256f'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('d75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, '2026-02-15 10:00:00+00', 30);
+SELECT 'd75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, 'Examen pe calculator', 'EXAM', 'Puteti veni cu latopul personal', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('d75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, '2026-02-15 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se va sustine online. Trebuie sa luat jumatate din punctaj ca sa intrati in examenul pe calculator', 'af2fec30-b46e-5459-bec1-5d4f776b256f'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, '2026-02-15 10:00:00+00', 70);
+SELECT '49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se va sustine online. Trebuie sa luat jumatate din punctaj ca sa intrati in examenul pe calculator', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, '2026-02-15 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se poate sustine online sau fizic. Daca nu stapaniti materia foarte bine, va sugerez sa mergeti fizic, deoarece aveti sanse mai mari sa treceti.', '0bea39fc-1412-5dab-b1d8-c34fa1601c16'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, '2026-06-30 10:00:00+00', 100);
+SELECT 'a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se poate sustine online sau fizic. Daca nu stapaniti materia foarte bine, va sugerez sa mergeti fizic, deoarece aveti sanse mai mari sa treceti.', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, '2026-06-30 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2822d7db-1b2a-5dbb-b08f-e894f82f0590'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, '2026-06-21 10:00:00+00', 100);
+SELECT 'b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, '2026-06-21 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '70629015-e8f4-5367-abb4-003a1934943f'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', '0dcfccad-987a-5fd6-be57-104d2740c9f8'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('70629015-e8f4-5367-abb4-003a1934943f'::uuid, '2026-06-13 10:00:00+00', 67);
+SELECT '70629015-e8f4-5367-abb4-003a1934943f'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('70629015-e8f4-5367-abb4-003a1934943f'::uuid, '2026-06-13 10:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '7f8d88c0-9a96-5231-ada6-cafe37ad65f8'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, '2026-06-27 12:00:00+00', 70);
+SELECT '7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, '2026-06-27 12:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', 'e4e35737-598f-5778-a0ed-0bfb05e07197'::uuid, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
-INSERT INTO exams (id, scheduled_date, grade_weight) VALUES ('8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, '2026-06-28 12:00:00+00', 70);
+SELECT '8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', NULL, id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00' FROM users;
+INSERT INTO exams (id, scheduled_date) VALUES ('8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, '2026-06-28 12:00:00+00');
 
 -- Insert Assignments (Resources + Assignments)
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '51365991-3559-541f-8060-2f8338c06bd6'::uuid, 'Proiect mips', 'ASSIGNMENT', NULL, '3974654c-e940-5b4d-a7e3-76657f118864'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('51365991-3559-541f-8060-2f8338c06bd6'::uuid, '2026-01-20 18:00:00+00', 60);
+SELECT '51365991-3559-541f-8060-2f8338c06bd6'::uuid, 'Proiect mips', 'ASSIGNMENT', NULL, NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('51365991-3559-541f-8060-2f8338c06bd6'::uuid, '2026-01-20 18:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, 'Proiect procese semnale si/sau tuburi', 'ASSIGNMENT', NULL, 'ec329b8c-e0d9-5d1e-a21f-a5648087783d'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, '2026-01-17 16:00:00+00', 60);
+SELECT '9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, 'Proiect procese semnale si/sau tuburi', 'ASSIGNMENT', NULL, NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, '2026-01-17 16:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, 'Tema lfa', 'ASSIGNMENT', NULL, '8ea1db2b-44e6-5025-bac4-e64d58871753'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, '2026-05-30 00:00:00+00', 33);
+SELECT 'a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, 'Tema lfa', 'ASSIGNMENT', NULL, NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, '2026-05-30 00:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT 'b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, 'Teme colective lmc', 'ASSIGNMENT', 'Trei teme care valoreaza 1p fiecare si trebuie trimise doar de un membru al fiecarei grupe', '2b863ae6-80de-5e0c-aad5-b91a5a637693'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, '2026-05-30 00:00:00+00', 30);
+SELECT 'b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, 'Teme colective lmc', 'ASSIGNMENT', 'Trei teme care valoreaza 1p fiecare si trebuie trimise doar de un membru al fiecarei grupe', NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, '2026-05-30 00:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, 'Proiect POO', 'ASSIGNMENT', 'Nota la proiect reprezinta nota finala trecuta in catalog', '6d95a562-5b21-57e6-96a3-783fbce44137'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, '2026-06-11 00:00:00+00', 100);
+SELECT '7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, 'Proiect POO', 'ASSIGNMENT', 'Nota la proiect reprezinta nota finala trecuta in catalog', NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, '2026-06-11 00:00:00+00');
 
 INSERT INTO resources (id, title, type, description, folder_id, owner_id, created_at, updated_at)
-SELECT '993f711f-264a-5833-a09b-6abece8fff08'::uuid, 'Teme colective sd', 'ASSIGNMENT', 'Tema care trebuie trimisa doar de un membru al fiecarei grupe', '9f351148-216f-586b-864b-cc63ca82c8fe'::uuid, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
-INSERT INTO assignments (id, due_date, grade_weight) VALUES ('993f711f-264a-5833-a09b-6abece8fff08'::uuid, '2026-05-30 00:00:00+00', 30);
-
--- Insert Attachments
-INSERT INTO attachments (id, parent_resource_id, attachment_type) VALUES
-('c2fb173f-3658-571e-adee-4eda7c7a4b25'::uuid, '35a42333-1447-52fd-a99a-873257c56963'::uuid, 'MATERIAL_LINK'),
-('5dc84f22-850d-5534-822c-eab0ed50fed0'::uuid, '15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, 'MATERIAL_LINK'),
-('1ef03067-8c9f-5d10-bde1-e30a3b6ce80b'::uuid, 'a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, 'MATERIAL_LINK'),
-('a8103a34-9534-5ce1-b43d-37789270f6d9'::uuid, '1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, 'MATERIAL_LINK'),
-('6184d9e0-a9fc-5e8c-accf-0afc2425b8c3'::uuid, 'bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, 'MATERIAL_LINK'),
-('688a67ff-4be3-556d-b4cc-422b8d352686'::uuid, 'b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, 'MATERIAL_LINK'),
-('8981c6ad-10b7-5934-8745-ad03f1da349d'::uuid, '70629015-e8f4-5367-abb4-003a1934943f'::uuid, 'MATERIAL_LINK'),
-('5ed40275-de5a-5310-8da1-f5fd58e543e3'::uuid, '7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, 'MATERIAL_LINK'),
-('ac1851a5-18bc-50fe-b792-0ff2d7928cf9'::uuid, '7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, 'MATERIAL_LINK'),
-('12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, '8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, 'MATERIAL_LINK');
+SELECT '993f711f-264a-5833-a09b-6abece8fff08'::uuid, 'Teme colective sd', 'ASSIGNMENT', 'Tema care trebuie trimisa doar de un membru al fiecarei grupe', NULL, id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00' FROM users;
+INSERT INTO assignments (id, due_date) VALUES ('993f711f-264a-5833-a09b-6abece8fff08'::uuid, '2026-05-30 00:00:00+00');
