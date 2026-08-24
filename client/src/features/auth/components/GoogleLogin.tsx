@@ -9,17 +9,26 @@ import type { OAuth2Response } from "../types";
 type GoogleLoginProps = {
   onSuccess?: (message: OAuth2Response) => void;
   onFailure?: (message: OAuth2Response) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  disabled?: boolean;
 };
 
 export default function GoogleLogin({
   onSuccess,
   onFailure,
+  onOpen,
+  onClose,
+  disabled = false,
 }: GoogleLoginProps) {
   const [status, setStatus] = useState<
     "idle" | "success" | "failure" | "veryfying"
   >("idle");
 
   const handleMessageReceived = useCallback((message: OAuth2Response) => {
+    if (import.meta.env.DEV)
+      console.log("Received message from popup:", message);
+
     if (message.type === "OAUTH_SUCCESS") {
       setStatus("success");
       onSuccess?.(message);
@@ -29,10 +38,18 @@ export default function GoogleLogin({
     }
   }, []);
 
+  const handlePopupClose = useCallback(() => {
+    setStatus("idle");
+    onClose?.();
+
+    if (import.meta.env.DEV) console.log("Popup closed.");
+  }, [onClose]);
+
   const { isOpen, openPopup, closePopup } = usePopup({
     url: GOOGLE_LOGIN_URL,
     channelName: AUTH_CHANNEL_NAME.GOOGLE_OAUTH2,
     onMessageReceived: handleMessageReceived,
+    onPopupClose: handlePopupClose,
   });
 
   useEffect(() => {
@@ -49,9 +66,12 @@ export default function GoogleLogin({
 
   return (
     <Button
-      disabled={status !== "idle"}
+      disabled={status !== "idle" || disabled}
       onClick={() => {
-        if (status === "idle") openPopup();
+        if (status === "idle") {
+          openPopup();
+          onOpen?.();
+        }
       }}
       variant="outline"
       type="button"

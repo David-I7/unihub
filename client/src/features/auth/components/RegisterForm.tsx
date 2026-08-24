@@ -13,14 +13,30 @@ import { useNavigate } from "react-router";
 import GoogleLogin from "./GoogleLogin";
 import GithubLogin from "./GithubLogin";
 import { useRegisterForm } from "../hooks/useRegisterForm";
+import useProviderForm from "../hooks/useProviderForm";
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
-  const { errors, touched, getFieldProps, handleSubmit, isLoading, serverError, isInvalid } =
-    useRegisterForm();
+  const {
+    handleSuccess: handleProviderSuccess,
+    handleFailure,
+    handleOpen,
+    handleClose,
+    error: providerLoginError,
+    activeProvider,
+  } = useProviderForm();
+  const {
+    errors,
+    touched,
+    getFieldProps,
+    handleSubmit,
+    isLoading,
+    serverError,
+    isInvalid,
+  } = useRegisterForm();
 
   return (
     <form
@@ -100,10 +116,28 @@ export function RegisterForm({
 
         <FieldGroup>
           <Field>
-            <GoogleLogin />
+            <GoogleLogin
+              onOpen={() => handleOpen("GOOGLE")}
+              onSuccess={handleProviderSuccess}
+              onFailure={handleFailure}
+              onClose={handleClose}
+              disabled={activeProvider !== null}
+            />
+            {providerLoginError && providerLoginError.provider === "GOOGLE" && (
+              <FieldError errors={[{ message: providerLoginError.message }]} />
+            )}
           </Field>
           <Field>
-            <GithubLogin />
+            <GithubLogin
+              onOpen={() => handleOpen("GITHUB")}
+              onSuccess={handleProviderSuccess}
+              onFailure={handleFailure}
+              onClose={handleClose}
+              disabled={activeProvider !== null}
+            />
+            {providerLoginError && providerLoginError.provider === "GITHUB" && (
+              <FieldError errors={[{ message: providerLoginError.message }]} />
+            )}
           </Field>
           <FieldDescription className="text-center">
             Already have an account?{" "}

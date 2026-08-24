@@ -12,12 +12,16 @@ import com.unihub.app.mappers.ObjectErrorMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.services.JwtService;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserIdentityService;
 import com.unihub.app.services.authentication.UserService;
+import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.ProblemDetailUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +46,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +57,8 @@ import static org.mockito.Mockito.when;
         SecurityConfig.class,
         OAuth2AuthenticationFailureHandler.class,
         OAuth2AuthenticationSuccessHandler.class,
+        OAuth2ProviderUserInfoExtractor.class,
+        RoleService.class,
         JwtSessionManagementFilter.class,
         SessionService.class,
         UserService.class,
@@ -76,6 +83,15 @@ public class OAuth2AuthenticationSuccessHandlerTests {
 
     @MockitoBean
     private UserIdentityRepository userIdentityRepository;
+
+    @MockitoBean
+    private RoleRepository roleRepository;
+
+    @BeforeEach
+    public void setUp() {
+        when(roleRepository.findByName(anyString()))
+                .thenReturn(Optional.of(Role.builder().name("USER").build()));
+    }
 
     @Test
     @DisplayName("""
@@ -124,7 +140,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
 
         verify(userRepository).save(any(User.class));
         verify(userIdentityRepository).save(any(UserIdentity.class));
@@ -182,7 +198,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
         verify(sessionRepository).save(any(Session.class));
     }
 
@@ -235,7 +251,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
 
         verify(userIdentityRepository).save(any(UserIdentity.class));
         verify(sessionRepository).save(any(Session.class));
@@ -265,7 +281,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
 
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/failure");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/failure?provider=INVALID_PROVIDER");
     }
 
     @Test
@@ -305,7 +321,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
 
         try {
             successHandler.onAuthenticationSuccess(request, response, authToken);
-            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2/success");
+            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2/success?provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
             ReflectionTestUtils.setField(successHandler, "isDevelopment", true);

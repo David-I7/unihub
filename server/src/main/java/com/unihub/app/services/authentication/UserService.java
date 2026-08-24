@@ -1,9 +1,12 @@
 package com.unihub.app.services.authentication;
 
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.Random;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +29,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     private final UserIdentityService userIdentityService;
+
+    private final RoleService roleService;
 
     @Transactional
     public User register(User user) {
@@ -53,6 +58,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
+        user.setRole(roleService.getRole(RoleType.USER));
 
         User savedUser = userRepository.save(user);
 
@@ -128,6 +134,7 @@ public class UserService {
                 .password(null)
                 .createdAt(now)
                 .updatedAt(now)
+                .role(roleService.getRole(RoleType.USER))
                 .build();
 
         User savedUser = userRepository.save(newUser);

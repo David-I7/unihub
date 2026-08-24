@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class AppApplication {
 	}
 
 	@Bean
+	@Profile("cli")
 	public CommandLineRunner commandLineRunner(FolderRepository folderRepository, Test test, ExamRepository examRepository) {
 		return (args) ->{
 			test.query(folderRepository,examRepository);
@@ -27,6 +29,7 @@ public class AppApplication {
 	}
 
 	@Service
+	@Profile("cli")
 	class Test{
 		@Transactional
 		public void query(FolderRepository folderRepository, ExamRepository examRepository){

@@ -6,7 +6,6 @@ import {
   type SyntheticEvent,
 } from "react";
 import { type ZodType, ZodError } from "zod";
-import type { ApiError } from "@/api/types";
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
 export type FormTouched<T> = Partial<Record<keyof T, boolean>>;

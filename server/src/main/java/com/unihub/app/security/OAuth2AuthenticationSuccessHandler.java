@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Component
 @RequiredArgsConstructor
@@ -26,6 +27,8 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     private final SessionService sessionService;
 
     private final UserService userService;
+
+    private final OAuth2ProviderUserInfoExtractor providerUserInfoExtractor;
 
     @Value("${app.is-development}")
     private boolean isDevelopment;
@@ -47,10 +50,9 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
 
         try {
             AuthProvider provider = AuthProvider.valueOf(token.getAuthorizedClientRegistrationId().toUpperCase());
-            String providerUserId = principal.getAttribute("sub");
-            String email = principal.getAttribute("email");
+            var providerUserInfo = providerUserInfoExtractor.extract(provider, token);
 
-            var user = userService.registerOrLoginWithProvider(provider, providerUserId, email);
+            var user = userService.registerOrLoginWithProvider(provider, providerUserInfo.providerSubjectId(), providerUserInfo.email());
             var session = sessionService.createSession(user);
 
             response.setHeader("Set-Cookie",session.cookie().toString());

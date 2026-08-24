@@ -1,23 +1,27 @@
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import NonAuthenticatedRoute from "@/features/auth/components/NonAuthenticatedRoute";
-import { useLoginForm } from "@/features/auth/hooks/useLoginForm";
-import { useRegisterForm } from "@/features/auth/hooks/useRegisterForm";
 import {
   loginSchema,
   registerSchema,
   type LoginFormData,
   type RegisterFormData,
 } from "@/features/auth/schemas/authSchemas";
+import useAuthStore from "./store/useAuthStore";
+import { refresh } from "./api/refresh";
+import Logout from "./components/Logout";
+import type { RefreshResponse } from "./types";
 
 export {
+  refresh,
   RegisterForm,
+  Logout,
   LoginForm,
   NonAuthenticatedRoute,
-  useLoginForm,
-  useRegisterForm,
+  useAuthStore,
   loginSchema,
   registerSchema,
   type LoginFormData,
   type RegisterFormData,
+  type RefreshResponse,
 };
