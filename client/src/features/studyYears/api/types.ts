@@ -6,7 +6,7 @@ export const StudyYearNameMap = {
 };
 
 export type StudyYearNameDto =
-  (typeof StudyYearNameMap)[keyof typeof StudyYearNameMap];
+  | (typeof StudyYearNameMap)[keyof typeof StudyYearNameMap];
 
 export type StudyYearName = keyof typeof StudyYearNameMap;
 
@@ -14,5 +14,33 @@ export interface StudyYearSummary {
   id: number;
   studyYearName: StudyYearName;
   coursesCount: number;
+  archivedCoursesCount: number;
   creditsCount: number;
+}
+
+export interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  averageRating: number;
+  ratingsCount: number;
+}
+
+export type TeacherSummary = Teacher;
+
+export interface Course {
+  id: number;
+  name: string;
+  abbreviation: string;
+  semester: number;
+  creditPoints: number;
+  archived: boolean;
+  description: string;
+  teachers: Teacher[];
+}
+
+export interface StudyYearDetail {
+  id: number;
+  studyYearName: StudyYearName;
+  courses: Course[];
 }

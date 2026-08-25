@@ -1,0 +1,221 @@
+import { Calendar, Clock, AlertCircle, CalendarPlus, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { useCourseExams } from "../api/getCourseExams";
+
+interface CourseExamsTabProps {
+  communitySlug: string;
+  studyYearSlug: string;
+  courseId: number | string;
+}
+
+function getRelativeTime(date: Date): { text: string; isUrgent: boolean } {
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return { text: "Past Session", isUrgent: false };
+  if (diffDays === 0) return { text: "Today", isUrgent: true };
+  if (diffDays === 1) return { text: "Tomorrow", isUrgent: true };
+  if (diffDays <= 7) return { text: `In ${diffDays} days`, isUrgent: true };
+  if (diffDays <= 30) return { text: `In ${Math.ceil(diffDays / 7)} weeks`, isUrgent: false };
+  return { text: `In ${diffDays} days`, isUrgent: false };
+}
+
+export function CourseExamsTab({
+  communitySlug,
+  studyYearSlug,
+  courseId,
+}: CourseExamsTabProps) {
+  const {
+    data,
+    isLoading,
+    isError,
+    refetch,
+  } = useCourseExams(communitySlug, studyYearSlug, courseId, { size: 20 });
+
+  const exams = data?.content ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex gap-4 rounded-2xl border bg-card p-5">
+            <Skeleton className="size-16 rounded-xl shrink-0" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center space-y-3">
+        <p className="text-sm font-semibold text-destructive">
+          Failed to load scheduled exams.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (exams.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center space-y-3">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <Calendar className="size-6" />
+        </div>
+        <div className="space-y-1">
+          <h3 className="font-heading text-base font-semibold text-foreground">
+            No Exams Scheduled
+          </h3>
+          <p className="text-xs text-muted-foreground max-w-sm">
+            There are currently no exams or session evaluations announced for this course.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Schedule Header & Calendar Sync Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-rose-500/5 border-rose-500/20 px-4 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">
+            <AlertCircle className="size-4" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-foreground">
+              {exams.length} Scheduled Exam{exams.length > 1 ? "s" : ""}
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              Dates, session venues, and evaluation criteria for this course.
+            </p>
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 text-xs rounded-lg border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white cursor-pointer transition-colors"
+          onClick={() => {
+            // Future calendar integration hook
+          }}
+        >
+          <CalendarPlus className="size-3.5" />
+          <span>Sync All with Calendar</span>
+        </Button>
+      </div>
+
+      {/* Exam Scheduling Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {exams.map((exam) => {
+          const dateObj = new Date(exam.scheduledDate);
+          const monthStr = dateObj
+            .toLocaleDateString("en-US", { month: "short" })
+            .toUpperCase();
+          const dayNum = dateObj.getDate();
+          const weekdayStr = dateObj
+            .toLocaleDateString("en-US", { weekday: "short" })
+            .toUpperCase();
+          const timeStr = dateObj.toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+          const relative = getRelativeTime(dateObj);
+
+          return (
+            <div
+              key={exam.id}
+              className="flex flex-col justify-between rounded-2xl border bg-card p-5 shadow-xs hover:shadow-md hover:border-rose-500/40 transition-all space-y-4"
+            >
+              <div className="flex items-start gap-4">
+                {/* Visual Calendar Date Tile */}
+                <div className="flex flex-col items-center justify-center size-15 sm:size-16 rounded-xl border border-rose-500/30 bg-card overflow-hidden shrink-0 shadow-2xs">
+                  <div className="w-full bg-rose-500 py-0.5 text-center text-[10px] font-extrabold tracking-wider text-white">
+                    {monthStr}
+                  </div>
+                  <div className="flex-1 flex flex-col items-center justify-center">
+                    <span className="text-xl font-extrabold font-heading text-foreground leading-none">
+                      {dayNum}
+                    </span>
+                    <span className="text-[9px] font-bold text-muted-foreground">
+                      {weekdayStr}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content & Details */}
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant="secondary"
+                      className={`text-[10px] font-bold py-0.5 px-2 ${
+                        relative.isUrgent
+                          ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {relative.text}
+                    </Badge>
+
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                      <Clock className="size-3 text-rose-500" />
+                      {timeStr}
+                    </span>
+
+                    {exam.estimatedDurationMinutes && (
+                      <span className="text-[11px] text-muted-foreground font-medium">
+                        ({exam.estimatedDurationMinutes} mins)
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="font-heading text-base font-bold text-foreground leading-snug">
+                    {exam.title}
+                  </h4>
+
+                  {exam.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {exam.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Card Footer: Metadata & Calendar Link Action */}
+              <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs">
+                <span className="text-[11px] text-muted-foreground truncate max-w-[140px]">
+                  By {exam.owner.username}
+                </span>
+
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  className="gap-1.5 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+                  onClick={() => {
+                    // Future calendar integration hook
+                  }}
+                >
+                  <CalendarPlus className="size-3.5" />
+                  <span>Add to Calendar</span>
+                  <ExternalLink className="size-3 opacity-60" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
