@@ -1,5 +1,6 @@
-import { Users, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CommunityBreadcrumb } from "./CommunityBreadcrumb";
 
 interface CommunityHeaderProps {
   onCreateClick?: () => void;
@@ -7,22 +8,17 @@ interface CommunityHeaderProps {
 
 export function CommunityHeader({ onCreateClick }: CommunityHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-          <Users className="size-6 text-primary" /> University Communities
-        </h1>
-        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">
-          Search, join, and browse communities.
-        </p>
-      </div>
+    <div className="flex items-center justify-between gap-4">
+      <CommunityBreadcrumb />
 
       <Button
         size="sm"
         onClick={onCreateClick}
-        className="gap-1.5 self-start md:self-auto shadow-xs font-semibold"
+        className="gap-1.5 shadow-xs font-semibold shrink-0"
       >
-        <Plus className="size-4" /> Create New Community
+        <Plus className="size-4" />
+        <span className="hidden sm:inline">Create New Community</span>
+        <span className="sm:hidden">Create</span>
       </Button>
     </div>
   );

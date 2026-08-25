@@ -18,7 +18,10 @@ export default function AppLayout() {
 
         {/* Main Content Inset */}
         <SidebarInset className="flex min-h-screen flex-1 flex-col overflow-hidden">
-          <AppHeader />
+          {/* Mobile-Only Header */}
+          <div className="sm:hidden">
+            <AppHeader />
+          </div>
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
             <Outlet />
           </main>

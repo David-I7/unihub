@@ -4,6 +4,8 @@ import HandleOAuthFailurePage from "../pages/HandleOAuth2FailurePage";
 import HandleOAuthSuccessPage from "../pages/HandleOAuthSuccessPage";
 import HomePage from "../pages/HomePage";
 import CommunitiesPage from "../pages/CommunitiesPage";
+import CommunityDetailPage from "../pages/CommunityDetailPage";
+
 import {
   LoginForm,
   RegisterForm,
@@ -49,6 +51,10 @@ export const router = createBrowserRouter([
       {
         path: "/communities",
         element: <CommunitiesPage />,
+      },
+      {
+        path: "/communities/:communitySlug",
+        element: <CommunityDetailPage />,
       },
       {
         path: "/oauth2/failure",

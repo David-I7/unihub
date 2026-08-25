@@ -40,16 +40,14 @@ export default function CommunitiesPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
-      {/* Header */}
+      {/* Community Header with Breadcrumb & Create Button */}
       <CommunityHeader
         onCreateClick={() => {
-          // Future modal / proposal trigger
           alert("Community creation modal will be implemented here.");
         }}
       />
 
-      {/* Simple Search Bar */}
-
+      {/* Search Bar */}
       <CommunitySearch
         value={searchQuery}
         onChange={setSearchQuery}

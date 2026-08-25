@@ -36,6 +36,7 @@ CREATE TABLE TEACHER_RATING_VALUES(
 CREATE TABLE COMMUNITIES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null UNIQUE,
+    slug text not null UNIQUE,
     description text not null,
     members_count int not null default 0,
     owner_id UUID REFERENCES USERS(id),

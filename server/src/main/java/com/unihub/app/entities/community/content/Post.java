@@ -40,6 +40,9 @@ public class Post {
     @Column(nullable = false, name = "likes_count")
     private int likesCount;
 
+    @Column(nullable = false, name = "comments_count")
+    private int commentsCount;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;

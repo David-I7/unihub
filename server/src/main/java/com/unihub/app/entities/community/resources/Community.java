@@ -30,6 +30,9 @@ public class Community {
     @Column(nullable = false)
     private boolean verified;
 
+    @Column(nullable = false, unique = true)
+    private String slug;
+
     @Column(name = "description", nullable = false)
     private String description;
 

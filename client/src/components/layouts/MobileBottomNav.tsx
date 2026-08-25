@@ -1,27 +1,9 @@
-import { Home, GraduationCap, Users } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
+import { navItems } from "./nav";
 
 export function MobileBottomNav() {
   const location = useLocation();
-
-  const navItems = [
-    {
-      title: "Home",
-      url: "/",
-      icon: Home,
-    },
-    {
-      title: "Communities",
-      url: "/communities",
-      icon: Users,
-    },
-    {
-      title: "Teachers",
-      url: "/teachers",
-      icon: GraduationCap,
-    },
-  ];
 
   const isRouteActive = (url: string) => {
     if (url === "/") {

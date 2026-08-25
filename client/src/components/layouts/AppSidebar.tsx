@@ -1,4 +1,4 @@
-import { GraduationCap, Users, Home, CalendarDays } from "lucide-react";
+import { GraduationCap, PanelLeft } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -9,39 +9,19 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 import { NavUser } from "./NavUser";
 import { NavLoginPrompt } from "./NavLoginPrompt";
 import { useAuthStore } from "@/features/auth";
 import { Link, useLocation } from "react-router";
-
-// Core Academic navigation
-const coreNavItems = [
-  {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "Communities",
-    url: "/communities",
-    icon: Users,
-  },
-  {
-    title: "Teachers",
-    url: "/teachers",
-    icon: GraduationCap,
-  },
-  {
-    title: "Calendar",
-    url: "/calendar",
-    icon: CalendarDays,
-  },
-];
+import { navItems } from "./nav";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
+  const { state, toggleSidebar } = useSidebar();
 
   const isRouteActive = (url: string) => {
     if (url === "/") {
@@ -56,24 +36,45 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       className="border-r border-sidebar-border"
       {...props}
     >
-      {/* Brand Header */}
+      {/* Brand Header & Toggle */}
       <SidebarHeader className="min-h-14 justify-center p-3 w-full group-data-[collapsible=icon]:p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              render={<Link to="/" />}
-              tooltip="UniHub Home"
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <GraduationCap className="size-4" />
+            {state === "collapsed" ? (
+              <SidebarMenuButton
+                size="lg"
+                tooltip="Expand Sidebar"
+                onClick={toggleSidebar}
+                className="cursor-pointer"
+              >
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <GraduationCap className="size-4" />
+                </div>
+              </SidebarMenuButton>
+            ) : (
+              <div className="flex items-center justify-between gap-2 px-1">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2 font-heading text-left"
+                >
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <GraduationCap className="size-4" />
+                  </div>
+                  <span className="truncate font-semibold text-base">
+                    UniHub
+                  </span>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={toggleSidebar}
+                  className="text-muted-foreground hover:text-foreground cursor-pointer"
+                  title="Collapse Sidebar"
+                >
+                  <PanelLeft className="size-4" />
+                </Button>
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-semibold text-base font-heading">
-                  UniHub
-                </span>
-              </div>
-            </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -83,7 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {coreNavItems.map((item) => {
+              {navItems.map((item) => {
                 const active = isRouteActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>

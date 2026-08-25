@@ -12,3 +12,33 @@ export type UserProfile = {
 } & User;
 
 export type AuthProvider = "GOOGLE" | "GITHUB";
+
+export type CommunicationChannel = "COMMUNITY" | "COURSE_OFFERING" | "GENERAL";
+
+export type ResourceOwner = {
+  id: string;
+  username: string;
+};
+
+export interface Comment {
+  id: string;
+  postId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  owner: ResourceOwner;
+}
+
+export interface Post {
+  id: string;
+  title: string;
+  description: string;
+  channel: CommunicationChannel;
+  pinned: boolean;
+  likesCount: number;
+  commentsCount: number;
+  createdAt: string;
+  updatedAt: string;
+  owner: ResourceOwner;
+  comments: Comment[];
+}
