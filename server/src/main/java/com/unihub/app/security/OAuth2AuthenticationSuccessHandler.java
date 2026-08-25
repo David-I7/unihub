@@ -41,7 +41,6 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
-        var principal = token.getPrincipal();
         String origin = isDevelopment ? clientOrigin :
             ServletUriComponentsBuilder
                 .fromCurrentContextPath()

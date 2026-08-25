@@ -147,17 +147,17 @@ public class JwtSessionManagementFilterTests {
     @DisplayName("""
             Given: protected path request without Authorization header
             When: doFilter is invoked
-            Then: 401 Unauthorized problem detail is written and filter chain stops
+            Then: request is passed down the filter chain for anonymous access
             """)
-    public void testFilter_ProtectedPath_MissingAuthHeader_Writes401ProblemDetail() throws Exception {
+    public void testFilter_ProtectedPath_MissingAuthHeader_AllowsAnonymousAccess() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/courses");
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
 
         jwtSessionManagementFilter.doFilter(request, response, filterChain);
 
-        verify(problemDetailUtil).writeProblemDetail(eq(request), eq(response), eq(HttpStatus.UNAUTHORIZED), eq("Authorization header is missing or invalid."));
-        verify(filterChain, never()).doFilter(any(), any());
+        verify(filterChain).doFilter(request, response);
+        verify(problemDetailUtil, never()).writeProblemDetail(any(), any(), any(), any());
     }
 
     @Test

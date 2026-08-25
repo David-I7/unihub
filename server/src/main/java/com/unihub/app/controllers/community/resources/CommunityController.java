@@ -1,8 +1,11 @@
 package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.community.content.PostResponseDto;
+import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.mappers.PageMapper;
+import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,14 +24,30 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommunityController {
 
     private final CommunityService communityService;
-
-    private final PageMapper pageMapper;
+    private final CommunityPostService communityPostService;
 
     @GetMapping
     public ResponseEntity<PageDto<CommunityResponseDto>> getCommunities(
             @PageableDefault(page = 0, size = 10, sort = "memberCount", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        Page<CommunityResponseDto> page = communityService.findAll(pageable);
-        return ResponseEntity.ok(pageMapper.<CommunityResponseDto>toPageDto(page));
+        PageDto<CommunityResponseDto> page = communityService.findAll(pageable);
+        return ResponseEntity.ok(page);
+    }
+
+    @GetMapping("/{communitySlug}")
+    public ResponseEntity<CommunityDetailResponseDto> getCommunity(
+            @PathVariable String communitySlug
+    ) {
+        CommunityDetailResponseDto community = communityService.findBySlug(communitySlug);
+        return ResponseEntity.ok(community);
+    }
+
+    @GetMapping("/{communitySlug}/posts")
+    public ResponseEntity<PageDto<PostResponseDto>> getCommunityPosts(
+            @PathVariable String communitySlug,
+            @PageableDefault(page = 0, size = 10) Pageable pageable
+    ) {
+        PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, pageable);
+        return ResponseEntity.ok(posts);
     }
 }

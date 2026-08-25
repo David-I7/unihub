@@ -31,7 +31,7 @@ export function CommunityCard({
   };
 
   const handleCardClick = () => {
-    navigate(`/communities/${community.id}`);
+    navigate(`/communities/${community.slug}`);
   };
 
   return (
@@ -75,7 +75,7 @@ export function CommunityCard({
               : "bg-white text-neutral-900 hover:bg-white/90 font-bold text-xs shadow-xs"
           }
         >
-          {isJoined ? "Joined ✓" : "+ Join Community"}
+          {isJoined ? "Joined ✓" : "+ Join"}
         </Button>
       </div>
 
@@ -101,7 +101,7 @@ export function CommunityCard({
         <div className="pt-3 border-t border-border flex items-center justify-between text-xs mt-2">
           <span className="text-muted-foreground text-[11px] flex items-center gap-1">
             <User className="size-3" />
-            Owner:{" "}
+            Created by{" "}
             <strong className="text-foreground font-semibold">
               {community.owner.username}
             </strong>

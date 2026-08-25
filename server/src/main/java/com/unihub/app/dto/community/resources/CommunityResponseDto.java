@@ -15,6 +15,7 @@ public record CommunityResponseDto(
     OffsetDateTime createdAt,
     OwnerDto owner,
     String backgroundColor,
-    boolean verified
+    boolean verified,
+    String slug
 ) {
 }

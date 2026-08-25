@@ -1,40 +1,53 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
+import com.unihub.app.dto.community.resources.CommunityRequestDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
-import com.unihub.app.entities.authentication.User;
+import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
 import com.unihub.app.entities.community.resources.Community;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class CommunityMapper {
 
-    public CommunityResponseDto toDto(Community  community) {
-        return new CommunityResponseDto(
-                community.getId(),
-                community.getName(),
-                community.getDescription(),
-                community.getMemberCount(),
-                community.getCreatedAt(),
-                new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()),
-                community.getBackgroundColor(),
-                community.isVerified()
-        );
+    public CommunityResponseDto toDto(Community community) {
+        return CommunityResponseDto.builder()
+                .id(community.getId())
+                .name(community.getName())
+                .description(community.getDescription())
+                .memberCount(community.getMemberCount())
+                .createdAt(community.getCreatedAt())
+                .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()))
+                .backgroundColor(community.getBackgroundColor())
+                .verified(community.isVerified())
+                .slug(community.getSlug())
+                .build();
     }
 
-    public Community toCommunity(CommunityResponseDto communityResponseDto) {
+    public CommunityDetailResponseDto toDetailDto(Community community, List<StudyYearSummaryDto> studyYears) {
+        return CommunityDetailResponseDto.builder()
+                .id(community.getId())
+                .name(community.getName())
+                .description(community.getDescription())
+                .memberCount(community.getMemberCount())
+                .createdAt(community.getCreatedAt())
+                .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()))
+                .backgroundColor(community.getBackgroundColor())
+                .verified(community.isVerified())
+                .slug(community.getSlug())
+                .studyYears(studyYears)
+                .build();
+    }
+
+    public Community toCommunity(CommunityRequestDto communityRequestDto) {
         return Community.builder()
-                .id(communityResponseDto.id())
-                .name(communityResponseDto.name())
-                .description(communityResponseDto.description())
-                .memberCount(communityResponseDto.memberCount())
-                .createdAt(communityResponseDto.createdAt())
-                .backgroundColor(communityResponseDto.backgroundColor())
-                .verified(communityResponseDto.verified())
-                .owner(User.builder()
-                        .id(communityResponseDto.owner().id())
-                        .username(communityResponseDto.owner().username())
-                        .build())
+                .name(communityRequestDto.name())
+                .description(communityRequestDto.description())
+                .backgroundColor(communityRequestDto.backgroundColor())
+                .slug(communityRequestDto.slug())
                 .build();
     }
 }
