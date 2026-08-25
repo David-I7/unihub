@@ -2,13 +2,12 @@ package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.content.PostResponseDto;
-import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
-import com.unihub.app.mappers.PageMapper;
+import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
 import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityService;
+import com.unihub.app.services.community.resources.StudyYearService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -18,6 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/communities")
 @RequiredArgsConstructor
@@ -25,6 +26,7 @@ public class CommunityController {
 
     private final CommunityService communityService;
     private final CommunityPostService communityPostService;
+    private final StudyYearService studyYearService;
 
     @GetMapping
     public ResponseEntity<PageDto<CommunityResponseDto>> getCommunities(
@@ -34,11 +36,19 @@ public class CommunityController {
         return ResponseEntity.ok(page);
     }
 
-    @GetMapping("/{communitySlug}")
-    public ResponseEntity<CommunityDetailResponseDto> getCommunity(
+    @GetMapping("/{communitySlug}/study-years")
+    public ResponseEntity<List<StudyYearSummaryDto>> getCommunityStudyYears(
             @PathVariable String communitySlug
     ) {
-        CommunityDetailResponseDto community = communityService.findBySlug(communitySlug);
+        List<StudyYearSummaryDto> studyYears = studyYearService.getStudyYearSummary(communitySlug);
+        return ResponseEntity.ok(studyYears);
+    }
+
+    @GetMapping("/{communitySlug}")
+    public ResponseEntity<CommunityResponseDto> getCommunity(
+            @PathVariable String communitySlug
+    ) {
+        CommunityResponseDto community = communityService.findBySlug(communitySlug);
         return ResponseEntity.ok(community);
     }
 

@@ -45,12 +45,9 @@ public class Community {
     @OneToMany(mappedBy = "community")
     private List<StudyYear> studyYears;
 
-    @OneToOne
+    @OneToOne()
     @JoinColumn(name = "owner_id")
     private User owner;
-
-    @OneToMany(mappedBy = "community")
-    private List<Course> courses;
 
     @OneToMany(mappedBy = "community")
     private List<CommunityMember> communityMembers;

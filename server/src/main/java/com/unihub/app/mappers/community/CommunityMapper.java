@@ -1,14 +1,10 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
-import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
 import com.unihub.app.dto.community.resources.CommunityRequestDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
-import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
 import com.unihub.app.entities.community.resources.Community;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class CommunityMapper {
@@ -24,21 +20,6 @@ public class CommunityMapper {
                 .backgroundColor(community.getBackgroundColor())
                 .verified(community.isVerified())
                 .slug(community.getSlug())
-                .build();
-    }
-
-    public CommunityDetailResponseDto toDetailDto(Community community, List<StudyYearSummaryDto> studyYears) {
-        return CommunityDetailResponseDto.builder()
-                .id(community.getId())
-                .name(community.getName())
-                .description(community.getDescription())
-                .memberCount(community.getMemberCount())
-                .createdAt(community.getCreatedAt())
-                .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()))
-                .backgroundColor(community.getBackgroundColor())
-                .verified(community.isVerified())
-                .slug(community.getSlug())
-                .studyYears(studyYears)
                 .build();
     }
 

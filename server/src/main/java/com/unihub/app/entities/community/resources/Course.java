@@ -1,17 +1,26 @@
 package com.unihub.app.entities.community.resources;
 
+import com.unihub.app.entities.community.content.CoursePost;
+import com.unihub.app.entities.community.content.Folder;
+import com.unihub.app.entities.community.content.Resource;
+import com.unihub.app.entities.globalResources.Teacher;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
-@Table(name = "courses",
+@Table(
+        name = "courses",
         uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"community_id","name"})
-})
+                @UniqueConstraint(columnNames = {"study_year_id", "name"})
+        },
+        indexes = {
+                @Index(name = "idx_courses_study_year_id", columnList = "study_year_id"),
+                @Index(name = "idx_courses_study_year_archived", columnList = "study_year_id, archived")
+        }
+)
 @Builder
 @Getter
 @Setter
@@ -20,24 +29,46 @@ import java.util.UUID;
 public class Course {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private int id;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(name="abbreviation", nullable = false, length = 4)
+    @Column(nullable = false)
     private String abbreviation;
 
-    @ManyToOne
-    @JoinColumn(name = "community_id")
-    private Community community;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "study_year_id", nullable = false)
+    private StudyYear studyYear;
+
+    @Column(nullable = false)
+    private int semester;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean archived = false;
+
+    @Column(name = "credit_points", nullable = false)
+    private int creditPoints ;
+
+    @ManyToMany(mappedBy = "coursesTaught")
+    private List<Teacher> teachers;
+
+    @OneToMany(mappedBy = "course")
+    private List<CoursePost> posts;
+
+    @OneToMany(mappedBy = "course")
+    private List<Folder> folders;
+
+    @OneToMany(mappedBy = "course")
+    private List<Resource> resources;
+
+    @Column
+    private String description;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
-
-    @OneToMany(mappedBy = "course")
-    private List<CourseOffering> courseOfferings;
 
     @PrePersist
     private void prePersist() {

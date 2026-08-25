@@ -33,8 +33,8 @@ public class AppApplication {
 	class Test {
 		@Transactional
 		public void query(FolderRepository folderRepository, ExamRepository examRepository) {
-			int courseOfferingId = 1;
-			List<Folder> rootFolders = folderRepository.findRootFoldersByCourseOfferingId(courseOfferingId);
+			int courseId = 1;
+			List<Folder> rootFolders = folderRepository.findRootFoldersByCourseId(courseId);
 
 			rootFolders.forEach(folder -> {
 				System.out.println("Folder: " + folder.getName());

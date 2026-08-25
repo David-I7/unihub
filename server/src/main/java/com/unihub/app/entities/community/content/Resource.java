@@ -1,6 +1,7 @@
 package com.unihub.app.entities.community.content;
 
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -10,7 +11,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "resources")
+@Table(
+        name = "resources",
+        indexes = {
+                @Index(name = "idx_resources_course_type_created_at", columnList = "course_id, type, created_at DESC"),
+                @Index(name = "idx_resources_folder_type", columnList = "course_id, folder_id, type")
+        }
+)
 @Builder
 @Getter
 @Setter
@@ -27,6 +34,10 @@ public class Resource {
 
     @Column
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id")

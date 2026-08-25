@@ -8,6 +8,7 @@ public record StudyYearSummaryDto(
         int id,
         StudyYearName studyYearName,
         long coursesCount,
+        long archivedCoursesCount,
         long creditsCount
 ) {
 }

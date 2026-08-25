@@ -8,7 +8,6 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.CommentResponseDto;
 import com.unihub.app.dto.community.content.PostResponseDto;
-import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;
@@ -32,6 +31,7 @@ import com.unihub.app.services.authentication.UserService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityService;
+import com.unihub.app.services.community.resources.StudyYearService;
 import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -88,6 +88,9 @@ public class CommunityControllerTests {
 
     @MockitoBean
     private CommunityPostService communityPostService;
+
+    @MockitoBean
+    private StudyYearService studyYearService;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -168,22 +171,16 @@ public class CommunityControllerTests {
 
     @Test
     @DisplayName("""
-            Given: community exists with study years, courses, and credits
+            Given: community exists
             When: GET /api/v1/communities/{communitySlug} is called
-            Then: 200 OK is returned with community details, study years, course counts, and credit counts
+            Then: 200 OK is returned with community response DTO
             """)
     public void testGetCommunityBySlug_Success() throws Exception {
         UUID communityId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        List<StudyYearSummaryDto> studyYears = List.of(
-                new StudyYearSummaryDto(1, StudyYearName.YEAR_1, 6, 30),
-                new StudyYearSummaryDto(2, StudyYearName.YEAR_2, 6, 30),
-                new StudyYearSummaryDto(3, StudyYearName.YEAR_3, 5, 30)
-        );
-
-        CommunityDetailResponseDto detailDto = CommunityDetailResponseDto.builder()
+        CommunityResponseDto responseDto = CommunityResponseDto.builder()
                 .id(communityId)
                 .name("FMI - Informatica ID")
                 .slug("fmi-info-id")
@@ -193,10 +190,9 @@ public class CommunityControllerTests {
                 .backgroundColor("#2563eb")
                 .createdAt(createdAt)
                 .owner(new OwnerDto(ownerId, "david"))
-                .studyYears(studyYears)
                 .build();
 
-        when(communityService.findBySlug("fmi-info-id")).thenReturn(detailDto);
+        when(communityService.findBySlug("fmi-info-id")).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -210,21 +206,7 @@ public class CommunityControllerTests {
                 .andExpect(jsonPath("$.verified").value(true))
                 .andExpect(jsonPath("$.createdAt").exists())
                 .andExpect(jsonPath("$.owner.id").value(ownerId.toString()))
-                .andExpect(jsonPath("$.owner.username").value("david"))
-                .andExpect(jsonPath("$.studyYears").isArray())
-                .andExpect(jsonPath("$.studyYears.length()").value(3))
-                .andExpect(jsonPath("$.studyYears[0].id").value(1))
-                .andExpect(jsonPath("$.studyYears[0].studyYearName").value("Year 1"))
-                .andExpect(jsonPath("$.studyYears[0].coursesCount").value(6))
-                .andExpect(jsonPath("$.studyYears[0].creditsCount").value(30))
-                .andExpect(jsonPath("$.studyYears[1].id").value(2))
-                .andExpect(jsonPath("$.studyYears[1].studyYearName").value("Year 2"))
-                .andExpect(jsonPath("$.studyYears[1].coursesCount").value(6))
-                .andExpect(jsonPath("$.studyYears[1].creditsCount").value(30))
-                .andExpect(jsonPath("$.studyYears[2].id").value(3))
-                .andExpect(jsonPath("$.studyYears[2].studyYearName").value("Year 3"))
-                .andExpect(jsonPath("$.studyYears[2].coursesCount").value(5))
-                .andExpect(jsonPath("$.studyYears[2].creditsCount").value(30));
+                .andExpect(jsonPath("$.owner.username").value("david"));
     }
 
     @Test
@@ -241,6 +223,47 @@ public class CommunityControllerTests {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Community not found"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/communities/{communitySlug}/study-years
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: community exists with study years
+            When: GET /api/v1/communities/{communitySlug}/study-years is called
+            Then: 200 OK is returned with study year summaries
+            """)
+    public void testGetCommunityStudyYears_Success() throws Exception {
+        List<StudyYearSummaryDto> studyYears = List.of(
+                new StudyYearSummaryDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearSummaryDto(2, StudyYearName.YEAR_2, 6, 0, 30),
+                new StudyYearSummaryDto(3, StudyYearName.YEAR_3, 5, 0, 30)
+        );
+
+        when(studyYearService.getStudyYearSummary("fmi-info-id")).thenReturn(studyYears);
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/study-years")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].studyYearName").value("Year 1"))
+                .andExpect(jsonPath("$[0].coursesCount").value(6))
+                .andExpect(jsonPath("$[0].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$[0].creditsCount").value(30))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].studyYearName").value("Year 2"))
+                .andExpect(jsonPath("$[1].coursesCount").value(6))
+                .andExpect(jsonPath("$[1].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$[1].creditsCount").value(30))
+                .andExpect(jsonPath("$[2].id").value(3))
+                .andExpect(jsonPath("$[2].studyYearName").value("Year 3"))
+                .andExpect(jsonPath("$[2].coursesCount").value(5))
+                .andExpect(jsonPath("$[2].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$[2].creditsCount").value(30));
     }
 
     // =========================================================================

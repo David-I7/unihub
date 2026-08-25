@@ -31,12 +31,12 @@ public class StudyYear {
     @Column(name = "study_year_name", nullable = false)
     private StudyYearName studyYearName;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id", nullable = false)
     private Community community;
 
     @OneToMany(mappedBy = "studyYear")
-    private List<CourseOffering> courseOfferings;
+    private List<Course> courses;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;

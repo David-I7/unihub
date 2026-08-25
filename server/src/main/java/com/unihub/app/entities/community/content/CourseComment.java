@@ -6,13 +6,13 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "course_offering_comment")
+@Table(name = "course_comment")
 @Builder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CourseOfferingComment {
+public class CourseComment {
 
     @Id
     private UUID id;
@@ -23,7 +23,7 @@ public class CourseOfferingComment {
     private Comment comment;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "course_offering_post_id", nullable = false)
-    private CourseOfferingPost courseOfferingPost;
+    @JoinColumn(name = "course_post_id", nullable = false)
+    private CoursePost coursePost;
 
 }

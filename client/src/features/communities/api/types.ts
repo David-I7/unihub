@@ -25,10 +25,6 @@ export type CreateCommunityDto = {
   slug: string;
 };
 
-export interface CommunityDetail extends Community {
-  studyYears: StudyYearSummary[];
-}
-
 export type {
   StudyYearSummary,
   CommunicationChannel,

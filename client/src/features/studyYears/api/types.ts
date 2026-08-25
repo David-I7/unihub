@@ -1,8 +1,8 @@
 export const StudyYearNameMap = {
-  "Year 1": "YEAR_1" as const,
-  "Year 2": "YEAR_2" as const,
-  "Year 3": "YEAR_3" as const,
-  "Year 4": "YEAR_4" as const,
+  "Year 1": "year-1" as const,
+  "Year 2": "year-2" as const,
+  "Year 3": "year-3" as const,
+  "Year 4": "year-4" as const,
 };
 
 export type StudyYearNameDto =

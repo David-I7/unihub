@@ -1,6 +1,6 @@
 package com.unihub.app.entities.globalResources;
 
-import com.unihub.app.entities.community.resources.CourseOffering;
+import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,11 +37,11 @@ public class Teacher {
 
     @ManyToMany
     @JoinTable(
-            name = "course_offering_teachers",
+            name = "course_teachers",
             joinColumns = @JoinColumn(name = "teacher_id"),
-            inverseJoinColumns = @JoinColumn(name = "course_offering_id")
+            inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    private List<CourseOffering> coursesTaught;
+    private List<Course> coursesTaught;
 
     @Override
     public String toString() {
