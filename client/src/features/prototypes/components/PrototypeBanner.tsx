@@ -7,7 +7,6 @@ import {
   Home,
   Users,
   Calendar,
-  BookOpen,
   FileText,
   X,
   Lightbulb,
@@ -84,6 +83,26 @@ const UX_NOTES: Record<string, UxNote> = {
     plainEnglishArgument:
       "Providing a rich preview with one-click actions (Open Repo, Copy Link, Bookmark, Mark as Done) streamlines study sessions and prevents messy local download folders.",
   },
+  calendar: {
+    page: "Community Academic Calendar (Mina-Scheduler Layout)",
+    dbEntities: ["EXAMS", "LECTURES", "ASSIGNMENTS", "COURSE_OFFERINGS", "COMMUNITIES"],
+    currentFriction:
+      "Deadlines and exam dates are scattered across disparate course folders, chat channels, and university portals without direct links back to the course offerings.",
+    uxInnovation:
+      "Integrated Month-View Academic Calendar inspired by Mina-Scheduler with color-coded event pills (Exams, Assignments, Lectures), weight tracking, and one-click course navigation.",
+    plainEnglishArgument:
+      "A consolidated monthly view with quick event registration and direct links to course offerings allows students to plan their semester and study sprints efficiently.",
+  },
+  teachers: {
+    page: "Faculty Directory & 5-Metric Professor Intelligence",
+    dbEntities: ["TEACHERS", "TEACHER_RATINGS", "RATING_METRICS", "COURSE_OFFERINGS", "COMMUNITIES"],
+    currentFriction:
+      "Students rely on fragmented unofficial forums to find out how professors grade, what courses they teach, and which communities they belong to.",
+    uxInnovation:
+      "Structured Professor Directory filtered by community ID with 5-metric statistical indexes, verified student reviews, passing tips, and direct course offering links.",
+    plainEnglishArgument:
+      "Surfacing transparent 5-metric professor stats and verified advice directly inside the community helps students prepare effectively for each course and teacher style.",
+  },
 };
 
 export function PrototypeBanner() {
@@ -94,7 +113,11 @@ export function PrototypeBanner() {
   // Determine current page key for UX notes
   const pathname = location.pathname;
   let activeKey = "home";
-  if (pathname.includes("/course/")) {
+  if (pathname.includes("/calendar")) {
+    activeKey = "calendar";
+  } else if (pathname.includes("/teachers")) {
+    activeKey = "teachers";
+  } else if (pathname.includes("/course/")) {
     activeKey = "course";
   } else if (pathname.includes("/year/")) {
     activeKey = "study_year";
@@ -145,26 +168,24 @@ export function PrototypeBanner() {
 
               <button
                 type="button"
-                onClick={() => navigate("/proto/communities/fmi-info-id")}
+                onClick={() => navigate("/proto/calendar")}
                 className={`flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-background/80 transition-colors ${
-                  pathname === "/proto/communities/fmi-info-id" || pathname === "/communities/fmi-info-id" ? "font-bold text-foreground bg-background/60 shadow-xs" : ""
+                  pathname.includes("/calendar") ? "font-bold text-foreground bg-background/60 shadow-xs" : ""
                 }`}
               >
-                <BookOpen className="size-3" /> FMI Info ID
+                <Calendar className="size-3" /> Calendar
               </button>
 
               <ChevronRight className="size-3 text-muted-foreground/50" />
 
               <button
                 type="button"
-                onClick={() => navigate("/proto/communities/fmi-info-id/year/1")}
+                onClick={() => navigate("/proto/teachers")}
                 className={`flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-background/80 transition-colors ${
-                  pathname.includes("/year/1") && !pathname.includes("/course/")
-                    ? "font-bold text-foreground bg-background/60 shadow-xs"
-                    : ""
+                  pathname.includes("/teachers") ? "font-bold text-foreground bg-background/60 shadow-xs" : ""
                 }`}
               >
-                <Calendar className="size-3" /> Year 1
+                <Users className="size-3" /> Teachers
               </button>
 
               <ChevronRight className="size-3 text-muted-foreground/50" />
@@ -180,6 +201,7 @@ export function PrototypeBanner() {
               </button>
             </div>
           </div>
+
 
           {/* Right: UX Innovation Argument Drawer Toggle */}
           <div className="flex items-center gap-2">

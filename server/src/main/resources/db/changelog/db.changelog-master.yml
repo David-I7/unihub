@@ -7,5 +7,3 @@ databaseChangeLog:
       file: db/changelog/003-insert-initial-auth-data.sql
   - include:
       file: db/changelog/004-insert-initial-resource-data.sql
-  - include:
-      file: db/changelog/005-add-post-comments-count-and-indexes.sql

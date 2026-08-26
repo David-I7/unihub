@@ -7,7 +7,12 @@ import lombok.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "community_posts")
+@Table(
+        name = "community_posts",
+        indexes = {
+                @Index(name = "idx_community_posts_community_id", columnList = "community_id")
+        }
+)
 @Builder
 @Getter
 @Setter

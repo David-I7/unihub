@@ -162,6 +162,50 @@ export function computeGradient(
 }
 
 /**
+ * Computes a theme-aware gradient that transitions smoothly:
+ * - On Dark theme: from the community color down to a deep dark shade.
+ * - On Light theme: maintains the rich community color through the header and starts the transition late towards the bottom.
+ */
+export function computeThemeGradient(
+  startHex: string,
+  isDark: boolean,
+  angle: number | string = 180,
+): string {
+  const valid = isValidHex(startHex);
+  const safeStartHex = valid ? normalizeHex(startHex) : "#3B82F6";
+  const hsl = hexToHsl(safeStartHex);
+  const angleStr = typeof angle === "number" ? `${angle}deg` : angle;
+
+  if (isDark) {
+    // Dark theme: vibrant start -> deep dark tone at bottom
+    const midHex = hslToHex(
+      (hsl.h + 6) % 360,
+      Math.min(hsl.s + 5, 80),
+      22,
+    );
+    const endHex = hslToHex(
+      (hsl.h + 10) % 360,
+      Math.min(hsl.s + 10, 60),
+      9,
+    );
+    return `linear-gradient(${angleStr}, ${safeStartHex} 0%, ${safeStartHex} 40%, ${midHex} 70%, ${endHex} 100%)`;
+  } else {
+    // Light theme: hold vibrant color through top 65%, then transition late towards bottom
+    const midHex = hslToHex(
+      hsl.h,
+      Math.min(hsl.s, 65),
+      74,
+    );
+    const endHex = hslToHex(
+      hsl.h,
+      Math.min(hsl.s, 35),
+      96,
+    );
+    return `linear-gradient(${angleStr}, ${safeStartHex} 0%, ${safeStartHex} 65%, ${midHex} 86%, ${endHex} 100%)`;
+  }
+}
+
+/**
  * Computes detailed gradient information (individual stop colors + CSS string).
  */
 export function computeGradientDetails(

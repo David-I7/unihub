@@ -2,7 +2,7 @@ import {
   Home,
   Users,
   GraduationCap,
-  CalendarDays,
+  Calendar,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +31,6 @@ export const navItems: NavItem[] = [
   {
     title: "Calendar",
     url: "/calendar",
-    icon: CalendarDays,
+    icon: Calendar,
   },
 ];

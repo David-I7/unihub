@@ -8,7 +8,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "comments")
+@Table(
+        name = "comments",
+        indexes = {
+                @Index(name = "idx_comments_post_id_created_at", columnList = "post_id, created_at ASC")
+        }
+)
 @Builder
 @Getter
 @Setter

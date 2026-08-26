@@ -1,6 +1,7 @@
 package com.unihub.app.entities.community.content;
 
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -9,14 +10,22 @@ import org.hibernate.type.SqlTypes;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import lombok.experimental.SuperBuilder;
+
 @Entity
-@Table(name = "resources")
-@Builder
+@Table(
+        name = "resources",
+        indexes = {
+                @Index(name = "idx_resources_course_folder_created_at", columnList = "course_id, folder_id, created_at DESC")
+        }
+)
+@Inheritance(strategy = InheritanceType.JOINED)
+@SuperBuilder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Resource {
+public abstract class Resource {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -27,6 +36,10 @@ public class Resource {
 
     @Column
     private String description;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id")

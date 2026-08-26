@@ -1,7 +1,7 @@
 package com.unihub.app.entities.community.content;
 
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.resources.CourseOffering;
+import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +10,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "folders")
+@Table(
+        name = "folders",
+        indexes = {
+                @Index(name = "idx_folders_course_parent_name", columnList = "course_id, parent_folder_id, name ASC")
+        }
+)
 @Builder
 @Getter
 @Setter
@@ -26,11 +31,10 @@ public class Folder {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_offering_id")
-    private CourseOffering courseOffering;
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
-    @OneToMany
-    @JoinColumn(name = "parent_folder_id")
+    @OneToMany(mappedBy = "parentFolder")
     private List<Folder> subfolders;
 
     @ManyToOne(fetch = FetchType.LAZY)

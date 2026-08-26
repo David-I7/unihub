@@ -1,6 +1,7 @@
 export * from "./api/getCommunities";
 export * from "./api/getCommunityDetail";
 export * from "./api/getCommunityPosts";
+export * from "./api/getCommunityStudyYear";
 export * from "./api/types";
 export * from "./components/CommunityHeader";
 export * from "./components/CommunityBreadcrumb";

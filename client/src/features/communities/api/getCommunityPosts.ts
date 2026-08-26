@@ -3,8 +3,6 @@ import type { PaginatedResponse } from "@/api/types";
 import type { Post } from "./types";
 import {
   useInfiniteQuery,
-  useQuery,
-  keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
@@ -33,18 +31,6 @@ export const communityPostKeys = {
   infinite: (slug: string, params: { size?: number }) =>
     [...communityPostKeys.all, slug, "infinite", params] as const,
 };
-
-export function useCommunityPosts(
-  communitySlug: string,
-  params: CommunityPostsQueryParams = {},
-) {
-  return useQuery({
-    queryKey: communityPostKeys.list(communitySlug, params),
-    queryFn: () => getCommunityPosts(communitySlug, params),
-    placeholderData: keepPreviousData,
-    enabled: communitySlug.length > 0,
-  });
-}
 
 export function useInfiniteCommunityPosts(
   communitySlug: string,

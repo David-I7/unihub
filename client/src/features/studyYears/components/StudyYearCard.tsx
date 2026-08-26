@@ -1,15 +1,18 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Archive } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import type { StudyYearSummary } from "../api/types";
+import { type StudyYear } from "../api/types";
 
 interface StudyYearCardProps {
-  studyYear: StudyYearSummary;
+  studyYear: StudyYear;
   communitySlug?: string;
   onClick?: () => void;
 }
 
-export function StudyYearCard({ studyYear, onClick }: StudyYearCardProps) {
-  const yearNumber = studyYear.studyYearName.replace(/\D/g, "") || "1";
+export function StudyYearCard({
+  studyYear,
+  onClick,
+}: StudyYearCardProps) {
+  const yearNumber = studyYear.studyYearName.split(" ")[1]!;
 
   return (
     <Card
@@ -35,11 +38,11 @@ export function StudyYearCard({ studyYear, onClick }: StudyYearCardProps) {
         </div>
       </div>
 
-      {/* Metrics Row (Each metric displayed exactly once) */}
+      {/* Metrics Row */}
       <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-border">
         <div className="rounded-xl bg-muted/40 px-3 py-2 text-center">
           <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Courses
+            Active Courses
           </span>
           <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1.5 mt-0.5">
             {studyYear.coursesCount}
@@ -55,6 +58,13 @@ export function StudyYearCard({ studyYear, onClick }: StudyYearCardProps) {
           </span>
         </div>
       </div>
+
+      {studyYear.archivedCoursesCount > 0 && (
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+          <Archive className="size-3.5 text-amber-500" />
+          <span>{studyYear.archivedCoursesCount} archived courses</span>
+        </div>
+      )}
     </Card>
   );
 }

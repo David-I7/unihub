@@ -1,16 +1,15 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.content.CommentResponseDto;
-import com.unihub.app.dto.community.content.PostResponseDto;
+import com.unihub.app.dto.community.content.response.CommentResponseDto;
+import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.community.CommentMapper;
-import com.unihub.app.mappers.community.PostMapper;
 import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.CommunityPostRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
@@ -50,10 +49,7 @@ public class CommunityPostServiceTests {
     private CommentRepository commentRepository;
 
     @Spy
-    private PostMapper postMapper = new PostMapper();
-
-    @Spy
-    private CommentMapper commentMapper = new CommentMapper();
+    private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();

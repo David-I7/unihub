@@ -1,11 +1,12 @@
 import { Calendar } from "lucide-react";
 import { StudyYearCard } from "./StudyYearCard";
-import type { StudyYearSummary } from "../api/types";
+import { StudyYearNameMap, type StudyYear } from "../api/types";
+import { useNavigate } from "react-router";
 
 interface StudyYearsGridProps {
-  studyYears: StudyYearSummary[];
-  communitySlug?: string;
-  onStudyYearSelect?: (studyYear: StudyYearSummary) => void;
+  studyYears: StudyYear[];
+  communitySlug: string;
+  onStudyYearSelect?: (studyYear: StudyYear) => void;
   emptyTitle?: string;
   emptyDescription?: string;
 }
@@ -17,6 +18,8 @@ export function StudyYearsGrid({
   emptyTitle = "No Study Years Available",
   emptyDescription = "There are no study years registered here yet.",
 }: StudyYearsGridProps) {
+  const navigate = useNavigate();
+
   if (!studyYears || studyYears.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center space-y-3">
@@ -37,14 +40,24 @@ export function StudyYearsGrid({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {studyYears.map((year) => (
-        <StudyYearCard
-          key={year.id}
-          studyYear={year}
-          communitySlug={communitySlug}
-          onClick={() => onStudyYearSelect?.(year)}
-        />
-      ))}
+      {studyYears.map((year) => {
+        const yearSlug = StudyYearNameMap[year.studyYearName];
+        const destination = `/communities/${communitySlug}/study-years/${yearSlug}`;
+        return (
+          <StudyYearCard
+            key={year.id}
+            studyYear={year}
+            communitySlug={communitySlug}
+            onClick={() => {
+              if (onStudyYearSelect) {
+                onStudyYearSelect(year);
+              } else {
+                navigate(destination);
+              }
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

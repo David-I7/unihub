@@ -6,11 +6,11 @@ import com.unihub.app.config.SessionProperties;
 import com.unihub.app.controllers.community.resources.CommunityController;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.OwnerDto;
-import com.unihub.app.dto.community.content.CommentResponseDto;
-import com.unihub.app.dto.community.content.PostResponseDto;
-import com.unihub.app.dto.community.resources.CommunityDetailResponseDto;
-import com.unihub.app.dto.community.resources.CommunityResponseDto;
-import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
+import com.unihub.app.dto.community.content.response.CommentResponseDto;
+import com.unihub.app.dto.community.content.response.PostResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.exceptions.GlobalExceptionHandler;
@@ -20,7 +20,9 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtSessionManagementFilter;
 import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
 import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
@@ -36,9 +38,8 @@ import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,26 +57,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CommunityController.class)
-@EnableConfigurationProperties(SessionProperties.class)
-@Import({
-        AppConfig.class,
-        SecurityConfig.class,
-        OAuth2AuthenticationFailureHandler.class,
-        OAuth2AuthenticationSuccessHandler.class,
-        OAuth2ProviderUserInfoExtractor.class,
-        RoleService.class,
-        JwtSessionManagementFilter.class,
-        SessionService.class,
-        UserService.class,
-        JwtService.class,
-        UserMapper.class,
-        UserIdentityService.class,
-        PageMapper.class,
-        ObjectErrorMapper.class,
-        ProblemDetailUtil.class,
-        GlobalExceptionHandler.class
-})
+@SpringBootTest
+@AutoConfigureMockMvc
 public class CommunityControllerTests {
 
     private static final String BASE_URL = "/api/v1/communities";
@@ -100,6 +83,12 @@ public class CommunityControllerTests {
 
     @MockitoBean
     private RoleRepository roleRepository;
+
+    @MockitoBean
+    private PermissionRepository permissionRepository;
+
+    @MockitoBean
+    private CommunityMemberRepository communityMemberRepository;
 
     // =========================================================================
     // GET /api/v1/communities
@@ -168,22 +157,16 @@ public class CommunityControllerTests {
 
     @Test
     @DisplayName("""
-            Given: community exists with study years, courses, and credits
+            Given: community exists
             When: GET /api/v1/communities/{communitySlug} is called
-            Then: 200 OK is returned with community details, study years, course counts, and credit counts
+            Then: 200 OK is returned with community response DTO
             """)
     public void testGetCommunityBySlug_Success() throws Exception {
         UUID communityId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        List<StudyYearSummaryDto> studyYears = List.of(
-                new StudyYearSummaryDto(1, StudyYearName.YEAR_1, 6, 30),
-                new StudyYearSummaryDto(2, StudyYearName.YEAR_2, 6, 30),
-                new StudyYearSummaryDto(3, StudyYearName.YEAR_3, 5, 30)
-        );
-
-        CommunityDetailResponseDto detailDto = CommunityDetailResponseDto.builder()
+        CommunityResponseDto responseDto = CommunityResponseDto.builder()
                 .id(communityId)
                 .name("FMI - Informatica ID")
                 .slug("fmi-info-id")
@@ -193,10 +176,9 @@ public class CommunityControllerTests {
                 .backgroundColor("#2563eb")
                 .createdAt(createdAt)
                 .owner(new OwnerDto(ownerId, "david"))
-                .studyYears(studyYears)
                 .build();
 
-        when(communityService.findBySlug("fmi-info-id")).thenReturn(detailDto);
+        when(communityService.findBySlug("fmi-info-id")).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -210,21 +192,7 @@ public class CommunityControllerTests {
                 .andExpect(jsonPath("$.verified").value(true))
                 .andExpect(jsonPath("$.createdAt").exists())
                 .andExpect(jsonPath("$.owner.id").value(ownerId.toString()))
-                .andExpect(jsonPath("$.owner.username").value("david"))
-                .andExpect(jsonPath("$.studyYears").isArray())
-                .andExpect(jsonPath("$.studyYears.length()").value(3))
-                .andExpect(jsonPath("$.studyYears[0].id").value(1))
-                .andExpect(jsonPath("$.studyYears[0].studyYearName").value("Year 1"))
-                .andExpect(jsonPath("$.studyYears[0].coursesCount").value(6))
-                .andExpect(jsonPath("$.studyYears[0].creditsCount").value(30))
-                .andExpect(jsonPath("$.studyYears[1].id").value(2))
-                .andExpect(jsonPath("$.studyYears[1].studyYearName").value("Year 2"))
-                .andExpect(jsonPath("$.studyYears[1].coursesCount").value(6))
-                .andExpect(jsonPath("$.studyYears[1].creditsCount").value(30))
-                .andExpect(jsonPath("$.studyYears[2].id").value(3))
-                .andExpect(jsonPath("$.studyYears[2].studyYearName").value("Year 3"))
-                .andExpect(jsonPath("$.studyYears[2].coursesCount").value(5))
-                .andExpect(jsonPath("$.studyYears[2].creditsCount").value(30));
+                .andExpect(jsonPath("$.owner.username").value("david"));
     }
 
     @Test
@@ -238,6 +206,93 @@ public class CommunityControllerTests {
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         mockMvc.perform(get(BASE_URL + "/unknown-slug")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Community not found"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/communities/{communitySlug}/study-years
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: community exists with study years
+            When: GET /api/v1/communities/{communitySlug}/study-years is called
+            Then: 200 OK is returned with community details and study year summaries
+            """)
+    public void testGetCommunityStudyYears_Success() throws Exception {
+        UUID communityId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        OffsetDateTime createdAt = OffsetDateTime.now();
+
+        CommunityResponseDto communityDto = CommunityResponseDto.builder()
+                .id(communityId)
+                .name("FMI - Informatica ID")
+                .slug("fmi-info-id")
+                .description("Community description")
+                .memberCount(42)
+                .verified(true)
+                .backgroundColor("#2563eb")
+                .createdAt(createdAt)
+                .owner(new OwnerDto(ownerId, "david"))
+                .build();
+
+        List<StudyYearResponseDto> studyYears = List.of(
+                new StudyYearResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30),
+                new StudyYearResponseDto(3, StudyYearName.YEAR_3, 5, 0, 30)
+        );
+
+        CommunityStudyYearsResponseDto response = CommunityStudyYearsResponseDto.builder()
+                .community(communityDto)
+                .studyYears(studyYears)
+                .build();
+
+        when(communityService.getCommunityStudyYears("fmi-info-id")).thenReturn(response);
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/study-years")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.community.id").value(communityId.toString()))
+                .andExpect(jsonPath("$.community.name").value("FMI - Informatica ID"))
+                .andExpect(jsonPath("$.community.slug").value("fmi-info-id"))
+                .andExpect(jsonPath("$.community.description").value("Community description"))
+                .andExpect(jsonPath("$.community.memberCount").value(42))
+                .andExpect(jsonPath("$.community.backgroundColor").value("#2563eb"))
+                .andExpect(jsonPath("$.community.verified").value(true))
+                .andExpect(jsonPath("$.community.owner.id").value(ownerId.toString()))
+                .andExpect(jsonPath("$.community.owner.username").value("david"))
+                .andExpect(jsonPath("$.studyYears").isArray())
+                .andExpect(jsonPath("$.studyYears.length()").value(3))
+                .andExpect(jsonPath("$.studyYears[0].id").value(1))
+                .andExpect(jsonPath("$.studyYears[0].studyYearName").value("Year 1"))
+                .andExpect(jsonPath("$.studyYears[0].coursesCount").value(6))
+                .andExpect(jsonPath("$.studyYears[0].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$.studyYears[0].creditsCount").value(30))
+                .andExpect(jsonPath("$.studyYears[1].id").value(2))
+                .andExpect(jsonPath("$.studyYears[1].studyYearName").value("Year 2"))
+                .andExpect(jsonPath("$.studyYears[1].coursesCount").value(6))
+                .andExpect(jsonPath("$.studyYears[1].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$.studyYears[1].creditsCount").value(30))
+                .andExpect(jsonPath("$.studyYears[2].id").value(3))
+                .andExpect(jsonPath("$.studyYears[2].studyYearName").value("Year 3"))
+                .andExpect(jsonPath("$.studyYears[2].coursesCount").value(5))
+                .andExpect(jsonPath("$.studyYears[2].archivedCoursesCount").value(0))
+                .andExpect(jsonPath("$.studyYears[2].creditsCount").value(30));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: non-existent community slug
+            When: GET /api/v1/communities/{communitySlug}/study-years is called
+            Then: 404 Not Found is returned
+            """)
+    public void testGetCommunityStudyYears_NotFound() throws Exception {
+        when(communityService.getCommunityStudyYears("unknown-slug"))
+                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+
+        mockMvc.perform(get(BASE_URL + "/unknown-slug/study-years")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Community not found"));

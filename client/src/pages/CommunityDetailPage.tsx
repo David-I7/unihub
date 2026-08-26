@@ -15,17 +15,20 @@ export default function CommunityDetailPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
 
   const {
-    data: community,
-    isLoading,
-    isError,
-    refetch,
+    data,
+    isLoading: isCommunityLoading,
+    isError: isCommunityError,
+    refetch: refetchCommunity,
   } = useCommunityDetail(communitySlug);
 
-  if (isLoading) {
+  const community = data?.community;
+  const studyYears = data?.studyYears ?? [];
+
+  if (isCommunityLoading) {
     return <CommunityDetailSkeleton />;
   }
 
-  if (isError || !community) {
+  if (isCommunityError || !community) {
     return (
       <div className="min-h-full space-y-6 pb-12">
         <CommunityBreadcrumb />
@@ -34,7 +37,11 @@ export default function CommunityDetailPage() {
             Failed to load community details.
           </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchCommunity()}
+            >
               Try Again
             </Button>
             <Link
@@ -55,38 +62,34 @@ export default function CommunityDetailPage() {
 
   return (
     <div className="min-h-full pb-12">
-      {/* Community Hero Header (Full Screen Width) */}
-      <CommunityHero community={community} />
+      {/* Community Hero Header */}
+      <CommunityHero community={community} studyYears={studyYears} />
 
       {/* Main Container for Tabs and Content */}
       <div className="max-w-7xl mx-auto space-y-6 pt-6">
         {/* Main Community Tabs: Study Years (default) & Posts */}
-        <Tabs defaultValue="study-years" className="w-full space-y-6">
-          <TabsList className="w-full sm:w-auto h-10 p-1 bg-muted/60 rounded-xl">
-            <TabsTrigger
-              value="study-years"
-              className="gap-2 px-4 py-1.5 text-xs font-semibold data-active:shadow-xs rounded-lg"
-            >
-              <GraduationCap className="size-4" />
-              <span>Study Years</span>
-            </TabsTrigger>
+        <Tabs defaultValue="study-years" className="w-full space-y-6 min-w-0">
+          <div className="w-full overflow-x-auto no-scrollbar">
+            <TabsList className="h-10 p-1 bg-muted/60 rounded-xl gap-1 flex-nowrap shrink-0">
+              <TabsTrigger value="study-years">
+                <GraduationCap className="size-4" />
+                <span>Study Years</span>
+              </TabsTrigger>
 
-            <TabsTrigger
-              value="posts"
-              className="gap-2 px-4 py-1.5 text-xs font-semibold data-active:shadow-xs rounded-lg"
-            >
-              <MessageSquare className="size-4" />
-              <span>Posts & Discussions</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="posts">
+                <MessageSquare className="size-4" />
+                <span>Posts & Discussions</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent
             value="study-years"
             className="focus-visible:outline-none"
           >
             <CommunityStudyYearsTab
-              studyYears={community.studyYears}
               communitySlug={community.slug}
+              studyYears={studyYears}
             />
           </TabsContent>
 

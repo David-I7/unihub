@@ -11,7 +11,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "posts")
+@Table(
+        name = "posts",
+        indexes = {
+                @Index(name = "idx_posts_created_at", columnList = "created_at DESC"),
+                @Index(name = "idx_posts_pinned_created_at", columnList = "pinned DESC, created_at DESC")
+        }
+)
 @Builder
 @Getter
 @Setter

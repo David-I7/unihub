@@ -1,9 +1,10 @@
 package com.unihub.app.entities.globalResources;
 
-import com.unihub.app.entities.community.resources.CourseOffering;
+import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,13 +36,24 @@ public class Teacher {
     @Column(name = "ratings_count", nullable = false)
     private int ratingsCount;
 
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
     @ManyToMany
     @JoinTable(
-            name = "course_offering_teachers",
+            name = "course_teachers",
             joinColumns = @JoinColumn(name = "teacher_id"),
-            inverseJoinColumns = @JoinColumn(name = "course_offering_id")
+            inverseJoinColumns = @JoinColumn(name = "course_id")
     )
-    private List<CourseOffering> coursesTaught;
+    private List<Course> coursesTaught;
+
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_communities",
+            joinColumns = @JoinColumn(name = "teacher_id"),
+            inverseJoinColumns = @JoinColumn(name = "community_id")
+    )
+    private List<com.unihub.app.entities.community.resources.Community> communities;
 
     @Override
     public String toString() {
@@ -52,5 +64,10 @@ public class Teacher {
                 ", averageRating=" + averageRating +
                 ", ratingsCount=" + ratingsCount +
                 '}';
+    }
+
+    @PrePersist
+    void onCreate() {
+        createdAt = OffsetDateTime.now();
     }
 }

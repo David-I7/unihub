@@ -2,11 +2,14 @@ package com.unihub.app.config;
 
 import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
 import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
+import com.unihub.app.utils.ProblemDetailUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import com.unihub.app.security.JwtSessionManagementFilter;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -30,6 +33,9 @@ public class SecurityConfig {
     @Autowired
     private OAuth2AuthenticationFailureHandler oAuth2AuthenticationFailureHandler;
 
+    @Autowired
+    private ProblemDetailUtil problemDetailUtil;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -41,6 +47,7 @@ public class SecurityConfig {
                 authorize
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET,"/api/v1/communities/**").permitAll()
+                    .requestMatchers(HttpMethod.GET,"/api/v1/teachers/**").permitAll()
                     .anyRequest().authenticated())
             .oauth2Login(login-> {
                         login
@@ -48,7 +55,14 @@ public class SecurityConfig {
                             .redirectionEndpoint(config -> config.baseUri("/api/v1/auth/oauth2/code/*"))
                             .successHandler(oAuth2AuthenticationSuccessHandler)
                             .failureHandler(oAuth2AuthenticationFailureHandler);
-            });
+            })
+            .exceptionHandling(exceptions -> exceptions
+                    .authenticationEntryPoint(
+                            (request, response, ex) ->
+                                    problemDetailUtil.writeProblemDetail(request,response, HttpStatus.UNAUTHORIZED)
+                    )
+            )
+        ;
 
         return http.build();
     }

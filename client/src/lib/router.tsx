@@ -5,11 +5,15 @@ import HandleOAuthSuccessPage from "../pages/HandleOAuthSuccessPage";
 import HomePage from "../pages/HomePage";
 import CommunitiesPage from "../pages/CommunitiesPage";
 import CommunityDetailPage from "../pages/CommunityDetailPage";
+import StudyYearDetailPage from "../pages/StudyYearDetailPage";
+import CourseDetailPage from "../pages/CourseDetailPage";
+import CalendarPage from "../pages/CalendarPage";
 
 import {
   LoginForm,
   RegisterForm,
   NonAuthenticatedRoute,
+  AuthenticatedRoute,
 } from "@/features/auth";
 import {
   ProtoHomePage,
@@ -17,7 +21,10 @@ import {
   ProtoCommunityPage,
   ProtoStudyYearPage,
   ProtoCoursePage,
+  ProtoCalendarPage,
+  ProtoTeachersPage,
 } from "@/features/prototypes";
+
 
 export const router = createBrowserRouter([
   {
@@ -49,12 +56,37 @@ export const router = createBrowserRouter([
         element: <ProtoCoursePage />,
       },
       {
+        path: "/proto/teachers",
+        element: <ProtoTeachersPage />,
+      },
+      {
+        path: "/proto/calendar",
+        element: <ProtoCalendarPage />,
+      },
+      {
+        path: "/calendar",
+        element: (
+          <AuthenticatedRoute>
+            <CalendarPage />
+          </AuthenticatedRoute>
+        ),
+      },
+      {
         path: "/communities",
+
         element: <CommunitiesPage />,
       },
       {
         path: "/communities/:communitySlug",
         element: <CommunityDetailPage />,
+      },
+      {
+        path: "/communities/:communitySlug/study-years/:studyYearSlug",
+        element: <StudyYearDetailPage />,
+      },
+      {
+        path: "/communities/:communitySlug/study-years/:studyYearSlug/courses/:courseSlug",
+        element: <CourseDetailPage />,
       },
       {
         path: "/oauth2/failure",

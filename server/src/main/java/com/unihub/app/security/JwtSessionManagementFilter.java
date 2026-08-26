@@ -27,7 +27,6 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
 
     private final ProblemDetailUtil problemDetailUtil;
 
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String requestPath = request.getRequestURI();

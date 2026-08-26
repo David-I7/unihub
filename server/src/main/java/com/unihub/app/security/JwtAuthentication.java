@@ -16,6 +16,10 @@ public class JwtAuthentication implements Authentication {
         this.userDto = userDto;
     }
 
+    public UserDto getUserDto() {
+        return userDto;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
@@ -32,7 +36,7 @@ public class JwtAuthentication implements Authentication {
     }
 
     @Override
-    public @Nullable Object getPrincipal() {
+    public @Nullable UserDto getPrincipal() {
         return userDto;
     }
 
