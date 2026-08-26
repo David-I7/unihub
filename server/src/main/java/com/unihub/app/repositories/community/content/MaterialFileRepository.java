@@ -17,7 +17,7 @@ public interface MaterialFileRepository extends JpaRepository<MaterialFile, UUID
         WHERE r.course.id = :courseId AND r.folder.id = :folderId
         ORDER BY r.createdAt DESC
     """)
-    List<MaterialFile> findByCourseIdAndFolderId(@Param("courseId") int courseId, @Param("folderId") UUID folderId);
+    List<MaterialFile> findByCourseIdAndFolderId(@Param("courseId") Long courseId, @Param("folderId") UUID folderId);
 
     @Query("""
         SELECT mf FROM MaterialFile mf
@@ -26,5 +26,5 @@ public interface MaterialFileRepository extends JpaRepository<MaterialFile, UUID
         WHERE r.course.id = :courseId AND r.folder IS NULL
         ORDER BY r.createdAt DESC
     """)
-    List<MaterialFile> findRootFilesByCourseId(@Param("courseId") int courseId);
+    List<MaterialFile> findRootFilesByCourseId(@Param("courseId") Long courseId);
 }

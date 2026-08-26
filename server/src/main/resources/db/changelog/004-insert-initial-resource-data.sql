@@ -56,35 +56,35 @@ INSERT INTO study_years (study_year_name, community_id, created_at)
 SELECT 'YEAR_2', id, now() FROM communities WHERE name = 'FMI - Informatica ID';
 
 -- Insert Courses (Year 1)
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Arhitectura sistemelor de calcul', 'ASC', sy.id, 1, 'Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.', now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Arhitectura sistemelor de calcul', 'arhitectura-sistemelor-de-calcul', 'ASC', sy.id, 1, 'Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Calcul diferential si integral', 'CDI', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Calcul diferential si integral', 'calcul-diferential-si-integral', 'CDI', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Instrumente si tehnici de baza in Informatica', 'ITBI', sy.id, 1, 'Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.', now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Instrumente si tehnici de baza in Informatica', 'instrumente-si-tehnici-de-baza-in-informatica', 'ITBI', sy.id, 1, 'Daca luati minim 5 la proiect, nu este necesar sa va prezentati la examen.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Programarea algoritmilor', 'PA', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Programarea algoritmilor', 'programarea-algoritmilor', 'PA', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Structuri algebrice in informatica', 'SAIF', sy.id, 1, 'La sfarsitul fiecarei lectii, se va da un test pentru puncte bonus la examen, pe baza lucrurilor discutate. Din fiecare test se poate obtine maximum 0.8p bonus, pentru un total de 3.2p.
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Structuri algebrice in informatica', 'structuri-algebrice-in-informatica', 'SAIF', sy.id, 1, 'La sfarsitul fiecarei lectii, se va da un test pentru puncte bonus la examen, pe baza lucrurilor discutate. Din fiecare test se poate obtine maximum 0.8p bonus, pentru un total de 3.2p.
 
 Nota: este usor sa treceti la aceasta materia asta daca primiti puncte bonus😉', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Tehnici web', 'TW', sy.id, 1, 'Nota la aceasta materie se poate obtine in doua moduri:
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Tehnici web', 'tehnici-web', 'TW', sy.id, 1, 'Nota la aceasta materie se poate obtine in doua moduri:
 
 1. Daca obtineti nota 10 doar din prezentarea proiectului personal, atunci nu mai trebuie sa va prezentati la examen.
 2. Daca nu obtineti nota 10 din prezentare, trebuie sa aveti minimum 5 la prezentarea proiectului si minimum 5 la examen, care va fi pe baza proiectului prezentat la curs.
@@ -93,20 +93,20 @@ Nota: dupa ce terminati cursul, profesoara nu va va mai raspunde la mesaje pana 
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Baze de date', 'BD', sy.id, 2, 'Nota la aceasta materie se obtine pe baza prezentarii proiectului. Nu faceti un proiect complex daca nu stiti foarte bine ce ati scris acolo, deoarece o sa fiti intrebati exact din partea complexa.
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Baze de date', 'baze-de-date', 'BD', sy.id, 2, 'Nota la aceasta materie se obtine pe baza prezentarii proiectului. Nu faceti un proiect complex daca nu stiti foarte bine ce ati scris acolo, deoarece o sa fiti intrebati exact din partea complexa.
 
 Ca sa luati 5, trebuie sa stiti sa faceti niste selecturi pe proiectul vostru in timpul prezentarii.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Geometrie si algebra liniara', 'GAL', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Geometrie si algebra liniara', 'geometrie-si-algebra-liniara', 'GAL', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Limbaje formale si automate', 'LFA', sy.id, 2, 'Nota la examenul acesta se calculeaza astfel:
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Limbaje formale si automate', 'limbaje-formale-si-automate', 'LFA', sy.id, 2, 'Nota la examenul acesta se calculeaza astfel:
 
 1. Nota obtinuta la tema
 2. Nota obtinuta la partea de teorie a examenului scris
@@ -117,79 +117,79 @@ SELECT 'Limbaje formale si automate', 'LFA', sy.id, 2, 'Nota la examenul acesta 
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Logica matematica si computationala', 'LMC', sy.id, 2, 'Daca faceti temele colective, porniti din start cu nota 4. Trebuie sa luati doar 0.5p la examen ca sa treceti.', now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Logica matematica si computationala', 'logica-matematica-si-computationala', 'LMC', sy.id, 2, 'Daca faceti temele colective, porniti din start cu nota 4. Trebuie sa luati doar 0.5p la examen ca sa treceti.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Programare orientata pe obiecte', 'POO', sy.id, 2, 'Nota se obtine pe baza unui proiect. Daca alegeti sa il trimiteti domnului M. Cherciu, atunci va trebui sa il prezentati timp de 3-5 minute.', now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Programare orientata pe obiecte', 'programare-orientata-pe-obiecte', 'POO', sy.id, 2, 'Nota se obtine pe baza unui proiect. Daca alegeti sa il trimiteti domnului M. Cherciu, atunci va trebui sa il prezentati timp de 3-5 minute.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Structuri de date', 'SDD', sy.id, 2, 'Daca faceti temele colective, porniti din start cu nota 4. Trebuie sa luati doar 0.5p la examen ca sa treceti.', now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Structuri de date', 'structuri-de-date', 'SDD', sy.id, 2, 'Daca faceti temele colective, porniti din start cu nota 4. Trebuie sa luati doar 0.5p la examen ca sa treceti.', now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_1';
 
 -- Insert Courses (Year 2)
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Algoritmi fundamentali', 'AF', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Algoritmi fundamentali', 'algoritmi-fundamentali', 'AF', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Dezvoltarea aplicatiilor web', 'DAW', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Dezvoltarea aplicatiilor web', 'dezvoltarea-aplicatiilor-web', 'DAW', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Probabilitati si statistica', 'PS', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Probabilitati si statistica', 'probabilitati-si-statistica', 'PS', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Programare functionala', 'PF', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Programare functionala', 'programare-functionala', 'PF', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Sisteme de gestiune a bazelor de date', 'SGBD', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Sisteme de gestiune a bazelor de date', 'sisteme-de-gestiune-a-bazelor-de-date', 'SGBD', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Sisteme de operare', 'SO', sy.id, 1, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Sisteme de operare', 'sisteme-de-operare', 'SO', sy.id, 1, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Algoritmi avansati', 'AA', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Algoritmi avansati', 'algoritmi-avansati', 'AA', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Fundamentele limbajelor de programare', 'FLP', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Fundamentele limbajelor de programare', 'fundamentele-limbajelor-de-programare', 'FLP', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Inteligenta artificiala', 'IA', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Inteligenta artificiala', 'inteligenta-artificiala', 'IA', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Metode de dezvoltare software', 'MDS', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Metode de dezvoltare software', 'metode-de-dezvoltare-software', 'MDS', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Programare avansata pe obiecte in Java', 'PAO', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Programare avansata pe obiecte in Java', 'programare-avansata-pe-obiecte-in-java', 'PAO', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 
-INSERT INTO courses (name, abbreviation, study_year_id, semester, description, created_at)
-SELECT 'Retele de calculatoare', 'RC', sy.id, 2, NULL, now()
+INSERT INTO courses (name, slug, abbreviation, study_year_id, semester, description, created_at)
+SELECT 'Retele de calculatoare', 'retele-de-calculatoare', 'RC', sy.id, 2, NULL, now()
 FROM study_years sy JOIN communities comm ON sy.community_id = comm.id
 WHERE comm.name = 'FMI - Informatica ID' AND sy.study_year_name = 'YEAR_2';
 

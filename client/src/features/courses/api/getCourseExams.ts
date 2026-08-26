@@ -11,12 +11,12 @@ export interface CourseExamsQueryParams {
 export async function getCourseExams(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   params: CourseExamsQueryParams = {},
 ): Promise<PaginatedResponse<CourseExam>> {
   const { page = 0, size = 10 } = params;
   const response = await client.get<PaginatedResponse<CourseExam>>(
-    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseId}/exams`,
+    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseSlug}/exams`,
     { params: { page, size } },
   );
   return response.data;
@@ -27,14 +27,14 @@ export const courseExamsKeys = {
   byCourse: (
     communitySlug: string,
     studyYearName: string,
-    courseId: number | string,
+    courseSlug: string,
     params: CourseExamsQueryParams = {},
   ) =>
     [
       ...courseExamsKeys.all,
       communitySlug,
       studyYearName,
-      String(courseId),
+      courseSlug,
       params,
     ] as const,
 };
@@ -42,22 +42,22 @@ export const courseExamsKeys = {
 export function useCourseExams(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   params: CourseExamsQueryParams = {},
 ) {
   return useQuery({
     queryKey: courseExamsKeys.byCourse(
       communitySlug,
       studyYearName,
-      courseId,
+      courseSlug,
       params,
     ),
     queryFn: () =>
-      getCourseExams(communitySlug, studyYearName, courseId, params),
+      getCourseExams(communitySlug, studyYearName, courseSlug, params),
     placeholderData: keepPreviousData,
     enabled:
       communitySlug.length > 0 &&
       studyYearName.length > 0 &&
-      Boolean(courseId),
+      Boolean(courseSlug),
   });
 }

@@ -43,7 +43,7 @@ export function CommunityBreadcrumb({ className }: CommunityBreadcrumbProps) {
   const isStudyYears = segments[2] === "study-years";
   const studyYearSlug = isStudyYears ? segments[3] : undefined;
   const isCourses = isStudyYears && segments[4] === "courses";
-  const courseId = isCourses ? segments[5] : undefined;
+  const courseSlug = isCourses ? segments[5] : undefined;
 
   const crumbs: Crumb[] = [{ label: "Communities", url: "/communities" }];
 
@@ -61,10 +61,10 @@ export function CommunityBreadcrumb({ className }: CommunityBreadcrumbProps) {
     });
   }
 
-  if (courseId) {
+  if (courseSlug) {
     crumbs.push({
-      label: `Course ${courseId}`,
-      url: `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${courseId}`,
+      label: formatSegment(courseSlug),
+      url: `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${courseSlug}`,
     });
   }
 

@@ -7,5 +7,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface CoursePostRepository extends JpaRepository<CoursePost, UUID> {
-    List<CoursePost> findByCourseId(int courseId);
+    List<CoursePost> findByCourseId(Long courseId);
 }

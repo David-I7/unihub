@@ -14,10 +14,10 @@ import java.util.List;
 @Table(
         name = "courses",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"study_year_id", "name"})
+                @UniqueConstraint(columnNames = {"study_year_id", "name"}),
+                @UniqueConstraint(columnNames = {"study_year_id", "slug"})
         },
         indexes = {
-                @Index(name = "idx_courses_study_year_id", columnList = "study_year_id"),
                 @Index(name = "idx_courses_study_year_archived", columnList = "study_year_id, archived")
         }
 )
@@ -30,10 +30,13 @@ public class Course {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
+
+    @Column(nullable = false)
+    private String slug;
 
     @Column(nullable = false)
     private String abbreviation;

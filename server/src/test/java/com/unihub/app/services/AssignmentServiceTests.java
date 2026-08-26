@@ -7,8 +7,8 @@ import com.unihub.app.entities.community.content.Assignment;
 import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.entities.community.content.ResourceType;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.community.ResourceContentMapper;
 import com.unihub.app.repositories.community.content.AssignmentRepository;
 import com.unihub.app.services.community.content.AssignmentService;
 import com.unihub.app.services.community.resources.CourseService;
@@ -39,7 +39,7 @@ public class AssignmentServiceTests {
     private CourseService courseService;
 
     @Spy
-    private ResourceContentMapper resourceContentMapper = new ResourceContentMapper();
+    private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();
@@ -54,6 +54,10 @@ public class AssignmentServiceTests {
         User owner = User.builder().id(UUID.randomUUID()).username("david").build();
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime dueDate = now.plusDays(14);
+        com.unihub.app.entities.community.resources.Course course = com.unihub.app.entities.community.resources.Course.builder()
+                .id(1L)
+                .slug("asc")
+                .build();
 
         Resource resource = Resource.builder()
                 .id(assignmentId)
@@ -72,13 +76,15 @@ public class AssignmentServiceTests {
                 .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(assignmentRepository.findByCourseId(1, pageRequest))
+        when(courseService.verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, "asc"))
+                .thenReturn(course);
+        when(assignmentRepository.findByCourseId(1L, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(assignment), pageRequest, 1));
 
         PageDto<AssignmentResponseDto> result = assignmentService.getAssignmentsByCourse(
                 "fmi-info-id",
                 StudyYearName.YEAR_1,
-                1,
+                "asc",
                 pageRequest
         );
 
@@ -95,7 +101,7 @@ public class AssignmentServiceTests {
         assertNotNull(dto.owner());
         assertEquals("david", dto.owner().username());
 
-        verify(courseService).verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, 1);
-        verify(assignmentRepository).findByCourseId(1, pageRequest);
+        verify(courseService).verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, "asc");
+        verify(assignmentRepository).findByCourseId(1L, pageRequest);
     }
 }

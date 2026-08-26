@@ -11,12 +11,12 @@ export interface CourseAssignmentsQueryParams {
 export async function getCourseAssignments(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   params: CourseAssignmentsQueryParams = {},
 ): Promise<PaginatedResponse<CourseAssignment>> {
   const { page = 0, size = 10 } = params;
   const response = await client.get<PaginatedResponse<CourseAssignment>>(
-    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseId}/assignments`,
+    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseSlug}/assignments`,
     { params: { page, size } },
   );
   return response.data;
@@ -27,14 +27,14 @@ export const courseAssignmentsKeys = {
   byCourse: (
     communitySlug: string,
     studyYearName: string,
-    courseId: number | string,
+    courseSlug: string,
     params: CourseAssignmentsQueryParams = {},
   ) =>
     [
       ...courseAssignmentsKeys.all,
       communitySlug,
       studyYearName,
-      String(courseId),
+      courseSlug,
       params,
     ] as const,
 };
@@ -42,22 +42,22 @@ export const courseAssignmentsKeys = {
 export function useCourseAssignments(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   params: CourseAssignmentsQueryParams = {},
 ) {
   return useQuery({
     queryKey: courseAssignmentsKeys.byCourse(
       communitySlug,
       studyYearName,
-      courseId,
+      courseSlug,
       params,
     ),
     queryFn: () =>
-      getCourseAssignments(communitySlug, studyYearName, courseId, params),
+      getCourseAssignments(communitySlug, studyYearName, courseSlug, params),
     placeholderData: keepPreviousData,
     enabled:
       communitySlug.length > 0 &&
       studyYearName.length > 0 &&
-      Boolean(courseId),
+      Boolean(courseSlug),
   });
 }

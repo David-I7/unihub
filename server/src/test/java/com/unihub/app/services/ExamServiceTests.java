@@ -7,8 +7,8 @@ import com.unihub.app.entities.community.content.Exam;
 import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.entities.community.content.ResourceType;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.community.ResourceContentMapper;
 import com.unihub.app.repositories.community.content.ExamRepository;
 import com.unihub.app.services.community.content.ExamService;
 import com.unihub.app.services.community.resources.CourseService;
@@ -39,7 +39,7 @@ public class ExamServiceTests {
     private CourseService courseService;
 
     @Spy
-    private ResourceContentMapper resourceContentMapper = new ResourceContentMapper();
+    private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();
@@ -54,6 +54,10 @@ public class ExamServiceTests {
         User owner = User.builder().id(UUID.randomUUID()).username("david").build();
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime scheduledDate = now.plusDays(30);
+        com.unihub.app.entities.community.resources.Course course = com.unihub.app.entities.community.resources.Course.builder()
+                .id(1L)
+                .slug("asc")
+                .build();
 
         Resource resource = Resource.builder()
                 .id(examId)
@@ -72,13 +76,15 @@ public class ExamServiceTests {
                 .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(examRepository.findByCourseId(1, pageRequest))
+        when(courseService.verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, "asc"))
+                .thenReturn(course);
+        when(examRepository.findByCourseId(1L, pageRequest))
                 .thenReturn(new PageImpl<>(List.of(exam), pageRequest, 1));
 
         PageDto<ExamResponseDto> result = examService.getExamsByCourse(
                 "fmi-info-id",
                 StudyYearName.YEAR_1,
-                1,
+                "asc",
                 pageRequest
         );
 
@@ -95,7 +101,7 @@ public class ExamServiceTests {
         assertNotNull(dto.owner());
         assertEquals("david", dto.owner().username());
 
-        verify(courseService).verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, 1);
-        verify(examRepository).findByCourseId(1, pageRequest);
+        verify(courseService).verifyCourseExists("fmi-info-id", StudyYearName.YEAR_1, "asc");
+        verify(examRepository).findByCourseId(1L, pageRequest);
     }
 }

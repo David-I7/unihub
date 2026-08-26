@@ -25,11 +25,11 @@ export default function CourseDetailPage() {
   const {
     communitySlug = "",
     studyYearSlug = "",
-    courseId = "",
+    courseSlug = "",
   } = useParams<{
     communitySlug: string;
     studyYearSlug: string;
-    courseId: string;
+    courseSlug: string;
   }>();
 
   const {
@@ -55,7 +55,7 @@ export default function CourseDetailPage() {
   }
 
   const course = studyYear?.courses.find(
-    (c) => String(c.id) === String(courseId),
+    (c) => c.slug === courseSlug,
   );
 
   if (isError || !community || !studyYear || !course) {
@@ -134,7 +134,7 @@ export default function CourseDetailPage() {
           <CourseMaterialsTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}
-            courseId={courseId}
+            courseSlug={courseSlug}
           />
         </TabsContent>
 
@@ -146,7 +146,7 @@ export default function CourseDetailPage() {
           <CourseExamsTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}
-            courseId={courseId}
+            courseSlug={courseSlug}
           />
         </TabsContent>
 
@@ -154,7 +154,7 @@ export default function CourseDetailPage() {
           <CourseAssignmentsTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}
-            courseId={courseId}
+            courseSlug={courseSlug}
           />
         </TabsContent>
 
@@ -162,7 +162,7 @@ export default function CourseDetailPage() {
           <CourseLecturesTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}
-            courseId={courseId}
+            courseSlug={courseSlug}
           />
         </TabsContent>
       </Tabs>

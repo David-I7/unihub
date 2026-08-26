@@ -7,6 +7,7 @@ CREATE TABLE TEACHERS(
     last_name text not null,
     average_rating real not null default 0.0 check (average_rating between 0 and 5),
     ratings_count int not null default 0,
+    created_at timestamptz not null default now(),
     UNIQUE (last_name,first_name)
 );
 
@@ -66,8 +67,9 @@ CREATE TABLE STUDY_YEARS(
 );
 
 CREATE TABLE COURSES(
-    id serial PRIMARY KEY,
+    id bigserial PRIMARY KEY,
     name text not null,
+    slug text not null,
     abbreviation text not null,
     study_year_id int not null REFERENCES STUDY_YEARS(id) ON DELETE CASCADE,
     semester int not null check (semester in (1,2)),
@@ -75,11 +77,12 @@ CREATE TABLE COURSES(
     credit_points int not null default 5,
     description text,
     created_at timestamptz not null default now(),
-    UNIQUE (study_year_id, name)
+    UNIQUE (study_year_id, name),
+    UNIQUE (study_year_id, slug)
 );
 
 CREATE TABLE COURSE_TEACHERS(
-    course_id int REFERENCES COURSES(id) ON DELETE CASCADE,
+    course_id bigint REFERENCES COURSES(id) ON DELETE CASCADE,
     teacher_id UUID REFERENCES TEACHERS(id) ON DELETE CASCADE,
     PRIMARY KEY (course_id, teacher_id)
 );
@@ -88,7 +91,7 @@ CREATE TABLE FOLDERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null,
     owner_id UUID REFERENCES USERS(id) ON DELETE set null,
-    course_id int not null REFERENCES COURSES(id) ON DELETE CASCADE,
+    course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
     parent_folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now()
 );
@@ -137,7 +140,7 @@ CREATE TABLE COMMUNITY_COMMENT(
 
 CREATE TABLE COURSE_POSTS(
     post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
-    course_id int REFERENCES COURSES(id) ON DELETE CASCADE
+    course_id bigint REFERENCES COURSES(id) ON DELETE CASCADE
 );
 
 CREATE TABLE COURSE_COMMENT(
@@ -151,7 +154,7 @@ CREATE TYPE RESOURCE_TYPE AS ENUM(
 
 CREATE TABLE RESOURCES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    course_id int not null REFERENCES COURSES(id) ON DELETE CASCADE,
+    course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
     folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
     owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
@@ -202,7 +205,6 @@ CREATE TABLE LECTURES(
 );
 
 -- Indexes
-CREATE INDEX idx_courses_study_year_id ON courses(study_year_id);
 CREATE INDEX idx_courses_study_year_archived ON courses(study_year_id, archived);
 CREATE INDEX idx_community_posts_community_id ON community_posts(community_id);
 CREATE INDEX idx_course_posts_course_id ON course_posts(course_id);

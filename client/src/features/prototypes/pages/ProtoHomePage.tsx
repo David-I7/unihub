@@ -98,10 +98,18 @@ export default function ProtoHomePage() {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => navigate("/proto/communities/fmi-info-id/year/1/course/1")}
+              onClick={() => navigate("/proto/calendar")}
               className="bg-white text-slate-900 hover:bg-white/90 font-semibold shadow-xs flex items-center justify-center gap-1.5"
             >
-              <BookOpen className="size-4 text-primary" /> Open ASC Course Hub
+              <BookOpen className="size-4 text-primary" /> Open Calendar ↗
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/proto/teachers")}
+              className="border-white/30 text-white hover:bg-white/10 flex items-center justify-center gap-1.5"
+            >
+              <Users className="size-4" /> Teachers Directory ↗
             </Button>
             <Button
               variant="outline"
@@ -109,10 +117,11 @@ export default function ProtoHomePage() {
               onClick={() => navigate("/proto/communities")}
               className="border-white/30 text-white hover:bg-white/10 flex items-center justify-center gap-1.5"
             >
-              <Search className="size-4" /> Find More Communities
+              <Search className="size-4" /> Explore Communities
             </Button>
           </div>
         </div>
+
 
         {/* Ambient Decorative Background Glows */}
         <div className="absolute -right-12 -bottom-12 size-64 rounded-full bg-emerald-400/10 blur-3xl" />

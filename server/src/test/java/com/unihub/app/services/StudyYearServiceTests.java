@@ -6,7 +6,8 @@ import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.entities.globalResources.Teacher;
-import com.unihub.app.mappers.community.CourseMapper;
+import com.unihub.app.mappers.GlobalResourceMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.repositories.community.resources.StudyYearRepository;
 import com.unihub.app.services.community.resources.StudyYearService;
@@ -37,7 +38,10 @@ public class StudyYearServiceTests {
     private CourseRepository courseRepository;
 
     @Spy
-    private CourseMapper courseMapper = new CourseMapper();
+    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
+
+    @Spy
+    private CommunityResourceMapper communityMapper = new CommunityResourceMapper(new GlobalResourceMapper());
 
     @InjectMocks
     private StudyYearService studyYearService;
@@ -60,8 +64,9 @@ public class StudyYearServiceTests {
                 .build();
 
         Course course = Course.builder()
-                .id(1)
+                .id(1L)
                 .name("Arhitectura sistemelor de calcul")
+                .slug("asc")
                 .abbreviation("ASC")
                 .studyYear(studyYear)
                 .semester(1)
@@ -84,8 +89,9 @@ public class StudyYearServiceTests {
         assertEquals(1, result.courses().size());
 
         var courseDto = result.courses().get(0);
-        assertEquals(1, courseDto.id());
+        assertEquals(1L, courseDto.id());
         assertEquals("Arhitectura sistemelor de calcul", courseDto.name());
+        assertEquals("asc", courseDto.slug());
         assertEquals("ASC", courseDto.abbreviation());
         assertEquals(1, courseDto.semester());
         assertEquals(5, courseDto.creditPoints());
@@ -106,16 +112,18 @@ public class StudyYearServiceTests {
                 .build();
 
         Course activeCourse = Course.builder()
-                .id(1)
+                .id(1L)
                 .name("ASC")
+                .slug("asc")
                 .abbreviation("ASC")
                 .archived(false)
                 .creditPoints(5)
                 .build();
 
         Course archivedCourse = Course.builder()
-                .id(2)
+                .id(2L)
                 .name("Old Course")
+                .slug("old-course")
                 .abbreviation("OC")
                 .archived(true)
                 .creditPoints(5)

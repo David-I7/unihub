@@ -17,7 +17,7 @@ public interface MaterialLinkRepository extends JpaRepository<MaterialLink, UUID
         WHERE r.course.id = :courseId AND r.folder.id = :folderId
         ORDER BY r.createdAt DESC
     """)
-    List<MaterialLink> findByCourseIdAndFolderId(@Param("courseId") int courseId, @Param("folderId") UUID folderId);
+    List<MaterialLink> findByCourseIdAndFolderId(@Param("courseId") Long courseId, @Param("folderId") UUID folderId);
 
     @Query("""
         SELECT ml FROM MaterialLink ml
@@ -26,5 +26,5 @@ public interface MaterialLinkRepository extends JpaRepository<MaterialLink, UUID
         WHERE r.course.id = :courseId AND r.folder IS NULL
         ORDER BY r.createdAt DESC
     """)
-    List<MaterialLink> findRootLinksByCourseId(@Param("courseId") int courseId);
+    List<MaterialLink> findRootLinksByCourseId(@Param("courseId") Long courseId);
 }

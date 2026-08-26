@@ -1,13 +1,11 @@
 package com.unihub.app.dto.community.resources;
 
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @Builder
-public record CourseSummaryDto(
+public record CourseResponseDto (
         Long id,
         String name,
         String slug,
@@ -16,7 +14,6 @@ public record CourseSummaryDto(
         int creditPoints,
         boolean archived,
         String description,
-        OffsetDateTime createdAt,
-        List<TeacherResponseDto> teachers
+        OffsetDateTime createdAt
 ) {
 }

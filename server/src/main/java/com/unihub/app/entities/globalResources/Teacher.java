@@ -4,6 +4,7 @@ import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +36,9 @@ public class Teacher {
     @Column(name = "ratings_count", nullable = false)
     private int ratingsCount;
 
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
     @ManyToMany
     @JoinTable(
             name = "course_teachers",
@@ -52,5 +56,10 @@ public class Teacher {
                 ", averageRating=" + averageRating +
                 ", ratingsCount=" + ratingsCount +
                 '}';
+    }
+
+    @PrePersist
+    void onCreate() {
+        createdAt = OffsetDateTime.now();
     }
 }

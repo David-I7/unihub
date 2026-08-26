@@ -188,7 +188,7 @@ export function StudyYearCoursesList({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredCourses.map((course) => {
             const primaryTeacher = course.teachers?.[0];
-            const courseUrl = `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${course.id}`;
+            const courseUrl = `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${course.slug}`;
 
             return (
               <Link

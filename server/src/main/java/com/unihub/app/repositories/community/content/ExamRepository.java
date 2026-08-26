@@ -15,5 +15,5 @@ public interface ExamRepository extends JpaRepository<Exam, UUID> {
         value = "SELECT e FROM Exam e JOIN FETCH e.resource r LEFT JOIN FETCH r.owner WHERE r.course.id = :courseId",
         countQuery = "SELECT COUNT(e) FROM Exam e JOIN e.resource r WHERE r.course.id = :courseId"
     )
-    Page<Exam> findByCourseId(@Param("courseId") int courseId, Pageable pageable);
+    Page<Exam> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 }

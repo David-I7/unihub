@@ -4,8 +4,9 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.community.CommunityMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.community.resources.CommunityService;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +36,10 @@ public class CommunityServiceTests {
     private CommunityRepository communityRepository;
 
     @Spy
-    private CommunityMapper communityMapper = new CommunityMapper();
+    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
+
+    @Spy
+    private CommunityResourceMapper communityMapper = new CommunityResourceMapper(new GlobalResourceMapper());
 
     @Spy
     private PageMapper pageMapper = new PageMapper();

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface CourseRepository extends JpaRepository<Course, Integer> {
+public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
         SELECT DISTINCT c FROM Course c
@@ -31,12 +31,27 @@ public interface CourseRepository extends JpaRepository<Course, Integer> {
         SELECT c FROM Course c
         JOIN c.studyYear sy
         JOIN sy.community comm
-        WHERE c.id = :courseId
+        JOIN FETCH c.teachers
+        WHERE c.slug = :courseSlug
           AND comm.slug = :communitySlug
           AND sy.studyYearName = :studyYearName
     """)
-    Optional<Course> findByIdAndCommunitySlugAndStudyYearName(
-            @Param("courseId") int courseId,
+    Optional<Course> findBySlugAndCommunitySlugAndStudyYearNameWithTeachers(
+            @Param("courseSlug") String courseSlug,
+            @Param("communitySlug") String communitySlug,
+            @Param("studyYearName") StudyYearName studyYearName
+    );
+
+    @Query("""
+        SELECT c FROM Course c
+        JOIN c.studyYear sy
+        JOIN sy.community comm
+        WHERE c.slug = :courseSlug
+          AND comm.slug = :communitySlug
+          AND sy.studyYearName = :studyYearName
+    """)
+    Optional<Course> findBySlugAndCommunitySlugAndStudyYearName(
+            @Param("courseSlug") String courseSlug,
             @Param("communitySlug") String communitySlug,
             @Param("studyYearName") StudyYearName studyYearName
     );

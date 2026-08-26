@@ -31,6 +31,7 @@ export type TeacherSummary = Teacher;
 export interface Course {
   id: number;
   name: string;
+  slug: string;
   abbreviation: string;
   semester: number;
   creditPoints: number;

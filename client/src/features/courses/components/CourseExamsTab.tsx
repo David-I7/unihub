@@ -7,7 +7,7 @@ import { useCourseExams } from "../api/getCourseExams";
 interface CourseExamsTabProps {
   communitySlug: string;
   studyYearSlug: string;
-  courseId: number | string;
+  courseSlug: string;
 }
 
 function getRelativeTime(date: Date): { text: string; isUrgent: boolean } {
@@ -26,14 +26,14 @@ function getRelativeTime(date: Date): { text: string; isUrgent: boolean } {
 export function CourseExamsTab({
   communitySlug,
   studyYearSlug,
-  courseId,
+  courseSlug,
 }: CourseExamsTabProps) {
   const {
     data,
     isLoading,
     isError,
     refetch,
-  } = useCourseExams(communitySlug, studyYearSlug, courseId, { size: 20 });
+  } = useCourseExams(communitySlug, studyYearSlug, courseSlug, { size: 20 });
 
   const exams = data?.content ?? [];
 

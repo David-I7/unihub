@@ -3,9 +3,10 @@ package com.unihub.app.services.community.content;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.content.LectureResponseDto;
 import com.unihub.app.entities.community.content.Lecture;
+import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.community.ResourceContentMapper;
 import com.unihub.app.repositories.community.content.LectureRepository;
 import com.unihub.app.services.community.resources.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -20,19 +21,19 @@ public class LectureService {
 
     private final LectureRepository lectureRepository;
     private final CourseService courseService;
-    private final ResourceContentMapper resourceContentMapper;
+    private final CommunityContentMapper contentMapper;
     private final PageMapper pageMapper;
 
     @Transactional(readOnly = true)
     public PageDto<LectureResponseDto> getLecturesByCourse(
             String communitySlug,
             StudyYearName studyYearName,
-            int courseId,
+            String courseSlug,
             Pageable pageable
     ) {
-        courseService.verifyCourseExists(communitySlug, studyYearName, courseId);
+        Course course = courseService.verifyCourseExists(communitySlug, studyYearName, courseSlug);
 
-        Page<Lecture> lecturePage = lectureRepository.findByCourseId(courseId, pageable);
-        return pageMapper.toPageDto(lecturePage.map(resourceContentMapper::toLectureDto));
+        Page<Lecture> lecturePage = lectureRepository.findByCourseId(course.getId(), pageable);
+        return pageMapper.toPageDto(lecturePage.map(contentMapper::toLectureResponseDto));
     }
 }

@@ -15,5 +15,5 @@ public interface AssignmentRepository extends JpaRepository<Assignment, UUID> {
         value = "SELECT a FROM Assignment a JOIN FETCH a.resource r LEFT JOIN FETCH r.owner WHERE r.course.id = :courseId",
         countQuery = "SELECT COUNT(a) FROM Assignment a JOIN a.resource r WHERE r.course.id = :courseId"
     )
-    Page<Assignment> findByCourseId(@Param("courseId") int courseId, Pageable pageable);
+    Page<Assignment> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 }

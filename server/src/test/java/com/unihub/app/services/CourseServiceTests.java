@@ -5,7 +5,12 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.mappers.community.ResourceContentMapper;
+import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.globalResources.TeacherResponseDto;
+import com.unihub.app.entities.globalResources.Teacher;
+import com.unihub.app.mappers.GlobalResourceMapper;
+import com.unihub.app.mappers.community.CommunityContentMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
 import com.unihub.app.repositories.community.content.MaterialFileRepository;
 import com.unihub.app.repositories.community.content.MaterialLinkRepository;
@@ -46,7 +51,13 @@ public class CourseServiceTests {
     private MaterialLinkRepository materialLinkRepository;
 
     @Spy
-    private ResourceContentMapper resourceContentMapper = new ResourceContentMapper();
+    private CommunityContentMapper contentMapper = new CommunityContentMapper();
+
+    @Spy
+    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
+
+    @Spy
+    private CommunityResourceMapper resourceMapper = new CommunityResourceMapper(new GlobalResourceMapper());
 
     @InjectMocks
     private CourseService courseService;
@@ -54,7 +65,7 @@ public class CourseServiceTests {
     @Test
     @DisplayName("getMaterials at root level returns root folders, files, and links")
     public void testGetMaterials_Root_Success() {
-        Course course = Course.builder().id(1).build();
+        Course course = Course.builder().id(1L).slug("asc").build();
         User owner = User.builder().id(UUID.randomUUID()).username("david").build();
         OffsetDateTime now = OffsetDateTime.now();
 
@@ -98,19 +109,19 @@ public class CourseServiceTests {
                 .linkType(MaterialLinkType.GITHUB)
                 .build();
 
-        when(courseRepository.findByIdAndCommunitySlugAndStudyYearName(1, "fmi-info-id", StudyYearName.YEAR_1))
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(folderRepository.findRootFoldersByCourseId(1))
+        when(folderRepository.findRootFoldersByCourseId(1L))
                 .thenReturn(List.of(rootFolder));
-        when(materialFileRepository.findRootFilesByCourseId(1))
+        when(materialFileRepository.findRootFilesByCourseId(1L))
                 .thenReturn(List.of(materialFile));
-        when(materialLinkRepository.findRootLinksByCourseId(1))
+        when(materialLinkRepository.findRootLinksByCourseId(1L))
                 .thenReturn(List.of(materialLink));
 
         CourseMaterialsResponseDto result = courseService.getMaterials(
                 "fmi-info-id",
                 StudyYearName.YEAR_1,
-                1,
+                "asc",
                 null
         );
 
@@ -126,7 +137,7 @@ public class CourseServiceTests {
     @Test
     @DisplayName("getMaterials in subfolder returns items inside folder")
     public void testGetMaterials_Subfolder_Success() {
-        Course course = Course.builder().id(1).build();
+        Course course = Course.builder().id(1L).slug("asc").build();
         User owner = User.builder().id(UUID.randomUUID()).username("david").build();
         OffsetDateTime now = OffsetDateTime.now();
         UUID subFolderId = UUID.randomUUID();
@@ -138,21 +149,21 @@ public class CourseServiceTests {
                 .createdAt(now)
                 .build();
 
-        when(courseRepository.findByIdAndCommunitySlugAndStudyYearName(1, "fmi-info-id", StudyYearName.YEAR_1))
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(folderRepository.existsByIdAndCourseId(subFolderId, 1))
+        when(folderRepository.existsByIdAndCourseId(subFolderId, 1L))
                 .thenReturn(true);
-        when(folderRepository.findByCourseIdAndParentFolderId(1, subFolderId))
+        when(folderRepository.findByCourseIdAndParentFolderId(1L, subFolderId))
                 .thenReturn(List.of(childFolder));
-        when(materialFileRepository.findByCourseIdAndFolderId(1, subFolderId))
+        when(materialFileRepository.findByCourseIdAndFolderId(1L, subFolderId))
                 .thenReturn(List.of());
-        when(materialLinkRepository.findByCourseIdAndFolderId(1, subFolderId))
+        when(materialLinkRepository.findByCourseIdAndFolderId(1L, subFolderId))
                 .thenReturn(List.of());
 
         CourseMaterialsResponseDto result = courseService.getMaterials(
                 "fmi-info-id",
                 StudyYearName.YEAR_1,
-                1,
+                "asc",
                 subFolderId
         );
 
@@ -166,25 +177,87 @@ public class CourseServiceTests {
     @Test
     @DisplayName("getMaterials throws 404 when course not found")
     public void testGetMaterials_CourseNotFound() {
-        when(courseRepository.findByIdAndCommunitySlugAndStudyYearName(999, "fmi-info-id", StudyYearName.YEAR_1))
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("unknown", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () ->
-                courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, 999, null));
+                courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, "unknown", null));
     }
 
     @Test
     @DisplayName("getMaterials throws 404 when folder not found")
     public void testGetMaterials_FolderNotFound() {
-        Course course = Course.builder().id(1).build();
+        Course course = Course.builder().id(1L).slug("asc").build();
         UUID folderId = UUID.randomUUID();
 
-        when(courseRepository.findByIdAndCommunitySlugAndStudyYearName(1, "fmi-info-id", StudyYearName.YEAR_1))
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(folderRepository.existsByIdAndCourseId(folderId, 1))
+        when(folderRepository.existsByIdAndCourseId(folderId, 1L))
                 .thenReturn(false);
 
         assertThrows(ResponseStatusException.class, () ->
-                courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, 1, folderId));
+                courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, "asc", folderId));
+    }
+
+    @Test
+    @DisplayName("findBySlug returns CourseResponseDto when course exists")
+    public void testFindBySlug_Success() {
+        Course course = Course.builder()
+                .id(1L)
+                .slug("asc")
+                .name("Arhitectura sistemelor de calcul")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(5)
+                .archived(false)
+                .description("Course description")
+                .build();
+
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(course));
+
+        CourseResponseDto result = courseService.findBySlug("fmi-info-id", StudyYearName.YEAR_1, "asc");
+
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals("asc", result.slug());
+        assertEquals("Arhitectura sistemelor de calcul", result.name());
+        assertEquals("ASC", result.abbreviation());
+        assertEquals(1, result.semester());
+        assertEquals(5, result.creditPoints());
+        assertFalse(result.archived());
+        assertEquals("Course description", result.description());
+    }
+
+    @Test
+    @DisplayName("findCourseTeachers returns teachers list")
+    public void testFindCourseTeachers_Success() {
+        UUID teacherId = UUID.randomUUID();
+        Teacher teacher = Teacher.builder()
+                .id(teacherId)
+                .firstName("Daniel")
+                .lastName("Dragulici")
+                .averageRating(4.8f)
+                .ratingsCount(15)
+                .build();
+
+        Course course = Course.builder()
+                .id(1L)
+                .slug("asc")
+                .teachers(List.of(teacher))
+                .build();
+
+        when(courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachers("asc", "fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(course));
+
+        List<TeacherResponseDto> result = courseService.findCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(teacherId, result.get(0).id());
+        assertEquals("Daniel", result.get(0).firstName());
+        assertEquals("Dragulici", result.get(0).lastName());
+        assertEquals(4.8f, result.get(0).averageRating());
+        assertEquals(15, result.get(0).ratingsCount());
     }
 }

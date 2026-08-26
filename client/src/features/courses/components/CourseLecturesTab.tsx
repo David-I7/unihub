@@ -7,7 +7,7 @@ import { useCourseLectures } from "../api/getCourseLectures";
 interface CourseLecturesTabProps {
   communitySlug: string;
   studyYearSlug: string;
-  courseId: number | string;
+  courseSlug: string;
 }
 
 function getRelativeLecture(date: Date): { text: string; isUrgent: boolean } {
@@ -25,14 +25,14 @@ function getRelativeLecture(date: Date): { text: string; isUrgent: boolean } {
 export function CourseLecturesTab({
   communitySlug,
   studyYearSlug,
-  courseId,
+  courseSlug,
 }: CourseLecturesTabProps) {
   const {
     data,
     isLoading,
     isError,
     refetch,
-  } = useCourseLectures(communitySlug, studyYearSlug, courseId, { size: 20 });
+  } = useCourseLectures(communitySlug, studyYearSlug, courseSlug, { size: 20 });
 
   const lectures = data?.content ?? [];
 

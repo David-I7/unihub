@@ -33,7 +33,7 @@ public class AppApplication {
 	class Test {
 		@Transactional
 		public void query(FolderRepository folderRepository, ExamRepository examRepository) {
-			int courseId = 1;
+			Long courseId = 1L;
 			List<Folder> rootFolders = folderRepository.findRootFoldersByCourseId(courseId);
 
 			rootFolders.forEach(folder -> {

@@ -5,8 +5,41 @@ import com.unihub.app.dto.community.content.*;
 import com.unihub.app.entities.community.content.*;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.List;
+
 @Component
-public class ResourceContentMapper {
+public class CommunityContentMapper {
+    public CommentResponseDto toCommentResponseDto(Comment comment) {
+        return CommentResponseDto.builder()
+                .id(comment.getId())
+                .postId(comment.getPost().getId())
+                .content(comment.getContent())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .owner(new OwnerDto(comment.getOwner().getId(), comment.getOwner().getUsername()))
+                .build();
+    }
+
+    public PostResponseDto toPostResponseDto(Post post) {
+        return toPostResponseDto(post, Collections.emptyList());
+    }
+
+    public PostResponseDto toPostResponseDto(Post post, List<CommentResponseDto> comments) {
+        return PostResponseDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .description(post.getDescription())
+                .channel(post.getChannel())
+                .pinned(post.isPinned())
+                .likesCount(post.getLikesCount())
+                .commentsCount(post.getCommentsCount())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername()))
+                .comments(comments)
+                .build();
+    }
 
     public FolderSummaryDto toFolderSummaryDto(Folder folder) {
         OwnerDto owner = folder.getOwner() == null
@@ -57,7 +90,7 @@ public class ResourceContentMapper {
                 .build();
     }
 
-    public ExamResponseDto toExamDto(Exam exam) {
+    public ExamResponseDto toExamResponseDto(Exam exam) {
         Resource resource = exam.getResource();
         OwnerDto owner = resource.getOwner() == null
                 ? null
@@ -74,7 +107,7 @@ public class ResourceContentMapper {
                 .build();
     }
 
-    public LectureResponseDto toLectureDto(Lecture lecture) {
+    public LectureResponseDto toLectureResponseDto(Lecture lecture) {
         Resource resource = lecture.getResource();
         OwnerDto owner = resource.getOwner() == null
                 ? null
@@ -92,7 +125,7 @@ public class ResourceContentMapper {
                 .build();
     }
 
-    public AssignmentResponseDto toAssignmentDto(Assignment assignment) {
+    public AssignmentResponseDto toAssignmentResponseDto(Assignment assignment) {
         Resource resource = assignment.getResource();
         OwnerDto owner = resource.getOwner() == null
                 ? null
@@ -108,4 +141,5 @@ public class ResourceContentMapper {
                 .owner(owner)
                 .build();
     }
+
 }

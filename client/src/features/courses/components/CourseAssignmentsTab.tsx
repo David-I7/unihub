@@ -7,7 +7,7 @@ import { useCourseAssignments } from "../api/getCourseAssignments";
 interface CourseAssignmentsTabProps {
   communitySlug: string;
   studyYearSlug: string;
-  courseId: number | string;
+  courseSlug: string;
 }
 
 function getRelativeDeadline(date: Date): { text: string; isUrgent: boolean } {
@@ -26,14 +26,14 @@ function getRelativeDeadline(date: Date): { text: string; isUrgent: boolean } {
 export function CourseAssignmentsTab({
   communitySlug,
   studyYearSlug,
-  courseId,
+  courseSlug,
 }: CourseAssignmentsTabProps) {
   const {
     data,
     isLoading,
     isError,
     refetch,
-  } = useCourseAssignments(communitySlug, studyYearSlug, courseId, { size: 20 });
+  } = useCourseAssignments(communitySlug, studyYearSlug, courseSlug, { size: 20 });
 
   const assignments = data?.content ?? [];
 

@@ -26,7 +26,7 @@ interface BreadcrumbItem {
 interface CourseMaterialsTabProps {
   communitySlug: string;
   studyYearSlug: string;
-  courseId: number | string;
+  courseSlug: string;
 }
 
 function formatBytes(bytes: number, decimals = 1): string {
@@ -56,7 +56,7 @@ function getLinkIcon(linkType: string) {
 export function CourseMaterialsTab({
   communitySlug,
   studyYearSlug,
-  courseId,
+  courseSlug,
 }: CourseMaterialsTabProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
     { id: null, name: "Root" },
@@ -73,7 +73,7 @@ export function CourseMaterialsTab({
   } = useCourseMaterials(
     communitySlug,
     studyYearSlug,
-    courseId,
+    courseSlug,
     currentFolderId,
   );
 

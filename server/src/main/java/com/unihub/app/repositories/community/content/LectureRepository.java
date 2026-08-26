@@ -15,5 +15,5 @@ public interface LectureRepository extends JpaRepository<Lecture, UUID> {
         value = "SELECT l FROM Lecture l JOIN FETCH l.resource r LEFT JOIN FETCH r.owner WHERE r.course.id = :courseId",
         countQuery = "SELECT COUNT(l) FROM Lecture l JOIN l.resource r WHERE r.course.id = :courseId"
     )
-    Page<Lecture> findByCourseId(@Param("courseId") int courseId, Pageable pageable);
+    Page<Lecture> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
 }

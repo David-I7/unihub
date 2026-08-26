@@ -19,7 +19,10 @@ import {
   ProtoCommunityPage,
   ProtoStudyYearPage,
   ProtoCoursePage,
+  ProtoCalendarPage,
+  ProtoTeachersPage,
 } from "@/features/prototypes";
+
 
 export const router = createBrowserRouter([
   {
@@ -51,7 +54,16 @@ export const router = createBrowserRouter([
         element: <ProtoCoursePage />,
       },
       {
+        path: "/proto/teachers",
+        element: <ProtoTeachersPage />,
+      },
+      {
+        path: "/proto/calendar",
+        element: <ProtoCalendarPage />,
+      },
+      {
         path: "/communities",
+
         element: <CommunitiesPage />,
       },
       {
@@ -63,7 +75,7 @@ export const router = createBrowserRouter([
         element: <StudyYearDetailPage />,
       },
       {
-        path: "/communities/:communitySlug/study-years/:studyYearSlug/courses/:courseId",
+        path: "/communities/:communitySlug/study-years/:studyYearSlug/courses/:courseSlug",
         element: <CourseDetailPage />,
       },
       {

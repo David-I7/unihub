@@ -5,7 +5,6 @@ import com.unihub.app.config.SecurityConfig;
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.controllers.community.resources.StudyYearController;
 import com.unihub.app.dto.community.resources.CourseSummaryDto;
-import com.unihub.app.dto.community.resources.CourseTeacherDto;
 import com.unihub.app.dto.community.resources.StudyYearDetailResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.exceptions.GlobalExceptionHandler;
@@ -38,6 +37,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.unihub.app.dto.globalResources.TeacherResponseDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -98,7 +99,7 @@ public class StudyYearControllerTests {
     public void testGetStudyYearCourses_Success() throws Exception {
         UUID teacherId = UUID.randomUUID();
 
-        CourseTeacherDto teacherDto = CourseTeacherDto.builder()
+        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
                 .id(teacherId)
                 .firstName("Daniel")
                 .lastName("Dragulici")
@@ -107,8 +108,9 @@ public class StudyYearControllerTests {
                 .build();
 
         CourseSummaryDto courseDto = CourseSummaryDto.builder()
-                .id(1)
+                .id(1L)
                 .name("Arhitectura sistemelor de calcul")
+                .slug("asc")
                 .abbreviation("ASC")
                 .semester(1)
                 .creditPoints(5)
@@ -133,6 +135,7 @@ public class StudyYearControllerTests {
                 .andExpect(jsonPath("$.courses").isArray())
                 .andExpect(jsonPath("$.courses[0].id").value(1))
                 .andExpect(jsonPath("$.courses[0].name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.courses[0].slug").value("asc"))
                 .andExpect(jsonPath("$.courses[0].abbreviation").value("ASC"))
                 .andExpect(jsonPath("$.courses[0].semester").value(1))
                 .andExpect(jsonPath("$.courses[0].creditPoints").value(5))

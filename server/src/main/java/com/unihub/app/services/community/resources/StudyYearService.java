@@ -6,7 +6,7 @@ import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.mappers.community.CourseMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.repositories.community.resources.StudyYearRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ public class StudyYearService {
 
     private final StudyYearRepository studyYearRepository;
     private final CourseRepository courseRepository;
-    private final CourseMapper courseMapper;
+    private final CommunityResourceMapper communityMapper;
 
     @Transactional(readOnly = true)
     public StudyYearDetailResponseDto getStudyYearDetail(String communitySlug, StudyYearName studyYearName, boolean includeArchived) {
@@ -35,10 +35,10 @@ public class StudyYearService {
                 : courseRepository.findActiveByStudyYearIdWithTeachers(studyYear.getId());
 
         List<CourseSummaryDto> summaryDtos = courses.stream()
-                .map(courseMapper::toSummaryDto)
+                .map(communityMapper::toCourseSummaryDto)
                 .toList();
 
-        return courseMapper.toStudyYearDetailDto(studyYear, summaryDtos);
+        return communityMapper.toStudyYearDetailResponseDto(studyYear, summaryDtos);
     }
 
     public List<StudyYearSummaryDto> getStudyYearSummary(String communitySlug) {

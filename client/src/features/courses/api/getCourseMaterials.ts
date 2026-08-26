@@ -5,11 +5,11 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 export async function getCourseMaterials(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   folderId?: string,
 ): Promise<CourseMaterialsResponse> {
   const response = await client.get<CourseMaterialsResponse>(
-    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseId}/materials`,
+    `/communities/${communitySlug}/study-years/${studyYearName}/courses/${courseSlug}/materials`,
     {
       params: folderId ? { folderId } : undefined,
     },
@@ -22,14 +22,14 @@ export const courseMaterialsKeys = {
   byCourse: (
     communitySlug: string,
     studyYearName: string,
-    courseId: number | string,
+    courseSlug: string,
     folderId?: string,
   ) =>
     [
       ...courseMaterialsKeys.all,
       communitySlug,
       studyYearName,
-      String(courseId),
+      courseSlug,
       folderId || "root",
     ] as const,
 };
@@ -37,22 +37,22 @@ export const courseMaterialsKeys = {
 export function useCourseMaterials(
   communitySlug: string,
   studyYearName: string,
-  courseId: number | string,
+  courseSlug: string,
   folderId?: string,
 ) {
   return useQuery({
     queryKey: courseMaterialsKeys.byCourse(
       communitySlug,
       studyYearName,
-      courseId,
+      courseSlug,
       folderId,
     ),
     queryFn: () =>
-      getCourseMaterials(communitySlug, studyYearName, courseId, folderId),
+      getCourseMaterials(communitySlug, studyYearName, courseSlug, folderId),
     placeholderData: keepPreviousData,
     enabled:
       communitySlug.length > 0 &&
       studyYearName.length > 0 &&
-      Boolean(courseId),
+      Boolean(courseSlug),
   });
 }
