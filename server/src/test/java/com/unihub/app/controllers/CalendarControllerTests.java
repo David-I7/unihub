@@ -6,6 +6,8 @@ import com.unihub.app.config.SessionProperties;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
+import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.community.content.EventLocation;
@@ -228,6 +230,120 @@ public class CalendarControllerTests {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.detail").value("User is not a member of this community"));
+    }
+
+    // =========================================================================
+    // POST /api/v1/calendar/events
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid event creation payload
+            When: POST /api/v1/calendar/events is called
+            Then: 201 Created is returned with event details
+            """)
+    public void testCreateEvent_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        OffsetDateTime startTime = OffsetDateTime.now().plusDays(3);
+
+        CreateEventRequestDto requestDto = CreateEventRequestDto.builder()
+                .title("Midterm Exam")
+                .description("Chapter 1-4")
+                .type(EventType.EXAM)
+                .startTime(startTime)
+                .location(EventLocation.IN_PERSON)
+                .locationDetails("Amphitheater A")
+                .courseId(1L)
+                .communitySlug("fmi-info-id")
+                .build();
+
+        EventResponseDto responseDto = EventResponseDto.builder()
+                .id(eventId)
+                .title("Midterm Exam")
+                .description("Chapter 1-4")
+                .type(EventType.EXAM)
+                .startTime(startTime)
+                .location(EventLocation.IN_PERSON)
+                .locationDetails("Amphitheater A")
+                .courseId(1L)
+                .courseSlug("sd")
+                .courseName("Data Structures")
+                .communitySlug("fmi-info-id")
+                .isSubscribed(false)
+                .reminders(List.of())
+                .build();
+
+        when(calendarService.createEvent(eq(userId), any(CreateEventRequestDto.class))).thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(eventId.toString()))
+                .andExpect(jsonPath("$.title").value("Midterm Exam"))
+                .andExpect(jsonPath("$.type").value("EXAM"))
+                .andExpect(jsonPath("$.communitySlug").value("fmi-info-id"));
+    }
+
+    // =========================================================================
+    // PATCH /api/v1/calendar/events/{eventId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid event update payload
+            When: PATCH /api/v1/calendar/events/{eventId} is called
+            Then: 200 OK is returned with updated event
+            """)
+    public void testUpdateEvent_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        OffsetDateTime startTime = OffsetDateTime.now().plusDays(4);
+
+        UpdateEventRequestDto requestDto = UpdateEventRequestDto.builder()
+                .title("Rescheduled Exam")
+                .startTime(startTime)
+                .build();
+
+        EventResponseDto responseDto = EventResponseDto.builder()
+                .id(eventId)
+                .title("Rescheduled Exam")
+                .type(EventType.EXAM)
+                .startTime(startTime)
+                .isSubscribed(false)
+                .reminders(List.of())
+                .build();
+
+        when(calendarService.updateEvent(eq(userId), eq(eventId), any(UpdateEventRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(BASE_URL + "/events/" + eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(eventId.toString()))
+                .andExpect(jsonPath("$.title").value("Rescheduled Exam"));
+    }
+
+    // =========================================================================
+    // DELETE /api/v1/calendar/events/{eventId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: existing event
+            When: DELETE /api/v1/calendar/events/{eventId} is called
+            Then: 204 No Content is returned
+            """)
+    public void testDeleteEvent_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        doNothing().when(calendarService).deleteEvent(userId, eventId);
+
+        mockMvc.perform(delete(BASE_URL + "/events/" + eventId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(calendarService).deleteEvent(userId, eventId);
     }
 
     // =========================================================================

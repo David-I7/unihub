@@ -23,6 +23,13 @@ public interface EventReminderRepository extends JpaRepository<EventReminder, UU
             @Param("now") OffsetDateTime now
     );
 
+    @Query("""
+        SELECT er FROM EventReminder er
+        JOIN FETCH er.user u
+        WHERE er.event.id = :eventId
+    """)
+    List<EventReminder> findByEventIdWithUser(@Param("eventId") UUID eventId);
+
     List<EventReminder> findByEventIdAndStatus(UUID eventId, ReminderStatus status);
 
     List<EventReminder> findByUserIdAndEventId(UUID userId, UUID eventId);

@@ -1,24 +1,22 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
+import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Event;
-import com.unihub.app.entities.community.content.EventLocation;
-import com.unihub.app.entities.community.content.EventReminder;
-import com.unihub.app.entities.community.content.EventType;
-import com.unihub.app.entities.community.content.ReminderStatus;
-import com.unihub.app.entities.community.resources.Community;
-import com.unihub.app.entities.community.resources.Course;
-import com.unihub.app.entities.community.resources.StudyYear;
-import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.entities.authorization.Role;
+import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.resources.*;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.EventRepository;
+import com.unihub.app.repositories.community.content.NotificationRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.services.community.content.CalendarService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,6 +55,12 @@ public class CalendarServiceTests {
     private CommunityMemberRepository communityMemberRepository;
 
     @Mock
+    private CourseRepository courseRepository;
+
+    @Mock
+    private NotificationRepository notificationRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Spy
@@ -91,8 +95,7 @@ public class CalendarServiceTests {
                 .build();
     }
 
-    private Event createTestEvent(UUID id, Community community, Course course, OffsetDateTime startTime) {
-        User owner = User.builder().id(UUID.randomUUID()).username("prof").build();
+    private Event createTestEvent(UUID id, Community community, Course course, OffsetDateTime startTime, User owner) {
         return Event.builder()
                 .id(id)
                 .title("Exam")
@@ -126,7 +129,8 @@ public class CalendarServiceTests {
         Community community = createTestCommunity(communityId, slug);
         Course course = createTestCourse(community);
         OffsetDateTime startTime = OffsetDateTime.now().plusDays(2);
-        Event event = createTestEvent(eventId, community, course, startTime);
+        User owner = User.builder().id(UUID.randomUUID()).username("prof").build();
+        Event event = createTestEvent(eventId, community, course, startTime, owner);
 
         EventReminder reminder = EventReminder.builder()
                 .id(UUID.randomUUID())
@@ -207,6 +211,195 @@ public class CalendarServiceTests {
     }
 
     // =========================================================================
+    // createEvent
+    // =========================================================================
+
+    @Test
+    @DisplayName("createEvent successfully creates and returns event")
+    public void testCreateEvent_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID communityId = UUID.randomUUID();
+        String slug = "fmi-info";
+
+        Community community = createTestCommunity(communityId, slug);
+        Course course = createTestCourse(community);
+        User owner = User.builder().id(userId).username("david").build();
+        OffsetDateTime startTime = OffsetDateTime.now().plusDays(2);
+
+        CreateEventRequestDto requestDto = CreateEventRequestDto.builder()
+                .title("New Exam")
+                .description("Midterm")
+                .type(EventType.EXAM)
+                .startTime(startTime)
+                .location(EventLocation.IN_PERSON)
+                .courseId(1L)
+                .communitySlug(slug)
+                .build();
+
+        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
+        when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(owner));
+        when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
+            Event e = invocation.getArgument(0);
+            e.setId(UUID.randomUUID());
+            e.setCreatedAt(OffsetDateTime.now());
+            e.setUpdatedAt(OffsetDateTime.now());
+            return e;
+        });
+
+        EventResponseDto result = calendarService.createEvent(userId, requestDto);
+
+        assertNotNull(result);
+        assertEquals("New Exam", result.title());
+        assertEquals(EventType.EXAM, result.type());
+        assertEquals(slug, result.communitySlug());
+        assertFalse(result.isSubscribed());
+        verify(eventRepository).save(any(Event.class));
+    }
+
+    @Test
+    @DisplayName("createEvent throws 400 when course does not belong to specified community")
+    public void testCreateEvent_CourseMismatch() {
+        UUID userId = UUID.randomUUID();
+        UUID communityId1 = UUID.randomUUID();
+        UUID communityId2 = UUID.randomUUID();
+
+        Community community1 = createTestCommunity(communityId1, "comm-1");
+        Community community2 = createTestCommunity(communityId2, "comm-2");
+        Course courseFromComm2 = createTestCourse(community2);
+
+        CreateEventRequestDto requestDto = CreateEventRequestDto.builder()
+                .title("Exam")
+                .type(EventType.EXAM)
+                .startTime(OffsetDateTime.now().plusDays(1))
+                .location(EventLocation.IN_PERSON)
+                .courseId(1L)
+                .communitySlug("comm-1")
+                .build();
+
+        when(communityRepository.findBySlug("comm-1")).thenReturn(Optional.of(community1));
+        when(communityMemberRepository.isMemberOfCommunity("comm-1", userId)).thenReturn(true);
+        when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(courseFromComm2));
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> calendarService.createEvent(userId, requestDto)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertEquals("Course does not belong to the specified community", ex.getReason());
+    }
+
+    // =========================================================================
+    // updateEvent
+    // =========================================================================
+
+    @Test
+    @DisplayName("updateEvent updates event and sends notifications to subscribed users")
+    public void testUpdateEvent_Success() {
+        UUID ownerId = UUID.randomUUID();
+        UUID subscriberId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Community community = createTestCommunity(UUID.randomUUID(), "fmi");
+        Course course = createTestCourse(community);
+        OffsetDateTime startTime = OffsetDateTime.now().plusDays(2);
+        User owner = User.builder().id(ownerId).username("owner").build();
+        User subscriber = User.builder().id(subscriberId).username("sub").build();
+        Event event = createTestEvent(eventId, community, course, startTime, owner);
+
+        EventReminder reminder = EventReminder.builder()
+                .id(UUID.randomUUID())
+                .event(event)
+                .user(subscriber)
+                .offsetMinutes(30)
+                .remindAt(startTime.minusMinutes(30))
+                .status(ReminderStatus.PENDING)
+                .build();
+
+        OffsetDateTime newStartTime = startTime.plusDays(1);
+        UpdateEventRequestDto requestDto = UpdateEventRequestDto.builder()
+                .title("Updated Title")
+                .startTime(newStartTime)
+                .build();
+
+        when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.save(any(Event.class))).thenReturn(event);
+        when(reminderRepository.findByEventIdWithUser(eventId)).thenReturn(List.of(reminder));
+        when(reminderRepository.findByUserIdAndEventId(ownerId, eventId)).thenReturn(Collections.emptyList());
+
+        EventResponseDto result = calendarService.updateEvent(ownerId, eventId, requestDto);
+
+        assertNotNull(result);
+        assertEquals("Updated Title", event.getTitle());
+        verify(notificationRepository).save(any(Notification.class));
+        verify(reminderRepository).save(reminder);
+    }
+
+    @Test
+    @DisplayName("updateEvent throws 403 when user is not owner or community admin")
+    public void testUpdateEvent_Forbidden() {
+        UUID ownerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Community community = createTestCommunity(UUID.randomUUID(), "fmi");
+        Course course = createTestCourse(community);
+        User owner = User.builder().id(ownerId).username("owner").build();
+        Event event = createTestEvent(eventId, community, course, OffsetDateTime.now().plusDays(2), owner);
+
+        Role memberRole = Role.builder().name("COMMUNITY_MEMBER").build();
+        CommunityMember member = CommunityMember.builder()
+                .user(User.builder().id(otherUserId).build())
+                .community(community)
+                .role(memberRole)
+                .build();
+
+        when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
+        when(communityMemberRepository.findMemberWithRoleByCommunitySlug("fmi", otherUserId))
+                .thenReturn(Optional.of(member));
+
+        UpdateEventRequestDto requestDto = UpdateEventRequestDto.builder().title("New").build();
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> calendarService.updateEvent(otherUserId, eventId, requestDto)
+        );
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    // =========================================================================
+    // deleteEvent
+    // =========================================================================
+
+    @Test
+    @DisplayName("deleteEvent sends cancellation notification and deletes event")
+    public void testDeleteEvent_Success() {
+        UUID ownerId = UUID.randomUUID();
+        UUID subscriberId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        Community community = createTestCommunity(UUID.randomUUID(), "fmi");
+        Course course = createTestCourse(community);
+        User owner = User.builder().id(ownerId).username("owner").build();
+        User subscriber = User.builder().id(subscriberId).username("sub").build();
+        Event event = createTestEvent(eventId, community, course, OffsetDateTime.now().plusDays(2), owner);
+
+        EventReminder reminder = EventReminder.builder()
+                .id(UUID.randomUUID())
+                .event(event)
+                .user(subscriber)
+                .offsetMinutes(30)
+                .status(ReminderStatus.PENDING)
+                .build();
+
+        when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
+        when(reminderRepository.findByEventIdWithUser(eventId)).thenReturn(List.of(reminder));
+
+        calendarService.deleteEvent(ownerId, eventId);
+
+        verify(notificationRepository).save(any(Notification.class));
+        verify(eventRepository).delete(event);
+    }
+
+    // =========================================================================
     // getEventById
     // =========================================================================
 
@@ -217,7 +410,8 @@ public class CalendarServiceTests {
         UUID eventId = UUID.randomUUID();
         Community community = createTestCommunity(UUID.randomUUID(), "fmi");
         Course course = createTestCourse(community);
-        Event event = createTestEvent(eventId, community, course, OffsetDateTime.now().plusDays(1));
+        User owner = User.builder().id(UUID.randomUUID()).username("prof").build();
+        Event event = createTestEvent(eventId, community, course, OffsetDateTime.now().plusDays(1), owner);
 
         when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
@@ -242,8 +436,8 @@ public class CalendarServiceTests {
         Community community = createTestCommunity(UUID.randomUUID(), "fmi");
         Course course = createTestCourse(community);
         OffsetDateTime startTime = OffsetDateTime.now().plusDays(2);
-        Event event = createTestEvent(eventId, community, course, startTime);
         User user = User.builder().id(userId).username("david").build();
+        Event event = createTestEvent(eventId, community, course, startTime, user);
 
         when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
@@ -276,9 +470,9 @@ public class CalendarServiceTests {
         UUID eventId = UUID.randomUUID();
         Community community = createTestCommunity(UUID.randomUUID(), "fmi");
         Course course = createTestCourse(community);
-        // Start time in 10 minutes, but offset is 30 minutes -> remindAt was 20 minutes ago
+        User user = User.builder().id(userId).username("david").build();
         OffsetDateTime startTime = OffsetDateTime.now().plusMinutes(10);
-        Event event = createTestEvent(eventId, community, course, startTime);
+        Event event = createTestEvent(eventId, community, course, startTime, user);
 
         when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
@@ -303,7 +497,8 @@ public class CalendarServiceTests {
         Community community = createTestCommunity(UUID.randomUUID(), "fmi");
         Course course = createTestCourse(community);
         OffsetDateTime startTime = OffsetDateTime.now().plusDays(1);
-        Event event = createTestEvent(eventId, community, course, startTime);
+        User user = User.builder().id(userId).username("david").build();
+        Event event = createTestEvent(eventId, community, course, startTime, user);
 
         when(eventRepository.findEventByIdWithDetails(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);

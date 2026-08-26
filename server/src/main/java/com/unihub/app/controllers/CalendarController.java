@@ -2,6 +2,8 @@ package com.unihub.app.controllers;
 
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
+import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.community.content.EventType;
@@ -47,11 +49,37 @@ public class CalendarController {
         return ResponseEntity.ok(events);
     }
 
+    @PostMapping("/events")
+    public ResponseEntity<EventResponseDto> createEvent(
+            @RequestBody @Valid CreateEventRequestDto requestDto
+    ) {
+        UserDto user = authorizationService.requireAuthentication().getUserDto();
+        EventResponseDto event = calendarService.createEvent(user.id(), requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(event);
+    }
+
     @GetMapping("/events/{eventId}")
     public ResponseEntity<EventResponseDto> getEventById(@PathVariable UUID eventId) {
         UserDto user = authorizationService.requireAuthentication().getUserDto();
         EventResponseDto event = calendarService.getEventById(user.id(), eventId);
         return ResponseEntity.ok(event);
+    }
+
+    @PatchMapping("/events/{eventId}")
+    public ResponseEntity<EventResponseDto> updateEvent(
+            @PathVariable UUID eventId,
+            @RequestBody @Valid UpdateEventRequestDto requestDto
+    ) {
+        UserDto user = authorizationService.requireAuthentication().getUserDto();
+        EventResponseDto event = calendarService.updateEvent(user.id(), eventId, requestDto);
+        return ResponseEntity.ok(event);
+    }
+
+    @DeleteMapping("/events/{eventId}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable UUID eventId) {
+        UserDto user = authorizationService.requireAuthentication().getUserDto();
+        calendarService.deleteEvent(user.id(), eventId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/events/{eventId}/reminders")

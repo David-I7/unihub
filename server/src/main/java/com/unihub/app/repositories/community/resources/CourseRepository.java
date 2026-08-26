@@ -55,4 +55,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             @Param("communitySlug") String communitySlug,
             @Param("studyYearName") StudyYearName studyYearName
     );
+
+    @Query("""
+        SELECT c FROM Course c
+        JOIN FETCH c.studyYear sy
+        JOIN FETCH sy.community comm
+        WHERE c.id = :courseId
+    """)
+    Optional<Course> findByIdWithStudyYearAndCommunity(@Param("courseId") Long courseId);
 }
