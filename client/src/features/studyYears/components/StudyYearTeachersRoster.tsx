@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { Users, Star } from "lucide-react";
-import type { Teacher, Course } from "../api/types";
+import type { Teacher } from "@/features/teachers";
+import type { CourseTeachers } from "@/features/courses";
 
 interface StudyYearTeachersRosterProps {
-  courses: Course[];
+  courses: CourseTeachers[];
   studyYearName: string;
 }
 
@@ -18,9 +19,9 @@ export function StudyYearTeachersRoster({
   const teachers = useMemo(() => {
     const map = new Map<string, TeacherWithCourses>();
 
-    for (const course of courses) {
-      if (!course.teachers) continue;
-      for (const teacher of course.teachers) {
+    for (const { course, teachers: courseTeachers } of courses) {
+      if (!courseTeachers) continue;
+      for (const teacher of courseTeachers) {
         if (!map.has(teacher.id)) {
           map.set(teacher.id, {
             ...teacher,

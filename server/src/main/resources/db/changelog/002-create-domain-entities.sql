@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset David:002
+--changeset David:002 validCheckSum:9:8afdd2a7dff1bec50cd9d94e965a48f7 validCheckSum:9:734fa4fc2c06994d7971b9362e17be77
 
 CREATE TABLE TEACHERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -211,14 +211,6 @@ CREATE TABLE EVENTS(
     owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
-);
-
-CREATE TABLE EVENT_SUBSCRIPTIONS(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
-    event_id UUID not null REFERENCES EVENTS(id) ON DELETE CASCADE,
-    created_at timestamptz not null default now(),
-    UNIQUE (user_id, event_id)
 );
 
 CREATE TYPE REMINDER_STATUS AS ENUM(

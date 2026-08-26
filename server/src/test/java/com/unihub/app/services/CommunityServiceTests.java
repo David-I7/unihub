@@ -1,14 +1,18 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.resources.CommunityResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.community.resources.CommunityService;
+import com.unihub.app.services.community.resources.StudyYearService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +38,9 @@ public class CommunityServiceTests {
 
     @Mock
     private CommunityRepository communityRepository;
+
+    @Mock
+    private StudyYearService studyYearService;
 
     @Spy
     private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
@@ -138,5 +145,44 @@ public class CommunityServiceTests {
         when(communityRepository.findBySlug("non-existent")).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> communityService.findBySlug("non-existent"));
+    }
+
+    @Test
+    @DisplayName("getCommunityStudyYears returns community and its study years")
+    public void testGetCommunityStudyYears_Success() {
+        UUID communityId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        User owner = User.builder().id(ownerId).username("david").build();
+        OffsetDateTime createdAt = OffsetDateTime.now();
+
+        Community community = Community.builder()
+                .id(communityId)
+                .name("FMI - Informatica ID")
+                .slug("fmi-info-id")
+                .description("Desc")
+                .memberCount(10)
+                .backgroundColor("#2563eb")
+                .verified(true)
+                .createdAt(createdAt)
+                .owner(owner)
+                .build();
+
+        List<StudyYearResponseDto> studyYears = List.of(
+                new StudyYearResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
+        );
+
+        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(studyYearService.getCommunityStudyYears("fmi-info-id")).thenReturn(studyYears);
+
+        CommunityStudyYearsResponseDto result = communityService.getCommunityStudyYears("fmi-info-id");
+
+        assertNotNull(result);
+        assertEquals("fmi-info-id", result.community().slug());
+        assertEquals(2, result.studyYears().size());
+        assertEquals(1, result.studyYears().get(0).id());
+
+        verify(communityRepository).findBySlug("fmi-info-id");
+        verify(studyYearService).getCommunityStudyYears("fmi-info-id");
     }
 }

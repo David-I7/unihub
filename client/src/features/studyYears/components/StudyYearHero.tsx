@@ -15,10 +15,10 @@ export function StudyYearHero({
   community,
   studyYear,
 }: StudyYearHeroProps) {
-  const activeCourses = studyYear.courses.filter((c) => !c.archived);
-  const archivedCourses = studyYear.courses.filter((c) => c.archived);
+  const activeCourses = studyYear.courses.filter((ct) => !ct.course.archived);
+  const archivedCourses = studyYear.courses.filter((ct) => ct.course.archived);
   const totalCredits = activeCourses.reduce(
-    (acc, c) => acc + (c.creditPoints || 0),
+    (acc, ct) => acc + (ct.course.creditPoints || 0),
     0,
   );
 

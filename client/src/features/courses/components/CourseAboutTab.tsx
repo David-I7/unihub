@@ -3,17 +3,14 @@ import remarkGfm from "remark-gfm";
 import { Star, Award, Archive, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Course } from "@/features/studyYears";
+import type { CourseTeachers } from "@/features/courses";
 import { SAMPLE_COURSE_MARKDOWN } from "./sampleCourseMarkdown";
 
-interface CourseAboutTabProps {
-  course: Course;
-}
-
-export function CourseAboutTab({ course }: CourseAboutTabProps) {
-  const teachers = course.teachers ?? [];
-  // Use rich sample markdown for all courses during testing phase
-  const markdownContent = SAMPLE_COURSE_MARKDOWN;
+export function CourseAboutTab({ course, teachers }: CourseTeachers) {
+  // Use course description if provided, otherwise sample rich markdown
+  const markdownContent = course.description?.trim()
+    ? course.description
+    : SAMPLE_COURSE_MARKDOWN;
 
   return (
     <div className="max-w-4xl space-y-8 py-2">
@@ -183,7 +180,9 @@ export function CourseAboutTab({ course }: CourseAboutTabProps) {
               ),
               tr: ({ children }) => <tr>{children}</tr>,
               th: ({ children }) => (
-                <th className="px-4 py-2.5 font-semibold text-foreground">{children}</th>
+                <th className="px-4 py-2.5 font-semibold text-foreground">
+                  {children}
+                </th>
               ),
               td: ({ children }) => (
                 <td className="px-4 py-2.5 text-foreground/90">{children}</td>
@@ -200,7 +199,9 @@ export function CourseAboutTab({ course }: CourseAboutTabProps) {
               ),
               hr: () => <hr className="my-6 border-border/60" />,
               strong: ({ children }) => (
-                <strong className="font-bold text-foreground">{children}</strong>
+                <strong className="font-bold text-foreground">
+                  {children}
+                </strong>
               ),
             }}
           >

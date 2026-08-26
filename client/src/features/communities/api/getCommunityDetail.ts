@@ -1,17 +1,19 @@
 import client from "@/api/client";
-import type { Community } from "./types";
+import type { CommunityStudyYears } from "./types";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 export async function getCommunityDetail(
   communitySlug: string,
-): Promise<Community> {
-  const response = await client.get<Community>(`/communities/${communitySlug}`);
+): Promise<CommunityStudyYears> {
+  const response = await client.get<CommunityStudyYears>(
+    `/communities/${communitySlug}/study-years`,
+  );
   return response.data;
 }
 
 export const communityDetailKeys = {
   all: ["communities"] as const,
-  detail: (slug: string) => [...communityDetailKeys.all, slug] as const,
+  detail: (slug: string) => [...communityDetailKeys.all, slug, "study-years"] as const,
 };
 
 export function useCommunityDetail(communitySlug: string) {

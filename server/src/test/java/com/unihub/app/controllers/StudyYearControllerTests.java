@@ -4,8 +4,10 @@ import com.unihub.app.config.AppConfig;
 import com.unihub.app.config.SecurityConfig;
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.controllers.community.resources.StudyYearController;
-import com.unihub.app.dto.community.resources.CourseSummaryDto;
-import com.unihub.app.dto.community.resources.StudyYearDetailResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearCoursesResponseDto;
+import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.exceptions.GlobalExceptionHandler;
 import com.unihub.app.mappers.ObjectErrorMapper;
@@ -37,8 +39,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
-
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -107,7 +107,7 @@ public class StudyYearControllerTests {
                 .ratingsCount(10)
                 .build();
 
-        CourseSummaryDto courseDto = CourseSummaryDto.builder()
+        CourseResponseDto courseDto = CourseResponseDto.builder()
                 .id(1L)
                 .name("Arhitectura sistemelor de calcul")
                 .slug("asc")
@@ -116,13 +116,17 @@ public class StudyYearControllerTests {
                 .creditPoints(5)
                 .archived(false)
                 .description("Course description")
+                .build();
+
+        CourseTeachersResponseDto courseTeachersDto = CourseTeachersResponseDto.builder()
+                .course(courseDto)
                 .teachers(List.of(teacherDto))
                 .build();
 
-        StudyYearDetailResponseDto responseDto = StudyYearDetailResponseDto.builder()
+        StudyYearCoursesResponseDto responseDto = StudyYearCoursesResponseDto.builder()
                 .id(1)
                 .studyYearName(StudyYearName.YEAR_1)
-                .courses(List.of(courseDto))
+                .courses(List.of(courseTeachersDto))
                 .build();
 
         when(studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false)).thenReturn(responseDto);
@@ -133,14 +137,14 @@ public class StudyYearControllerTests {
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.studyYearName").value("Year 1"))
                 .andExpect(jsonPath("$.courses").isArray())
-                .andExpect(jsonPath("$.courses[0].id").value(1))
-                .andExpect(jsonPath("$.courses[0].name").value("Arhitectura sistemelor de calcul"))
-                .andExpect(jsonPath("$.courses[0].slug").value("asc"))
-                .andExpect(jsonPath("$.courses[0].abbreviation").value("ASC"))
-                .andExpect(jsonPath("$.courses[0].semester").value(1))
-                .andExpect(jsonPath("$.courses[0].creditPoints").value(5))
-                .andExpect(jsonPath("$.courses[0].archived").value(false))
-                .andExpect(jsonPath("$.courses[0].description").value("Course description"))
+                .andExpect(jsonPath("$.courses[0].course.id").value(1))
+                .andExpect(jsonPath("$.courses[0].course.name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.courses[0].course.slug").value("asc"))
+                .andExpect(jsonPath("$.courses[0].course.abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.courses[0].course.semester").value(1))
+                .andExpect(jsonPath("$.courses[0].course.creditPoints").value(5))
+                .andExpect(jsonPath("$.courses[0].course.archived").value(false))
+                .andExpect(jsonPath("$.courses[0].course.description").value("Course description"))
                 .andExpect(jsonPath("$.courses[0].teachers").isArray())
                 .andExpect(jsonPath("$.courses[0].teachers[0].id").value(teacherId.toString()))
                 .andExpect(jsonPath("$.courses[0].teachers[0].firstName").value("Daniel"))

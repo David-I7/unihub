@@ -4,12 +4,13 @@ import { Search, BookOpen, Star, Archive, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { Course } from "../api/types";
+import type { CourseTeachers } from "@/features/courses";
+import type { Teacher } from "@/features/teachers";
 
 type CourseTabFilter = "all" | "sem-1" | "sem-2" | "archived";
 
 interface StudyYearCoursesListProps {
-  courses: Course[];
+  courses: CourseTeachers[];
   communitySlug: string;
   studyYearSlug: string;
 }
@@ -23,19 +24,19 @@ export function StudyYearCoursesList({
   const [searchQuery, setSearchQuery] = useState("");
 
   const activeCourses = useMemo(
-    () => courses.filter((c) => !c.archived),
+    () => courses.filter((ct) => !ct.course.archived),
     [courses],
   );
   const archivedCourses = useMemo(
-    () => courses.filter((c) => c.archived),
+    () => courses.filter((ct) => ct.course.archived),
     [courses],
   );
   const sem1Courses = useMemo(
-    () => activeCourses.filter((c) => c.semester === 1),
+    () => activeCourses.filter((ct) => ct.course.semester === 1),
     [activeCourses],
   );
   const sem2Courses = useMemo(
-    () => activeCourses.filter((c) => c.semester === 2),
+    () => activeCourses.filter((ct) => ct.course.semester === 2),
     [activeCourses],
   );
 
@@ -58,14 +59,14 @@ export function StudyYearCoursesList({
     if (!q) return currentTabCourses;
 
     return currentTabCourses.filter(
-      (course) =>
+      ({ course, teachers }) =>
         course.name.toLowerCase().includes(q) ||
         course.abbreviation.toLowerCase().includes(q) ||
-        (course.teachers &&
-          course.teachers.some(
-            (t) =>
-              t.firstName.toLowerCase().includes(q) ||
-              t.lastName.toLowerCase().includes(q),
+        (teachers &&
+          teachers.some(
+            (t: Teacher) =>
+              t.firstName?.toLowerCase().includes(q) ||
+              t.lastName?.toLowerCase().includes(q),
           )),
     );
   }, [currentTabCourses, searchQuery]);
@@ -186,8 +187,8 @@ export function StudyYearCoursesList({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {filteredCourses.map((course) => {
-            const primaryTeacher = course.teachers?.[0];
+          {filteredCourses.map(({ course, teachers }) => {
+            const primaryTeacher = teachers?.[0];
             const courseUrl = `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${course.slug}`;
 
             return (

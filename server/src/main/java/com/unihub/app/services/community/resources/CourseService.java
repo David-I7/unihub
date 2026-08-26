@@ -4,7 +4,8 @@ import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.content.FolderSummaryDto;
 import com.unihub.app.dto.community.content.MaterialFileDto;
 import com.unihub.app.dto.community.content.MaterialLinkDto;
-import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
@@ -37,7 +38,6 @@ public class CourseService {
     private final ResourceRepository resourceRepository;
     private final CommunityContentMapper contentMapper;
     private final CommunityResourceMapper resourceMapper;
-    private final GlobalResourceMapper globalResourceMapper;
 
     @Transactional(readOnly = true)
     public CourseMaterialsResponseDto getMaterials(
@@ -92,15 +92,14 @@ public class CourseService {
     }
 
     public CourseResponseDto findBySlug(String communitySlug, StudyYearName studyYearName, String courseSlug) {
-        Course course = verifyCourseExists(communitySlug, studyYearName, courseSlug);
+        Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearName(courseSlug, communitySlug, studyYearName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
         return resourceMapper.toCourseResponseDto(course);
     }
 
-    public List<TeacherResponseDto> findCourseTeachers(String communitySlug, StudyYearName studyYearName, String courseSlug) {
+    public CourseTeachersResponseDto getCourseTeachers(String communitySlug, StudyYearName studyYearName, String courseSlug) {
         Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachers(courseSlug, communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-        return course.getTeachers().stream()
-                .map(globalResourceMapper::toTeacherResponseDto)
-                .toList();
+        return resourceMapper.toCourseTeachersResponseDto(course);
     }
 }

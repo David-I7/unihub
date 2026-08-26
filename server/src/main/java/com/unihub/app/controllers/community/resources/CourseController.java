@@ -1,7 +1,8 @@
 package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
-import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.resources.CourseService;
@@ -19,24 +20,14 @@ public class CourseController {
 
     private final CourseService courseService;
 
-    @GetMapping
-    public ResponseEntity<CourseResponseDto> getCourse(
-            @PathVariable String communitySlug,
-            @PathVariable StudyYearName studyYearName,
-            @PathVariable String courseSlug
-    ){
-        CourseResponseDto courseResponse = courseService.findBySlug(communitySlug, studyYearName, courseSlug);
-        return ResponseEntity.ok(courseResponse);
-    }
-
     @GetMapping("/teachers")
-    public ResponseEntity<List<TeacherResponseDto>> getCourseTeachers(
+    public ResponseEntity<CourseTeachersResponseDto> getCourse(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
             @PathVariable String courseSlug
     ){
-        List<TeacherResponseDto> teachers = courseService.findCourseTeachers(communitySlug, studyYearName, courseSlug);
-        return ResponseEntity.ok(teachers);
+        CourseTeachersResponseDto courseResponse = courseService.getCourseTeachers(communitySlug, studyYearName, courseSlug);
+        return ResponseEntity.ok(courseResponse);
     }
 
     @GetMapping("/materials")

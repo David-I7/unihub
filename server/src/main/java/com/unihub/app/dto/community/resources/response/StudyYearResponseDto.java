@@ -1,10 +1,10 @@
-package com.unihub.app.dto.community.resources;
+package com.unihub.app.dto.community.resources.response;
 
 import com.unihub.app.entities.community.resources.StudyYearName;
 import lombok.Builder;
 
 @Builder
-public record StudyYearSummaryDto(
+public record StudyYearResponseDto(
         int id,
         StudyYearName studyYearName,
         long coursesCount,

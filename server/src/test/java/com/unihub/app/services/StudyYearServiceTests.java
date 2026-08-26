@@ -1,7 +1,7 @@
 package com.unihub.app.services;
 
-import com.unihub.app.dto.community.resources.StudyYearDetailResponseDto;
-import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
+import com.unihub.app.dto.community.resources.response.StudyYearCoursesResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -78,17 +78,18 @@ public class StudyYearServiceTests {
 
         when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(studyYear));
-        when(courseRepository.findActiveByStudyYearIdWithTeachers(1))
+        when(courseRepository.findAllActiveByStudyYearIdWithTeachers(1))
                 .thenReturn(List.of(course));
 
-        StudyYearDetailResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false);
+        StudyYearCoursesResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false);
 
         assertNotNull(result);
         assertEquals(1, result.id());
         assertEquals(StudyYearName.YEAR_1, result.studyYearName());
         assertEquals(1, result.courses().size());
 
-        var courseDto = result.courses().get(0);
+        var courseTeacherDto = result.courses().get(0);
+        var courseDto = courseTeacherDto.course();
         assertEquals(1L, courseDto.id());
         assertEquals("Arhitectura sistemelor de calcul", courseDto.name());
         assertEquals("asc", courseDto.slug());
@@ -96,11 +97,11 @@ public class StudyYearServiceTests {
         assertEquals(1, courseDto.semester());
         assertEquals(5, courseDto.creditPoints());
         assertFalse(courseDto.archived());
-        assertEquals(1, courseDto.teachers().size());
-        assertEquals("Daniel", courseDto.teachers().get(0).firstName());
+        assertEquals(1, courseTeacherDto.teachers().size());
+        assertEquals("Daniel", courseTeacherDto.teachers().get(0).firstName());
 
         verify(studyYearRepository).findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1);
-        verify(courseRepository).findActiveByStudyYearIdWithTeachers(1);
+        verify(courseRepository).findAllActiveByStudyYearIdWithTeachers(1);
     }
 
     @Test
@@ -134,12 +135,12 @@ public class StudyYearServiceTests {
         when(courseRepository.findAllByStudyYearIdWithTeachers(1))
                 .thenReturn(List.of(activeCourse, archivedCourse));
 
-        StudyYearDetailResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, true);
+        StudyYearCoursesResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, true);
 
         assertNotNull(result);
         assertEquals(2, result.courses().size());
-        assertFalse(result.courses().get(0).archived());
-        assertTrue(result.courses().get(1).archived());
+        assertFalse(result.courses().get(0).course().archived());
+        assertTrue(result.courses().get(1).course().archived());
 
         verify(courseRepository).findAllByStudyYearIdWithTeachers(1);
     }
@@ -155,22 +156,22 @@ public class StudyYearServiceTests {
     }
 
     @Test
-    @DisplayName("getStudyYearSummary returns list of StudyYearSummaryDto")
-    public void testGetStudyYearSummary() {
-        List<StudyYearSummaryDto> summaries = List.of(
-                new StudyYearSummaryDto(1, StudyYearName.YEAR_1, 6, 0, 30),
-                new StudyYearSummaryDto(2, StudyYearName.YEAR_2, 6, 0, 30)
+    @DisplayName("getCommunityStudyYears returns list of StudyYearResponseDto")
+    public void testGetCommunityStudyYears() {
+        List<StudyYearResponseDto> studyYears = List.of(
+                new StudyYearResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
         );
 
-        when(studyYearRepository.findSummariesByCommunitySlug("fmi-info-id")).thenReturn(summaries);
+        when(studyYearRepository.findStudyYearsByCommunitySlug("fmi-info-id")).thenReturn(studyYears);
 
-        List<StudyYearSummaryDto> result = studyYearService.getStudyYearSummary("fmi-info-id");
+        List<StudyYearResponseDto> result = studyYearService.getCommunityStudyYears("fmi-info-id");
 
         assertNotNull(result);
         assertEquals(2, result.size());
         assertEquals(1, result.get(0).id());
         assertEquals(6, result.get(0).coursesCount());
 
-        verify(studyYearRepository).findSummariesByCommunitySlug("fmi-info-id");
+        verify(studyYearRepository).findStudyYearsByCommunitySlug("fmi-info-id");
     }
 }

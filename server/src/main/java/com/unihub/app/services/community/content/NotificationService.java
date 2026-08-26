@@ -34,24 +34,24 @@ public class NotificationService {
     private final PageMapper pageMapper;
 
     @Transactional(readOnly = true)
-    public PageDto<NotificationResponseDto> getUserNotifications(User user, Pageable pageable) {
-        Page<Notification> page = notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
+    public PageDto<NotificationResponseDto> getUserNotifications(UUID userId, Pageable pageable) {
+        Page<Notification> page = notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return pageMapper.toPageDto(page.map(contentMapper::toNotificationResponseDto));
     }
 
     @Transactional(readOnly = true)
-    public long getUnreadCount(User user) {
-        return notificationRepository.countByUserIdAndIsReadFalse(user.getId());
+    public long getUnreadCount(UUID userId) {
+        return notificationRepository.countByUserIdAndIsReadFalse(userId);
     }
 
     @Transactional
-    public void markAsRead(User user, UUID notificationId) {
-        notificationRepository.markAsReadByIdAndUserId(notificationId, user.getId());
+    public void markAsRead(UUID userId, UUID notificationId) {
+        notificationRepository.markAsReadByIdAndUserId(notificationId, userId);
     }
 
     @Transactional
-    public void markAllAsRead(User user) {
-        notificationRepository.markAllAsReadByUserId(user.getId());
+    public void markAllAsRead(UUID userId) {
+        notificationRepository.markAllAsReadByUserId(userId);
     }
 
     @Scheduled(fixedDelay = 60000)

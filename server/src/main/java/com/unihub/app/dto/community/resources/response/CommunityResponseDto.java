@@ -1,4 +1,4 @@
-package com.unihub.app.dto.community.resources;
+package com.unihub.app.dto.community.resources.response;
 
 
 import com.unihub.app.dto.community.OwnerDto;

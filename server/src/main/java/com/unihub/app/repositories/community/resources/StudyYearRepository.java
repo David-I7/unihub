@@ -1,6 +1,6 @@
 package com.unihub.app.repositories.community.resources;
 
-import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,12 +9,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface StudyYearRepository extends JpaRepository<StudyYear, Integer> {
 
     @Query("""
-        SELECT new com.unihub.app.dto.community.resources.StudyYearSummaryDto(
+        SELECT new com.unihub.app.dto.community.resources.response.StudyYearResponseDto(
             sy.id,
             sy.studyYearName,
             COALESCE(SUM(CASE WHEN c.archived = false THEN 1L ELSE 0L END), 0L),
@@ -27,7 +26,7 @@ public interface StudyYearRepository extends JpaRepository<StudyYear, Integer> {
         GROUP BY sy.id, sy.studyYearName
         ORDER BY sy.studyYearName ASC
     """)
-    List<StudyYearSummaryDto> findSummariesByCommunitySlug(@Param("communitySlug") String communitySlug);
+    List<StudyYearResponseDto> findStudyYearsByCommunitySlug(@Param("communitySlug") String communitySlug);
 
     @Query("SELECT sy FROM StudyYear sy JOIN sy.community c WHERE c.slug = :communitySlug AND sy.studyYearName = :studyYearName")
     Optional<StudyYear> findByCommunitySlugAndStudyYearName(@Param("communitySlug") String communitySlug, @Param("studyYearName") StudyYearName studyYearName);

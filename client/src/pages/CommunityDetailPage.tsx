@@ -8,7 +8,6 @@ import {
   CommunityPostsTab,
   CommunityDetailSkeleton,
 } from "@/features/communities";
-import { useStudyYears } from "@/features/studyYears";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
 
@@ -16,13 +15,14 @@ export default function CommunityDetailPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
 
   const {
-    data: community,
+    data,
     isLoading: isCommunityLoading,
     isError: isCommunityError,
     refetch: refetchCommunity,
   } = useCommunityDetail(communitySlug);
 
-  const { data: studyYears } = useStudyYears(communitySlug);
+  const community = data?.community;
+  const studyYears = data?.studyYears ?? [];
 
   if (isCommunityLoading) {
     return <CommunityDetailSkeleton />;
@@ -87,7 +87,10 @@ export default function CommunityDetailPage() {
             value="study-years"
             className="focus-visible:outline-none"
           >
-            <CommunityStudyYearsTab communitySlug={community.slug} />
+            <CommunityStudyYearsTab
+              communitySlug={community.slug}
+              studyYears={studyYears}
+            />
           </TabsContent>
 
           <TabsContent value="posts" className="focus-visible:outline-none">

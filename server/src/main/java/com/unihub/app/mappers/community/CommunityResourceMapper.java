@@ -1,12 +1,11 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
-import com.unihub.app.dto.community.resources.*;
+import com.unihub.app.dto.community.resources.response.*;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
-import com.unihub.app.entities.globalResources.Teacher;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,35 +33,21 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public Community toCommunity(CommunityRequestDto communityRequestDto) {
-        return Community.builder()
-                .name(communityRequestDto.name())
-                .description(communityRequestDto.description())
-                .backgroundColor(communityRequestDto.backgroundColor())
-                .slug(communityRequestDto.slug())
-                .build();
-    }
-
-    public CourseSummaryDto toCourseSummaryDto(Course course) {
+    public CourseTeachersResponseDto toCourseTeachersResponseDto(Course course) {
         List<TeacherResponseDto> teachers = course.getTeachers() != null
                 ? course.getTeachers().stream().map(globalResourceMapper::toTeacherResponseDto).toList()
                 : Collections.emptyList();
 
-        return CourseSummaryDto.builder()
-                .id(course.getId())
-                .name(course.getName())
-                .slug(course.getSlug())
-                .abbreviation(course.getAbbreviation())
-                .semester(course.getSemester())
-                .creditPoints(course.getCreditPoints())
-                .archived(course.isArchived())
-                .description(course.getDescription())
+        CourseResponseDto courseResponseDto = toCourseResponseDto(course);
+
+        return CourseTeachersResponseDto.builder()
+                .course(courseResponseDto)
                 .teachers(teachers)
                 .build();
     }
 
-    public StudyYearDetailResponseDto toStudyYearDetailResponseDto(StudyYear studyYear, List<CourseSummaryDto> courses) {
-        return StudyYearDetailResponseDto.builder()
+    public StudyYearCoursesResponseDto toStudyYearDetailResponseDto(StudyYear studyYear, List<CourseTeachersResponseDto> courses) {
+        return StudyYearCoursesResponseDto.builder()
                 .id(studyYear.getId())
                 .studyYearName(studyYear.getStudyYearName())
                 .courses(courses)
@@ -79,6 +64,13 @@ public class CommunityResourceMapper {
                 .creditPoints(course.getCreditPoints())
                 .archived(course.isArchived())
                 .description(course.getDescription())
+                .build();
+    }
+
+    public CommunityStudyYearsResponseDto toCommunityStudyYearsResponseDto(CommunityResponseDto community, List<StudyYearResponseDto> studyYears) {
+        return CommunityStudyYearsResponseDto.builder()
+                .community(community)
+                .studyYears(studyYears)
                 .build();
     }
 }

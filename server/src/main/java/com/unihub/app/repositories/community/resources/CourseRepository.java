@@ -17,7 +17,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         WHERE c.studyYear.id = :studyYearId AND c.archived = false
         ORDER BY c.semester ASC, c.name ASC
     """)
-    List<Course> findActiveByStudyYearIdWithTeachers(@Param("studyYearId") int studyYearId);
+    List<Course> findAllActiveByStudyYearIdWithTeachers(@Param("studyYearId") int studyYearId);
 
     @Query("""
         SELECT DISTINCT c FROM Course c
@@ -31,7 +31,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         SELECT c FROM Course c
         JOIN c.studyYear sy
         JOIN sy.community comm
-        JOIN FETCH c.teachers
+        LEFT JOIN FETCH c.teachers
         WHERE c.slug = :courseSlug
           AND comm.slug = :communitySlug
           AND sy.studyYearName = :studyYearName

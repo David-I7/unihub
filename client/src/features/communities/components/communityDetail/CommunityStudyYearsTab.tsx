@@ -1,22 +1,26 @@
-import { StudyYearsGrid, useStudyYears, type StudyYearSummary } from "@/features/studyYears";
+import { StudyYearsGrid, useStudyYears, type StudyYear } from "@/features/studyYears";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 interface CommunityStudyYearsTabProps {
   communitySlug: string;
-  onStudyYearSelect?: (studyYear: StudyYearSummary) => void;
+  studyYears?: StudyYear[];
+  onStudyYearSelect?: (studyYear: StudyYear) => void;
 }
 
 export function CommunityStudyYearsTab({
   communitySlug,
+  studyYears: propStudyYears,
   onStudyYearSelect,
 }: CommunityStudyYearsTabProps) {
   const {
-    data: studyYears = [],
+    data: queriedStudyYears = [],
     isLoading,
     isError,
     refetch,
-  } = useStudyYears(communitySlug);
+  } = useStudyYears(propStudyYears ? "" : communitySlug);
+
+  const studyYears = propStudyYears ?? queriedStudyYears;
 
   if (isLoading) {
     return (

@@ -1,7 +1,8 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
-import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
@@ -209,8 +210,8 @@ public class CourseServiceTests {
     }
 
     @Test
-    @DisplayName("findCourseTeachers returns teachers list")
-    public void testFindCourseTeachers_Success() {
+    @DisplayName("getCourseTeachers returns CourseTeachersResponseDto")
+    public void testGetCourseTeachers_Success() {
         UUID teacherId = UUID.randomUUID();
         Teacher teacher = Teacher.builder()
                 .id(teacherId)
@@ -223,20 +224,28 @@ public class CourseServiceTests {
         Course course = Course.builder()
                 .id(1L)
                 .slug("asc")
+                .name("Arhitectura sistemelor de calcul")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(5)
+                .archived(false)
+                .description("Course description")
                 .teachers(List.of(teacher))
                 .build();
 
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachers("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
 
-        List<TeacherResponseDto> result = courseService.findCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc");
+        CourseTeachersResponseDto result = courseService.getCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc");
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(teacherId, result.get(0).id());
-        assertEquals("Daniel", result.get(0).firstName());
-        assertEquals("Dragulici", result.get(0).lastName());
-        assertEquals(4.8f, result.get(0).averageRating());
-        assertEquals(15, result.get(0).ratingsCount());
+        assertEquals(1L, result.course().id());
+        assertEquals("asc", result.course().slug());
+        assertEquals(1, result.teachers().size());
+        assertEquals(teacherId, result.teachers().get(0).id());
+        assertEquals("Daniel", result.teachers().get(0).firstName());
+        assertEquals("Dragulici", result.teachers().get(0).lastName());
+        assertEquals(4.8f, result.teachers().get(0).averageRating());
+        assertEquals(15, result.teachers().get(0).ratingsCount());
     }
 }

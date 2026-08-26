@@ -1,4 +1,4 @@
-import type { StudyYearSummary } from "@/features/studyYears";
+import type { StudyYear } from "@/features/studyYears";
 import type {
   CommunicationChannel,
   Comment,
@@ -25,10 +25,9 @@ export type CreateCommunityDto = {
   slug: string;
 };
 
-export type {
-  StudyYearSummary,
-  CommunicationChannel,
-  Comment,
-  Post,
-  ResourceOwner,
+export type CommunityStudyYears = {
+  community: Community;
+  studyYears: StudyYear[];
 };
+
+export type { StudyYear, CommunicationChannel, Comment, Post, ResourceOwner };

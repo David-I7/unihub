@@ -8,11 +8,11 @@ import { computeThemeGradient } from "@/lib/gradientUtils";
 import { useThemeStore } from "@/store/useThemeStore";
 import { CommunityBreadcrumb } from "../CommunityBreadcrumb";
 import type { Community } from "../../api/types";
-import type { StudyYearSummary } from "@/features/studyYears";
+import type { StudyYear } from "@/features/studyYears";
 
 interface CommunityHeroProps {
   community: Community;
-  studyYears?: StudyYearSummary[];
+  studyYears?: StudyYear[];
   isInitiallyJoined?: boolean;
   onJoinToggle?: (communityId: string, isJoined: boolean) => void;
 }
@@ -40,13 +40,13 @@ export function CommunityHero({
   };
 
   const totalCourses = studyYears.reduce(
-    (acc: number, year: StudyYearSummary) =>
+    (acc: number, year: StudyYear) =>
       acc + (year.coursesCount || 0) + (year.archivedCoursesCount || 0),
     0,
   );
 
   const totalCredits = studyYears.reduce(
-    (acc: number, year: StudyYearSummary) => acc + (year.creditsCount || 0),
+    (acc: number, year: StudyYear) => acc + (year.creditsCount || 0),
     0,
   );
 

@@ -1,3 +1,4 @@
+import type { Teacher } from "@/features/teachers/api/types";
 import type { ResourceOwner } from "@/types/domain";
 
 export interface CourseMaterialFolder {
@@ -35,33 +36,19 @@ export interface CourseMaterialsResponse {
   links: CourseMaterialLink[];
 }
 
-export interface CourseExam {
-  id: string;
-  title: string;
-  description: string;
-  scheduledDate: string;
-  estimatedDurationMinutes: number;
-  createdAt: string;
-  owner: ResourceOwner;
+export interface Course {
+  id: number;
+  name: string;
+  slug: string;
+  abbreviation: string;
+  semester: number;
+  creditPoints: number;
+  archived: boolean;
+  description?: string;
+  createdAt?: string;
 }
 
-export interface CourseLecture {
-  id: string;
-  title: string;
-  description: string;
-  startTime: string;
-  endTime: string;
-  location: "ONLINE" | "IN_PERSON";
-  createdAt: string;
-  owner: ResourceOwner;
-}
-
-export interface CourseAssignment {
-  id: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  estimatedDurationMinutes: number;
-  createdAt: string;
-  owner: ResourceOwner;
+export interface CourseTeachers {
+  course: Course;
+  teachers: Teacher[];
 }

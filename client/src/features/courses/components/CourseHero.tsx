@@ -2,7 +2,8 @@ import { BookOpen, Star, Archive, ArrowLeft } from "lucide-react";
 import { Link } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import type { Course } from "@/features/studyYears";
+import type { Teacher } from "@/features/teachers/api/types";
+import type { Course } from "../api/types";
 import type { Community } from "@/features/communities";
 
 interface CourseHeroProps {
@@ -10,6 +11,7 @@ interface CourseHeroProps {
   studyYearSlug: string;
   studyYearName?: string;
   course: Course;
+  teachers?: Teacher[];
 }
 
 export function CourseHero({
@@ -17,6 +19,7 @@ export function CourseHero({
   studyYearSlug,
   studyYearName,
   course,
+  teachers = [],
 }: CourseHeroProps) {
   return (
     <div className="rounded-2xl border bg-card p-6 md:p-8 shadow-xs space-y-6">
@@ -81,13 +84,13 @@ export function CourseHero({
         </div>
 
         {/* Assigned Teachers Chips */}
-        {course.teachers && course.teachers.length > 0 && (
+        {teachers && teachers.length > 0 && (
           <div className="flex flex-col gap-2 shrink-0 md:max-w-xs">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Instructors
             </span>
             <div className="space-y-2">
-              {course.teachers.map((teacher) => (
+              {teachers.map((teacher) => (
                 <div
                   key={teacher.id}
                   className="flex items-center gap-3 rounded-xl border bg-muted/20 p-3 shadow-2xs"

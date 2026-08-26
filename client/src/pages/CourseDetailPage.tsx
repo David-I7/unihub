@@ -3,19 +3,15 @@ import {
   Info,
   FolderOpen,
   Calendar,
-  CheckSquare,
-  Video,
   MessageSquare,
   ArrowLeft,
 } from "lucide-react";
-import { useCommunityDetail, CommunityBreadcrumb, CommunityPostsTab } from "@/features/communities";
-import { useStudyYearDetail } from "@/features/studyYears";
+import { CommunityBreadcrumb, CommunityPostsTab } from "@/features/communities";
 import {
+  useCourseTeachers,
   CourseAboutTab,
   CourseMaterialsTab,
-  CourseExamsTab,
-  CourseAssignmentsTab,
-  CourseLecturesTab,
+  CourseEventsTab,
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -33,32 +29,17 @@ export default function CourseDetailPage() {
   }>();
 
   const {
-    data: community,
-    isLoading: isCommunityLoading,
-    isError: isCommunityError,
-  } = useCommunityDetail(communitySlug);
-
-  const {
-    data: studyYear,
-    isLoading: isStudyYearLoading,
-    isError: isStudyYearError,
+    data: courseTeachers,
+    isLoading,
+    isError,
     refetch,
-  } = useStudyYearDetail(communitySlug, studyYearSlug, {
-    includeArchived: true,
-  });
-
-  const isLoading = isCommunityLoading || isStudyYearLoading;
-  const isError = isCommunityError || isStudyYearError;
+  } = useCourseTeachers(communitySlug, studyYearSlug, courseSlug);
 
   if (isLoading) {
     return <CourseSkeleton />;
   }
 
-  const course = studyYear?.courses.find(
-    (c) => c.slug === courseSlug,
-  );
-
-  if (isError || !community || !studyYear || !course) {
+  if (isError || !courseTeachers) {
     return (
       <div className="min-h-full space-y-6 pb-12">
         <CommunityBreadcrumb />
@@ -109,25 +90,18 @@ export default function CourseDetailPage() {
               <span>Posts & Discussions</span>
             </TabsTrigger>
 
-            <TabsTrigger value="exams">
+            <TabsTrigger value="events">
               <Calendar className="size-4" />
-              <span>Exams</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="assignments">
-              <CheckSquare className="size-4" />
-              <span>Assignments</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="lectures">
-              <Video className="size-4" />
-              <span>Lectures</span>
+              <span>Calendar & Events</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
         <TabsContent value="about" className="focus-visible:outline-none">
-          <CourseAboutTab course={course} />
+          <CourseAboutTab
+            course={courseTeachers.course}
+            teachers={courseTeachers.teachers}
+          />
         </TabsContent>
 
         <TabsContent value="materials" className="focus-visible:outline-none">
@@ -142,24 +116,8 @@ export default function CourseDetailPage() {
           <CommunityPostsTab communitySlug={communitySlug} />
         </TabsContent>
 
-        <TabsContent value="exams" className="focus-visible:outline-none">
-          <CourseExamsTab
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            courseSlug={courseSlug}
-          />
-        </TabsContent>
-
-        <TabsContent value="assignments" className="focus-visible:outline-none">
-          <CourseAssignmentsTab
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            courseSlug={courseSlug}
-          />
-        </TabsContent>
-
-        <TabsContent value="lectures" className="focus-visible:outline-none">
-          <CourseLecturesTab
+        <TabsContent value="events" className="focus-visible:outline-none">
+          <CourseEventsTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}
             courseSlug={courseSlug}

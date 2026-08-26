@@ -9,7 +9,8 @@ import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.content.FolderSummaryDto;
 import com.unihub.app.dto.community.content.MaterialFileDto;
 import com.unihub.app.dto.community.content.MaterialLinkDto;
-import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.content.MaterialLinkType;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -94,17 +95,17 @@ public class CourseControllerTests {
     private RoleRepository roleRepository;
 
     // =========================================================================
-    // GET / (getCourse)
+    // GET /teachers (getCourse)
     // =========================================================================
 
     @Test
     @DisplayName("""
             Given: course exists
-            When: GET .../courses/asc is called
-            Then: 200 OK is returned with CourseResponseDto
+            When: GET .../courses/asc/teachers is called
+            Then: 200 OK is returned with CourseTeachersResponseDto
             """)
     public void testGetCourse_Success() throws Exception {
-        CourseResponseDto courseResponse = CourseResponseDto.builder()
+        CourseResponseDto courseDto = CourseResponseDto.builder()
                 .id(1L)
                 .name("Arhitectura sistemelor de calcul")
                 .slug("asc")
@@ -115,56 +116,28 @@ public class CourseControllerTests {
                 .description("Course description")
                 .build();
 
-        when(courseService.findBySlug("fmi-info-id", StudyYearName.YEAR_1, "asc"))
-                .thenReturn(courseResponse);
+        TeacherResponseDto teacherDto = new TeacherResponseDto(UUID.randomUUID(), "Daniel", "Dragulici", 4.8f, 15, OffsetDateTime.now());
 
-        mockMvc.perform(get(BASE_URL)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").value("Arhitectura sistemelor de calcul"))
-                .andExpect(jsonPath("$.slug").value("asc"))
-                .andExpect(jsonPath("$.abbreviation").value("ASC"))
-                .andExpect(jsonPath("$.semester").value(1))
-                .andExpect(jsonPath("$.creditPoints").value(5))
-                .andExpect(jsonPath("$.archived").value(false))
-                .andExpect(jsonPath("$.description").value("Course description"));
-    }
-
-    // =========================================================================
-    // GET /teachers (getCourseTeachers)
-    // =========================================================================
-
-    @Test
-    @DisplayName("""
-            Given: course exists with teachers
-            When: GET .../courses/asc/teachers is called
-            Then: 200 OK is returned with teachers list
-            """)
-    public void testGetCourseTeachers_Success() throws Exception {
-        UUID teacherId = UUID.randomUUID();
-        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
-                .id(teacherId)
-                .firstName("Daniel")
-                .lastName("Dragulici")
-                .averageRating(4.8f)
-                .ratingsCount(15)
-                .createdAt(OffsetDateTime.now())
+        CourseTeachersResponseDto courseResponse = CourseTeachersResponseDto.builder()
+                .course(courseDto)
+                .teachers(List.of(teacherDto))
                 .build();
 
-        when(courseService.findCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc"))
-                .thenReturn(List.of(teacherDto));
+        when(courseService.getCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc"))
+                .thenReturn(courseResponse);
 
         mockMvc.perform(get(BASE_URL + "/teachers")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].id").value(teacherId.toString()))
-                .andExpect(jsonPath("$[0].firstName").value("Daniel"))
-                .andExpect(jsonPath("$[0].lastName").value("Dragulici"))
-                .andExpect(jsonPath("$[0].averageRating").value(4.8))
-                .andExpect(jsonPath("$[0].ratingsCount").value(15));
+                .andExpect(jsonPath("$.course.id").value(1))
+                .andExpect(jsonPath("$.course.name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.course.slug").value("asc"))
+                .andExpect(jsonPath("$.course.abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.course.semester").value(1))
+                .andExpect(jsonPath("$.course.creditPoints").value(5))
+                .andExpect(jsonPath("$.course.archived").value(false))
+                .andExpect(jsonPath("$.course.description").value("Course description"))
+                .andExpect(jsonPath("$.teachers[0].firstName").value("Daniel"));
     }
 
     // =========================================================================

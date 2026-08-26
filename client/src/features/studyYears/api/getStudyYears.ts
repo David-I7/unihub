@@ -1,14 +1,17 @@
 import client from "@/api/client";
-import type { StudyYearSummary } from "./types";
+import type { StudyYear } from "./types";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 export async function getStudyYears(
   communitySlug: string,
-): Promise<StudyYearSummary[]> {
-  const response = await client.get<StudyYearSummary[]>(
+): Promise<StudyYear[]> {
+  const response = await client.get<{ studyYears?: StudyYear[] } | StudyYear[]>(
     `/communities/${communitySlug}/study-years`,
   );
-  return response.data;
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+  return response.data.studyYears ?? [];
 }
 
 export const studyYearsKeys = {

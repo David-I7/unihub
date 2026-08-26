@@ -1,9 +1,9 @@
 import { ArrowRight, Archive } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { type StudyYearSummary } from "../api/types";
+import { type StudyYear } from "../api/types";
 
 interface StudyYearCardProps {
-  studyYear: StudyYearSummary;
+  studyYear: StudyYear;
   communitySlug?: string;
   onClick?: () => void;
 }
