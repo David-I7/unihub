@@ -1,11 +1,17 @@
 package com.unihub.app.services.authentication;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.user.UserCommunitiesResponseDto;
+import com.unihub.app.dto.user.UserEnrolledCommunityDto;
+import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
 import com.unihub.app.entities.authorization.Role;
+import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.Random;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +37,8 @@ public class UserService {
     private final UserIdentityService userIdentityService;
 
     private final RoleService roleService;
+
+    private final CommunityMemberRepository communityMemberRepository;
 
     @Transactional
     public User register(User user) {
@@ -214,5 +222,48 @@ public class UserService {
     public User findById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public UserProfileResponseDto getUserProfile(UUID userId) {
+        User user = findById(userId);
+        String roleName = user.getRole() != null ? user.getRole().getName() : null;
+        List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
+        return new UserProfileResponseDto(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                roleName,
+                permissions,
+                user.getCreatedAt()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public UserCommunitiesResponseDto getUserEnrolledCommunities(UUID userId) {
+        List<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId);
+
+        List<UserEnrolledCommunityDto> communities = memberships.stream().map(membership -> {
+            Community community = membership.getCommunity();
+            String roleName = membership.getRole() != null ? membership.getRole().getName() : null;
+            List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
+            return new UserEnrolledCommunityDto(
+                    community.getId(),
+                    community.getName(),
+                    community.getSlug(),
+                    community.getDescription(),
+                    (long) community.getMemberCount(),
+                    roleName,
+                    permissions,
+                    membership.getJoinedAt()
+            );
+        }).toList();
+
+        List<String> aggregatedPermissions = communities.stream()
+                .flatMap(c -> c.permissions().stream())
+                .distinct()
+                .toList();
+
+        return new UserCommunitiesResponseDto(communities, aggregatedPermissions);
     }
 }

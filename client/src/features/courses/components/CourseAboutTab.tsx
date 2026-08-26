@@ -43,10 +43,6 @@ export function CourseAboutTab({ course, teachers }: CourseTeachers) {
               </Badge>
             )}
           </div>
-
-          <h1 className="font-heading text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
-            {course.name}
-          </h1>
         </div>
 
         {/* Professors & Faculty Section */}

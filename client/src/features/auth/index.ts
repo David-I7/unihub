@@ -1,6 +1,7 @@
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import NonAuthenticatedRoute from "@/features/auth/components/NonAuthenticatedRoute";
+import AuthenticatedRoute from "@/features/auth/components/AuthenticatedRoute";
 import {
   loginSchema,
   registerSchema,
@@ -18,6 +19,7 @@ export {
   Logout,
   LoginForm,
   NonAuthenticatedRoute,
+  AuthenticatedRoute,
   useAuthStore,
   loginSchema,
   registerSchema,

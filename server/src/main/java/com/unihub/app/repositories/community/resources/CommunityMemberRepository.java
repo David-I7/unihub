@@ -20,5 +20,11 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
 
     @Query("SELECT cm FROM CommunityMember cm JOIN FETCH cm.role WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     java.util.Optional<CommunityMember> findMemberWithRoleByCommunitySlug(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
+
+    @Query("SELECT cm FROM CommunityMember cm " +
+           "JOIN FETCH cm.community c " +
+           "LEFT JOIN FETCH cm.role r " +
+           "WHERE cm.user.id = :userId")
+    List<CommunityMember> findMembershipsByUserIdWithCommunityAndRole(@Param("userId") UUID userId);
 }
 

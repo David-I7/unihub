@@ -1,17 +1,10 @@
 import { useParams, Link } from "react-router";
-import {
-  Info,
-  FolderOpen,
-  Calendar,
-  MessageSquare,
-  ArrowLeft,
-} from "lucide-react";
+import { Info, FolderOpen, MessageSquare, ArrowLeft } from "lucide-react";
 import { CommunityBreadcrumb, CommunityPostsTab } from "@/features/communities";
 import {
   useCourseTeachers,
   CourseAboutTab,
   CourseMaterialsTab,
-  CourseEventsTab,
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -42,6 +35,9 @@ export default function CourseDetailPage() {
   if (isError || !courseTeachers) {
     return (
       <div className="min-h-full space-y-6 pb-12">
+        <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
+          Failed to load {courseSlug} details.
+        </h1>
         <CommunityBreadcrumb />
         <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center space-y-3">
           <p className="text-sm font-semibold text-destructive">
@@ -69,6 +65,10 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
+      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
+        {courseTeachers.course.name}{" "}
+      </h1>
+
       <CommunityBreadcrumb />
 
       {/* Course Tabs (Top Navigation) */}
@@ -88,11 +88,6 @@ export default function CourseDetailPage() {
             <TabsTrigger value="discussions">
               <MessageSquare className="size-4" />
               <span>Posts & Discussions</span>
-            </TabsTrigger>
-
-            <TabsTrigger value="events">
-              <Calendar className="size-4" />
-              <span>Calendar & Events</span>
             </TabsTrigger>
           </TabsList>
         </div>
@@ -114,14 +109,6 @@ export default function CourseDetailPage() {
 
         <TabsContent value="discussions" className="focus-visible:outline-none">
           <CommunityPostsTab communitySlug={communitySlug} />
-        </TabsContent>
-
-        <TabsContent value="events" className="focus-visible:outline-none">
-          <CourseEventsTab
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            courseSlug={courseSlug}
-          />
         </TabsContent>
       </Tabs>
     </div>

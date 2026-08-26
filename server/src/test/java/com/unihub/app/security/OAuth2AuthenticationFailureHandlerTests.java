@@ -10,7 +10,9 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.services.JwtService;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserIdentityService;
@@ -20,9 +22,8 @@ import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -33,25 +34,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@WebMvcTest(AuthController.class)
-@EnableConfigurationProperties(SessionProperties.class)
-@Import({
-        AppConfig.class,
-        SecurityConfig.class,
-        OAuth2AuthenticationFailureHandler.class,
-        OAuth2AuthenticationSuccessHandler.class,
-        OAuth2ProviderUserInfoExtractor.class,
-        RoleService.class,
-        JwtSessionManagementFilter.class,
-        SessionService.class,
-        UserService.class,
-        JwtService.class,
-        UserMapper.class,
-        UserIdentityService.class,
-        ObjectErrorMapper.class,
-        ProblemDetailUtil.class,
-        GlobalExceptionHandler.class
-})
+@SpringBootTest
+@AutoConfigureMockMvc
 public class OAuth2AuthenticationFailureHandlerTests {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";
@@ -70,6 +54,12 @@ public class OAuth2AuthenticationFailureHandlerTests {
 
     @MockitoBean
     private RoleRepository roleRepository;
+
+    @MockitoBean
+    private PermissionRepository permissionRepository;
+
+    @MockitoBean
+    private CommunityMemberRepository communityMemberRepository;
 
     @Test
     @DisplayName("""

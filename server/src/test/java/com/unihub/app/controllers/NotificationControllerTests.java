@@ -14,7 +14,9 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.security.JwtSessionManagementFilter;
 import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
@@ -32,9 +34,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -53,27 +54,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(NotificationController.class)
-@EnableConfigurationProperties(SessionProperties.class)
-@Import({
-        AppConfig.class,
-        SecurityConfig.class,
-        OAuth2AuthenticationFailureHandler.class,
-        OAuth2AuthenticationSuccessHandler.class,
-        OAuth2ProviderUserInfoExtractor.class,
-        RoleService.class,
-        JwtSessionManagementFilter.class,
-        SessionService.class,
-        UserService.class,
-        JwtService.class,
-        UserMapper.class,
-        UserIdentityService.class,
-        PageMapper.class,
-        ObjectErrorMapper.class,
-        ProblemDetailUtil.class,
-        GlobalExceptionHandler.class,
-        AuthorizationService.class
-})
+@SpringBootTest
+@AutoConfigureMockMvc
 public class NotificationControllerTests {
 
     private static final String BASE_URL = "/api/v1/notifications";
@@ -95,6 +77,12 @@ public class NotificationControllerTests {
 
     @MockitoBean
     private RoleRepository roleRepository;
+
+    @MockitoBean
+    private PermissionRepository permissionRepository;
+
+    @MockitoBean
+    private CommunityMemberRepository communityMemberRepository;
 
     private UUID userId;
     private UserDto userDto;

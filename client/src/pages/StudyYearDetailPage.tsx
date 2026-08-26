@@ -57,6 +57,10 @@ export default function StudyYearDetailPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
+      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
+        {studyYear.studyYearName} <span className="">Courses</span>
+      </h1>
+
       <CommunityBreadcrumb />
 
       {/* Courses List with Full-width Semester & Archived Tabs and Search */}

@@ -40,106 +40,132 @@ export function LoginForm({
   } = useLoginForm();
 
   return (
-    <form
-      className={cn("flex flex-col gap-6", className)}
-      onSubmit={handleSubmit}
-      noValidate
-      {...props}
-    >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Login to your account</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Enter your email or username below to login to your account
-          </p>
-        </div>
-
-        {serverError && (
-          <FieldError className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-center text-sm">
-            {serverError}
-          </FieldError>
+    <div className="flex flex-1 min-h-full w-full flex-col items-center justify-center p-4 my-auto animate-in fade-in duration-200">
+      <form
+        className={cn(
+          "w-full max-w-md rounded-2xl border bg-card p-6 sm:p-8 shadow-xs flex flex-col gap-6",
+          className,
         )}
-
-        <Field data-invalid={isInvalid("identifier")}>
-          <FieldLabel htmlFor="identifier">Email or Username</FieldLabel>
-          <Input
-            {...getFieldProps("identifier")}
-            type="text"
-            placeholder="john_doe@example.com or john_doe"
-            autoComplete="username"
-          />
-          {touched.identifier && errors.identifier && (
-            <FieldError errors={[{ message: errors.identifier }]} />
-          )}
-        </Field>
-
-        <Field data-invalid={isInvalid("password")}>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a
-              href="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Forgot your password?
-            </a>
-          </div>
-          <Input
-            {...getFieldProps("password")}
-            type="password"
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-          {touched.password && errors.password && (
-            <FieldError errors={[{ message: errors.password }]} />
-          )}
-        </Field>
-
-        <Field>
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? "Logging in..." : "Login"}
-          </Button>
-        </Field>
-
-        <FieldSeparator>Or</FieldSeparator>
-
+        onSubmit={handleSubmit}
+        noValidate
+        {...props}
+      >
         <FieldGroup>
-          <Field>
-            <GoogleLogin
-              onOpen={() => handleOpen("GOOGLE")}
-              onSuccess={handleProviderSuccess}
-              onFailure={handleFailure}
-              onClose={handleClose}
-              disabled={activeProvider !== null}
+          <div className="flex flex-col items-center gap-1 text-center">
+            <h1 className="text-2xl font-bold font-heading text-foreground">
+              Login to your account
+            </h1>
+            <p className="text-xs text-balance text-muted-foreground">
+              Enter your email or username below to login to your account
+            </p>
+          </div>
+
+          {serverError && (
+            <FieldError className="rounded-md border border-destructive/20 bg-destructive/10 p-3 text-center text-xs">
+              {serverError}
+            </FieldError>
+          )}
+
+          <Field data-invalid={isInvalid("identifier")}>
+            <FieldLabel htmlFor="identifier" className="text-xs font-semibold">
+              Email or Username
+            </FieldLabel>
+            <Input
+              {...getFieldProps("identifier")}
+              type="text"
+              placeholder="john_doe@example.com or john_doe"
+              autoComplete="username"
+              className="h-9 text-xs"
             />
-            {providerLoginError && providerLoginError.provider === "GOOGLE" && (
-              <FieldError errors={[{ message: providerLoginError.message }]} />
+            {touched.identifier && errors.identifier && (
+              <FieldError errors={[{ message: errors.identifier }]} />
             )}
           </Field>
-          <Field>
-            <GithubLogin
-              onOpen={() => handleOpen("GITHUB")}
-              onSuccess={handleProviderSuccess}
-              onFailure={handleFailure}
-              onClose={handleClose}
-              disabled={activeProvider !== null}
+
+          <Field data-invalid={isInvalid("password")}>
+            <div className="flex items-center">
+              <FieldLabel htmlFor="password" className="text-xs font-semibold">
+                Password
+              </FieldLabel>
+              <a
+                href="#"
+                className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+              >
+                Forgot your password?
+              </a>
+            </div>
+            <Input
+              {...getFieldProps("password")}
+              type="password"
+              placeholder="••••••••"
+              autoComplete="current-password"
+              className="h-9 text-xs"
             />
-            {providerLoginError && providerLoginError.provider === "GITHUB" && (
-              <FieldError errors={[{ message: providerLoginError.message }]} />
+            {touched.password && errors.password && (
+              <FieldError errors={[{ message: errors.password }]} />
             )}
           </Field>
-          <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
+
+          <Field>
             <Button
-              type="button"
-              size="link"
-              onClick={() => navigate("/register")}
-              variant="link"
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-9 font-semibold text-xs cursor-pointer"
             >
-              Sign up
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
-          </FieldDescription>
+          </Field>
+
+          <FieldSeparator className="text-xs text-muted-foreground">
+            Or
+          </FieldSeparator>
+
+          <FieldGroup>
+            <Field>
+              <GoogleLogin
+                onOpen={() => handleOpen("GOOGLE")}
+                onSuccess={handleProviderSuccess}
+                onFailure={handleFailure}
+                onClose={handleClose}
+                disabled={activeProvider !== null}
+              />
+              {providerLoginError &&
+                providerLoginError.provider === "GOOGLE" && (
+                  <FieldError
+                    errors={[{ message: providerLoginError.message }]}
+                  />
+                )}
+            </Field>
+            <Field>
+              <GithubLogin
+                onOpen={() => handleOpen("GITHUB")}
+                onSuccess={handleProviderSuccess}
+                onFailure={handleFailure}
+                onClose={handleClose}
+                disabled={activeProvider !== null}
+              />
+              {providerLoginError &&
+                providerLoginError.provider === "GITHUB" && (
+                  <FieldError
+                    errors={[{ message: providerLoginError.message }]}
+                  />
+                )}
+            </Field>
+            <FieldDescription className="text-center text-xs">
+              Don&apos;t have an account?{" "}
+              <Button
+                type="button"
+                size="link"
+                onClick={() => navigate("/register")}
+                variant="link"
+                className="text-xs font-semibold cursor-pointer"
+              >
+                Sign up
+              </Button>
+            </FieldDescription>
+          </FieldGroup>
         </FieldGroup>
-      </FieldGroup>
-    </form>
+      </form>
+    </div>
   );
 }

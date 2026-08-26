@@ -25,9 +25,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -50,24 +49,8 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@WebMvcTest(AuthController.class)
-@EnableConfigurationProperties(SessionProperties.class)
-@Import({
-        AppConfig.class,
-        SecurityConfig.class,
-        OAuth2AuthenticationFailureHandler.class,
-        OAuth2AuthenticationSuccessHandler.class,
-        OAuth2ProviderUserInfoExtractor.class,
-        RoleService.class,
-        JwtSessionManagementFilter.class,
-        SessionService.class,
-        UserService.class,
-        JwtService.class,
-        UserMapper.class,
-        UserIdentityService.class,
-        ObjectErrorMapper.class,
-        ProblemDetailUtil.class
-})
+@SpringBootTest
+@AutoConfigureMockMvc
 public class OAuth2AuthenticationSuccessHandlerTests {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";

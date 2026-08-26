@@ -7,11 +7,13 @@ import CommunitiesPage from "../pages/CommunitiesPage";
 import CommunityDetailPage from "../pages/CommunityDetailPage";
 import StudyYearDetailPage from "../pages/StudyYearDetailPage";
 import CourseDetailPage from "../pages/CourseDetailPage";
+import CalendarPage from "../pages/CalendarPage";
 
 import {
   LoginForm,
   RegisterForm,
   NonAuthenticatedRoute,
+  AuthenticatedRoute,
 } from "@/features/auth";
 import {
   ProtoHomePage,
@@ -60,6 +62,14 @@ export const router = createBrowserRouter([
       {
         path: "/proto/calendar",
         element: <ProtoCalendarPage />,
+      },
+      {
+        path: "/calendar",
+        element: (
+          <AuthenticatedRoute>
+            <CalendarPage />
+          </AuthenticatedRoute>
+        ),
       },
       {
         path: "/communities",
