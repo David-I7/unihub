@@ -1,5 +1,5 @@
 package com.unihub.app.entities.community.content;
 
-public enum LectureLocation {
+public enum EventLocation {
     ONLINE, IN_PERSON, HYBRID
 }

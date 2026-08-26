@@ -1,19 +1,18 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
+import com.unihub.app.dto.community.resources.CourseResponseDto;
+import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.dto.community.resources.CourseResponseDto;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.globalResources.Teacher;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
-import com.unihub.app.repositories.community.content.MaterialFileRepository;
-import com.unihub.app.repositories.community.content.MaterialLinkRepository;
+import com.unihub.app.repositories.community.content.ResourceRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.services.community.resources.CourseService;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +31,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,10 +43,7 @@ public class CourseServiceTests {
     private FolderRepository folderRepository;
 
     @Mock
-    private MaterialFileRepository materialFileRepository;
-
-    @Mock
-    private MaterialLinkRepository materialLinkRepository;
+    private ResourceRepository resourceRepository;
 
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
@@ -76,47 +71,33 @@ public class CourseServiceTests {
                 .createdAt(now)
                 .build();
 
-        Resource fileResource = Resource.builder()
+        MaterialFile materialFile = MaterialFile.builder()
                 .id(UUID.randomUUID())
                 .title("Curs 1.pdf")
                 .description("Intro")
-                .type(ResourceType.MATERIAL_FILE)
                 .owner(owner)
-                .createdAt(now)
-                .build();
-
-        MaterialFile materialFile = MaterialFile.builder()
-                .id(fileResource.getId())
-                .resource(fileResource)
                 .storageKey("key/curs1.pdf")
                 .mediaType(MediaType.APPLICATION_PDF)
                 .size(2048)
-                .build();
-
-        Resource linkResource = Resource.builder()
-                .id(UUID.randomUUID())
-                .title("Repo GitHub")
-                .description("Source code")
-                .type(ResourceType.MATERIAL_LINK)
-                .owner(owner)
                 .createdAt(now)
                 .build();
 
         MaterialLink materialLink = MaterialLink.builder()
-                .ID(linkResource.getId())
-                .resource(linkResource)
+                .id(UUID.randomUUID())
+                .title("Repo GitHub")
+                .description("Source code")
+                .owner(owner)
                 .url("https://github.com/test")
                 .linkType(MaterialLinkType.GITHUB)
+                .createdAt(now)
                 .build();
 
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
         when(folderRepository.findRootFoldersByCourseId(1L))
                 .thenReturn(List.of(rootFolder));
-        when(materialFileRepository.findRootFilesByCourseId(1L))
-                .thenReturn(List.of(materialFile));
-        when(materialLinkRepository.findRootLinksByCourseId(1L))
-                .thenReturn(List.of(materialLink));
+        when(resourceRepository.findRootResourcesByCourseId(1L))
+                .thenReturn(List.of(materialFile, materialLink));
 
         CourseMaterialsResponseDto result = courseService.getMaterials(
                 "fmi-info-id",
@@ -155,9 +136,7 @@ public class CourseServiceTests {
                 .thenReturn(true);
         when(folderRepository.findByCourseIdAndParentFolderId(1L, subFolderId))
                 .thenReturn(List.of(childFolder));
-        when(materialFileRepository.findByCourseIdAndFolderId(1L, subFolderId))
-                .thenReturn(List.of());
-        when(materialLinkRepository.findByCourseIdAndFolderId(1L, subFolderId))
+        when(resourceRepository.findByCourseIdAndFolderId(1L, subFolderId))
                 .thenReturn(List.of());
 
         CourseMaterialsResponseDto result = courseService.getMaterials(

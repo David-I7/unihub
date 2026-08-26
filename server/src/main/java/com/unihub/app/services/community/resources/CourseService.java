@@ -9,14 +9,14 @@ import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.MaterialLink;
+import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
-import com.unihub.app.repositories.community.content.MaterialFileRepository;
-import com.unihub.app.repositories.community.content.MaterialLinkRepository;
+import com.unihub.app.repositories.community.content.ResourceRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,8 +34,7 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final FolderRepository folderRepository;
-    private final MaterialFileRepository materialFileRepository;
-    private final MaterialLinkRepository materialLinkRepository;
+    private final ResourceRepository resourceRepository;
     private final CommunityContentMapper contentMapper;
     private final CommunityResourceMapper resourceMapper;
     private final GlobalResourceMapper globalResourceMapper;
@@ -50,8 +50,7 @@ public class CourseService {
         Long courseId = course.getId();
 
         List<Folder> folders;
-        List<MaterialFile> files;
-        List<MaterialLink> links;
+        List<Resource> resources;
 
         if (folderId != null) {
             if (!folderRepository.existsByIdAndCourseId(folderId, courseId)) {
@@ -59,25 +58,26 @@ public class CourseService {
             }
 
             folders = folderRepository.findByCourseIdAndParentFolderId(courseId, folderId);
-            files = materialFileRepository.findByCourseIdAndFolderId(courseId, folderId);
-            links = materialLinkRepository.findByCourseIdAndFolderId(courseId, folderId);
+            resources = resourceRepository.findByCourseIdAndFolderId(courseId, folderId);
         } else {
             folders = folderRepository.findRootFoldersByCourseId(courseId);
-            files = materialFileRepository.findRootFilesByCourseId(courseId);
-            links = materialLinkRepository.findRootLinksByCourseId(courseId);
+            resources = resourceRepository.findRootResourcesByCourseId(courseId);
         }
 
         List<FolderSummaryDto> folderDtos = folders.stream()
                 .map(contentMapper::toFolderSummaryDto)
                 .toList();
 
-        List<MaterialFileDto> fileDtos = files.stream()
-                .map(contentMapper::toMaterialFileDto)
-                .toList();
+        List<MaterialFileDto> fileDtos = new ArrayList<>();
+        List<MaterialLinkDto> linkDtos = new ArrayList<>();
 
-        List<MaterialLinkDto> linkDtos = links.stream()
-                .map(contentMapper::toMaterialLinkDto)
-                .toList();
+        for (Resource resource : resources) {
+            if (resource instanceof MaterialFile file) {
+                fileDtos.add(contentMapper.toMaterialFileDto(file));
+            } else if (resource instanceof MaterialLink link) {
+                linkDtos.add(contentMapper.toMaterialLinkDto(link));
+            }
+        }
 
         return CourseMaterialsResponseDto.builder()
                 .folders(folderDtos)

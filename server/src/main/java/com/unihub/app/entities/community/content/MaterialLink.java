@@ -7,17 +7,16 @@ import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
+import lombok.experimental.SuperBuilder;
+
 @Entity
 @Table(name = "material_links")
-@Builder
+@SuperBuilder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MaterialLink {
-
-    @Id
-    private UUID ID;
+public class MaterialLink extends Resource {
 
     @Column(nullable = false)
     private String url;
@@ -26,10 +25,5 @@ public class MaterialLink {
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Enumerated(EnumType.STRING)
     private MaterialLinkType linkType;
-
-    @OneToOne(optional = false)
-    @JoinColumn(nullable = false, name = "id")
-    @MapsId
-    private Resource resource;
 
 }

@@ -47,6 +47,14 @@ public class Teacher {
     )
     private List<Course> coursesTaught;
 
+    @ManyToMany
+    @JoinTable(
+            name = "teacher_communities",
+            joinColumns = @JoinColumn(name = "teacher_id"),
+            inverseJoinColumns = @JoinColumn(name = "community_id")
+    )
+    private List<com.unihub.app.entities.community.resources.Community> communities;
+
     @Override
     public String toString() {
         return "Teacher{" +

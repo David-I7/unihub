@@ -4,9 +4,11 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.content.PostResponseDto;
 import com.unihub.app.dto.community.resources.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.StudyYearSummaryDto;
+import com.unihub.app.dto.globalResources.TeacherWithCoursesDto;
 import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityService;
 import com.unihub.app.services.community.resources.StudyYearService;
+import com.unihub.app.services.globalResources.TeacherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,6 +29,7 @@ public class CommunityController {
     private final CommunityService communityService;
     private final CommunityPostService communityPostService;
     private final StudyYearService studyYearService;
+    private final TeacherService teacherService;
 
     @GetMapping
     public ResponseEntity<PageDto<CommunityResponseDto>> getCommunities(
@@ -59,5 +62,13 @@ public class CommunityController {
     ) {
         PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, pageable);
         return ResponseEntity.ok(posts);
+    }
+
+    @GetMapping("/{communitySlug}/teachers")
+    public ResponseEntity<List<TeacherWithCoursesDto>> getCommunityTeachers(
+            @PathVariable String communitySlug
+    ) {
+        List<TeacherWithCoursesDto> teachers = teacherService.getCommunityTeachers(communitySlug);
+        return ResponseEntity.ok(teachers);
     }
 }

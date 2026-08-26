@@ -7,17 +7,17 @@ import org.springframework.http.MediaType;
 
 import java.util.UUID;
 
+import lombok.experimental.SuperBuilder;
+import org.springframework.http.MediaType;
+
 @Entity
 @Table(name = "material_files")
-@Builder
+@SuperBuilder
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MaterialFile {
-
-    @Id
-    private UUID id;
+public class MaterialFile extends Resource {
 
     @Column(name = "storage_key", nullable = false)
     private String storageKey;
@@ -28,10 +28,5 @@ public class MaterialFile {
 
     @Column(nullable = false)
     private long size;
-
-    @OneToOne(optional = false)
-    @JoinColumn(name = "id", nullable = false)
-    @MapsId
-    private Resource resource;
 
 }

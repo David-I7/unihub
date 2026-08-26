@@ -418,6 +418,13 @@ FROM courses c
          JOIN teachers t ON (t.last_name = 'Georgescu' AND t.first_name = 'Horia')
 WHERE comm.name = 'FMI - Informatica ID' AND c.name = 'Retele de calculatoare';
 
+-- Insert Teacher Communities
+INSERT INTO teacher_communities (teacher_id, community_id)
+SELECT DISTINCT ct.teacher_id, sy.community_id
+FROM course_teachers ct
+JOIN courses c ON ct.course_id = c.id
+JOIN study_years sy ON c.study_year_id = sy.id;
+
 -- Insert Folders for Courses
 INSERT INTO folders (id, name, course_id, created_at, owner_id)
 SELECT '35f6d7f5-545b-51a6-acaa-175d69b0de5c'::uuid, 'Materiale', c.id, now(), u.id
@@ -707,130 +714,111 @@ SELECT '12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'Exemple examene', 'MATERIA
 FROM folders f, users u WHERE f.id = 'e4e35737-598f-5778-a0ed-0bfb05e07197'::uuid;
 INSERT INTO material_links (id, url, link_type) VALUES ('12dcc7d8-a676-5ec0-94e3-8a464fd49c6e'::uuid, 'https://github.com/David-I7/fmi_info_id_materials/tree/main/year%201/semester%202/Structuri%20de%20date/examen', 'GITHUB');
 
--- Insert Exams (Resources + Exams)
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '35a42333-1447-52fd-a99a-873257c56963'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+-- Insert Events (Exams & Assignments)
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '35a42333-1447-52fd-a99a-873257c56963'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2026-01-20 18:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Arhitectura sistemelor de calcul';
-INSERT INTO exams (id, scheduled_date) VALUES ('35a42333-1447-52fd-a99a-873257c56963'::uuid, '2026-01-20 18:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Arhitectura sistemelor de calcul' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', '2026-01-25 12:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Calcul diferential si integral';
-INSERT INTO exams (id, scheduled_date) VALUES ('15ed5abc-0370-5d4d-8ea2-875c4902de23'::uuid, '2026-01-25 12:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Calcul diferential si integral' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2026-01-25 12:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Instrumente si tehnici de baza in Informatica';
-INSERT INTO exams (id, scheduled_date) VALUES ('a679d179-be17-5e11-82bc-fe01d09cd870'::uuid, '2026-01-25 12:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Instrumente si tehnici de baza in Informatica' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', '2026-01-31 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Programarea algoritmilor';
-INSERT INTO exams (id, scheduled_date) VALUES ('1d6b133b-ca8b-5fa1-b27b-2181c48eec4d'::uuid, '2026-01-31 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Programarea algoritmilor' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:01:18.325+00', '2026-07-01 09:01:18.325+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', '2026-02-07 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:01:18.325+00', '2026-07-01 09:01:18.325+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri algebrice in informatica';
-INSERT INTO exams (id, scheduled_date) VALUES ('bd6a020e-7f30-537f-b2bb-81f8e92aac8d'::uuid, '2026-02-07 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri algebrice in informatica' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'd75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, 'Examen pe calculator', 'EXAM', 'Puteti veni cu latopul personal', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'd75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, 'Examen pe calculator', 'EXAM', 'Puteti veni cu latopul personal', '2026-02-15 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Tehnici web';
-INSERT INTO exams (id, scheduled_date) VALUES ('d75fc805-3803-502e-9ba8-4b0c5dcb8461'::uuid, '2026-02-15 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Tehnici web' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se va sustine online. Trebuie sa luat jumatate din punctaj ca sa intrati in examenul pe calculator', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se va sustine online. Trebuie sa luat jumatate din punctaj ca sa intrati in examenul pe calculator', '2026-02-15 10:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Tehnici web';
-INSERT INTO exams (id, scheduled_date) VALUES ('49c48d59-f8b7-513a-a2d1-1ffdcad14391'::uuid, '2026-02-15 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Tehnici web' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se poate sustine online sau fizic. Daca nu stapaniti materia foarte bine, va sugerez sa mergeti fizic, deoarece aveti sanse mai mari sa treceti.', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, 'Prezentare proiect', 'EXAM', 'Prezentarea se poate sustine online sau fizic. Daca nu stapaniti materia foarte bine, va sugerez sa mergeti fizic, deoarece aveti sanse mai mari sa treceti.', '2026-06-30 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Baze de date';
-INSERT INTO exams (id, scheduled_date) VALUES ('a1e0848d-6be3-554c-9fb6-4a9b48ca7c7f'::uuid, '2026-06-30 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Baze de date' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2026-06-21 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Geometrie si algebra liniara';
-INSERT INTO exams (id, scheduled_date) VALUES ('b589ce5a-8708-57d8-8af1-8f96ee76fb15'::uuid, '2026-06-21 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Geometrie si algebra liniara' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '70629015-e8f4-5367-abb4-003a1934943f'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '70629015-e8f4-5367-abb4-003a1934943f'::uuid, 'Examen scris', 'EXAM', 'Nu aveti voie cu materiale scrise de mana la examen', '2026-06-13 10:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Limbaje formale si automate';
-INSERT INTO exams (id, scheduled_date) VALUES ('70629015-e8f4-5367-abb4-003a1934943f'::uuid, '2026-06-13 10:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Limbaje formale si automate' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2026-06-27 12:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Logica matematica si computationala';
-INSERT INTO exams (id, scheduled_date) VALUES ('7d192339-b929-56cc-ac1a-a6a107947b5c'::uuid, '2026-06-27 12:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Logica matematica si computationala' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', c.id, NULL, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, 'Examen scris', 'EXAM', 'Aveti voie cu materiale scrise de mana la examen', '2026-06-28 12:00:00+00', 'IN_PERSON', c.id, comm.id, u.id, '2026-07-01 09:11:18.827+00', '2026-07-01 09:11:18.827+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri de date';
-INSERT INTO exams (id, scheduled_date) VALUES ('8ac11726-059b-5898-96c4-b2c6da14f586'::uuid, '2026-06-28 12:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri de date' AND u.username = 'iosub_david';
 
--- Insert Assignments (Resources + Assignments)
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '51365991-3559-541f-8060-2f8338c06bd6'::uuid, 'Proiect mips', 'ASSIGNMENT', NULL, c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '51365991-3559-541f-8060-2f8338c06bd6'::uuid, 'Proiect mips', 'ASSIGNMENT', NULL, '2026-01-20 18:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Arhitectura sistemelor de calcul';
-INSERT INTO assignments (id, due_date) VALUES ('51365991-3559-541f-8060-2f8338c06bd6'::uuid, '2026-01-20 18:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Arhitectura sistemelor de calcul' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, 'Proiect procese semnale si/sau tuburi', 'ASSIGNMENT', NULL, c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, 'Proiect procese semnale si/sau tuburi', 'ASSIGNMENT', NULL, '2026-01-17 16:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Sisteme de operare';
-INSERT INTO assignments (id, due_date) VALUES ('9312d7ab-3f63-534a-a3c7-83877a23683d'::uuid, '2026-01-17 16:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Sisteme de operare' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, 'Tema lfa', 'ASSIGNMENT', NULL, c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, 'Tema lfa', 'ASSIGNMENT', NULL, '2026-05-30 00:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Limbaje formale si automate';
-INSERT INTO assignments (id, due_date) VALUES ('a83e36d8-2a7e-5ad5-bc6c-627ed8eb81a8'::uuid, '2026-05-30 00:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Limbaje formale si automate' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT 'b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, 'Teme colective lmc', 'ASSIGNMENT', 'Trei teme care valoreaza 1p fiecare si trebuie trimise doar de un membru al fiecarei grupe', c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT 'b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, 'Teme colective lmc', 'ASSIGNMENT', 'Trei teme care valoreaza 1p fiecare si trebuie trimise doar de un membru al fiecarei grupe', '2026-05-30 00:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Logica matematica si computationala';
-INSERT INTO assignments (id, due_date) VALUES ('b7edb0ab-06d0-504e-861f-d2c1f32173ec'::uuid, '2026-05-30 00:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Logica matematica si computationala' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, 'Proiect POO', 'ASSIGNMENT', 'Nota la proiect reprezinta nota finala trecuta in catalog', c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, 'Proiect POO', 'ASSIGNMENT', 'Nota la proiect reprezinta nota finala trecuta in catalog', '2026-06-11 00:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Programare orientata pe obiecte';
-INSERT INTO assignments (id, due_date) VALUES ('7afffa03-284b-5eb3-9f54-aab9544222cd'::uuid, '2026-06-11 00:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Programare orientata pe obiecte' AND u.username = 'iosub_david';
 
-INSERT INTO resources (id, title, type, description, course_id, folder_id, owner_id, created_at, updated_at)
-SELECT '993f711f-264a-5833-a09b-6abece8fff08'::uuid, 'Teme colective sd', 'ASSIGNMENT', 'Tema care trebuie trimisa doar de un membru al fiecarei grupe', c.id, NULL, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
+INSERT INTO events (id, title, type, description, start_time, location, course_id, community_id, owner_id, created_at, updated_at)
+SELECT '993f711f-264a-5833-a09b-6abece8fff08'::uuid, 'Teme colective sd', 'ASSIGNMENT', 'Tema care trebuie trimisa doar de un membru al fiecarei grupe', '2026-05-30 00:00:00+00', 'ONLINE', c.id, comm.id, u.id, '2026-07-01 09:13:38.210+00', '2026-07-01 09:13:38.210+00'
 FROM courses c, users u, study_years sy, communities comm
 WHERE c.study_year_id = sy.id AND sy.community_id = comm.id
-  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri de date';
-INSERT INTO assignments (id, due_date) VALUES ('993f711f-264a-5833-a09b-6abece8fff08'::uuid, '2026-05-30 00:00:00+00');
+  AND comm.name = 'FMI - Informatica ID' AND c.name = 'Structuri de date' AND u.username = 'iosub_david';

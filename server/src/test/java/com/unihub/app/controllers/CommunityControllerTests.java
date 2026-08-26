@@ -93,6 +93,9 @@ public class CommunityControllerTests {
     private StudyYearService studyYearService;
 
     @MockitoBean
+    private com.unihub.app.services.globalResources.TeacherService teacherService;
+
+    @MockitoBean
     private UserRepository userRepository;
 
     @MockitoBean
@@ -361,5 +364,37 @@ public class CommunityControllerTests {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Community not found"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/communities/{communitySlug}/teachers
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: community exists with teachers
+            When: GET /api/v1/communities/{communitySlug}/teachers is called
+            Then: 200 OK is returned with teachers list
+            """)
+    public void testGetCommunityTeachers_Success() throws Exception {
+        com.unihub.app.dto.globalResources.TeacherWithCoursesDto teacherDto = com.unihub.app.dto.globalResources.TeacherWithCoursesDto.builder()
+                .id(UUID.randomUUID())
+                .firstName("Daniel")
+                .lastName("Dragulici")
+                .averageRating(4.8f)
+                .ratingsCount(15)
+                .createdAt(OffsetDateTime.now())
+                .courses(List.of())
+                .build();
+
+        when(teacherService.getCommunityTeachers("fmi-info-id")).thenReturn(List.of(teacherDto));
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/teachers")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].firstName").value("Daniel"))
+                .andExpect(jsonPath("$[0].lastName").value("Dragulici"));
     }
 }

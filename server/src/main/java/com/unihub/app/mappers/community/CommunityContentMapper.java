@@ -56,90 +56,88 @@ public class CommunityContentMapper {
     }
 
     public MaterialFileDto toMaterialFileDto(MaterialFile materialFile) {
-        Resource resource = materialFile.getResource();
-        OwnerDto owner = resource.getOwner() == null
+        OwnerDto owner = materialFile.getOwner() == null
                 ? null
-                : new OwnerDto(resource.getOwner().getId(), resource.getOwner().getUsername());
+                : new OwnerDto(materialFile.getOwner().getId(), materialFile.getOwner().getUsername());
 
         return MaterialFileDto.builder()
                 .id(materialFile.getId())
-                .title(resource.getTitle())
-                .description(resource.getDescription())
+                .title(materialFile.getTitle())
+                .description(materialFile.getDescription())
                 .storageKey(materialFile.getStorageKey())
                 .mediaType(materialFile.getMediaType() != null ? materialFile.getMediaType().toString() : null)
                 .size(materialFile.getSize())
-                .createdAt(resource.getCreatedAt())
+                .createdAt(materialFile.getCreatedAt())
                 .owner(owner)
                 .build();
     }
 
     public MaterialLinkDto toMaterialLinkDto(MaterialLink materialLink) {
-        Resource resource = materialLink.getResource();
-        OwnerDto owner = resource.getOwner() == null
+        OwnerDto owner = materialLink.getOwner() == null
                 ? null
-                : new OwnerDto(resource.getOwner().getId(), resource.getOwner().getUsername());
+                : new OwnerDto(materialLink.getOwner().getId(), materialLink.getOwner().getUsername());
 
         return MaterialLinkDto.builder()
-                .id(materialLink.getID())
-                .title(resource.getTitle())
-                .description(resource.getDescription())
+                .id(materialLink.getId())
+                .title(materialLink.getTitle())
+                .description(materialLink.getDescription())
                 .url(materialLink.getUrl())
                 .linkType(materialLink.getLinkType())
-                .createdAt(resource.getCreatedAt())
+                .createdAt(materialLink.getCreatedAt())
                 .owner(owner)
                 .build();
     }
 
-    public ExamResponseDto toExamResponseDto(Exam exam) {
-        Resource resource = exam.getResource();
-        OwnerDto owner = resource.getOwner() == null
+    public EventResponseDto toEventResponseDto(Event event) {
+        return toEventResponseDto(event, false);
+    }
+
+    public EventResponseDto toEventResponseDto(Event event, boolean isSubscribed) {
+        OwnerDto owner = event.getOwner() == null
                 ? null
-                : new OwnerDto(resource.getOwner().getId(), resource.getOwner().getUsername());
+                : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername());
 
-        return ExamResponseDto.builder()
-                .id(exam.getId())
-                .title(resource.getTitle())
-                .description(resource.getDescription())
-                .scheduledDate(exam.getScheduledDate())
-                .estimatedDurationMinutes(exam.getEstimatedDurationMinutes())
-                .createdAt(resource.getCreatedAt())
+        return EventResponseDto.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .type(event.getType())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .durationMinutes(event.getDurationMinutes())
+                .location(event.getLocation())
+                .locationDetails(event.getLocationDetails())
+                .courseId(event.getCourse().getId())
+                .courseSlug(event.getCourse().getSlug())
+                .courseName(event.getCourse().getName())
+                .communitySlug(event.getCommunity().getSlug())
+                .createdAt(event.getCreatedAt())
+                .updatedAt(event.getUpdatedAt())
                 .owner(owner)
+                .isSubscribed(isSubscribed)
                 .build();
     }
 
-    public LectureResponseDto toLectureResponseDto(Lecture lecture) {
-        Resource resource = lecture.getResource();
-        OwnerDto owner = resource.getOwner() == null
-                ? null
-                : new OwnerDto(resource.getOwner().getId(), resource.getOwner().getUsername());
-
-        return LectureResponseDto.builder()
-                .id(lecture.getId())
-                .title(resource.getTitle())
-                .description(resource.getDescription())
-                .startTime(lecture.getStartTime())
-                .endTime(lecture.getEndTime())
-                .location(lecture.getLocation())
-                .createdAt(resource.getCreatedAt())
-                .owner(owner)
+    public EventReminderResponseDto toEventReminderResponseDto(EventReminder reminder) {
+        return EventReminderResponseDto.builder()
+                .id(reminder.getId())
+                .eventId(reminder.getEvent().getId())
+                .offsetMinutes(reminder.getOffsetMinutes())
+                .remindAt(reminder.getRemindAt())
+                .status(reminder.getStatus())
+                .createdAt(reminder.getCreatedAt())
                 .build();
     }
 
-    public AssignmentResponseDto toAssignmentResponseDto(Assignment assignment) {
-        Resource resource = assignment.getResource();
-        OwnerDto owner = resource.getOwner() == null
-                ? null
-                : new OwnerDto(resource.getOwner().getId(), resource.getOwner().getUsername());
-
-        return AssignmentResponseDto.builder()
-                .id(assignment.getId())
-                .title(resource.getTitle())
-                .description(resource.getDescription())
-                .dueDate(assignment.getDueDate())
-                .estimatedDurationMinutes(assignment.getEstimatedDurationMinutes())
-                .createdAt(resource.getCreatedAt())
-                .owner(owner)
+    public NotificationResponseDto toNotificationResponseDto(Notification notification) {
+        return NotificationResponseDto.builder()
+                .id(notification.getId())
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .type(notification.getType())
+                .eventId(notification.getEvent() != null ? notification.getEvent().getId() : null)
+                .isRead(notification.isRead())
+                .createdAt(notification.getCreatedAt())
                 .build();
     }
-
 }
