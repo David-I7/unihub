@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCommunities } from "@/features/communities/api/getCommunities";
+import { useUserCommunities } from "@/features/users";
 import { useStudyYearDetail } from "@/features/studyYears/api/getStudyYearDetail";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
 import type {
@@ -84,11 +84,8 @@ export function EventFormModal({
 }: EventFormModalProps) {
   const isEditing = Boolean(editingEvent);
 
-  const { data: communitiesPage } = useCommunities({
-    page: 0,
-    size: 50,
-  });
-  const communities = communitiesPage?.content ?? [];
+  const { data: userCommunitiesData } = useUserCommunities();
+  const communities = userCommunitiesData?.communities ?? [];
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -211,7 +208,7 @@ export function EventFormModal({
       );
     } else {
       if (!communitySlug) {
-        setValidationError("Please select a community");
+        setValidationError("Please select an enrolled community");
         return;
       }
       if (!effectiveCourseId) {
@@ -400,7 +397,7 @@ export function EventFormModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
-                    Community *
+                    Enrolled Community *
                   </Label>
                   <Select
                     value={communitySlug}
@@ -412,7 +409,13 @@ export function EventFormModal({
                     }}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
-                      <SelectValue placeholder="Select community" />
+                      <SelectValue
+                        placeholder={
+                          communities.length === 0
+                            ? "No enrolled communities"
+                            : "Select community"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {communities.map((c) => (

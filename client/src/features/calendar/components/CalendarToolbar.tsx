@@ -100,6 +100,16 @@ export function CalendarToolbar({
             {monthName} {yearNumber}
           </h2>
         </div>
+
+        {/* Add Event Button */}
+        <Button
+          size="sm"
+          onClick={onAddEvent}
+          className="gap-1.5 font-semibold text-xs h-9 cursor-pointer"
+        >
+          <Plus className="size-4" />
+          Add Event
+        </Button>
       </div>
 
       {/* Filter Selectors and Search/Category Chips */}

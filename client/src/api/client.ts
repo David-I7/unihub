@@ -19,8 +19,7 @@ client.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().accessToken;
     if (token && config.headers) {
-      config.headers.Authorization = `Bearer  
-  ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

@@ -20,9 +20,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         JOIN FETCH e.community comm
         LEFT JOIN FETCH e.owner
         WHERE comm.slug = :communitySlug
-          AND (:courseSlug IS NULL OR c.slug = :courseSlug)
-          AND (:studyYearName IS NULL OR c.studyYear.studyYearName = :studyYearName)
-          AND (:type IS NULL OR e.type = :type)
+          AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
+          AND (CAST(:studyYearName AS string) IS NULL OR c.studyYear.studyYearName = :studyYearName)
+          AND (CAST(:type AS string) IS NULL OR e.type = :type)
           AND (CAST(:from AS string) IS NULL OR e.startTime >= :from)
           AND (CAST(:to AS string) IS NULL OR e.startTime <= :to)
         ORDER BY e.startTime ASC
@@ -42,9 +42,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         JOIN FETCH e.community comm
         LEFT JOIN FETCH e.owner
         WHERE comm.id IN :communityIds
-          AND (:courseSlug IS NULL OR c.slug = :courseSlug)
-          AND (:studyYearName IS NULL OR c.studyYear.studyYearName = :studyYearName)
-          AND (:type IS NULL OR e.type = :type)
+          AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
+          AND (CAST(:studyYearName AS string) IS NULL OR c.studyYear.studyYearName = :studyYearName)
+          AND (CAST(:type AS string) IS NULL OR e.type = :type)
           AND (CAST(:from AS string) IS NULL OR e.startTime >= :from)
           AND (CAST(:to AS string) IS NULL OR e.startTime <= :to)
         ORDER BY e.startTime ASC

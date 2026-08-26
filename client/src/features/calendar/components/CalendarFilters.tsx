@@ -7,7 +7,7 @@ import {
   Video,
   X,
 } from "lucide-react";
-import { useCommunities } from "@/features/communities/api/getCommunities";
+import { useUserCommunities } from "@/features/users";
 import { useStudyYearDetail } from "@/features/studyYears/api/getStudyYearDetail";
 import type { EventType } from "../api/types";
 import { Input } from "@/components/ui/input";
@@ -61,13 +61,9 @@ export function CalendarFilters({
   lectureCount,
   totalCount,
 }: CalendarFiltersProps) {
-  // Fetch communities list
-  const { data: communitiesPage } = useCommunities({
-    page: 0,
-    size: 50,
-  });
-
-  const communities = communitiesPage?.content ?? [];
+  // Fetch user enrolled communities list
+  const { data: userCommunitiesData } = useUserCommunities();
+  const communities = userCommunitiesData?.communities ?? [];
 
   // Fetch courses for the selected study year if community and studyYear are selected
   const activeStudyYear =
@@ -104,11 +100,11 @@ export function CalendarFilters({
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All Communities" />
+              <SelectValue placeholder="All Enrolled Communities" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL_COMMUNITIES">
-                All Communities ({communities.length})
+                All Enrolled ({communities.length})
               </SelectItem>
               {communities.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
