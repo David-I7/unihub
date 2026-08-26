@@ -2,7 +2,7 @@ package com.unihub.app.controllers;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.dto.community.content.NotificationResponseDto;
+import com.unihub.app.dto.community.content.response.NotificationResponseDto;
 import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.NotificationService;
 import lombok.RequiredArgsConstructor;

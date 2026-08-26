@@ -27,5 +27,15 @@ public interface EventReminderRepository extends JpaRepository<EventReminder, UU
 
     List<EventReminder> findByUserIdAndEventId(UUID userId, UUID eventId);
 
+    List<EventReminder> findByUserIdAndEventIdIn(UUID userId, java.util.Collection<UUID> eventIds);
+
+    boolean existsByUserIdAndEventIdAndOffsetMinutes(UUID userId, UUID eventId, int offsetMinutes);
+
+    boolean existsByUserIdAndEventId(UUID userId, UUID eventId);
+
+    java.util.Optional<EventReminder> findByIdAndUserId(UUID id, UUID userId);
+
+    void deleteByIdAndUserId(UUID id, UUID userId);
+
     void deleteByUserIdAndEventId(UUID userId, UUID eventId);
 }

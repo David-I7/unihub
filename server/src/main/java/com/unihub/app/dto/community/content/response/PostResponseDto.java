@@ -1,4 +1,4 @@
-package com.unihub.app.dto.community.content;
+package com.unihub.app.dto.community.content.response;
 
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;

@@ -41,6 +41,37 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         JOIN FETCH e.course c
         JOIN FETCH e.community comm
         LEFT JOIN FETCH e.owner
+        WHERE comm.id IN :communityIds
+          AND (:courseSlug IS NULL OR c.slug = :courseSlug)
+          AND (:studyYearName IS NULL OR c.studyYear.studyYearName = :studyYearName)
+          AND (:type IS NULL OR e.type = :type)
+          AND (CAST(:from AS string) IS NULL OR e.startTime >= :from)
+          AND (CAST(:to AS string) IS NULL OR e.startTime <= :to)
+        ORDER BY e.startTime ASC
+    """)
+    List<Event> findEventsByCommunityIds(
+            @Param("communityIds") java.util.Collection<UUID> communityIds,
+            @Param("courseSlug") String courseSlug,
+            @Param("studyYearName") StudyYearName studyYearName,
+            @Param("type") EventType type,
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to
+    );
+
+    @Query("""
+        SELECT e FROM Event e
+        JOIN FETCH e.course c
+        JOIN FETCH e.community comm
+        LEFT JOIN FETCH e.owner
+        WHERE e.id = :eventId
+    """)
+    Optional<Event> findEventByIdWithDetails(@Param("eventId") UUID eventId);
+
+    @Query("""
+        SELECT e FROM Event e
+        JOIN FETCH e.course c
+        JOIN FETCH e.community comm
+        LEFT JOIN FETCH e.owner
         WHERE comm.slug = :communitySlug AND e.id = :eventId
     """)
     Optional<Event> findByCommunitySlugAndId(@Param("communitySlug") String communitySlug, @Param("eventId") UUID eventId);

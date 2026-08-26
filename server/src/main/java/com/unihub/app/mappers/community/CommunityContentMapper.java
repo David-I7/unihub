@@ -1,7 +1,7 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
-import com.unihub.app.dto.community.content.*;
+import com.unihub.app.dto.community.content.response.*;
 import com.unihub.app.entities.community.content.*;
 import org.springframework.stereotype.Component;
 
@@ -89,10 +89,14 @@ public class CommunityContentMapper {
     }
 
     public EventResponseDto toEventResponseDto(Event event) {
-        return toEventResponseDto(event, false);
+        return toEventResponseDto(event, false, Collections.emptyList());
     }
 
     public EventResponseDto toEventResponseDto(Event event, boolean isSubscribed) {
+        return toEventResponseDto(event, isSubscribed, Collections.emptyList());
+    }
+
+    public EventResponseDto toEventResponseDto(Event event, boolean isSubscribed, List<EventReminderResponseDto> reminders) {
         OwnerDto owner = event.getOwner() == null
                 ? null
                 : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername());
@@ -115,6 +119,7 @@ public class CommunityContentMapper {
                 .updatedAt(event.getUpdatedAt())
                 .owner(owner)
                 .isSubscribed(isSubscribed)
+                .reminders(reminders != null ? reminders : Collections.emptyList())
                 .build();
     }
 

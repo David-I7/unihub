@@ -1,8 +1,8 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.content.CommentResponseDto;
-import com.unihub.app.dto.community.content.PostResponseDto;
+import com.unihub.app.dto.community.content.response.CommentResponseDto;
+import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.CommunicationChannel;

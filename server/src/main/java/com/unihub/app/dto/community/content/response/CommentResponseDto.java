@@ -1,4 +1,4 @@
-package com.unihub.app.dto.community.content;
+package com.unihub.app.dto.community.content.response;
 
 import com.unihub.app.dto.community.OwnerDto;
 import lombok.Builder;
@@ -7,14 +7,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Builder
-public record MaterialFileDto(
+public record CommentResponseDto(
         UUID id,
-        String title,
-        String description,
-        String storageKey,
-        String mediaType,
-        long size,
+        UUID postId,
+        String content,
         OffsetDateTime createdAt,
+        OffsetDateTime updatedAt,
         OwnerDto owner
 ) {
 }

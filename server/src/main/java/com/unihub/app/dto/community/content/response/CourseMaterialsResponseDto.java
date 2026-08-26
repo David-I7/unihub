@@ -1,4 +1,4 @@
-package com.unihub.app.dto.community.content;
+package com.unihub.app.dto.community.content.response;
 
 import lombok.Builder;
 

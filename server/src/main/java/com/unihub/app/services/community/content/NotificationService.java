@@ -1,8 +1,7 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.content.NotificationResponseDto;
-import com.unihub.app.entities.authentication.User;
+import com.unihub.app.dto.community.content.response.NotificationResponseDto;
 import com.unihub.app.entities.community.content.EventReminder;
 import com.unihub.app.entities.community.content.Notification;
 import com.unihub.app.entities.community.content.NotificationType;

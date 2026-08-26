@@ -1,7 +1,7 @@
 package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.content.PostResponseDto;
+import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
 import com.unihub.app.services.community.content.CommunityPostService;

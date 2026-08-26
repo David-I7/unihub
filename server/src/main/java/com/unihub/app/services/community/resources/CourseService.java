@@ -1,19 +1,17 @@
 package com.unihub.app.services.community.resources;
 
-import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
-import com.unihub.app.dto.community.content.FolderSummaryDto;
-import com.unihub.app.dto.community.content.MaterialFileDto;
-import com.unihub.app.dto.community.content.MaterialLinkDto;
+import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
+import com.unihub.app.dto.community.content.response.FolderSummaryDto;
+import com.unihub.app.dto.community.content.response.MaterialFileDto;
+import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.MaterialLink;
 import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;

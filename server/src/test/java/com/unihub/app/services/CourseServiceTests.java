@@ -1,9 +1,8 @@
 package com.unihub.app.services;
 
-import com.unihub.app.dto.community.content.CourseMaterialsResponseDto;
+import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Course;
