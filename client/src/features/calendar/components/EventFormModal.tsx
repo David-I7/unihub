@@ -1,6 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
+import {
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  GraduationCap,
+  Info,
+  Users,
+} from "lucide-react";
 import { useUserCommunities } from "@/features/users";
-import { useStudyYearDetail } from "@/features/studyYears/api/getStudyYearDetail";
+import { useCommunityStudyYears } from "@/features/communities";
+import {
+  StudyYearNameMap,
+  useStudyYearCourses,
+  type StudyYearName,
+} from "@/features/studyYears";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
 import type {
   CalendarEvent,
@@ -9,7 +23,7 @@ import type {
   EventType,
   UpdateEventPayload,
 } from "../api/types";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -29,13 +43,16 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { cn } from "@/lib/utils";
 
 interface EventFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultDate?: string;
   editingEvent?: CalendarEvent | null;
-  defaultCommunitySlug?: string;
+  defaultCommunitySlug?: string | null;
+  defaultStudyYear?: string | null;
+  defaultCourseSlug?: string | null;
 }
 
 const EVENT_TYPES: { label: string; value: EventType }[] = [
@@ -49,8 +66,6 @@ const LOCATION_TYPES: { label: string; value: EventLocation }[] = [
   { label: "Online", value: "ONLINE" },
   { label: "Hybrid", value: "HYBRID" },
 ];
-
-const STUDY_YEARS = ["year-1", "year-2", "year-3", "year-4"];
 
 function toDatetimeLocal(isoStr?: string, defaultDateStr?: string): string {
   if (isoStr) {
@@ -82,12 +97,18 @@ export function EventFormModal({
   defaultDate,
   editingEvent,
   defaultCommunitySlug,
+  defaultStudyYear,
+  defaultCourseSlug,
 }: EventFormModalProps) {
   const isEditing = Boolean(editingEvent);
 
-  const { data: userCommunitiesData } = useUserCommunities();
+  // 1. Fetch user's enrolled communities
+  const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
+    useUserCommunities();
   const communities = userCommunitiesData?.communities ?? [];
+  const hasCommunities = communities.length > 0;
 
+  // Form states
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<EventType>("EXAM");
@@ -98,25 +119,24 @@ export function EventFormModal({
   );
   const [location, setLocation] = useState<EventLocation>("IN_PERSON");
   const [locationDetails, setLocationDetails] = useState("");
-  const [communitySlug, setCommunitySlug] = useState("");
-  const [courseId, setCourseId] = useState<number | undefined>(undefined);
-  const [formStudyYear, setFormStudyYear] = useState<string>("year-1");
+
+  // Creation cascade states
+  const [formCommunitySlug, setFormCommunitySlug] = useState<string | null>(
+    null,
+  );
+  const [formStudyYear, setFormStudyYear] = useState<string | null>(null);
+  const [formCourseId, setFormCourseId] = useState<number | undefined>(
+    undefined,
+  );
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Fetch courses for the selected community & study year
-  const { data: studyYearDetail } = useStudyYearDetail(
-    communitySlug,
-    formStudyYear,
-    { includeArchived: false },
-  );
-  const availableCourses = studyYearDetail?.courses ?? [];
-  const effectiveCourseId =
-    courseId ?? (availableCourses.length > 0 ? availableCourses[0].course.id : undefined);
+  // 2. Fetch study years for currently selected community
+  const { data: communityStudyYears, isLoading: isLoadingStudyYears } =
+    useCommunityStudyYears(formCommunitySlug ?? "");
 
-  // Mutations
-  const { mutate: createEventMutate, isPending: isCreating } = useCreateEvent();
-  const { mutate: updateEventMutate, isPending: isUpdating } = useUpdateEvent();
-  const isSubmitting = isCreating || isUpdating;
+  // 3. Fetch courses for selected community & study year
+  const { data: studyYearCourses, isLoading: isLoadingCourses } =
+    useStudyYearCourses(formCommunitySlug ?? "", formStudyYear ?? "");
 
   // Initialize or reset form state on open / change
   useEffect(() => {
@@ -135,25 +155,110 @@ export function EventFormModal({
       setDurationMinutes(editingEvent.durationMinutes);
       setLocation(editingEvent.location);
       setLocationDetails(editingEvent.locationDetails ?? "");
-      setCommunitySlug(editingEvent.communitySlug);
-      setCourseId(editingEvent.courseId);
+      setFormCommunitySlug(editingEvent.communitySlug);
+      setFormCourseId(editingEvent.courseId);
     } else {
       setTitle("");
       setDescription("");
       setType("EXAM");
-      const initStart = toDatetimeLocal(undefined, defaultDate);
-      setStartTime(initStart);
+      setStartTime(toDatetimeLocal(undefined, defaultDate));
       setEndTime("");
       setDurationMinutes(undefined);
       setLocation("IN_PERSON");
       setLocationDetails("");
 
-      const initialComm =
-        defaultCommunitySlug || communities[0]?.slug || "";
-      setCommunitySlug(initialComm);
-      setCourseId(undefined);
+      // Pick initial community: preferred default, or first available enrolled community
+      const initialCommunity =
+        defaultCommunitySlug &&
+        communities.some((c) => c.slug === defaultCommunitySlug)
+          ? defaultCommunitySlug
+          : communities[0]?.slug ?? null;
+
+      setFormCommunitySlug(initialCommunity);
+      setFormStudyYear(defaultStudyYear ?? null);
+      setFormCourseId(undefined);
     }
-  }, [isOpen, editingEvent, defaultDate, defaultCommunitySlug, communities]);
+  }, [
+    isOpen,
+    editingEvent,
+    defaultDate,
+    defaultCommunitySlug,
+    defaultStudyYear,
+    communities,
+  ]);
+
+  // When study years load for the selected community, ensure a valid study year is selected
+  useEffect(() => {
+    if (isEditing || !communityStudyYears) return;
+
+    if (communityStudyYears.length === 0) {
+      setFormStudyYear(null);
+      setFormCourseId(undefined);
+      return;
+    }
+
+    // Keep current selection if valid in new study years list
+    const currentIsValid = communityStudyYears.some(
+      (y) => StudyYearNameMap[y.studyYearName] === formStudyYear,
+    );
+
+    if (!currentIsValid) {
+      const firstYearMapped =
+        StudyYearNameMap[communityStudyYears[0].studyYearName];
+      setFormStudyYear(firstYearMapped ?? null);
+      setFormCourseId(undefined);
+    }
+  }, [communityStudyYears, formStudyYear, isEditing]);
+
+  // When courses load, optionally auto-select or pick based on defaultCourseSlug
+  useEffect(() => {
+    if (isEditing || !studyYearCourses) return;
+
+    if (studyYearCourses.length === 0) {
+      setFormCourseId(undefined);
+      return;
+    }
+
+    if (
+      defaultCourseSlug &&
+      studyYearCourses.some((c) => c.slug === defaultCourseSlug)
+    ) {
+      const matched = studyYearCourses.find((c) => c.slug === defaultCourseSlug);
+      if (matched) {
+        setFormCourseId(matched.id);
+        return;
+      }
+    }
+
+    // If current selected course isn't in list, select the first course
+    const currentCourseExists = studyYearCourses.some(
+      (c) => c.id === formCourseId,
+    );
+    if (!currentCourseExists) {
+      setFormCourseId(studyYearCourses[0].id);
+    }
+  }, [studyYearCourses, formCourseId, defaultCourseSlug, isEditing]);
+
+  // Selected study year display label
+  const activeStudyYearName = useMemo(() => {
+    if (!communityStudyYears || !formStudyYear) return null;
+    const found = communityStudyYears.find(
+      (y) => StudyYearNameMap[y.studyYearName] === formStudyYear,
+    );
+    return found?.studyYearName ?? null;
+  }, [communityStudyYears, formStudyYear]);
+
+  // Mutations
+  const { mutate: createEventMutate, isPending: isCreating } = useCreateEvent();
+  const { mutate: updateEventMutate, isPending: isUpdating } = useUpdateEvent();
+  const isSubmitting = isCreating || isUpdating;
+
+  // Validation rules evaluation
+  const hasStudyYears = Boolean(
+    communityStudyYears && communityStudyYears.length > 0,
+  );
+  const hasCourses = Boolean(studyYearCourses && studyYearCourses.length > 0);
+  const canCreateInCommunity = hasCommunities && hasStudyYears && hasCourses;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,12 +313,16 @@ export function EventFormModal({
         },
       );
     } else {
-      if (!communitySlug) {
-        setValidationError("Please select an enrolled community");
+      if (!hasCommunities || !formCommunitySlug) {
+        setValidationError(
+          "You must be a member of a community to create calendar events",
+        );
         return;
       }
-      if (!effectiveCourseId) {
-        setValidationError("Please select a course");
+      if (!formCourseId) {
+        setValidationError(
+          "Please select a course. Events must be linked to a course",
+        );
         return;
       }
 
@@ -226,8 +335,8 @@ export function EventFormModal({
         durationMinutes: durationMinutes || undefined,
         location,
         locationDetails: locationDetails.trim() || undefined,
-        communitySlug,
-        courseId: effectiveCourseId,
+        communitySlug: formCommunitySlug,
+        courseId: formCourseId,
       };
 
       createEventMutate(payload, {
@@ -245,7 +354,7 @@ export function EventFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold font-heading">
             {isEditing ? "Edit Calendar Event" : "Create New Event"}
@@ -257,9 +366,39 @@ export function EventFormModal({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Global form validation message */}
         {validationError && (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
-            {validationError}
+          <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{validationError}</span>
+          </div>
+        )}
+
+        {/* Informative banners for creation validation constraints */}
+        {!isEditing && !isLoadingCommunities && !hasCommunities && (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2 text-xs">
+            <div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>Community Membership Required</span>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              You are not currently enrolled in any community. You must join a
+              community with courses before scheduling calendar events.
+            </p>
+            <div className="pt-1">
+              <Link
+                to="/communities"
+                onClick={onClose}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "text-xs font-semibold gap-1.5 cursor-pointer",
+                )}
+              >
+                <Users className="size-3.5" />
+                Explore Communities
+                <ArrowRight className="size-3" />
+              </Link>
+            </div>
           </div>
         )}
 
@@ -271,7 +410,7 @@ export function EventFormModal({
             </Label>
             <Input
               id="event-title"
-              placeholder="e.g. Midterm Examination, Assignment 1 Submission"
+              placeholder="e.g. Midterm Examination, Assignment 1 Submission, Lab Tutorial"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="text-xs h-9"
@@ -360,7 +499,7 @@ export function EventFormModal({
               </Label>
               <Input
                 id="event-loc"
-                placeholder="e.g. Amphitheater 2, Room 301, Google Meet URL"
+                placeholder="e.g. Room 301, Amphitheater B, or Meeting URL"
                 value={locationDetails}
                 onChange={(e) => setLocationDetails(e.target.value)}
                 className="text-xs h-9"
@@ -387,118 +526,214 @@ export function EventFormModal({
             </div>
           </div>
 
-          {/* Community & Course Selectors (Only required for creation) */}
-          {!isEditing && (
-            <div className="rounded-xl border bg-muted/30 p-3 space-y-3">
-              <div className="font-semibold text-xs text-foreground">
-                Community & Course Assignment
+          {/* Read-Only Context when Editing */}
+          {isEditing && editingEvent && (
+            <div className="rounded-xl border bg-muted/40 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2">
+                <Users className="size-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Community:</span>
+                <span className="font-semibold text-foreground">
+                  {editingEvent.communitySlug}
+                </span>
               </div>
+
+              <div className="flex items-center gap-2">
+                <GraduationCap className="size-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Course:</span>
+                {editingEvent.courseAbbreviation && (
+                  <span className="font-mono text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded">
+                    [{editingEvent.courseAbbreviation}]
+                  </span>
+                )}
+                <span className="font-semibold text-foreground">
+                  {editingEvent.courseName}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Cascading Community, Study Year, and Course Selectors (Create Mode) */}
+          {!isEditing && (
+            <div className="rounded-xl border bg-muted/30 p-3.5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                  <GraduationCap className="size-3.5 text-primary" />
+                  Course & Community Selection *
+                </span>
+                {formCommunitySlug && (
+                  <span className="text-[11px] text-muted-foreground">
+                    Required for scheduling
+                  </span>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* 1. Community Dropdown */}
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
                     Enrolled Community *
                   </Label>
                   <Select
-                    value={communitySlug}
+                    value={formCommunitySlug}
                     onValueChange={(val: string | null) => {
-                      if (val) {
-                        setCommunitySlug(val);
-                        setCourseId(undefined);
-                      }
+                      if (!val || val === "NO_COMMUNITIES") return;
+                      setFormCommunitySlug(val);
+                      setFormStudyYear(null);
+                      setFormCourseId(undefined);
                     }}
+                    disabled={!hasCommunities}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
                       <SelectValue
                         placeholder={
-                          communities.length === 0
-                            ? "No enrolled communities"
-                            : "Select community"
+                          isLoadingCommunities
+                            ? "Loading..."
+                            : !hasCommunities
+                              ? "No communities"
+                              : "Select community"
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {communities.map((c) => (
-                        <SelectItem key={c.id} value={c.slug}>
-                          {c.name}
+                      {!hasCommunities ? (
+                        <SelectItem value="NO_COMMUNITIES" disabled>
+                          No enrolled communities
                         </SelectItem>
-                      ))}
+                      ) : (
+                        communities.map((c) => (
+                          <SelectItem key={c.id} value={c.slug}>
+                            {c.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* 2. Study Year Dropdown */}
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
-                    Study Year
+                    Study Year *
                   </Label>
                   <Select
-                    value={formStudyYear}
+                    value={activeStudyYearName ?? undefined}
                     onValueChange={(val: string | null) => {
-                      if (val) {
-                        setFormStudyYear(val);
-                        setCourseId(undefined);
-                      }
+                      if (!val || val === "NO_YEARS") return;
+                      const next = StudyYearNameMap[val as StudyYearName];
+                      setFormStudyYear(next ?? null);
+                      setFormCourseId(undefined);
                     }}
+                    disabled={!formCommunitySlug || !hasStudyYears}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
-                      <SelectValue />
+                      <SelectValue
+                        placeholder={
+                          isLoadingStudyYears
+                            ? "Loading years..."
+                            : !formCommunitySlug
+                              ? "Pick community first"
+                              : !hasStudyYears
+                                ? "No study years"
+                                : "Select year"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {STUDY_YEARS.map((y, idx) => (
-                        <SelectItem key={y} value={y}>
-                          Year {idx + 1}
+                      {!hasStudyYears ? (
+                        <SelectItem value="NO_YEARS" disabled>
+                          No study years found
                         </SelectItem>
-                      ))}
+                      ) : (
+                        communityStudyYears?.map((y) => (
+                          <SelectItem key={y.id} value={y.studyYearName}>
+                            {y.studyYearName}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
+                {/* 3. Course Dropdown */}
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
                     Course *
                   </Label>
                   <Select
-                    value={effectiveCourseId ? String(effectiveCourseId) : ""}
+                    value={formCourseId ? String(formCourseId) : undefined}
                     onValueChange={(val: string | null) => {
-                      if (val) setCourseId(Number(val));
+                      if (!val || val === "NO_COURSES") return;
+                      setFormCourseId(Number(val));
                     }}
-                    disabled={availableCourses.length === 0}
+                    disabled={!formStudyYear || !hasCourses}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
                       <SelectValue
                         placeholder={
-                          availableCourses.length === 0
-                            ? "No courses found"
-                            : "Select course"
+                          isLoadingCourses
+                            ? "Loading courses..."
+                            : !formStudyYear
+                              ? "Pick year first"
+                              : !hasCourses
+                                ? "No courses"
+                                : "Select course"
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableCourses.map((c) => (
-                        <SelectItem
-                          key={c.course.id}
-                          value={String(c.course.id)}
-                        >
-                          {c.course.abbreviation
-                            ? `[${c.course.abbreviation}] ${c.course.name}`
-                            : c.course.name}
+                      {!hasCourses ? (
+                        <SelectItem value="NO_COURSES" disabled>
+                          No courses available
                         </SelectItem>
-                      ))}
+                      ) : (
+                        studyYearCourses?.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.abbreviation ? `[${c.abbreviation}] ` : ""}
+                            {c.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
+              {/* Informative notices for missing study years / courses */}
+              {formCommunitySlug &&
+                !isLoadingStudyYears &&
+                !hasStudyYears && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                    <Info className="size-3.5 text-amber-500 shrink-0" />
+                    <span>
+                      The selected community has no study years configured yet.
+                    </span>
+                  </div>
+                )}
+
+              {formCommunitySlug &&
+                formStudyYear &&
+                !isLoadingCourses &&
+                !hasCourses && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                    <Info className="size-3.5 text-amber-500 shrink-0" />
+                    <span>
+                      No courses found in this study year. Events must be linked to
+                      a course.
+                    </span>
+                  </div>
+                )}
             </div>
           )}
 
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="event-desc" className="text-xs font-semibold">
-              Description / Syllabus Notes (Optional)
+              Description / Notes (Optional)
             </Label>
             <Textarea
               id="event-desc"
               rows={3}
-              placeholder="Add relevant instructions, exam topics, requirements..."
+              placeholder="Add relevant instructions, exam topics, room directions, or syllabus details..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="text-xs resize-none"
@@ -506,7 +741,7 @@ export function EventFormModal({
           </div>
 
           {/* Modal Footer */}
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -519,12 +754,12 @@ export function EventFormModal({
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!isEditing && !canCreateInCommunity)}
               className="h-8 text-xs font-semibold cursor-pointer"
             >
               {isSubmitting
                 ? isEditing
-                  ? "Updating..."
+                  ? "Saving Changes..."
                   : "Creating..."
                 : isEditing
                   ? "Save Changes"

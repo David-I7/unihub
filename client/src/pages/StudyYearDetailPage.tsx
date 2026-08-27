@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { CommunityBreadcrumb } from "@/features/communities";
 import {
-  useStudyYearDetail,
+  useStudyYearHome,
   StudyYearCoursesList,
   StudyYearSkeleton,
 } from "@/features/studyYears";
@@ -19,7 +19,7 @@ export default function StudyYearDetailPage() {
     isLoading,
     isError,
     refetch,
-  } = useStudyYearDetail(communitySlug, studyYearSlug, {
+  } = useStudyYearHome(communitySlug, studyYearSlug, {
     includeArchived: true,
   });
 
@@ -58,7 +58,7 @@ export default function StudyYearDetailPage() {
   return (
     <div className="min-h-full space-y-6 pb-12">
       <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
-        {studyYear.studyYearName} <span className="">Courses</span>
+        {studyYear.studyYear.studyYearName} <span className="">Courses</span>
       </h1>
 
       <CommunityBreadcrumb />

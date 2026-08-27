@@ -1,7 +1,7 @@
 package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.resources.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +17,13 @@ public class CourseController {
 
     private final CourseService courseService;
 
-    @GetMapping("/teachers")
-    public ResponseEntity<CourseTeachersResponseDto> getCourse(
+    @GetMapping("/home")
+    public ResponseEntity<CourseHomeResponseDto> getCourseHome(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
             @PathVariable String courseSlug
     ){
-        CourseTeachersResponseDto courseResponse = courseService.getCourseTeachers(communitySlug, studyYearName, courseSlug);
+        CourseHomeResponseDto courseResponse = courseService.getCourseHome(communitySlug, studyYearName, courseSlug);
         return ResponseEntity.ok(courseResponse);
     }
 

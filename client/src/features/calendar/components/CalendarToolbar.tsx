@@ -1,4 +1,10 @@
-import { ChevronLeft, ChevronRight, LayoutGrid, List, Plus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Plus,
+} from "lucide-react";
 import type { EventType } from "../api/types";
 import { CalendarFilters } from "./CalendarFilters";
 import { Button } from "@/components/ui/button";
@@ -10,22 +16,22 @@ interface CalendarToolbarProps {
   onNextMonth: () => void;
   onToday: () => void;
   onAddEvent: () => void;
-  communitySlug?: string;
-  onCommunityChange: (slug?: string) => void;
-  studyYear?: string;
-  onStudyYearChange: (year?: string) => void;
-  courseSlug?: string;
-  onCourseChange: (courseSlug?: string) => void;
-  selectedType: EventType | "ALL";
-  onTypeChange: (type: EventType | "ALL") => void;
+  communitySlug: string | null;
+  onCommunityChange: (slug: string | null) => void;
+  studyYear: string | null;
+  onStudyYearChange: (year: string | null) => void;
+  courseSlug: string | null;
+  onCourseChange: (courseSlug: string | null) => void;
+  selectedType: EventType | "ALL_TYPES";
+  onTypeChange: (type: EventType | "ALL_TYPES") => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   examCount: number;
   assignmentCount: number;
   lectureCount: number;
   totalCount: number;
-  viewMode?: "auto" | "month" | "list";
-  onViewModeChange?: (mode: "auto" | "month" | "list") => void;
+  viewMode: "auto" | "month" | "list";
+  onViewModeChange: (mode: "auto" | "month" | "list") => void;
 }
 
 const MONTH_NAMES = [
@@ -108,49 +114,47 @@ export function CalendarToolbar({
 
         {/* Right Action buttons (View Switcher & Add Event) */}
         <div className="flex items-center gap-2">
-          {onViewModeChange && (
-            <div className="flex items-center gap-0.5 rounded-xl border bg-muted/40 p-1 text-xs">
-              <button
-                type="button"
-                onClick={() => onViewModeChange("auto")}
-                className={cn(
-                  "px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer",
-                  viewMode === "auto"
-                    ? "bg-background text-foreground shadow-2xs font-bold"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                title="Auto responsive mode (<640px = list, >=640px = grid)"
-              >
-                Auto
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewModeChange("month")}
-                className={cn(
-                  "p-1.5 rounded-lg transition-colors cursor-pointer",
-                  viewMode === "month"
-                    ? "bg-background text-primary shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                title="Month grid view"
-              >
-                <LayoutGrid className="size-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onViewModeChange("list")}
-                className={cn(
-                  "p-1.5 rounded-lg transition-colors cursor-pointer",
-                  viewMode === "list"
-                    ? "bg-background text-primary shadow-2xs"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                title="Agenda list view"
-              >
-                <List className="size-3.5" />
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-0.5 rounded-xl border bg-muted/40 p-1 text-xs">
+            <button
+              type="button"
+              onClick={() => onViewModeChange("auto")}
+              className={cn(
+                "px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer",
+                viewMode === "auto"
+                  ? "bg-background text-foreground shadow-2xs font-bold"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              title="Auto responsive mode (<640px = list, >=640px = grid)"
+            >
+              Auto
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange("month")}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors cursor-pointer",
+                viewMode === "month"
+                  ? "bg-background text-primary shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              title="Month grid view"
+            >
+              <LayoutGrid className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange("list")}
+              className={cn(
+                "p-1.5 rounded-lg transition-colors cursor-pointer",
+                viewMode === "list"
+                  ? "bg-background text-primary shadow-2xs"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+              title="Agenda list view"
+            >
+              <List className="size-3.5" />
+            </button>
+          </div>
 
           {/* Add Event Button */}
           <Button

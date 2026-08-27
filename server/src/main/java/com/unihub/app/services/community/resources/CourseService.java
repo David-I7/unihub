@@ -5,7 +5,7 @@ import com.unihub.app.dto.community.content.response.FolderSummaryDto;
 import com.unihub.app.dto.community.content.response.MaterialFileDto;
 import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.MaterialLink;
@@ -95,9 +95,9 @@ public class CourseService {
         return resourceMapper.toCourseResponseDto(course);
     }
 
-    public CourseTeachersResponseDto getCourseTeachers(String communitySlug, StudyYearName studyYearName, String courseSlug) {
+    public CourseHomeResponseDto getCourseHome(String communitySlug, StudyYearName studyYearName, String courseSlug) {
         Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachers(courseSlug, communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-        return resourceMapper.toCourseTeachersResponseDto(course);
+        return resourceMapper.toCourseHomeResponseDto(course);
     }
 }

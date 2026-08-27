@@ -17,7 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
  * Temporary toggle for UI testing.
  * Set to false or delete when backend calendar events are populated.
  */
-const USE_MOCK_EVENTS = true;
+const USE_MOCK_EVENTS = false;
 
 function getLocalDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -63,10 +63,9 @@ export default function CalendarPage() {
     year: currentDate.getFullYear(),
     month: currentDate.getMonth() + 1,
     communitySlug: communitySlug || undefined,
-    studyYear: studyYear && studyYear !== "ALL_YEARS" ? studyYear : undefined,
-    courseSlug:
-      courseSlug && courseSlug !== "ALL_COURSES" ? courseSlug : undefined,
-    type: selectedType !== "ALL" ? selectedType : undefined,
+    studyYear: studyYear !== null ? studyYear : undefined,
+    courseSlug: courseSlug !== null ? courseSlug : undefined,
+    type: selectedType !== "ALL_TYPES" ? selectedType : undefined,
   });
 
   const eventsList = useMemo(() => {
@@ -82,26 +81,12 @@ export default function CalendarPage() {
 
   // Client-side search and category filtering
   const filteredEvents = useMemo(() => {
-    let list = eventsList;
-
-    if (selectedType !== "ALL") {
-      list = list.filter((e) => e.type === selectedType);
-    }
-    if (communitySlug && communitySlug !== "ALL_COMMUNITIES") {
-      list = list.filter(
-        (e) => !e.communitySlug || e.communitySlug === communitySlug,
-      );
-    }
-    if (courseSlug && courseSlug !== "ALL_COURSES") {
-      list = list.filter((e) => !e.courseSlug || e.courseSlug === courseSlug);
-    }
-
-    if (!searchQuery.trim()) return list;
+    if (!searchQuery.trim()) return eventsList;
     const q = searchQuery.toLowerCase().trim();
-    return list.filter((ev) => {
+    return eventsList.filter((ev) => {
       const matchTitle = ev.title.toLowerCase().includes(q);
-      const matchCourseName = ev.courseName?.toLowerCase().includes(q);
-      const matchCourseSlug = ev.courseSlug?.toLowerCase().includes(q);
+      const matchCourseName = ev.courseName.toLowerCase().includes(q);
+      const matchCourseSlug = ev.courseSlug.toLowerCase().includes(q);
       const matchLocation = ev.locationDetails?.toLowerCase().includes(q);
       const matchDescription = ev.description?.toLowerCase().includes(q);
       return (
@@ -112,7 +97,7 @@ export default function CalendarPage() {
         matchDescription
       );
     });
-  }, [eventsList, selectedType, communitySlug, courseSlug, searchQuery]);
+  }, [eventsList, selectedType, courseSlug, searchQuery]);
 
   // Counts for category badges
   const examCount = useMemo(
@@ -293,6 +278,8 @@ export default function CalendarPage() {
         defaultDate={formDefaultDate}
         editingEvent={editingEvent}
         defaultCommunitySlug={communitySlug}
+        defaultStudyYear={studyYear}
+        defaultCourseSlug={courseSlug}
       />
 
       {/* Crowded Day Overflow Modal */}

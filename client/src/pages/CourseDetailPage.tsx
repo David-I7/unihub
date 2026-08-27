@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router";
 import { Info, FolderOpen, MessageSquare, ArrowLeft } from "lucide-react";
 import { CommunityBreadcrumb, CommunityPostsTab } from "@/features/communities";
 import {
-  useCourseTeachers,
+  useCourseHome,
   CourseAboutTab,
   CourseMaterialsTab,
   CourseSkeleton,
@@ -22,17 +22,17 @@ export default function CourseDetailPage() {
   }>();
 
   const {
-    data: courseTeachers,
+    data: courseHome,
     isLoading,
     isError,
     refetch,
-  } = useCourseTeachers(communitySlug, studyYearSlug, courseSlug);
+  } = useCourseHome(communitySlug, studyYearSlug, courseSlug);
 
   if (isLoading) {
     return <CourseSkeleton />;
   }
 
-  if (isError || !courseTeachers) {
+  if (isError || !courseHome) {
     return (
       <div className="min-h-full space-y-6 pb-12">
         <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
@@ -66,7 +66,7 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-full space-y-6 pb-12">
       <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
-        {courseTeachers.course.name}{" "}
+        {courseHome.course.name}{" "}
       </h1>
 
       <CommunityBreadcrumb />
@@ -94,8 +94,8 @@ export default function CourseDetailPage() {
 
         <TabsContent value="about" className="focus-visible:outline-none">
           <CourseAboutTab
-            course={courseTeachers.course}
-            teachers={courseTeachers.teachers}
+            course={courseHome.course}
+            teachers={courseHome.teachers}
           />
         </TabsContent>
 

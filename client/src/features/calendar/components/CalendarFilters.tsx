@@ -1,13 +1,5 @@
-import { useMemo } from "react";
-import {
-  AlertCircle,
-  FileText,
-  Search,
-  Video,
-  X,
-} from "lucide-react";
+import { AlertCircle, FileText, Search, Video, X } from "lucide-react";
 import { useUserCommunities } from "@/features/users";
-import { useStudyYearDetail } from "@/features/studyYears/api/getStudyYearDetail";
 import type { EventType } from "../api/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useCommunityStudyYears } from "@/features/communities";
+import {
+  StudyYearNameMap,
+  useStudyYearCourses,
+  type StudyYearName,
+} from "@/features/studyYears";
 
 interface CalendarFiltersProps {
-  communitySlug?: string;
-  onCommunityChange: (slug?: string) => void;
-  studyYear?: string;
-  onStudyYearChange: (year?: string) => void;
-  courseSlug?: string;
-  onCourseChange: (courseSlug?: string) => void;
-  selectedType: EventType | "ALL";
-  onTypeChange: (type: EventType | "ALL") => void;
+  communitySlug: string | null;
+  onCommunityChange: (slug: string | null) => void;
+  studyYear: string | null;
+  onStudyYearChange: (year: string | null) => void;
+  courseSlug: string | null;
+  onCourseChange: (courseSlug: string | null) => void;
+  selectedType: EventType | "ALL_TYPES";
+  onTypeChange: (type: EventType | "ALL_TYPES") => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   examCount: number;
@@ -35,14 +33,6 @@ interface CalendarFiltersProps {
   lectureCount: number;
   totalCount: number;
 }
-
-const STUDY_YEARS = [
-  { label: "All Years", value: "ALL_YEARS" },
-  { label: "Year 1", value: "year-1" },
-  { label: "Year 2", value: "year-2" },
-  { label: "Year 3", value: "year-3" },
-  { label: "Year 4", value: "year-4" },
-];
 
 export function CalendarFilters({
   communitySlug,
@@ -62,27 +52,17 @@ export function CalendarFilters({
 }: CalendarFiltersProps) {
   // Fetch user enrolled communities list
   const { data: userCommunitiesData } = useUserCommunities();
-  const communities = userCommunitiesData?.communities ?? [];
 
-  // Fetch courses for the selected study year if community and studyYear are selected
-  const activeStudyYear =
-    studyYear && studyYear !== "ALL_YEARS" ? studyYear : "year-1";
-  const { data: studyYearDetail } = useStudyYearDetail(
+  // Fetch all study years for the selected community
+  const { data: communityStudyYears } = useCommunityStudyYears(
     communitySlug ?? "",
-    activeStudyYear,
-    { includeArchived: false },
   );
 
-  // Available courses
-  const courses = useMemo(() => {
-    if (!communitySlug) return [];
-    return studyYearDetail?.courses ?? [];
-  }, [communitySlug, studyYearDetail]);
-
-  const selectedCommunityValue = communitySlug || "ALL_COMMUNITIES";
-  const selectedYearValue = studyYear || "ALL_YEARS";
-  const selectedCourseValue = courseSlug || "ALL_COURSES";
-  const selectedCategoryValue = selectedType || "ALL";
+  // Fetch all courses for the selected community and study year
+  const { data: studyYearCourses } = useStudyYearCourses(
+    communitySlug ?? "",
+    studyYear ?? "",
+  );
 
   return (
     <div className="space-y-3 pt-1">
@@ -94,22 +74,24 @@ export function CalendarFilters({
             Community
           </Label>
           <Select
-            value={selectedCommunityValue}
+            value={communitySlug}
             onValueChange={(val: string | null) => {
-              const next =
-                !val || val === "ALL_COMMUNITIES" ? undefined : val;
-              onCommunityChange(next);
-              onCourseChange(undefined);
+              if (!val || val === "NO_COMMUNITIES") return;
+              onCommunityChange(val);
+              onCourseChange(null);
+              onStudyYearChange(null);
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All Communities" />
+              <SelectValue placeholder="Select Community" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL_COMMUNITIES">
-                All Communities ({communities.length})
-              </SelectItem>
-              {communities.map((c) => (
+              {userCommunitiesData?.communities.length === 0 && (
+                <SelectItem value="NO_COMMUNITIES" disabled>
+                  No communities found
+                </SelectItem>
+              )}
+              {userCommunitiesData?.communities.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
                   {c.name}
                 </SelectItem>
@@ -124,20 +106,27 @@ export function CalendarFilters({
             Study Year
           </Label>
           <Select
-            value={selectedYearValue}
+            value={studyYear}
             onValueChange={(val: string | null) => {
-              const next = !val || val === "ALL_YEARS" ? undefined : val;
+              if (!val || val === "NO_YEARS") return;
+              const next = StudyYearNameMap[val as StudyYearName];
               onStudyYearChange(next);
-              onCourseChange(undefined);
+              onCourseChange(null);
             }}
+            disabled={!communitySlug}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All Years" />
+              <SelectValue placeholder="Select Year" />
             </SelectTrigger>
             <SelectContent>
-              {STUDY_YEARS.map((y) => (
-                <SelectItem key={y.value} value={y.value}>
-                  {y.label}
+              {communityStudyYears?.length === 0 && (
+                <SelectItem value="NO_YEARS" disabled>
+                  No study years found
+                </SelectItem>
+              )}
+              {communityStudyYears?.map((y) => (
+                <SelectItem key={y.id} value={y.studyYearName}>
+                  {y.studyYearName}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -150,27 +139,27 @@ export function CalendarFilters({
             Course
           </Label>
           <Select
-            value={selectedCourseValue}
+            value={courseSlug ?? "ALL_COURSES"}
             onValueChange={(val: string | null) => {
-              const next = !val || val === "ALL_COURSES" ? undefined : val;
+              if (!val || val === "NO_COURSES") return;
+              const next = val === "ALL_COURSES" ? null : val;
               onCourseChange(next);
             }}
-            disabled={!communitySlug}
+            disabled={!studyYear}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue
-                placeholder={
-                  !communitySlug ? "Select community" : "All Courses"
-                }
-              />
+              <SelectValue placeholder="Select Course" />
             </SelectTrigger>
             <SelectContent>
+              {studyYearCourses?.length === 0 && (
+                <SelectItem value="NO_COURSES" disabled>
+                  No courses found
+                </SelectItem>
+              )}
               <SelectItem value="ALL_COURSES">All Courses</SelectItem>
-              {courses.map((item) => (
-                <SelectItem key={item.course.id} value={item.course.slug}>
-                  {item.course.abbreviation
-                    ? `[${item.course.abbreviation}] ${item.course.name}`
-                    : item.course.name}
+              {studyYearCourses?.map((c) => (
+                <SelectItem key={c.id} value={c.slug}>
+                  {c.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -183,17 +172,17 @@ export function CalendarFilters({
             Event Type
           </Label>
           <Select
-            value={selectedCategoryValue}
+            value={selectedType}
             onValueChange={(val: string | null) => {
-              if (val) onTypeChange(val as EventType | "ALL");
+              if (val) onTypeChange(val as EventType | "ALL_TYPES");
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
               <SelectValue placeholder="All Event Types" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">
-                All Event Types ({totalCount})
+              <SelectItem value="ALL_TYPES">
+                All Events ({totalCount})
               </SelectItem>
               <SelectItem value="EXAM">
                 <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
@@ -202,7 +191,8 @@ export function CalendarFilters({
               </SelectItem>
               <SelectItem value="ASSIGNMENT">
                 <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
-                  <FileText className="size-3.5" /> Assignments ({assignmentCount})
+                  <FileText className="size-3.5" /> Assignments (
+                  {assignmentCount})
                 </span>
               </SelectItem>
               <SelectItem value="LECTURE">

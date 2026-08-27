@@ -45,10 +45,18 @@ export interface Course {
   creditPoints: number;
   archived: boolean;
   description?: string;
-  createdAt?: string;
+  createdAt: string;
 }
 
-export interface CourseTeachers {
+export interface CourseHome {
   course: Course;
   teachers: Teacher[];
+}
+
+export interface CourseIndentifiers {
+  id: number;
+  name: string;
+  slug: string;
+  abbreviation: string;
+  semester: number;
 }

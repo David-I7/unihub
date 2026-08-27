@@ -1,5 +1,5 @@
 export * from "./api/getCommunities";
-export * from "./api/getCommunityDetail";
+export * from "./api/getCommunityHome";
 export * from "./api/getCommunityPosts";
 export * from "./api/getCommunityStudyYear";
 export * from "./api/types";

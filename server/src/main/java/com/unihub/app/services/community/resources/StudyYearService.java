@@ -1,10 +1,6 @@
 package com.unihub.app.services.community.resources;
 
-import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearCoursesResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
-import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.dto.community.resources.response.*;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -28,7 +24,7 @@ public class StudyYearService {
     private final CommunityResourceMapper communityMapper;
 
     @Transactional(readOnly = true)
-    public StudyYearCoursesResponseDto getStudyYearDetail(String communitySlug, StudyYearName studyYearName, boolean includeArchived) {
+    public StudyYearHomeResponseDto getStudyYearHome(String communitySlug, StudyYearName studyYearName, boolean includeArchived) {
         StudyYear studyYear = studyYearRepository.findByCommunitySlugAndStudyYearName(communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
@@ -36,14 +32,25 @@ public class StudyYearService {
                 courseRepository.findAllByStudyYearIdWithTeachers(studyYear.getId()) :
                 courseRepository.findAllActiveByStudyYearIdWithTeachers(studyYear.getId());
 
-        List<CourseTeachersResponseDto> courseTeachersResponseDtos = courses.stream()
-                .map(communityMapper::toCourseTeachersResponseDto)
+        List<CourseHomeResponseDto> courseTeachersResponseDtos = courses.stream()
+                .map(communityMapper::toCourseHomeResponseDto)
                 .toList();
 
-        return communityMapper.toStudyYearDetailResponseDto(studyYear, courseTeachersResponseDtos);
+        return communityMapper.toStudyYearHomeResponseDto(studyYear, courseTeachersResponseDtos);
     }
 
-    public List<StudyYearResponseDto> getCommunityStudyYears(String communitySlug) {
-        return studyYearRepository.findStudyYearsByCommunitySlug(communitySlug);
+    public List<StudyYearMetricsResponseDto> getCommunityStudyYearMetrics(String communitySlug) {
+        return studyYearRepository.findStudyYearMetricsByCommunitySlug(communitySlug);
+    }
+
+    public List<StudyYearIdentifiersResponseDto> getCommunityStudyYearIdentifiers(String communitySlug) {
+        return studyYearRepository.findStudyYearIdentifiersByCommunitySlug(communitySlug);
+    }
+
+    public List<CourseIdentifiersResponseDto> getStudyYearCourses(String communitySlug, StudyYearName studyYearName){
+        StudyYear studyYear = studyYearRepository.findByCommunitySlugAndStudyYearNameWithCourses(communitySlug, studyYearName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
+
+        return studyYear.getCourses().stream().map(communityMapper::courseIdentifiersResponseDto).toList();
     }
 }

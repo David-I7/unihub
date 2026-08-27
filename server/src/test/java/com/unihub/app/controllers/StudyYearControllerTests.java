@@ -1,35 +1,17 @@
 package com.unihub.app.controllers;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.config.SessionProperties;
-import com.unihub.app.controllers.community.resources.StudyYearController;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearCoursesResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.exceptions.GlobalExceptionHandler;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
-import com.unihub.app.security.JwtSessionManagementFilter;
-import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
-import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
-import com.unihub.app.security.OAuth2ProviderUserInfoExtractor;
-import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.StudyYearService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -106,12 +88,12 @@ public class StudyYearControllerTests {
                 .description("Course description")
                 .build();
 
-        CourseTeachersResponseDto courseTeachersDto = CourseTeachersResponseDto.builder()
+        CourseHomeResponseDto courseTeachersDto = CourseHomeResponseDto.builder()
                 .course(courseDto)
                 .teachers(List.of(teacherDto))
                 .build();
 
-        StudyYearCoursesResponseDto responseDto = StudyYearCoursesResponseDto.builder()
+        StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
                 .id(1)
                 .studyYearName(StudyYearName.YEAR_1)
                 .courses(List.of(courseTeachersDto))

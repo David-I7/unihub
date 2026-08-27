@@ -3,15 +3,17 @@ import type { CalendarEvent, EventType } from "../api/types";
 
 export function useCalendarState() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
-  const [communitySlug, setCommunitySlug] = useState<string | undefined>(
-    undefined,
+  const [communitySlug, setCommunitySlug] = useState<string | null>(null);
+  const [studyYear, setStudyYear] = useState<string | null>(null);
+  const [courseSlug, setCourseSlug] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<EventType | "ALL_TYPES">(
+    "ALL_TYPES",
   );
-  const [studyYear, setStudyYear] = useState<string | undefined>(undefined);
-  const [courseSlug, setCourseSlug] = useState<string | undefined>(undefined);
-  const [selectedType, setSelectedType] = useState<EventType | "ALL">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
+    null,
+  );
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [formDefaultDate, setFormDefaultDate] = useState<string | undefined>(
     undefined,

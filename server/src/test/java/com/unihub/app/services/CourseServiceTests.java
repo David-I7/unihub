@@ -2,7 +2,7 @@ package com.unihub.app.services;
 
 import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseTeachersResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Course;
@@ -235,7 +235,7 @@ public class CourseServiceTests {
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachers("asc", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
 
-        CourseTeachersResponseDto result = courseService.getCourseTeachers("fmi-info-id", StudyYearName.YEAR_1, "asc");
+        CourseHomeResponseDto result = courseService.getCourseHome("fmi-info-id", StudyYearName.YEAR_1, "asc");
 
         assertNotNull(result);
         assertEquals(1L, result.course().id());
