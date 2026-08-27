@@ -119,7 +119,7 @@ export function EventDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl p-6">
+      <DialogContent className="sm:max-w-2xl">
         {/* Modal Header */}
         <DialogHeader className="gap-2">
           <div className="flex flex-wrap items-center justify-between gap-2 pr-6">

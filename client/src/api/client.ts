@@ -2,7 +2,6 @@ import useAuthStore from "@/features/auth/store/useAuthStore";
 import type { RefreshResponse } from "@/features/auth";
 import axios, { type AxiosRequestConfig } from "axios";
 import { refresh } from "@/features/auth";
-import queryClient from "@/lib/queryClient";
 
 export const BASE_URL = import.meta.env.VITE_BASE_API_URL;
 
@@ -52,7 +51,6 @@ client.interceptors.response.use(
       if (refreshPromise === null) {
         refreshPromise = refresh().then((data) => {
           useAuthStore.getState().setAuth(data.user, data.accessToken);
-          queryClient.invalidateQueries({ queryKey: ["profile"] });
           return data;
         });
         originalRequest.retryOwner = true;

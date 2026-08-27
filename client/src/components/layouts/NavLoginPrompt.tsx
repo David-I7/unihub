@@ -31,7 +31,7 @@ export function NavLoginPrompt() {
             render={<Link to="/login" />}
             className="text-primary hover:text-primary hover:bg-primary/10"
           >
-            <LogIn className="size-4" />
+            <LogIn className="size-4 sm:size-5" />
             <span>Sign In</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

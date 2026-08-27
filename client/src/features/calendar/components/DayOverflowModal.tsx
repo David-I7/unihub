@@ -44,7 +44,7 @@ export function DayOverflowModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-5">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader className="gap-1">
           <div className="flex items-center gap-2">
             <CalendarIcon className="size-4 text-primary" />
@@ -58,7 +58,7 @@ export function DayOverflowModal({
         </DialogHeader>
 
         {/* Events List */}
-        <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+        <div className="space-y-2 sm:max-h-[60vh] sm:overflow-y-auto sm:pr-1">
           {events.length === 0 ? (
             <p className="text-xs text-muted-foreground py-4 text-center">
               No events scheduled for this day.

@@ -43,14 +43,19 @@ export async function getEvents(
 }
 
 export async function getEventById(eventId: string): Promise<CalendarEvent> {
-  const response = await client.get<CalendarEvent>(`/calendar/events/${eventId}`);
+  const response = await client.get<CalendarEvent>(
+    `/calendar/events/${eventId}`,
+  );
   return response.data;
 }
 
 export async function createEvent(
   payload: CreateEventPayload,
 ): Promise<CalendarEvent> {
-  const response = await client.post<CalendarEvent>("/calendar/events", payload);
+  const response = await client.post<CalendarEvent>(
+    "/calendar/events",
+    payload,
+  );
   return response.data;
 }
 

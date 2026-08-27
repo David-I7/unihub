@@ -1,4 +1,4 @@
-import { AlertCircle, Bell, FileText, Video } from "lucide-react";
+import { AlertCircle, FileText, Video } from "lucide-react";
 import type { CalendarEvent, EventType } from "../api/types";
 import { cn } from "@/lib/utils";
 
@@ -56,10 +56,7 @@ export function CalendarEventPill({
   const config = getEventCategoryConfig(event.type);
   const Icon = config.icon;
   const timeStr = formatEventTime(event.startTime);
-  const courseCode =
-    event.courseSlug?.toUpperCase() ||
-    event.courseName?.slice(0, 3).toUpperCase() ||
-    "";
+  const abbreviation = event.courseAbbreviation?.trim() || "ABBV";
 
   return (
     <button
@@ -69,34 +66,16 @@ export function CalendarEventPill({
         onClick(event);
       }}
       className={cn(
-        "group/pill flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-[11px] font-medium leading-tight transition-all cursor-pointer shadow-2xs select-none",
+        "group/pill flex w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-left text-[11px] font-semibold leading-tight transition-all cursor-pointer shadow-2xs select-none truncate",
         config.container,
         className,
       )}
-      title={`${courseCode ? `[${courseCode}] ` : ""}${event.title}${
-        timeStr ? ` (${timeStr})` : ""
-      }`}
+      title={`[${abbreviation}] ${event.title}${timeStr ? ` (${timeStr})` : ""}`}
     >
-      <Icon className="size-3 shrink-0 opacity-80" />
-      {courseCode && (
-        <span className="shrink-0 font-mono text-[10px] font-bold opacity-90">
-          {courseCode}
-        </span>
-      )}
-      <span className="min-w-0 flex-1 truncate font-normal">{event.title}</span>
-      {timeStr && (
-        <span className="shrink-0 font-mono text-[10px] font-semibold opacity-75">
-          {timeStr}
-        </span>
-      )}
-      {event.isSubscribed && (
-        <span
-          title="Reminder set"
-          className="inline-flex shrink-0 items-center justify-center text-primary"
-        >
-          <Bell className="size-3 fill-current" />
-        </span>
-      )}
+      <Icon className="size-2.5 shrink-0 opacity-80" />
+      <span className="font-mono text-[10px] font-bold tracking-tight truncate">
+        {abbreviation}
+      </span>
     </button>
   );
 }

@@ -19,12 +19,12 @@ public class CommunityMember {
     @EmbeddedId
     private CommunityMembersId id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("communityId")
     @JoinColumn(name = "community_id")
     private Community community;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;

@@ -24,6 +24,7 @@ export interface CalendarEvent {
   courseId: number;
   courseSlug: string;
   courseName: string;
+  courseAbbreviation?: string;
   communitySlug: string;
   createdAt: string;
   updatedAt: string;

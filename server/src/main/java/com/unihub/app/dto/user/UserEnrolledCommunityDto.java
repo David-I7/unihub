@@ -12,9 +12,8 @@ public record UserEnrolledCommunityDto(
         String name,
         String slug,
         String description,
-        Long memberCount,
+        Integer memberCount,
         String role,
-        List<String> permissions,
         OffsetDateTime joinedAt
 ) {
 }

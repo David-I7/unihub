@@ -114,6 +114,7 @@ public class CommunityContentMapper {
                 .courseId(event.getCourse().getId())
                 .courseSlug(event.getCourse().getSlug())
                 .courseName(event.getCourse().getName())
+                .courseAbbreviation(event.getCourse().getAbbreviation())
                 .communitySlug(event.getCommunity().getSlug())
                 .createdAt(event.getCreatedAt())
                 .updatedAt(event.getUpdatedAt())

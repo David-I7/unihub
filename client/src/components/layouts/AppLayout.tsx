@@ -1,5 +1,4 @@
 import { refresh, useAuthStore } from "@/features/auth/";
-import queryClient from "@/lib/queryClient";
 import { useEffect, useRef } from "react";
 import { Outlet } from "react-router";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -36,6 +35,7 @@ export default function AppLayout() {
 
 export function useAppLayout() {
   const isFetched = useRef(false);
+  const setInitialized = useAuthStore((state) => state.setInitialized);
 
   useEffect(() => {
     if (isFetched.current) return;
@@ -46,9 +46,10 @@ export function useAppLayout() {
       try {
         const data = await refresh();
         useAuthStore.getState().setAuth(data.user, data.accessToken);
-        queryClient.invalidateQueries({ queryKey: ["profile"] });
       } catch (error) {
         if (import.meta.env.DEV) console.log("Error refreshing user:", error);
+      } finally {
+        setInitialized();
       }
     }
 

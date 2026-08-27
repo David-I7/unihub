@@ -151,7 +151,7 @@ export function ProtoEventRegisterModal({
           {/* Segmented Type Selector */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground">
-              Event Category
+              Event Type
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button

@@ -1,15 +1,23 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
+  CalendarAgendaList,
   CalendarMonthGrid,
   CalendarToolbar,
   DayOverflowModal,
   EventDetailModal,
   EventFormModal,
+  getMockCalendarEventsForMonth,
   useCalendarEvents,
   useCalendarState,
   type CalendarEvent,
 } from "@/features/calendar";
 import { Spinner } from "@/components/ui/spinner";
+
+/**
+ * Temporary toggle for UI testing.
+ * Set to false or delete when backend calendar events are populated.
+ */
+const USE_MOCK_EVENTS = true;
 
 function getLocalDateKey(date: Date): string {
   const y = date.getFullYear();
@@ -19,6 +27,8 @@ function getLocalDateKey(date: Date): string {
 }
 
 export default function CalendarPage() {
+  const [viewMode, setViewMode] = useState<"auto" | "month" | "list">("auto");
+
   const {
     currentDate,
     setCurrentDate,
@@ -45,33 +55,50 @@ export default function CalendarPage() {
   } = useCalendarState();
 
   // Fetch events for active year, month, and filters
-  const { data: rawEvents, isLoading, isFetching } = useCalendarEvents({
+  const {
+    data: rawEvents,
+    isLoading,
+    isFetching,
+  } = useCalendarEvents({
     year: currentDate.getFullYear(),
     month: currentDate.getMonth() + 1,
     communitySlug: communitySlug || undefined,
     studyYear: studyYear && studyYear !== "ALL_YEARS" ? studyYear : undefined,
-    courseSlug: courseSlug && courseSlug !== "ALL_COURSES" ? courseSlug : undefined,
+    courseSlug:
+      courseSlug && courseSlug !== "ALL_COURSES" ? courseSlug : undefined,
     type: selectedType !== "ALL" ? selectedType : undefined,
   });
 
-  // Guarantee rawEvents is converted to a valid array
-  const eventsList: CalendarEvent[] = useMemo(() => {
-    if (Array.isArray(rawEvents)) return rawEvents;
-    const dataObj = rawEvents as Record<string, unknown> | null | undefined;
-    if (dataObj && Array.isArray(dataObj.content)) {
-      return dataObj.content as CalendarEvent[];
-    }
-    if (dataObj && Array.isArray(dataObj.data)) {
-      return dataObj.data as CalendarEvent[];
+  const eventsList = useMemo(() => {
+    if (rawEvents && rawEvents.length > 0) return rawEvents;
+    if (USE_MOCK_EVENTS) {
+      return getMockCalendarEventsForMonth(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+      );
     }
     return [];
-  }, [rawEvents]);
+  }, [rawEvents, currentDate]);
 
-  // Client-side search filtering
+  // Client-side search and category filtering
   const filteredEvents = useMemo(() => {
-    if (!searchQuery.trim()) return eventsList;
+    let list = eventsList;
+
+    if (selectedType !== "ALL") {
+      list = list.filter((e) => e.type === selectedType);
+    }
+    if (communitySlug && communitySlug !== "ALL_COMMUNITIES") {
+      list = list.filter(
+        (e) => !e.communitySlug || e.communitySlug === communitySlug,
+      );
+    }
+    if (courseSlug && courseSlug !== "ALL_COURSES") {
+      list = list.filter((e) => !e.courseSlug || e.courseSlug === courseSlug);
+    }
+
+    if (!searchQuery.trim()) return list;
     const q = searchQuery.toLowerCase().trim();
-    return eventsList.filter((ev) => {
+    return list.filter((ev) => {
       const matchTitle = ev.title.toLowerCase().includes(q);
       const matchCourseName = ev.courseName?.toLowerCase().includes(q);
       const matchCourseSlug = ev.courseSlug?.toLowerCase().includes(q);
@@ -85,7 +112,7 @@ export default function CalendarPage() {
         matchDescription
       );
     });
-  }, [eventsList, searchQuery]);
+  }, [eventsList, selectedType, communitySlug, courseSlug, searchQuery]);
 
   // Counts for category badges
   const examCount = useMemo(
@@ -159,7 +186,7 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-          Community Calendar
+          Calendar
         </h1>
         {isFetching && !isLoading && (
           <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
@@ -190,9 +217,11 @@ export default function CalendarPage() {
         assignmentCount={assignmentCount}
         lectureCount={lectureCount}
         totalCount={eventsList.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      {/* Month Calendar Grid View */}
+      {/* Calendar View Container */}
       {isLoading ? (
         <div className="flex h-96 flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
           <Spinner className="size-8 text-primary" />
@@ -201,13 +230,49 @@ export default function CalendarPage() {
           </p>
         </div>
       ) : (
-        <CalendarMonthGrid
-          currentDate={currentDate}
-          events={filteredEvents}
-          onSelectEvent={handleSelectEvent}
-          onSelectDate={handleSelectDate}
-          onOpenOverflow={handleOpenOverflow}
-        />
+        <div className="@container w-full">
+          {/* Automatic Container Query Mode */}
+          {viewMode === "auto" && (
+            <>
+              <div className="hidden @[640px]:block">
+                <CalendarMonthGrid
+                  currentDate={currentDate}
+                  events={filteredEvents}
+                  onSelectEvent={handleSelectEvent}
+                  onSelectDate={handleSelectDate}
+                  onOpenOverflow={handleOpenOverflow}
+                />
+              </div>
+              <div className="block @[640px]:hidden">
+                <CalendarAgendaList
+                  currentDate={currentDate}
+                  events={filteredEvents}
+                  onSelectEvent={handleSelectEvent}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Explicit Month Grid Mode */}
+          {viewMode === "month" && (
+            <CalendarMonthGrid
+              currentDate={currentDate}
+              events={filteredEvents}
+              onSelectEvent={handleSelectEvent}
+              onSelectDate={handleSelectDate}
+              onOpenOverflow={handleOpenOverflow}
+            />
+          )}
+
+          {/* Explicit Agenda List Mode */}
+          {viewMode === "list" && (
+            <CalendarAgendaList
+              currentDate={currentDate}
+              events={filteredEvents}
+              onSelectEvent={handleSelectEvent}
+            />
+          )}
+        </div>
       )}
 
       {/* Event Details Modal */}

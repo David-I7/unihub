@@ -2,7 +2,6 @@ import { useMutation } from "@tanstack/react-query";
 import type { RefreshResponse, RegisterRequest } from "../types";
 import client from "@/api/client";
 import useAuthStore from "../store/useAuthStore";
-import queryClient from "@/lib/queryClient";
 
 export const register = async (
   registerRequest: RegisterRequest,
@@ -16,7 +15,6 @@ export const useRegister = () => {
     mutationFn: register,
     onSuccess: (data) => {
       useAuthStore.getState().setAuth(data.user, data.accessToken);
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 };

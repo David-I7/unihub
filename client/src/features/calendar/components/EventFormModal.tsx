@@ -28,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 interface EventFormModalProps {
   isOpen: boolean;
@@ -244,7 +245,7 @@ export function EventFormModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto p-6">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold font-heading">
             {isEditing ? "Edit Calendar Event" : "Create New Event"}
@@ -329,13 +330,11 @@ export function EventFormModal({
               <Label htmlFor="event-start" className="text-xs font-semibold">
                 Start Date & Time *
               </Label>
-              <Input
+              <DateTimePicker
                 id="event-start"
-                type="datetime-local"
                 value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="text-xs h-9"
-                required
+                onChange={(val) => setStartTime(val)}
+                placeholder="Select start date & time"
               />
             </div>
 
@@ -343,12 +342,12 @@ export function EventFormModal({
               <Label htmlFor="event-end" className="text-xs font-semibold">
                 End Date & Time (Optional)
               </Label>
-              <Input
+              <DateTimePicker
                 id="event-end"
-                type="datetime-local"
                 value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="text-xs h-9"
+                onChange={(val) => setEndTime(val)}
+                placeholder="Select end date & time"
+                clearable
               />
             </div>
           </div>

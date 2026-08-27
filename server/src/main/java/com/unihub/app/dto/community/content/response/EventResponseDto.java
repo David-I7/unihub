@@ -23,6 +23,7 @@ public record EventResponseDto(
         Long courseId,
         String courseSlug,
         String courseName,
+        String courseAbbreviation,
         String communitySlug,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,

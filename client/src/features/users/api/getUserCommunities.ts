@@ -2,7 +2,7 @@ import client from "@/api/client";
 import { useAuthStore } from "@/features/auth";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { userKeys } from "./getUserProfile";
-import type { UserCommunitiesResponse } from "../types";
+import type { UserCommunitiesResponse } from "./types";
 
 export async function getUserCommunities(): Promise<UserCommunitiesResponse> {
   const response = await client.get<UserCommunitiesResponse>(

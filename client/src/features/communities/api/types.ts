@@ -30,4 +30,9 @@ export type CommunityStudyYears = {
   studyYears: StudyYear[];
 };
 
+export type CommunityMemberRole =
+  | "COMMUNITY_OWNER"
+  | "COMMUNITY_ADMIN"
+  | "COMMUNITY_MEMBER";
+
 export type { StudyYear, CommunicationChannel, Comment, Post, ResourceOwner };
