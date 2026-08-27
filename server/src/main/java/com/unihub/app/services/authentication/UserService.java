@@ -1,13 +1,13 @@
 package com.unihub.app.services.authentication;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
-import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -22,9 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -66,7 +64,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setCreatedAt(now);
         user.setUpdatedAt(now);
-        user.setRole(roleService.getRole(RoleType.USER));
+        user.setRoleId(roleService.getRoleByName(RoleType.USER).getId());
 
         User savedUser = userRepository.save(user);
 
@@ -112,9 +110,6 @@ public class UserService {
 
         if (existingIdentity.isPresent()) {
             User user =  existingIdentity.get().getUser();
-            // trigger user loading
-            //user.getEmail();
-            //user.getUsername();
             return user;
         }
 
@@ -142,7 +137,7 @@ public class UserService {
                 .password(null)
                 .createdAt(now)
                 .updatedAt(now)
-                .role(roleService.getRole(RoleType.USER))
+                .roleId(roleService.getRoleByName(RoleType.USER).getId())
                 .build();
 
         User savedUser = userRepository.save(newUser);
@@ -227,43 +222,39 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserProfileResponseDto getUserProfile(UUID userId) {
         User user = findById(userId);
-        String roleName = user.getRole() != null ? user.getRole().getName() : null;
+        String roleName = roleService.getRoleById(user.getRoleId()).getName();
         List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
-        return new UserProfileResponseDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                roleName,
-                permissions,
-                user.getCreatedAt()
-        );
+        return  UserProfileResponseDto.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(roleName)
+                .permissions(permissions)
+                .createdAt(user.getCreatedAt())
+                .build();
     }
 
     @Transactional(readOnly = true)
     public UserCommunitiesResponseDto getUserEnrolledCommunities(UUID userId) {
         List<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId);
+        Map<String, List<String>> permissionsByRole = new HashMap<>();
 
         List<UserEnrolledCommunityDto> communities = memberships.stream().map(membership -> {
             Community community = membership.getCommunity();
-            String roleName = membership.getRole() != null ? membership.getRole().getName() : null;
-            List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
-            return new UserEnrolledCommunityDto(
-                    community.getId(),
-                    community.getName(),
-                    community.getSlug(),
-                    community.getDescription(),
-                    (long) community.getMemberCount(),
-                    roleName,
-                    permissions,
-                    membership.getJoinedAt()
-            );
+            String roleName = membership.getRole().getName();
+
+            permissionsByRole.computeIfAbsent(roleName, roleService::getPermissionNamesByRoleName);
+
+            return UserEnrolledCommunityDto.builder()
+                    .id(community.getId())
+                    .name(community.getName())
+                    .slug(community.getSlug())
+                    .description(community.getDescription())
+                    .memberCount(community.getMemberCount())
+                    .role(roleName)
+                    .build();
         }).toList();
 
-        List<String> aggregatedPermissions = communities.stream()
-                .flatMap(c -> c.permissions().stream())
-                .distinct()
-                .toList();
-
-        return new UserCommunitiesResponseDto(communities, aggregatedPermissions);
+        return new UserCommunitiesResponseDto(communities, permissionsByRole);
     }
 }

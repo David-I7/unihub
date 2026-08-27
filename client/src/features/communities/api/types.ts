@@ -1,4 +1,8 @@
-import type { StudyYear } from "@/features/studyYears";
+import type {
+  StudyYear,
+  StudyYearIdentifiers,
+  StudyYearMetrics,
+} from "@/features/studyYears";
 import type {
   CommunicationChannel,
   Comment,
@@ -25,9 +29,16 @@ export type CreateCommunityDto = {
   slug: string;
 };
 
-export type CommunityStudyYears = {
+export type CommunityHome = {
   community: Community;
-  studyYears: StudyYear[];
+  studyYears: StudyYearMetrics[];
 };
+
+export type CommunityStudyYears = StudyYearIdentifiers[];
+
+export type CommunityMemberRole =
+  | "COMMUNITY_OWNER"
+  | "COMMUNITY_ADMIN"
+  | "COMMUNITY_MEMBER";
 
 export type { StudyYear, CommunicationChannel, Comment, Post, ResourceOwner };

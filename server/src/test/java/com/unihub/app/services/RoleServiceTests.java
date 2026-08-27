@@ -83,8 +83,8 @@ public class RoleServiceTests {
         Role role = Role.builder().name("USER").build();
         when(roleRepository.findByName("USER")).thenReturn(Optional.of(role));
 
-        Role result1 = roleService.getRole(RoleType.USER);
-        Role result2 = roleService.getRole(RoleType.USER);
+        Role result1 = roleService.getRoleByName(RoleType.USER);
+        Role result2 = roleService.getRoleByName(RoleType.USER);
 
         assertEquals(role, result1);
         assertEquals(role, result2);

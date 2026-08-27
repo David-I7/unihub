@@ -1,7 +1,7 @@
 import client from "@/api/client";
 import { useAuthStore } from "@/features/auth";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import type { UserProfileResponse } from "../types";
+import type { UserProfileResponse } from "./types";
 
 export const userKeys = {
   all: ["users"] as const,

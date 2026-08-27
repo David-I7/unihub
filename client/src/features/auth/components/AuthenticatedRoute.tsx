@@ -9,6 +9,26 @@ export default function AuthenticatedRoute({
   children: React.ReactNode;
 }) {
   const user = useAuthStore((state) => state.user);
+  const initialized = useAuthStore((state) => state.initialized);
+
+  if (!initialized) {
+    //loading state while auth is being initialized
+    return (
+      <div className="flex flex-1 min-h-full w-full flex-col items-center justify-center p-4 my-auto animate-in fade-in duration-200">
+        <div className="mx-auto flex max-w-sm flex-col items-center justify-center rounded-2xl border bg-card p-6 shadow-xs">
+          <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Lock className="size-5" />
+          </div>
+          <h2 className="mt-3 font-heading text-lg font-bold text-foreground">
+            Loading...
+          </h2>
+          <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
+            Please wait while we check your authentication status.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (user === null) {
     return (

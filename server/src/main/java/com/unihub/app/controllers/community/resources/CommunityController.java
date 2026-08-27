@@ -3,7 +3,8 @@ package com.unihub.app.controllers.community.resources;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
-import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/communities")
@@ -33,10 +36,18 @@ public class CommunityController {
     }
 
     @GetMapping("/{communitySlug}/study-years")
-    public ResponseEntity<CommunityStudyYearsResponseDto> getCommunityStudyYears(
+    public ResponseEntity<List<StudyYearIdentifiersResponseDto>> getCommunityStudyYears(
             @PathVariable String communitySlug
     ) {
-        CommunityStudyYearsResponseDto communityStudyYears = communityService.getCommunityStudyYears(communitySlug);
+        List<StudyYearIdentifiersResponseDto> communityStudyYears= communityService.getCommunityStudyYears(communitySlug);
+        return ResponseEntity.ok(communityStudyYears);
+    }
+
+    @GetMapping("/{communitySlug}/home")
+    public ResponseEntity<CommunityHomeResponseDto> getCommunityHome(
+            @PathVariable String communitySlug
+    ) {
+        CommunityHomeResponseDto communityStudyYears = communityService.getCommunityHome(communitySlug);
         return ResponseEntity.ok(communityStudyYears);
     }
 

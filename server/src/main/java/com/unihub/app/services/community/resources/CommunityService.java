@@ -2,8 +2,9 @@ package com.unihub.app.services.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
-import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -40,9 +41,14 @@ public class CommunityService {
     }
 
     @Transactional(readOnly = true)
-    public CommunityStudyYearsResponseDto getCommunityStudyYears(String communitySlug) {
+    public CommunityHomeResponseDto getCommunityHome(String communitySlug) {
         CommunityResponseDto community = findBySlug(communitySlug);
-        List<StudyYearResponseDto> studyYears = studyYearService.getCommunityStudyYears(communitySlug);
-        return communityMapper.toCommunityStudyYearsResponseDto(community, studyYears);
+        List<StudyYearMetricsResponseDto> studyYears = studyYearService.getCommunityStudyYearMetrics(communitySlug);
+        return communityMapper.toCommunityHomeResponseDto(community, studyYears);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StudyYearIdentifiersResponseDto> getCommunityStudyYears(String communitySlug) {
+        return studyYearService.getCommunityStudyYearIdentifiers(communitySlug);
     }
 }

@@ -33,24 +33,41 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CourseTeachersResponseDto toCourseTeachersResponseDto(Course course) {
+    public CourseHomeResponseDto toCourseHomeResponseDto(Course course) {
         List<TeacherResponseDto> teachers = course.getTeachers() != null
                 ? course.getTeachers().stream().map(globalResourceMapper::toTeacherResponseDto).toList()
                 : Collections.emptyList();
 
         CourseResponseDto courseResponseDto = toCourseResponseDto(course);
 
-        return CourseTeachersResponseDto.builder()
+        return CourseHomeResponseDto.builder()
                 .course(courseResponseDto)
                 .teachers(teachers)
                 .build();
     }
 
-    public StudyYearCoursesResponseDto toStudyYearDetailResponseDto(StudyYear studyYear, List<CourseTeachersResponseDto> courses) {
-        return StudyYearCoursesResponseDto.builder()
-                .id(studyYear.getId())
-                .studyYearName(studyYear.getStudyYearName())
+    public StudyYearHomeResponseDto toStudyYearHomeResponseDto(StudyYear studyYear, List<CourseHomeResponseDto> courses) {
+        return StudyYearHomeResponseDto.builder()
+                .studyYear(toStudyYearResponseDto(studyYear))
                 .courses(courses)
+                .build();
+    }
+
+    public StudyYearResponseDto toStudyYearResponseDto(StudyYear studyYear) {
+        return StudyYearResponseDto.builder()
+                .id(studyYear.getId())
+                .name(studyYear.getStudyYearName())
+                .createdAt(studyYear.getCreatedAt())
+                .build();
+    }
+
+    public CourseIdentifiersResponseDto courseIdentifiersResponseDto(Course course){
+        return CourseIdentifiersResponseDto.builder()
+                .id(course.getId())
+                .slug(course.getSlug())
+                .abbreviation(course.getAbbreviation())
+                .name(course.getName())
+                .semester(course.getSemester())
                 .build();
     }
 
@@ -67,8 +84,8 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CommunityStudyYearsResponseDto toCommunityStudyYearsResponseDto(CommunityResponseDto community, List<StudyYearResponseDto> studyYears) {
-        return CommunityStudyYearsResponseDto.builder()
+    public CommunityHomeResponseDto toCommunityHomeResponseDto(CommunityResponseDto community, List<StudyYearMetricsResponseDto> studyYears) {
+        return CommunityHomeResponseDto.builder()
                 .community(community)
                 .studyYears(studyYears)
                 .build();

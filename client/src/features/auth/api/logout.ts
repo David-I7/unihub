@@ -1,5 +1,4 @@
 import client from "@/api/client";
-import queryClient from "@/lib/queryClient";
 import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 
@@ -11,7 +10,6 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
       useAuthStore.getState().clearAuth();
     },
   });

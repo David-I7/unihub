@@ -2,7 +2,6 @@ import client from "@/api/client";
 import type { RefreshResponse } from "../types";
 import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
-import queryClient from "@/lib/queryClient";
 
 export const refresh = async (): Promise<RefreshResponse> => {
   const response = await client.post("/auth/refresh");
@@ -14,7 +13,6 @@ export const useRefresh = () => {
     mutationFn: refresh,
     onSuccess: (data) => {
       useAuthStore.getState().setAuth(data.user, data.accessToken);
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 };

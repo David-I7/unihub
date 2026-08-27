@@ -1,7 +1,7 @@
 package com.unihub.app.services;
 
-import com.unihub.app.dto.community.resources.response.StudyYearCoursesResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -81,7 +81,7 @@ public class StudyYearServiceTests {
         when(courseRepository.findAllActiveByStudyYearIdWithTeachers(1))
                 .thenReturn(List.of(course));
 
-        StudyYearCoursesResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false);
+        StudyYearHomeResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false);
 
         assertNotNull(result);
         assertEquals(1, result.id());
@@ -135,7 +135,7 @@ public class StudyYearServiceTests {
         when(courseRepository.findAllByStudyYearIdWithTeachers(1))
                 .thenReturn(List.of(activeCourse, archivedCourse));
 
-        StudyYearCoursesResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, true);
+        StudyYearHomeResponseDto result = studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, true);
 
         assertNotNull(result);
         assertEquals(2, result.courses().size());
@@ -158,14 +158,14 @@ public class StudyYearServiceTests {
     @Test
     @DisplayName("getCommunityStudyYears returns list of StudyYearResponseDto")
     public void testGetCommunityStudyYears() {
-        List<StudyYearResponseDto> studyYears = List.of(
-                new StudyYearResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
-                new StudyYearResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
+        List<StudyYearMetricsResponseDto> studyYears = List.of(
+                new StudyYearMetricsResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearMetricsResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
         );
 
         when(studyYearRepository.findStudyYearsByCommunitySlug("fmi-info-id")).thenReturn(studyYears);
 
-        List<StudyYearResponseDto> result = studyYearService.getCommunityStudyYears("fmi-info-id");
+        List<StudyYearMetricsResponseDto> result = studyYearService.getCommunityStudyYearMetrics("fmi-info-id");
 
         assertNotNull(result);
         assertEquals(2, result.size());

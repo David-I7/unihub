@@ -14,8 +14,7 @@ public interface CommunityRepository extends JpaRepository<Community, UUID> {
 
     @Query("""
         SELECT c FROM Community c
-        JOIN FETCH c.owner 
-        JOIN FETCH c.owner.role
+        JOIN FETCH c.owner
         WHERE c.slug = :slug
     """)
     Optional<Community> findBySlug(String slug);

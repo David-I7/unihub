@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router";
 import { GraduationCap, MessageSquare, ArrowLeft } from "lucide-react";
 import {
-  useCommunityDetail,
+  useCommunityHome,
   CommunityBreadcrumb,
   CommunityHero,
   CommunityStudyYearsTab,
@@ -19,7 +19,7 @@ export default function CommunityDetailPage() {
     isLoading: isCommunityLoading,
     isError: isCommunityError,
     refetch: refetchCommunity,
-  } = useCommunityDetail(communitySlug);
+  } = useCommunityHome(communitySlug);
 
   const community = data?.community;
   const studyYears = data?.studyYears ?? [];

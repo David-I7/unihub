@@ -1,17 +1,14 @@
 import { ArrowRight, Archive } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { type StudyYear } from "../api/types";
+import { type StudyYearMetrics } from "../api/types";
 
 interface StudyYearCardProps {
-  studyYear: StudyYear;
+  studyYear: StudyYearMetrics;
   communitySlug?: string;
   onClick?: () => void;
 }
 
-export function StudyYearCard({
-  studyYear,
-  onClick,
-}: StudyYearCardProps) {
+export function StudyYearCard({ studyYear, onClick }: StudyYearCardProps) {
   const yearNumber = studyYear.studyYearName.split(" ")[1]!;
 
   return (

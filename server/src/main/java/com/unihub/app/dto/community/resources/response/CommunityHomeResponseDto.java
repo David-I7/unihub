@@ -3,8 +3,8 @@ import lombok.Builder;
 import java.util.List;
 
 @Builder
-public record CommunityStudyYearsResponseDto(
+public record CommunityHomeResponseDto(
         CommunityResponseDto community,
-        List<StudyYearResponseDto> studyYears
+        List<StudyYearMetricsResponseDto> studyYears
 ) {
 }

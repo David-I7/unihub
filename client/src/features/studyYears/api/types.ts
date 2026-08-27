@@ -1,4 +1,4 @@
-import type { CourseTeachers } from "@/features/courses/api/types";
+import { type CourseIndentifiers, type CourseHome } from "@/features/courses";
 
 export const StudyYearNameMap = {
   "Year 1": "year-1" as const,
@@ -12,16 +12,25 @@ export type StudyYearNameDto =
 
 export type StudyYearName = keyof typeof StudyYearNameMap;
 
-export interface StudyYear {
-  id: number;
-  studyYearName: StudyYearName;
-  coursesCount: number;
+export type StudyYearMetrics = {
   archivedCoursesCount: number;
   creditsCount: number;
-}
+} & StudyYear;
 
-export interface StudyYearDetail {
+export type StudyYear = {
   id: number;
   studyYearName: StudyYearName;
-  courses: CourseTeachers[];
+  createdAt: string;
+};
+
+export type StudyYearIdentifiers = {
+  id: number;
+  studyYearName: StudyYearName;
+};
+
+export interface StudyYearHome {
+  studyYear: StudyYear;
+  courses: CourseHome[];
 }
+
+export type StudyYearCourses = CourseIndentifiers[];

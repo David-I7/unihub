@@ -6,9 +6,12 @@ import lombok.Builder;
 import java.time.OffsetDateTime;
 
 @Builder
-public record StudyYearResponseDto(
+public record StudyYearMetricsResponseDto(
         int id,
-        StudyYearName name,
-        OffsetDateTime createdAt
+        StudyYearName studyYearName,
+        OffsetDateTime createdAt,
+        long coursesCount,
+        long archivedCoursesCount,
+        long creditsCount
 ) {
 }

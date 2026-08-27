@@ -28,9 +28,8 @@ public class User {
 
     private String password;
 
-    @OneToOne
-    @JoinColumn(name = "role_id")
-    private Role role;
+    @Column(nullable = false, name="role_id")
+    private UUID roleId;
 
     @Column(nullable = false, name = "created_at")
     private OffsetDateTime createdAt;

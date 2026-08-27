@@ -2,8 +2,8 @@ package com.unihub.app.services;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
-import com.unihub.app.dto.community.resources.response.CommunityStudyYearsResponseDto;
-import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -167,15 +167,15 @@ public class CommunityServiceTests {
                 .owner(owner)
                 .build();
 
-        List<StudyYearResponseDto> studyYears = List.of(
-                new StudyYearResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
-                new StudyYearResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
+        List<StudyYearMetricsResponseDto> studyYears = List.of(
+                new StudyYearMetricsResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
+                new StudyYearMetricsResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
         );
 
         when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
-        when(studyYearService.getCommunityStudyYears("fmi-info-id")).thenReturn(studyYears);
+        when(studyYearService.getCommunityStudyYearMetrics("fmi-info-id")).thenReturn(studyYears);
 
-        CommunityStudyYearsResponseDto result = communityService.getCommunityStudyYears("fmi-info-id");
+        CommunityHomeResponseDto result = communityService.getCommunityStudyYears("fmi-info-id");
 
         assertNotNull(result);
         assertEquals("fmi-info-id", result.community().slug());
@@ -183,6 +183,6 @@ public class CommunityServiceTests {
         assertEquals(1, result.studyYears().get(0).id());
 
         verify(communityRepository).findBySlug("fmi-info-id");
-        verify(studyYearService).getCommunityStudyYears("fmi-info-id");
+        verify(studyYearService).getCommunityStudyYearMetrics("fmi-info-id");
     }
 }

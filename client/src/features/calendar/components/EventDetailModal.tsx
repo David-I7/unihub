@@ -9,6 +9,7 @@ import {
   MapPin,
   Pencil,
   Trash2,
+  User as UserIcon,
   Users,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -93,6 +94,7 @@ export function EventDetailModal({
   const isUrl =
     event.locationDetails?.startsWith("http://") ||
     event.locationDetails?.startsWith("https://");
+  const tag = event.courseAbbreviation?.trim() || event.courseSlug;
 
   const handleSetReminder = () => {
     createReminderMutate({
@@ -119,7 +121,7 @@ export function EventDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl p-6">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <DialogHeader className="gap-2">
           <div className="flex flex-wrap items-center justify-between gap-2 pr-6">
@@ -132,9 +134,9 @@ export function EventDetailModal({
                 {config.label}
               </Badge>
 
-              {event.courseSlug && (
+              {tag && (
                 <span className="font-mono text-xs font-bold uppercase text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                  {event.courseSlug}
+                  {tag}
                 </span>
               )}
             </div>
@@ -169,15 +171,24 @@ export function EventDetailModal({
             {event.title}
           </DialogTitle>
 
-          <DialogDescription className="text-xs text-muted-foreground flex items-center gap-2">
-            <span>Community:</span>
-            <Link
-              to={`/communities/${event.communitySlug}`}
-              className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              <Users className="size-3" />
-              {event.communitySlug}
-            </Link>
+          <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center gap-1.5">
+              <span>Community:</span>
+              <Link
+                to={`/communities/${event.communitySlug}`}
+                className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
+              >
+                <Users className="size-3" />
+                {event.communitySlug}
+              </Link>
+            </span>
+
+            {event.owner?.username && (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <UserIcon className="size-3" />
+                <span>@{event.owner.username}</span>
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -193,7 +204,7 @@ export function EventDetailModal({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsConfirmingDelete(false)}
-                className="h-7 text-xs"
+                className="h-7 text-xs cursor-pointer"
               >
                 Cancel
               </Button>
@@ -202,7 +213,7 @@ export function EventDetailModal({
                 size="sm"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="h-7 text-xs"
+                className="h-7 text-xs cursor-pointer font-semibold"
               >
                 {isDeleting ? "Deleting..." : "Confirm Delete"}
               </Button>
@@ -270,6 +281,11 @@ export function EventDetailModal({
                 <div className="font-semibold text-foreground">
                   {event.courseName}
                 </div>
+                {tag && (
+                  <div className="text-xs text-muted-foreground font-mono">
+                    Code: {tag}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -292,7 +308,10 @@ export function EventDetailModal({
             </span>
 
             {event.isSubscribed && (
-              <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20">
+              <Badge
+                variant="secondary"
+                className="text-[10px] bg-primary/10 text-primary border-primary/20"
+              >
                 Reminder Active
               </Badge>
             )}

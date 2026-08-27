@@ -1,12 +1,12 @@
 import { Calendar } from "lucide-react";
 import { StudyYearCard } from "./StudyYearCard";
-import { StudyYearNameMap, type StudyYear } from "../api/types";
+import { StudyYearNameMap, type StudyYearMetrics } from "../api/types";
 import { useNavigate } from "react-router";
 
 interface StudyYearsGridProps {
-  studyYears: StudyYear[];
+  studyYears: StudyYearMetrics[];
   communitySlug: string;
-  onStudyYearSelect?: (studyYear: StudyYear) => void;
+  onStudyYearSelect?: (studyYear: StudyYearMetrics) => void;
   emptyTitle?: string;
   emptyDescription?: string;
 }

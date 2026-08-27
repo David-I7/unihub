@@ -44,7 +44,7 @@ export function DayOverflowModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md p-5">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader className="gap-1">
           <div className="flex items-center gap-2">
             <CalendarIcon className="size-4 text-primary" />
@@ -53,12 +53,13 @@ export function DayOverflowModal({
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs">
-            Showing all {events.length} events scheduled on this day.
+            Showing all {events.length} event{events.length === 1 ? "" : "s"}{" "}
+            scheduled on this day.
           </DialogDescription>
         </DialogHeader>
 
         {/* Events List */}
-        <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+        <div className="space-y-2 sm:max-h-[60vh] sm:overflow-y-auto sm:pr-1">
           {events.length === 0 ? (
             <p className="text-xs text-muted-foreground py-4 text-center">
               No events scheduled for this day.
@@ -68,6 +69,7 @@ export function DayOverflowModal({
               const config = getEventCategoryConfig(ev.type);
               const Icon = config.icon;
               const timeStr = formatEventTime(ev.startTime);
+              const tag = ev.courseAbbreviation?.trim() || ev.courseSlug;
 
               return (
                 <div
@@ -81,9 +83,9 @@ export function DayOverflowModal({
                   <div className="flex items-center justify-between gap-2 text-xs font-bold">
                     <span className="flex items-center gap-1.5 min-w-0">
                       <Icon className="size-3.5 shrink-0" />
-                      {ev.courseSlug && (
+                      {tag && (
                         <span className="font-mono text-[10px] uppercase font-bold shrink-0 opacity-80">
-                          [{ev.courseSlug}]
+                          [{tag}]
                         </span>
                       )}
                       <span className="truncate">{ev.title}</span>
@@ -96,6 +98,12 @@ export function DayOverflowModal({
                       </span>
                     )}
                   </div>
+
+                  {ev.courseName && (
+                    <div className="mt-1 text-[11px] font-medium opacity-85 truncate">
+                      {ev.courseName}
+                    </div>
+                  )}
 
                   {ev.description && (
                     <p className="mt-1 text-xs opacity-90 line-clamp-2">
