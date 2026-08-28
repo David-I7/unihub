@@ -1,57 +1,13 @@
-import { Bell, FileText, Pen, Video } from "lucide-react";
-import type { CalendarEvent, EventType } from "../api/types";
+import { Bell } from "lucide-react";
+import type { CalendarEvent } from "../api/types";
 import { cn } from "@/lib/utils";
+import { formatTime } from "@/lib/dateUtils";
+import { getEventCategoryConfig, isEventCompleted } from "../utils/eventUtils";
 
 interface CalendarEventPillProps {
   event: CalendarEvent;
   onClick: (event: CalendarEvent) => void;
   className?: string;
-}
-
-export function formatEventTime(isoDateStr?: string): string {
-  if (!isoDateStr) return "";
-  const d = new Date(isoDateStr);
-  if (isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-export function getEventCategoryConfig(type: EventType) {
-  switch (type) {
-    case "EXAM":
-      return {
-        container:
-          "bg-rose-500/15 text-rose-800 dark:text-rose-200 border-l-2 border-rose-500 hover:bg-rose-500/25",
-        badge: "bg-rose-500 text-white",
-        icon: Pen,
-        label: "Exam",
-      };
-    case "ASSIGNMENT":
-      return {
-        container:
-          "bg-amber-500/15 text-amber-800 dark:text-amber-200 border-l-2 border-amber-500 hover:bg-amber-500/25",
-        badge: "bg-amber-500 text-white",
-        icon: FileText,
-        label: "Assignment",
-      };
-    case "LECTURE":
-      return {
-        container:
-          "bg-blue-500/15 text-blue-800 dark:text-blue-200 border-l-2 border-blue-500 hover:bg-blue-500/25",
-        badge: "bg-blue-500 text-white",
-        icon: Video,
-        label: "Lecture",
-      };
-  }
-}
-
-export function isEventCompleted(event: CalendarEvent): boolean {
-  if (!event.startTime) return false;
-  const d = new Date(event.startTime);
-  return !isNaN(d.getTime()) && d.getTime() < Date.now();
 }
 
 export function CalendarEventPill({
@@ -61,7 +17,7 @@ export function CalendarEventPill({
 }: CalendarEventPillProps) {
   const config = getEventCategoryConfig(event.type);
   const Icon = config.icon;
-  const timeStr = formatEventTime(event.startTime);
+  const timeStr = formatTime(event.startTime);
   const abbreviation = event.courseAbbreviation?.trim() || "ABBV";
   const hasActiveReminder = event.isSubscribed && !isEventCompleted(event);
 

@@ -15,7 +15,6 @@ import { useCommunityStudyYears } from "@/features/communities";
 import {
   StudyYearNameMap,
   useStudyYearCourses,
-  type StudyYearName,
   type StudyYearNameDto,
 } from "@/features/studyYears";
 
@@ -69,7 +68,7 @@ export function CalendarFilters({
             Community
           </Label>
           <Select
-            value={communitySlug}
+            value={communitySlug ?? null}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_COMMUNITIES") return;
               setCommunitySlug(val);
@@ -86,7 +85,7 @@ export function CalendarFilters({
               )}
               {userCommunitiesData?.communities.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
-                  {c.name}
+                  <span className="truncate">{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -125,7 +124,7 @@ export function CalendarFilters({
                     const mappedValue = StudyYearNameMap[y.studyYearName];
                     return (
                       <SelectItem key={y.id} value={mappedValue}>
-                        {y.studyYearName}
+                        <span className="truncate">{y.studyYearName}</span>
                       </SelectItem>
                     );
                   })}
@@ -161,7 +160,7 @@ export function CalendarFilters({
               <SelectItem value="All">All</SelectItem>
               {studyYearCourses?.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
-                  {c.name}
+                  <span className="truncate">{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>

@@ -3,10 +3,12 @@ import remarkGfm from "remark-gfm";
 import { Star, Award, Archive, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
+import type { Teacher } from "@/features/teachers";
 import type { CourseTeachers } from "@/features/courses";
 import { SAMPLE_COURSE_MARKDOWN } from "./sampleCourseMarkdown";
 
-export function CourseAboutTab({ course, teachers }: CourseTeachers) {
+export function CourseAboutTab({ course, teachers = [] }: CourseTeachers) {
   // Use course description if provided, otherwise sample rich markdown
   const markdownContent = course.description?.trim()
     ? course.description
@@ -57,10 +59,8 @@ export function CourseAboutTab({ course, teachers }: CourseTeachers) {
             </p>
           ) : (
             <div className="flex flex-wrap gap-4 pt-1">
-              {teachers.map((teacher) => {
-                const initials = teacher.lastName
-                  ? teacher.lastName.slice(0, 2).toUpperCase()
-                  : "PR";
+              {teachers.map((teacher: Teacher) => {
+                const initials = getInitials(teacher.lastName || teacher.firstName, "PR");
 
                 return (
                   <div

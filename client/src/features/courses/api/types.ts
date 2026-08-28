@@ -53,6 +53,8 @@ export interface CourseHome {
   teachers: Teacher[];
 }
 
+export type CourseTeachers = CourseHome;
+
 export interface CourseIndentifiers {
   id: number;
   name: string;
@@ -60,3 +62,4 @@ export interface CourseIndentifiers {
   abbreviation: string;
   semester: number;
 }
+

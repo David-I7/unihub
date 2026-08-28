@@ -1,4 +1,4 @@
-import { LogIn, UserPlus, Sun, Moon, Laptop } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   SidebarMenu,
@@ -6,20 +6,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useThemeStore } from "@/store/useThemeStore";
 import { Link, useNavigate } from "react-router";
+import { ThemeDropdownMenu } from "./ThemeMenu";
 
 export function NavLoginPrompt() {
   const { state, isMobile } = useSidebar();
   const navigate = useNavigate();
-  const theme = useThemeStore((state) => state.theme);
-  const setTheme = useThemeStore((state) => state.setTheme);
 
   // When collapsed on desktop, render a compact centered button with tooltip
   if (state === "collapsed" && !isMobile) {
@@ -45,45 +37,7 @@ export function NavLoginPrompt() {
         <span className="text-xs font-semibold text-sidebar-foreground">
           Welcome to UniHub
         </span>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                className="text-muted-foreground hover:text-foreground h-6 w-6"
-              >
-                {theme === "dark" ? (
-                  <Moon className="size-3.5" />
-                ) : theme === "light" ? (
-                  <Sun className="size-3.5" />
-                ) : (
-                  <Laptop className="size-3.5" />
-                )}
-              </Button>
-            }
-          />
-          <DropdownMenuContent align="end" className="min-w-32 p-1">
-            <DropdownMenuItem onClick={() => setTheme("light")}>
-              <Sun className="mr-2 size-3.5" /> Light
-              {theme === "light" && (
-                <span className="ml-auto text-xs font-bold">✓</span>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>
-              <Moon className="mr-2 size-3.5" /> Dark
-              {theme === "dark" && (
-                <span className="ml-auto text-xs font-bold">✓</span>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>
-              <Laptop className="mr-2 size-3.5" /> System
-              {theme === "system" && (
-                <span className="ml-auto text-xs font-bold">✓</span>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <ThemeDropdownMenu />
       </div>
 
       <p className="text-xs text-muted-foreground leading-relaxed">

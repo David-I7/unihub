@@ -1,5 +1,9 @@
 import client from "@/api/client";
-import type { PaginatedResponse } from "@/api/types";
+import {
+  getPaginatedNextPageParam,
+  getPaginatedPrevPageParam,
+  type PaginatedResponse,
+} from "@/api/types";
 import type { Post } from "./types";
 import {
   useInfiniteQuery,
@@ -60,10 +64,8 @@ export function useInfiniteCommunityPosts(
         size,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.last ? undefined : lastPage.number + 1,
-    getPreviousPageParam: (firstPage) =>
-      firstPage.first ? undefined : firstPage.number - 1,
+    getNextPageParam: getPaginatedNextPageParam,
+    getPreviousPageParam: getPaginatedPrevPageParam,
     enabled: communitySlug.length > 0,
     ...options,
   });

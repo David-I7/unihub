@@ -1,7 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import AppLayout from "../components/layouts/AppLayout";
-import HandleOAuthFailurePage from "../pages/HandleOAuth2FailurePage";
-import HandleOAuthSuccessPage from "../pages/HandleOAuthSuccessPage";
+import OAuth2CallbackPage from "../pages/OAuth2CallbackPage";
 import HomePage from "../pages/HomePage";
 import CommunitiesPage from "../pages/CommunitiesPage";
 import CommunityDetailPage from "../pages/CommunityDetailPage";
@@ -89,12 +88,8 @@ export const router = createBrowserRouter([
         element: <CourseDetailPage />,
       },
       {
-        path: "/oauth2/failure",
-        element: <HandleOAuthFailurePage />,
-      },
-      {
-        path: "/oauth2/success",
-        element: <HandleOAuthSuccessPage />,
+        path: "/oauth2",
+        element: <OAuth2CallbackPage />,
       },
       {
         path: "/login",

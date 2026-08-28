@@ -10,7 +10,12 @@ import { useCalendarStore } from "../store/useCalendarStore";
 import {
   getEventCategoryConfig,
   isEventCompleted,
-} from "./CalendarEventPill";
+} from "../utils/eventUtils";
+import {
+  formatDayHeader,
+  formatTimeRange,
+  getLocalDateKey,
+} from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -18,58 +23,6 @@ interface CalendarAgendaListProps {
   events: CalendarEvent[];
 }
 
-function getLocalDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatDayHeader(dateStr: string): {
-  weekday: string;
-  formattedDate: string;
-  isToday: boolean;
-} {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  const todayStr = getLocalDateKey(new Date());
-
-  const weekday = date.toLocaleDateString(undefined, { weekday: "short" });
-  const formattedDate = date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-
-  return {
-    weekday,
-    formattedDate,
-    isToday: dateStr === todayStr,
-  };
-}
-
-function formatTimeRange(startTime?: string, endTime?: string): string {
-  if (!startTime) return "";
-  const startD = new Date(startTime);
-  if (isNaN(startD.getTime())) return "";
-
-  const startFormatted = startD.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-  if (!endTime) return startFormatted;
-  const endD = new Date(endTime);
-  if (isNaN(endD.getTime())) return startFormatted;
-
-  const endFormatted = endD.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-  return `${startFormatted} - ${endFormatted}`;
-}
 
 export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
@@ -169,7 +122,7 @@ export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
               return (
                 <div
                   key={event.id}
-                  onClick={() => openEventDetails(event)}
+                  onClick={() => openEventDetails(event.id)}
                   className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
                 >
                   <div className="min-w-0 flex-1 space-y-1.5">

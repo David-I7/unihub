@@ -7,6 +7,7 @@ import {
   CommunityGridSkeleton,
   CommunityEmptyState,
 } from "@/features/communities";
+import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -58,14 +59,10 @@ export default function CommunitiesPage() {
       {isLoading ? (
         <CommunityGridSkeleton count={6} />
       ) : isError ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center space-y-3">
-          <p className="text-sm font-semibold text-destructive">
-            Failed to load communities. Please check your connection.
-          </p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            Try Again
-          </Button>
-        </div>
+        <ErrorStateCard
+          message="Failed to load communities. Please check your connection."
+          onRetry={() => refetch()}
+        />
       ) : filteredCommunities.length === 0 ? (
         <CommunityEmptyState
           searchQuery={searchQuery}

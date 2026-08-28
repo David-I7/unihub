@@ -40,16 +40,16 @@ export function StudyYearHero({
             </Link>
             <span className="text-muted-foreground/40">•</span>
             <Badge variant="secondary" className="font-mono text-xs font-bold">
-              {studyYear.studyYearName}
+              {studyYear.studyYear.studyYearName}
             </Badge>
           </div>
 
           <h1 className="font-heading text-2xl md:text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
             <GraduationCap className="size-7 text-primary" />
-            <span>{studyYear.studyYearName}</span>
+            <span>{studyYear.studyYear.studyYearName}</span>
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Curriculum overview, course materials, and exam schedules for {studyYear.studyYearName}.
+            Curriculum overview, course materials, and exam schedules for {studyYear.studyYear.studyYearName}.
           </p>
         </div>
 

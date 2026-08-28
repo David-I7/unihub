@@ -1,10 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { CommunityBreadcrumb } from "@/features/communities";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 
 export function CourseSkeleton() {
   return (
     <div className="min-h-full space-y-6 pb-12">
-      <CommunityBreadcrumb />
+      <AppBreadcrumb />
 
       {/* Tabs Header Skeleton */}
       <Skeleton className="h-10 w-full max-w-2xl rounded-xl" />

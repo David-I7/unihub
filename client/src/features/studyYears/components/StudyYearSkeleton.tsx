@@ -1,10 +1,10 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { CommunityBreadcrumb } from "@/features/communities";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 
 export function StudyYearSkeleton() {
   return (
     <div className="min-h-full space-y-6 pb-12">
-      <CommunityBreadcrumb />
+      <AppBreadcrumb />
 
       {/* Tabs & Search Skeletons */}
       <div className="space-y-6">

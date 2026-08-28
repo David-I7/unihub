@@ -29,7 +29,7 @@ export function CalendarDayCell({
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
   const openOverflowModal = useCalendarStore((s) => s.openOverflowModal);
 
-  const maxVisible = 3;
+  const maxVisible = 2;
   const visibleEvents = events.slice(0, maxVisible);
   const overflowCount = events.length - maxVisible;
 
@@ -84,7 +84,11 @@ export function CalendarDayCell({
       {/* Event Pills List */}
       <div className="mt-1.5 flex flex-1 flex-col gap-1">
         {visibleEvents.map((ev) => (
-          <CalendarEventPill key={ev.id} event={ev} onClick={openEventDetails} />
+          <CalendarEventPill
+            key={ev.id}
+            event={ev}
+            onClick={(e) => openEventDetails(e.id)}
+          />
         ))}
 
         {/* Overflow Badge */}

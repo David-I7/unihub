@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CommunityBreadcrumb } from "./CommunityBreadcrumb";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 
 interface CommunityHeaderProps {
   onCreateClick?: () => void;
@@ -13,7 +13,7 @@ export function CommunityHeader({ onCreateClick }: CommunityHeaderProps) {
         Communities
       </h1>
       <div className="flex items-center justify-between gap-4">
-        <CommunityBreadcrumb />
+        <AppBreadcrumb />
 
         <Button
           size="sm"

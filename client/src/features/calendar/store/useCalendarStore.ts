@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { CalendarEvent, EventType } from "../api/types";
+import type { Event, EventType } from "../api/types";
 import type { StudyYearNameDto } from "@/features/studyYears";
 
 interface CalendarState {
@@ -10,10 +10,10 @@ interface CalendarState {
   courseSlug: string | null;
   selectedType: EventType | "All";
   searchQuery: string;
-  selectedEvent: CalendarEvent | null;
+  selectedEventId: string | null;
   isFormModalOpen: boolean;
   formDefaultDate: string | undefined;
-  editingEvent: CalendarEvent | null;
+  editingEvent: Event | null;
   overflowDate: string | null;
 }
 
@@ -29,9 +29,9 @@ interface CalendarActions {
   setSelectedType: (type: EventType | "All") => void;
   setSearchQuery: (query: string) => void;
   openCreateModal: (defaultDate?: string) => void;
-  openEditModal: (event: CalendarEvent) => void;
+  openEditModal: (event: Event) => void;
   closeFormModal: () => void;
-  openEventDetails: (event: CalendarEvent) => void;
+  openEventDetails: (eventId: string) => void;
   closeEventDetails: () => void;
   openOverflowModal: (dateStr: string) => void;
   closeOverflowModal: () => void;
@@ -48,7 +48,7 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
   courseSlug: null,
   selectedType: "All",
   searchQuery: "",
-  selectedEvent: null,
+  selectedEventId: null,
   isFormModalOpen: false,
   formDefaultDate: undefined,
   editingEvent: null,
@@ -100,7 +100,7 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
     }),
   openEditModal: (event) =>
     set({
-      selectedEvent: null,
+      selectedEventId: null,
       editingEvent: event,
       isFormModalOpen: true,
     }),
@@ -110,8 +110,8 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
       editingEvent: null,
       formDefaultDate: undefined,
     }),
-  openEventDetails: (event) => set({ selectedEvent: event }),
-  closeEventDetails: () => set({ selectedEvent: null }),
+  openEventDetails: (eventId) => set({ selectedEventId: eventId }),
+  closeEventDetails: () => set({ selectedEventId: null }),
   openOverflowModal: (dateStr) => set({ overflowDate: dateStr }),
   closeOverflowModal: () => set({ overflowDate: null }),
 }));

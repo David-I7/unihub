@@ -45,8 +45,8 @@ export function useLoginForm(options?: UseLoginFormOptions) {
           const errors: typeof form.errors = {};
 
           for (const error of apiError.errors!) {
-            if (error.type === "FIELD") {
-              errors[error.field as keyof typeof errors] = error.message;
+            if (error.type === "FIELD" && error.field === "password") {
+              errors[error.field] = error.message;
             } else {
               errors["identifier"] = error.message;
             }

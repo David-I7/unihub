@@ -1,3 +1,4 @@
+import type { ResourceOwner } from "@/features/communities/api/types";
 import type {
   StudyYearName,
   StudyYearNameDto,
@@ -13,7 +14,6 @@ export interface EventReminder {
   offsetMinutes: number;
   remindAt: string;
   status: ReminderStatus;
-  createdAt: string;
 }
 
 export interface CalendarEvent {
@@ -31,6 +31,26 @@ export interface CalendarEvent {
   communityName: string;
   studyYear: StudyYearName;
   isSubscribed: boolean;
+}
+
+export interface Event {
+  id: string;
+  title: string;
+  type: EventType;
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  location: EventLocation;
+  locationDetails?: string;
+  description?: string;
+  courseSlug: string;
+  courseName: string;
+  courseAbbreviation: string;
+  communitySlug: string;
+  communityName: string;
+  studyYear: StudyYearName;
+  owner: ResourceOwner;
+  reminders: EventReminder[];
 }
 
 export interface CalendarQueryParams {

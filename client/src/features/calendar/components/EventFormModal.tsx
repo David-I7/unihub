@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { isAxiosError } from "axios";
 import {
   AlertCircle,
   GraduationCap,
@@ -12,8 +13,13 @@ import {
   useStudyYearCourses,
   type StudyYearName,
 } from "@/features/studyYears";
+import { useForm } from "@/hooks/useForm";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
 import { useCalendarStore } from "../store/useCalendarStore";
+import {
+  eventFormSchema,
+  type EventFormData,
+} from "../schemas/eventSchemas";
 import type {
   CreateEventPayload,
   EventLocation,
@@ -40,6 +46,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { toDatetimeLocal } from "@/lib/dateUtils";
 
 const EVENT_TYPES: { label: string; value: EventType }[] = [
   { label: "Exam", value: "EXAM" },
@@ -52,30 +59,6 @@ const LOCATION_TYPES: { label: string; value: EventLocation }[] = [
   { label: "Online", value: "ONLINE" },
   { label: "Hybrid", value: "HYBRID" },
 ];
-
-function toDatetimeLocal(isoStr?: string, defaultDateStr?: string): string {
-  if (isoStr) {
-    const d = new Date(isoStr);
-    if (!isNaN(d.getTime())) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const h = String(d.getHours()).padStart(2, "0");
-      const min = String(d.getMinutes()).padStart(2, "0");
-      return `${y}-${m}-${day}T${h}:${min}`;
-    }
-  }
-
-  if (defaultDateStr) {
-    return `${defaultDateStr}T09:00`;
-  }
-
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}T09:00`;
-}
 
 export function EventFormModal() {
   const isOpen = useCalendarStore((s) => s.isFormModalOpen);
@@ -94,75 +77,156 @@ export function EventFormModal() {
   const communities = userCommunitiesData?.communities ?? [];
   const hasCommunities = communities.length > 0;
 
-  // Form states
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<EventType>("EXAM");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState<number | undefined>(
-    undefined,
-  );
-  const [location, setLocation] = useState<EventLocation>("IN_PERSON");
-  const [locationDetails, setLocationDetails] = useState("");
+  // Mutations
+  const { mutateAsync: createEventMutateAsync, isPending: isCreating } =
+    useCreateEvent();
+  const { mutateAsync: updateEventMutateAsync, isPending: isUpdating } =
+    useUpdateEvent();
 
-  // Creation cascade states
-  const [formCommunitySlug, setFormCommunitySlug] = useState<string | null>(
-    null,
-  );
-  const [formStudyYear, setFormStudyYear] = useState<string | null>(null);
-  const [formCourseId, setFormCourseId] = useState<number | undefined>(
-    undefined,
-  );
-  const [validationError, setValidationError] = useState<string | null>(null);
+  // 2. Form state with Zod validation
+  const form = useForm<EventFormData>({
+    initialValues: {
+      title: "",
+      description: "",
+      type: "EXAM",
+      startTime: toDatetimeLocal(undefined, defaultDate),
+      endTime: "",
+      durationMinutes: "",
+      location: "IN_PERSON",
+      locationDetails: "",
+      communitySlug: defaultCommunitySlug ?? "",
+      studyYear: defaultStudyYear ?? "",
+      courseId: "",
+      isEditing,
+    },
+    schema: eventFormSchema,
+    validateOnChange: true,
+    validateOnBlur: true,
+    onSubmit: async (values) => {
+      const startIso = new Date(values.startTime).toISOString();
+      const endIso =
+        values.endTime && values.endTime.trim() !== ""
+          ? new Date(values.endTime).toISOString()
+          : undefined;
 
-  // 2. Fetch study years for currently selected community
+      const durationNum =
+        typeof values.durationMinutes === "number" && values.durationMinutes > 0
+          ? values.durationMinutes
+          : undefined;
+
+      if (isEditing && editingEvent) {
+        const payload: UpdateEventPayload = {
+          title: values.title.trim(),
+          description: values.description?.trim() || undefined,
+          type: values.type,
+          startTime: editingEvent.startTime,
+          endTime: endIso,
+          durationMinutes: durationNum,
+          location: values.location,
+          locationDetails: values.locationDetails?.trim() || undefined,
+        };
+
+        try {
+          await updateEventMutateAsync({ id: editingEvent.id, payload });
+          onClose();
+        } catch (err) {
+          if (isAxiosError(err)) {
+            const apiError = err.response?.data;
+            form.setServerError(
+              apiError?.detail || apiError?.title || "Failed to update event",
+            );
+          } else {
+            form.setServerError(
+              err instanceof Error ? err.message : "Failed to update event",
+            );
+          }
+        }
+      } else {
+        const payload: CreateEventPayload = {
+          title: values.title.trim(),
+          description: values.description?.trim() || undefined,
+          type: values.type,
+          startTime: startIso,
+          endTime: endIso,
+          durationMinutes: durationNum,
+          location: values.location,
+          locationDetails: values.locationDetails?.trim() || undefined,
+          communitySlug: values.communitySlug ?? "",
+          courseId: Number(values.courseId),
+        };
+
+        try {
+          await createEventMutateAsync(payload);
+          onClose();
+        } catch (err) {
+          if (isAxiosError(err)) {
+            const apiError = err.response?.data;
+            form.setServerError(
+              apiError?.detail || apiError?.title || "Failed to create event",
+            );
+          } else {
+            form.setServerError(
+              err instanceof Error ? err.message : "Failed to create event",
+            );
+          }
+        }
+      }
+    },
+  });
+
+  const selectedCommunitySlug = form.values.communitySlug || null;
+  const selectedStudyYear = form.values.studyYear || null;
+
+  // 3. Fetch study years for selected community
   const { data: communityStudyYears, isLoading: isLoadingStudyYears } =
-    useCommunityStudyYears(formCommunitySlug ?? "");
+    useCommunityStudyYears(selectedCommunitySlug ?? "");
 
-  // 3. Fetch courses for selected community & study year
+  // 4. Fetch courses for selected community & study year
   const { data: studyYearCourses, isLoading: isLoadingCourses } =
-    useStudyYearCourses(formCommunitySlug ?? "", formStudyYear ?? "");
+    useStudyYearCourses(selectedCommunitySlug ?? "", selectedStudyYear ?? "");
 
-  // Initialize or reset form state on open / change
+  // Reset form on open or editingEvent changes
   useEffect(() => {
     if (!isOpen) return;
 
-    setValidationError(null);
-
     if (editingEvent) {
-      setTitle(editingEvent.title);
-      setDescription("");
-      setType(editingEvent.type);
-      setStartTime(toDatetimeLocal(editingEvent.startTime));
-      setEndTime(
-        editingEvent.endTime ? toDatetimeLocal(editingEvent.endTime) : "",
-      );
-      setDurationMinutes(editingEvent.durationMinutes);
-      setLocation(editingEvent.location);
-      setLocationDetails("");
-      setFormCommunitySlug(editingEvent.communitySlug);
-      setFormCourseId(undefined);
+      form.reset({
+        title: editingEvent.title,
+        description: editingEvent.description ?? "",
+        type: editingEvent.type,
+        startTime: toDatetimeLocal(editingEvent.startTime),
+        endTime: editingEvent.endTime
+          ? toDatetimeLocal(editingEvent.endTime)
+          : "",
+        durationMinutes: editingEvent.durationMinutes ?? "",
+        location: editingEvent.location,
+        locationDetails: editingEvent.locationDetails ?? "",
+        communitySlug: editingEvent.communitySlug,
+        studyYear: editingEvent.studyYear ?? "",
+        courseId: "",
+        isEditing: true,
+      });
     } else {
-      setTitle("");
-      setDescription("");
-      setType("EXAM");
-      setStartTime(toDatetimeLocal(undefined, defaultDate));
-      setEndTime("");
-      setDurationMinutes(undefined);
-      setLocation("IN_PERSON");
-      setLocationDetails("");
-
-      // Pick initial community: preferred default, or first available enrolled community
       const initialCommunity =
         defaultCommunitySlug &&
         communities.some((c) => c.slug === defaultCommunitySlug)
           ? defaultCommunitySlug
-          : communities[0]?.slug ?? null;
+          : communities[0]?.slug ?? "";
 
-      setFormCommunitySlug(initialCommunity);
-      setFormStudyYear(defaultStudyYear ?? null);
-      setFormCourseId(undefined);
+      form.reset({
+        title: "",
+        description: "",
+        type: "EXAM",
+        startTime: toDatetimeLocal(undefined, defaultDate),
+        endTime: "",
+        durationMinutes: "",
+        location: "IN_PERSON",
+        locationDetails: "",
+        communitySlug: initialCommunity,
+        studyYear: defaultStudyYear ?? "",
+        courseId: "",
+        isEditing: false,
+      });
     }
   }, [
     isOpen,
@@ -178,30 +242,30 @@ export function EventFormModal() {
     if (isEditing || !communityStudyYears) return;
 
     if (communityStudyYears.length === 0) {
-      setFormStudyYear(null);
-      setFormCourseId(undefined);
+      form.setValue("studyYear", "");
+      form.setValue("courseId", "");
       return;
     }
 
-    // Keep current selection if valid in new study years list
+    const currentYear = form.values.studyYear;
     const currentIsValid = communityStudyYears.some(
-      (y) => StudyYearNameMap[y.studyYearName] === formStudyYear,
+      (y) => StudyYearNameMap[y.studyYearName] === currentYear,
     );
 
     if (!currentIsValid) {
       const firstYearMapped =
         StudyYearNameMap[communityStudyYears[0].studyYearName];
-      setFormStudyYear(firstYearMapped ?? null);
-      setFormCourseId(undefined);
+      form.setValue("studyYear", firstYearMapped ?? "");
+      form.setValue("courseId", "");
     }
-  }, [communityStudyYears, formStudyYear, isEditing]);
+  }, [communityStudyYears, form.values.studyYear, isEditing]);
 
-  // When courses load, optionally auto-select or pick based on defaultCourseSlug
+  // When courses load, auto-select matching or first course
   useEffect(() => {
     if (isEditing || !studyYearCourses) return;
 
     if (studyYearCourses.length === 0) {
-      setFormCourseId(undefined);
+      form.setValue("courseId", "");
       return;
     }
 
@@ -209,134 +273,49 @@ export function EventFormModal() {
       defaultCourseSlug &&
       studyYearCourses.some((c) => c.slug === defaultCourseSlug)
     ) {
-      const matched = studyYearCourses.find((c) => c.slug === defaultCourseSlug);
+      const matched = studyYearCourses.find(
+        (c) => c.slug === defaultCourseSlug,
+      );
       if (matched) {
-        setFormCourseId(matched.id);
+        form.setValue("courseId", matched.id);
         return;
       }
     }
 
-    // If current selected course isn't in list, select the first course
     const currentCourseExists = studyYearCourses.some(
-      (c) => c.id === formCourseId,
+      (c) => c.id === form.values.courseId,
     );
     if (!currentCourseExists) {
-      setFormCourseId(studyYearCourses[0].id);
+      form.setValue("courseId", studyYearCourses[0].id);
     }
-  }, [studyYearCourses, formCourseId, defaultCourseSlug, isEditing]);
+  }, [studyYearCourses, form.values.courseId, defaultCourseSlug, isEditing]);
+
+  const selectedCommunity = useMemo(() => {
+    if (!selectedCommunitySlug) return null;
+    return communities.find((c) => c.slug === selectedCommunitySlug) ?? null;
+  }, [communities, selectedCommunitySlug]);
 
   // Selected study year display label
   const activeStudyYearName = useMemo(() => {
-    if (!communityStudyYears || !formStudyYear) return null;
+    if (!communityStudyYears || !selectedStudyYear) return null;
     const found = communityStudyYears.find(
-      (y) => StudyYearNameMap[y.studyYearName] === formStudyYear,
+      (y) => StudyYearNameMap[y.studyYearName] === selectedStudyYear,
     );
     return found?.studyYearName ?? null;
-  }, [communityStudyYears, formStudyYear]);
+  }, [communityStudyYears, selectedStudyYear]);
 
-  // Mutations
-  const { mutate: createEventMutate, isPending: isCreating } = useCreateEvent();
-  const { mutate: updateEventMutate, isPending: isUpdating } = useUpdateEvent();
-  const isSubmitting = isCreating || isUpdating;
+  // Selected course display object
+  const selectedCourse = useMemo(() => {
+    if (!studyYearCourses || !form.values.courseId) return null;
+    return studyYearCourses.find((c) => c.id === form.values.courseId) ?? null;
+  }, [studyYearCourses, form.values.courseId]);
 
-  // Validation rules evaluation
   const hasStudyYears = Boolean(
     communityStudyYears && communityStudyYears.length > 0,
   );
   const hasCourses = Boolean(studyYearCourses && studyYearCourses.length > 0);
   const canCreateInCommunity = hasCommunities && hasStudyYears && hasCourses;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setValidationError(null);
-
-    if (!title.trim()) {
-      setValidationError("Please enter an event title");
-      return;
-    }
-
-    if (!startTime) {
-      setValidationError("Please select a start date and time");
-      return;
-    }
-
-    const startIso = new Date(startTime).toISOString();
-    let endIso: string | undefined = undefined;
-
-    if (endTime) {
-      const endD = new Date(endTime);
-      const startD = new Date(startTime);
-      if (endD <= startD) {
-        setValidationError("End time must be after start time");
-        return;
-      }
-      endIso = endD.toISOString();
-    }
-
-    if (isEditing && editingEvent) {
-      const payload: UpdateEventPayload = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        type,
-        startTime: startIso,
-        endTime: endIso,
-        durationMinutes: durationMinutes || undefined,
-        location,
-        locationDetails: locationDetails.trim() || undefined,
-      };
-
-      updateEventMutate(
-        { id: editingEvent.id, payload },
-        {
-          onSuccess: () => {
-            onClose();
-          },
-          onError: (err: unknown) => {
-            const message =
-              err instanceof Error ? err.message : "Failed to update event";
-            setValidationError(message);
-          },
-        },
-      );
-    } else {
-      if (!hasCommunities || !formCommunitySlug) {
-        setValidationError(
-          "You must be a member of a community to create calendar events",
-        );
-        return;
-      }
-      if (!formCourseId) {
-        setValidationError(
-          "Please select a course. Events must be linked to a course",
-        );
-        return;
-      }
-
-      const payload: CreateEventPayload = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        type,
-        startTime: startIso,
-        endTime: endIso,
-        durationMinutes: durationMinutes || undefined,
-        location,
-        locationDetails: locationDetails.trim() || undefined,
-        communitySlug: formCommunitySlug,
-        courseId: formCourseId,
-      };
-
-      createEventMutate(payload, {
-        onSuccess: () => {
-          onClose();
-        },
-        onError: (err: unknown) => {
-          const message =
-            err instanceof Error ? err.message : "Failed to create event";
-          setValidationError(message);
-        },
-      });
-    }
-  };
+  const isSubmitting = isCreating || isUpdating || form.isSubmitting;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -352,15 +331,15 @@ export function EventFormModal() {
           </DialogDescription>
         </DialogHeader>
 
-        {/* Global form validation message */}
-        {validationError && (
+        {/* Global server error alert banner */}
+        {form.serverError && (
           <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
             <AlertCircle className="size-4 shrink-0" />
-            <span>{validationError}</span>
+            <span>{form.serverError}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+        <form onSubmit={form.handleSubmit} className="space-y-4 text-xs">
           {/* Title */}
           <div className="space-y-1.5">
             <Label htmlFor="event-title" className="text-xs font-semibold">
@@ -368,12 +347,17 @@ export function EventFormModal() {
             </Label>
             <Input
               id="event-title"
+              name="title"
               placeholder="e.g. Midterm Examination, Assignment 1 Submission, Lab Tutorial"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={form.values.title}
+              onChange={form.handleChange}
+              onBlur={form.handleBlur}
               className="text-xs h-9"
-              required
+              aria-invalid={form.isInvalid("title")}
             />
+            {form.errors.title && (
+              <p className="text-[11px] text-destructive">{form.errors.title}</p>
+            )}
           </div>
 
           {/* Event Type & Location Type */}
@@ -381,9 +365,9 @@ export function EventFormModal() {
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Event Type *</Label>
               <Select
-                value={type}
+                value={form.values.type}
                 onValueChange={(val: string | null) => {
-                  if (val) setType(val as EventType);
+                  if (val) form.setValue("type", val as EventType);
                 }}
               >
                 <SelectTrigger className="w-full h-9 text-xs bg-background">
@@ -397,14 +381,17 @@ export function EventFormModal() {
                   ))}
                 </SelectContent>
               </Select>
+              {form.errors.type && (
+                <p className="text-[11px] text-destructive">{form.errors.type}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold">Location Format *</Label>
               <Select
-                value={location}
+                value={form.values.location}
                 onValueChange={(val: string | null) => {
-                  if (val) setLocation(val as EventLocation);
+                  if (val) form.setValue("location", val as EventLocation);
                 }}
               >
                 <SelectTrigger className="w-full h-9 text-xs bg-background">
@@ -418,6 +405,11 @@ export function EventFormModal() {
                   ))}
                 </SelectContent>
               </Select>
+              {form.errors.location && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.location}
+                </p>
+              )}
             </div>
           </div>
 
@@ -429,10 +421,20 @@ export function EventFormModal() {
               </Label>
               <DateTimePicker
                 id="event-start"
-                value={startTime}
-                onChange={(val) => setStartTime(val)}
+                value={form.values.startTime}
+                onChange={(val) => form.setValue("startTime", val)}
                 placeholder="Select start date & time"
+                disabled={isEditing}
               />
+              {isEditing ? (
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Start time cannot be changed. Delete and reschedule if the event date or time needs to change.
+                </p>
+              ) : form.errors.startTime ? (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.startTime}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-1.5">
@@ -441,11 +443,16 @@ export function EventFormModal() {
               </Label>
               <DateTimePicker
                 id="event-end"
-                value={endTime}
-                onChange={(val) => setEndTime(val)}
+                value={form.values.endTime}
+                onChange={(val) => form.setValue("endTime", val)}
                 placeholder="Select end date & time"
                 clearable
               />
+              {form.errors.endTime && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.endTime}
+                </p>
+              )}
             </div>
           </div>
 
@@ -457,11 +464,18 @@ export function EventFormModal() {
               </Label>
               <Input
                 id="event-loc"
+                name="locationDetails"
                 placeholder="e.g. Room 301, Amphitheater B, or Meeting URL"
-                value={locationDetails}
-                onChange={(e) => setLocationDetails(e.target.value)}
+                value={form.values.locationDetails ?? ""}
+                onChange={form.handleChange}
+                onBlur={form.handleBlur}
                 className="text-xs h-9"
               />
+              {form.errors.locationDetails && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.locationDetails}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -470,17 +484,25 @@ export function EventFormModal() {
               </Label>
               <Input
                 id="event-dur"
+                name="durationMinutes"
                 type="number"
                 min="0"
                 placeholder="e.g. 90"
-                value={durationMinutes ?? ""}
+                value={form.values.durationMinutes ?? ""}
                 onChange={(e) =>
-                  setDurationMinutes(
-                    e.target.value ? parseInt(e.target.value, 10) : undefined,
+                  form.setValue(
+                    "durationMinutes",
+                    e.target.value ? parseInt(e.target.value, 10) : "",
                   )
                 }
+                onBlur={form.handleBlur}
                 className="text-xs h-9"
               />
+              {form.errors.durationMinutes && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.durationMinutes}
+                </p>
+              )}
             </div>
           </div>
 
@@ -518,7 +540,7 @@ export function EventFormModal() {
                   <GraduationCap className="size-3.5 text-primary" />
                   Course & Community Selection *
                 </span>
-                {formCommunitySlug && (
+                {selectedCommunitySlug && (
                   <span className="text-[11px] text-muted-foreground">
                     Required for scheduling
                   </span>
@@ -532,12 +554,12 @@ export function EventFormModal() {
                     Enrolled Community *
                   </Label>
                   <Select
-                    value={formCommunitySlug}
+                    value={selectedCommunitySlug || null}
                     onValueChange={(val: string | null) => {
                       if (!val || val === "NO_COMMUNITIES") return;
-                      setFormCommunitySlug(val);
-                      setFormStudyYear(null);
-                      setFormCourseId(undefined);
+                      form.setValue("communitySlug", val);
+                      form.setValue("studyYear", "");
+                      form.setValue("courseId", "");
                     }}
                     disabled={!hasCommunities}
                   >
@@ -550,7 +572,9 @@ export function EventFormModal() {
                               ? "No communities"
                               : "Select community"
                         }
-                      />
+                      >
+                        {selectedCommunity?.name}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {!hasCommunities ? (
@@ -560,12 +584,17 @@ export function EventFormModal() {
                       ) : (
                         communities.map((c) => (
                           <SelectItem key={c.id} value={c.slug}>
-                            {c.name}
+                            <span className="truncate">{c.name}</span>
                           </SelectItem>
                         ))
                       )}
                     </SelectContent>
                   </Select>
+                  {form.errors.communitySlug && (
+                    <p className="text-[11px] text-destructive">
+                      {form.errors.communitySlug}
+                    </p>
+                  )}
                 </div>
 
                 {/* 2. Study Year Dropdown */}
@@ -574,27 +603,29 @@ export function EventFormModal() {
                     Study Year *
                   </Label>
                   <Select
-                    value={activeStudyYearName ?? undefined}
+                    value={activeStudyYearName ?? null}
                     onValueChange={(val: string | null) => {
                       if (!val || val === "NO_YEARS") return;
                       const next = StudyYearNameMap[val as StudyYearName];
-                      setFormStudyYear(next ?? null);
-                      setFormCourseId(undefined);
+                      form.setValue("studyYear", next ?? "");
+                      form.setValue("courseId", "");
                     }}
-                    disabled={!formCommunitySlug || !hasStudyYears}
+                    disabled={!selectedCommunitySlug || !hasStudyYears}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
                       <SelectValue
                         placeholder={
                           isLoadingStudyYears
                             ? "Loading years..."
-                            : !formCommunitySlug
+                            : !selectedCommunitySlug
                               ? "Pick community first"
                               : !hasStudyYears
                                 ? "No study years"
                                 : "Select year"
                         }
-                      />
+                      >
+                        {activeStudyYearName}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {!hasStudyYears ? (
@@ -604,7 +635,7 @@ export function EventFormModal() {
                       ) : (
                         communityStudyYears?.map((y) => (
                           <SelectItem key={y.id} value={y.studyYearName}>
-                            {y.studyYearName}
+                            <span className="truncate">{y.studyYearName}</span>
                           </SelectItem>
                         ))
                       )}
@@ -618,25 +649,35 @@ export function EventFormModal() {
                     Course *
                   </Label>
                   <Select
-                    value={formCourseId ? String(formCourseId) : undefined}
+                    value={
+                      form.values.courseId
+                        ? String(form.values.courseId)
+                        : null
+                    }
                     onValueChange={(val: string | null) => {
                       if (!val || val === "NO_COURSES") return;
-                      setFormCourseId(Number(val));
+                      form.setValue("courseId", Number(val));
                     }}
-                    disabled={!formStudyYear || !hasCourses}
+                    disabled={!selectedStudyYear || !hasCourses}
                   >
                     <SelectTrigger className="w-full h-8 text-xs bg-background">
                       <SelectValue
                         placeholder={
                           isLoadingCourses
                             ? "Loading courses..."
-                            : !formStudyYear
+                            : !selectedStudyYear
                               ? "Pick year first"
                               : !hasCourses
                                 ? "No courses"
                                 : "Select course"
                         }
-                      />
+                      >
+                        {selectedCourse
+                          ? selectedCourse.abbreviation
+                            ? `[${selectedCourse.abbreviation}] ${selectedCourse.name}`
+                            : selectedCourse.name
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {!hasCourses ? (
@@ -646,18 +687,27 @@ export function EventFormModal() {
                       ) : (
                         studyYearCourses?.map((c) => (
                           <SelectItem key={c.id} value={String(c.id)}>
-                            {c.abbreviation ? `[${c.abbreviation}] ` : ""}
-                            {c.name}
+                            {c.abbreviation ? (
+                              <span className="shrink-0 font-mono text-[10px] font-bold">
+                                [{c.abbreviation}]
+                              </span>
+                            ) : null}
+                            <span className="truncate">{c.name}</span>
                           </SelectItem>
                         ))
                       )}
                     </SelectContent>
                   </Select>
+                  {form.errors.courseId && (
+                    <p className="text-[11px] text-destructive">
+                      {form.errors.courseId}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Informative notices for missing study years / courses */}
-              {formCommunitySlug &&
+              {selectedCommunitySlug &&
                 !isLoadingStudyYears &&
                 !hasStudyYears && (
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
@@ -668,8 +718,8 @@ export function EventFormModal() {
                   </div>
                 )}
 
-              {formCommunitySlug &&
-                formStudyYear &&
+              {selectedCommunitySlug &&
+                selectedStudyYear &&
                 !isLoadingCourses &&
                 !hasCourses && (
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
@@ -690,12 +740,19 @@ export function EventFormModal() {
             </Label>
             <Textarea
               id="event-desc"
+              name="description"
               rows={3}
               placeholder="Add relevant instructions, exam topics, room directions, or syllabus details..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={form.values.description ?? ""}
+              onChange={form.handleChange}
+              onBlur={form.handleBlur}
               className="text-xs resize-none"
             />
+            {form.errors.description && (
+              <p className="text-[11px] text-destructive">
+                {form.errors.description}
+              </p>
+            )}
           </div>
 
           {/* Modal Footer */}

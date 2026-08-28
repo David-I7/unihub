@@ -3,10 +3,14 @@ import { Bell, Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
 import {
-  formatEventTime,
   getEventCategoryConfig,
   isEventCompleted,
-} from "./CalendarEventPill";
+} from "../utils/eventUtils";
+import {
+  formatHeadingDate,
+  formatTime,
+  getLocalDateKey,
+} from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,24 +26,6 @@ interface DayOverflowModalProps {
   canCreateEvent?: boolean;
 }
 
-function getLocalDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-function formatHeadingDate(dateStr?: string | null): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 export function DayOverflowModal({
   events,
@@ -87,7 +73,7 @@ export function DayOverflowModal({
             dayEvents.map((ev) => {
               const config = getEventCategoryConfig(ev.type);
               const Icon = config.icon;
-              const timeStr = formatEventTime(ev.startTime);
+              const timeStr = formatTime(ev.startTime);
               const tag = ev.courseAbbreviation?.trim() || ev.courseSlug;
 
               return (
@@ -95,7 +81,7 @@ export function DayOverflowModal({
                   key={ev.id}
                   onClick={() => {
                     closeOverflowModal();
-                    openEventDetails(ev);
+                    openEventDetails(ev.id);
                   }}
                   className={`rounded-xl border p-3 transition-all cursor-pointer select-none ${config.container}`}
                 >
