@@ -4,12 +4,15 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
+import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.CommunityPostService;
+import com.unihub.app.services.community.resources.CommunityMemberService;
 import com.unihub.app.services.community.resources.CommunityService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ import java.util.List;
 public class CommunityController {
 
     private final CommunityService communityService;
+    private final CommunityMemberService communityMemberService;
     private final CommunityPostService communityPostService;
     private final AuthorizationService authorizationService;
 
@@ -48,6 +52,15 @@ public class CommunityController {
         UserDto user = authorizationService.requireAuthentication().getUserDto();
         CommunityResponseDto created = communityService.createCommunity(user.id(), requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/join")
+    public ResponseEntity<UserEnrolledCommunityDto> joinCommunity(
+            @Valid @RequestBody JoinCommunityRequestDto requestDto
+    ) {
+        UserDto user = authorizationService.requireAuthentication().getUserDto();
+        UserEnrolledCommunityDto enrolled = communityMemberService.joinWithCode(user.id(), requestDto.joinCode());
+        return ResponseEntity.status(HttpStatus.CREATED).body(enrolled);
     }
 
     @GetMapping("/{communitySlug}/study-years")

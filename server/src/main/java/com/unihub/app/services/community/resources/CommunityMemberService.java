@@ -2,15 +2,20 @@ package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
+import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.CommunityMembersId;
 import com.unihub.app.mappers.PageMapper;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
@@ -32,10 +37,12 @@ public class CommunityMemberService {
 
     private final CommunityMemberRepository communityMemberRepository;
     private final CommunityRepository communityRepository;
+    private final CommunityJoinCodeRepository joinCodeRepository;
     private final UserRepository userRepository;
     private final RoleService roleService;
     private final AuthorizationService authorizationService;
     private final PageMapper pageMapper;
+    private final UserMapper userMapper;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, Pageable pageable) {
@@ -48,16 +55,25 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public CommunityMemberResponseDto joinCommunity(String communitySlug, UUID userId) {
-        Community community = communityRepository.findBySlug(communitySlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+    public UserEnrolledCommunityDto joinWithCode(UUID userId, String code) {
+        CommunityJoinCode joinCode = joinCodeRepository.findByCodeWithCommunity(code)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid join code"));
+
+        if (joinCode.isExpired()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join code has expired");
+        }
+
+        if (joinCode.isUsageLimitReached()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join code usage limit reached");
+        }
+
+        Community community = joinCode.getCommunity();
 
         if (communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), userId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this community");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        User user = userMapper.toEntity(authorizationService.requireAuthentication().getUserDto());
 
         Role memberRole = roleService.getRoleByName(RoleType.COMMUNITY_MEMBER);
         OffsetDateTime now = OffsetDateTime.now();
@@ -70,10 +86,55 @@ public class CommunityMemberService {
                 .joinedAt(now)
                 .build();
 
-        CommunityMember saved = communityMemberRepository.save(member);
+        communityMemberRepository.save(member);
+        joinCodeRepository.incrementUsesCount(joinCode.getId());
         communityRepository.updateMemberCount(community.getId(), 1);
 
-        return toResponseDto(saved);
+        return userMapper.toUserEnrolledCommunityDto(community, RoleType.COMMUNITY_MEMBER.name(), now);
+    }
+
+    @Transactional
+    public void addMemberDirectly(String communitySlug, UUID callerId, AddCommunityMemberRequestDto dto) {
+        Community community = communityRepository.findBySlugWithOwner(communitySlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+
+        User targetUser = userRepository.findByUsername(dto.username())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found"));
+
+        if (communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), targetUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of this community");
+        }
+
+        RoleType targetRole = dto.role() != null ? dto.role() : RoleType.COMMUNITY_MEMBER;
+
+        if (targetRole == RoleType.COMMUNITY_ADMIN) {
+            String callerGlobalRole = authorizationService.getGlobalRoleName(callerId);
+            boolean isPlatformAdmin = RoleType.ROOT.name().equals(callerGlobalRole) || RoleType.ADMIN.name().equals(callerGlobalRole);
+            boolean isOwner = community.getOwner().getId().equals(callerId);
+
+            if (!isOwner && !isPlatformAdmin) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN,
+                        "Only community owners or platform administrators can directly assign the administrator role"
+                );
+            }
+        } else if (targetRole != RoleType.COMMUNITY_MEMBER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role must be COMMUNITY_MEMBER or COMMUNITY_ADMIN");
+        }
+
+        Role assignedRole = roleService.getRoleByName(targetRole);
+        OffsetDateTime now = OffsetDateTime.now();
+
+        CommunityMember member = CommunityMember.builder()
+                .id(new CommunityMembersId(community.getId(), targetUser.getId()))
+                .community(community)
+                .user(targetUser)
+                .roleId(assignedRole.getId())
+                .joinedAt(now)
+                .build();
+
+        communityMemberRepository.save(member);
+        communityRepository.updateMemberCount(community.getId(), 1);
     }
 
     @Transactional
@@ -82,7 +143,7 @@ public class CommunityMemberService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         if (community.getOwner().getId().equals(userId)) {
-            if(community.getMemberCount() == 1){
+            if (community.getMemberCount() == 1) {
                 communityRepository.delete(community);
                 return;
             }
@@ -101,8 +162,8 @@ public class CommunityMemberService {
 
     @Transactional
     public CommunityMemberResponseDto updateMemberRole(String communitySlug, String targetUsername, UpdateMemberRoleRequestDto dto) {
-        if(dto.role() != RoleType.COMMUNITY_MEMBER && dto.role() != RoleType.COMMUNITY_ADMIN){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. Only COMMUNITY_MEMBER and COMMUNITY_ADMIN are allowed. Use PATCH /api/v1/communities/{communitySlug} to transfer ownership.");
+        if (dto.role() != RoleType.COMMUNITY_MEMBER && dto.role() != RoleType.COMMUNITY_ADMIN) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. Only COMMUNITY_MEMBER and COMMUNITY_ADMIN are allowed.");
         }
 
         Community community = communityRepository.findBySlugWithOwner(communitySlug)

@@ -110,6 +110,7 @@ public class UserService {
             user.setUsername(dto.username());
         }
 
+        // TODO: update to email notification for setting a new password
         if (dto.newPassword() != null) {
             if (user.getPassword() != null) {
                 if (dto.currentPassword() == null) {

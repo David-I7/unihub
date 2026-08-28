@@ -2,9 +2,13 @@ package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
+import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
+import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
 import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.services.community.resources.CommunityJoinCodeService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,6 +29,7 @@ import java.util.UUID;
 public class CommunityMemberController {
 
     private final CommunityMemberService communityMemberService;
+    private final CommunityJoinCodeService communityJoinCodeService;
     private final AuthorizationService authorizationService;
 
     @GetMapping("/members")
@@ -35,13 +41,15 @@ public class CommunityMemberController {
         return ResponseEntity.ok(members);
     }
 
-    @PostMapping("/join")
-    public ResponseEntity<CommunityMemberResponseDto> joinCommunity(
-            @PathVariable String communitySlug
+    @PostMapping("/members")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:member')")
+    public ResponseEntity<Void> addMember(
+            @PathVariable String communitySlug,
+            @Valid @RequestBody AddCommunityMemberRequestDto requestDto
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
-        CommunityMemberResponseDto response = communityMemberService.joinCommunity(communitySlug, user.id());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        UserDto caller = authorizationService.requireAuthentication().getUserDto();
+        communityMemberService.addMemberDirectly(communitySlug, caller.id(), requestDto);
+        return ResponseEntity.ok(null);
     }
 
     @DeleteMapping("/leave")
@@ -72,6 +80,36 @@ public class CommunityMemberController {
     ) {
         UserDto caller = authorizationService.requireAuthentication().getUserDto();
         communityMemberService.removeMember(communitySlug, caller.id(), username);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/join-codes")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:joinCode')")
+    public ResponseEntity<CommunityJoinCodeResponseDto> createJoinCode(
+            @PathVariable String communitySlug,
+            @Valid @RequestBody CreateJoinCodeRequestDto requestDto
+    ) {
+        UserDto caller = authorizationService.requireAuthentication().getUserDto();
+        CommunityJoinCodeResponseDto response = communityJoinCodeService.createJoinCode(communitySlug, caller.id(), requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @GetMapping("/join-codes")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:joinCode')")
+    public ResponseEntity<List<CommunityJoinCodeResponseDto>> getJoinCodes(
+            @PathVariable String communitySlug
+    ) {
+        List<CommunityJoinCodeResponseDto> codes = communityJoinCodeService.getJoinCodes(communitySlug);
+        return ResponseEntity.ok(codes);
+    }
+
+    @DeleteMapping("/join-codes/{codeId}")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:joinCode')")
+    public ResponseEntity<Void> deleteJoinCode(
+            @PathVariable String communitySlug,
+            @PathVariable UUID codeId
+    ) {
+        communityJoinCodeService.deleteJoinCode(communitySlug, codeId);
         return ResponseEntity.noContent().build();
     }
 }

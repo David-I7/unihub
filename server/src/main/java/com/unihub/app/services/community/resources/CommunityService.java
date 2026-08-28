@@ -136,14 +136,14 @@ public class CommunityService {
             community.setDescription(dto.description());
         }
 
-        if(dto.slug() != null) {
+        if (dto.slug() != null && !dto.slug().equals(community.getSlug())) {
             if (communityRepository.existsBySlug(dto.slug())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this slug already exists");
             }
             community.setSlug(dto.slug());
         }
 
-        if(dto.name() != null ) {
+        if (dto.name() != null && !dto.name().equals(community.getName())) {
             if (communityRepository.existsByName(dto.name())) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this name already exists");
             }

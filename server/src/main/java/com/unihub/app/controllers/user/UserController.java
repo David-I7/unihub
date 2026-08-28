@@ -41,6 +41,7 @@ public class UserController {
     public ResponseEntity<UserProfileResponseDto> updateProfile(
             @Valid @RequestBody UpdateUserProfileRequestDto requestDto
     ) {
+        UserDto currentUser = authorizationService.requireAuthentication().getUserDto();
         UserProfileResponseDto profile = userService.updateProfile(currentUser.id(), requestDto);
         return ResponseEntity.ok(profile);
     }

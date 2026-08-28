@@ -30,6 +30,9 @@ Pattern: <action>:<resource>
   create:community           |  X   |   X   |                 |                 |                  |  X
   update:community           |  X   |   X   |        X        |                 |                  |
   delete:community           |  X   |   X   |        X        |                 |                  |
+  create:joinCode            |  X   |   X   |        x        |        x        |                  |
+  update:joinCode            |  X   |   X   |        X        |        x        |                  |
+  delete:joinCode            |  X   |   X   |        X        |        x        |                  |
   verify:community           |  X   |   X   |                 |                 |                  |
   update:memberRole          |  X   |   X   |        X        |                 |                  |
   delete:member              |  X   |   X   |        X        |        X        |                  |
@@ -87,6 +90,9 @@ INSERT INTO PERMISSIONS (id, name, description) VALUES
 (gen_random_uuid(), 'verify:community', 'Toggle platform verified status on a community'),
 
 -- Community membership
+(gen_random_uuid(), 'create:joinCode', 'Generate an invite join code for a community'),
+(gen_random_uuid(), 'delete:joinCode', 'Delete or revoke a join code for a community'),
+(gen_random_uuid(), 'create:member', 'Directly add a user to a community without a join code'),
 (gen_random_uuid(), 'update:memberRole', 'Promote or demote members to and from community administrator'),
 (gen_random_uuid(), 'delete:member', 'Remove or kick a member from a community'),
 
@@ -174,6 +180,9 @@ WHERE r.name = 'COMMUNITY_OWNER'
   AND p.name IN (
     'update:community',
     'delete:community',
+    'create:joinCode',
+    'delete:joinCode',
+    'create:member',
     'update:memberRole',
     'delete:member',
     'create:studyYear',
@@ -219,6 +228,9 @@ SELECT r.id, p.id
 FROM ROLES r, PERMISSIONS p
 WHERE r.name = 'COMMUNITY_ADMIN'
   AND p.name IN (
+    'create:joinCode',
+    'delete:joinCode',
+    'create:member',
     'delete:member',
     'create:studyYear',
     'create:course',

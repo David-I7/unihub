@@ -15,6 +15,9 @@ public enum PermissionType {
     VERIFY_COMMUNITY(Permissions.VERIFY_COMMUNITY),
 
     // Community Membership
+    CREATE_JOIN_CODE(Permissions.CREATE_JOIN_CODE),
+    DELETE_JOIN_CODE(Permissions.DELETE_JOIN_CODE),
+    CREATE_MEMBER(Permissions.CREATE_MEMBER),
     UPDATE_MEMBER_ROLE(Permissions.UPDATE_MEMBER_ROLE),
     DELETE_MEMBER(Permissions.DELETE_MEMBER),
 

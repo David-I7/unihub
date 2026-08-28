@@ -1,5 +1,5 @@
 --liquibase formatted sql
---changeset David:002 validCheckSum:9:8afdd2a7dff1bec50cd9d94e965a48f7 validCheckSum:9:734fa4fc2c06994d7971b9362e17be77
+--changeset David:002
 
 CREATE TABLE TEACHERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
