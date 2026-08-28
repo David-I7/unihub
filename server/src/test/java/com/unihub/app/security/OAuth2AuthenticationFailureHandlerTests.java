@@ -34,38 +34,21 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class OAuth2AuthenticationFailureHandlerTests {
+public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";
 
     @Autowired
     private OAuth2AuthenticationFailureHandler failureHandler;
 
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
-
     @Test
     @DisplayName("""
             Given: isDevelopment is true
             When: onAuthenticationFailure is invoked
-            Then: user is redirected to clientOrigin + '/oauth2/failure?provider=GOOGLE'
+            Then: user is redirected to clientOrigin + '/oauth2?status=failure&provider=GOOGLE'
             """)
     public void testOAuth2Failure_WhenIsDevelopmentTrue_RedirectsToClientOriginFailureUrl() throws Exception {
         ReflectionTestUtils.setField(failureHandler, "isDevelopment", true);
@@ -77,14 +60,14 @@ public class OAuth2AuthenticationFailureHandlerTests {
 
         failureHandler.onAuthenticationFailure(request, response, new BadCredentialsException("OAuth2 failed"));
 
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/failure?provider=GOOGLE");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=failure&provider=GOOGLE");
     }
 
     @Test
     @DisplayName("""
             Given: isDevelopment is false
             When: onAuthenticationFailure is invoked
-            Then: user is redirected to current context path + '/oauth2/failure?provider=GOOGLE'
+            Then: user is redirected to current context path + '/oauth2?status=failure&provider=GOOGLE'
             """)
     public void testOAuth2Failure_WhenIsDevelopmentFalse_RedirectsToContextPathFailureUrl() throws Exception {
         ReflectionTestUtils.setField(failureHandler, "isDevelopment", false);
@@ -101,7 +84,7 @@ public class OAuth2AuthenticationFailureHandlerTests {
 
         try {
             failureHandler.onAuthenticationFailure(request, response, new BadCredentialsException("OAuth2 failed"));
-            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2/failure?provider=GOOGLE");
+            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2?status=failure&provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
             ReflectionTestUtils.setField(failureHandler, "isDevelopment", true);

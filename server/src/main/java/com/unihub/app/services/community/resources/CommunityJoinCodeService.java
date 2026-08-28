@@ -6,7 +6,7 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
@@ -32,6 +32,7 @@ public class CommunityJoinCodeService {
     private final CommunityJoinCodeRepository joinCodeRepository;
     private final CommunityRepository communityRepository;
     private final UserMapper userMapper;
+    private final CommunityResourceMapper communityMapper;
     private final AuthorizationService authorizationService;
 
     @Transactional
@@ -47,18 +48,17 @@ public class CommunityJoinCodeService {
                 ? now.plusHours(dto.validForHours())
                 : null;
 
-        CommunityJoinCode joinCode = CommunityJoinCode.builder()
-                .community(community)
-                .code(code)
-                .createdBy(caller)
-                .maxUses(dto.maxUses())
-                .usesCount(0)
-                .expiresAt(expiresAt)
-                .createdAt(now)
-                .build();
+        CommunityJoinCode joinCode = communityMapper.toCommunityJoinCodeEntity(
+                dto,
+                community,
+                caller,
+                code,
+                now,
+                expiresAt
+        );
 
         CommunityJoinCode saved = joinCodeRepository.save(joinCode);
-        return toResponseDto(saved);
+        return communityMapper.toCommunityJoinCodeResponseDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -68,7 +68,7 @@ public class CommunityJoinCodeService {
         }
         return joinCodeRepository.findByCommunitySlug(communitySlug)
                 .stream()
-                .map(this::toResponseDto)
+                .map(communityMapper::toCommunityJoinCodeResponseDto)
                 .toList();
     }
 
@@ -96,18 +96,5 @@ public class CommunityJoinCodeService {
             }
         }
         throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to generate a unique join code");
-    }
-
-    public CommunityJoinCodeResponseDto toResponseDto(CommunityJoinCode joinCode) {
-        return CommunityJoinCodeResponseDto.builder()
-                .id(joinCode.getId())
-                .code(joinCode.getCode())
-                .communityId(joinCode.getCommunity().getId())
-                .communitySlug(joinCode.getCommunity().getSlug())
-                .maxUses(joinCode.getMaxUses())
-                .usesCount(joinCode.getUsesCount())
-                .expiresAt(joinCode.getExpiresAt())
-                .createdAt(joinCode.getCreatedAt())
-                .build();
     }
 }

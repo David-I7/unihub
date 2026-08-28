@@ -42,9 +42,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class AuthControllerTests {
+public class AuthControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/auth";
 
@@ -62,24 +63,6 @@ public class AuthControllerTests {
 
     @Autowired
     private SessionProperties sessionProperties;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
 
     @BeforeEach
     public void setUp() {

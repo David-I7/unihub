@@ -14,6 +14,7 @@ import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.CommunityMembersId;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
@@ -43,6 +44,7 @@ public class CommunityMemberService {
     private final AuthorizationService authorizationService;
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
+    private final CommunityResourceMapper communityMapper;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, Pageable pageable) {
@@ -51,7 +53,10 @@ public class CommunityMemberService {
         }
 
         Page<CommunityMember> page = communityMemberRepository.findMembersByCommunitySlug(communitySlug, pageable);
-        return pageMapper.toPageDto(page.map(this::toResponseDto));
+        return pageMapper.toPageDto(page.map(member -> {
+            String roleName = roleService.getRoleById(member.getRoleId()).getName();
+            return communityMapper.toCommunityMemberResponseDto(member, roleName);
+        }));
     }
 
     @Transactional
@@ -78,13 +83,12 @@ public class CommunityMemberService {
         Role memberRole = roleService.getRoleByName(RoleType.COMMUNITY_MEMBER);
         OffsetDateTime now = OffsetDateTime.now();
 
-        CommunityMember member = CommunityMember.builder()
-                .id(new CommunityMembersId(community.getId(), user.getId()))
-                .community(community)
-                .user(user)
-                .roleId(memberRole.getId())
-                .joinedAt(now)
-                .build();
+        CommunityMember member = communityMapper.toCommunityMemberEntity(
+                community,
+                user,
+                memberRole.getId(),
+                now
+        );
 
         communityMemberRepository.save(member);
         joinCodeRepository.incrementUsesCount(joinCode.getId());
@@ -125,13 +129,12 @@ public class CommunityMemberService {
         Role assignedRole = roleService.getRoleByName(targetRole);
         OffsetDateTime now = OffsetDateTime.now();
 
-        CommunityMember member = CommunityMember.builder()
-                .id(new CommunityMembersId(community.getId(), targetUser.getId()))
-                .community(community)
-                .user(targetUser)
-                .roleId(assignedRole.getId())
-                .joinedAt(now)
-                .build();
+        CommunityMember member = communityMapper.toCommunityMemberEntity(
+                community,
+                targetUser,
+                assignedRole.getId(),
+                now
+        );
 
         communityMemberRepository.save(member);
         communityRepository.updateMemberCount(community.getId(), 1);
@@ -183,7 +186,7 @@ public class CommunityMemberService {
         member.setRoleId(newRole.getId());
         CommunityMember saved = communityMemberRepository.save(member);
 
-        return toResponseDto(saved);
+        return communityMapper.toCommunityMemberResponseDto(saved, newRole.getName());
     }
 
     @Transactional
@@ -214,16 +217,5 @@ public class CommunityMemberService {
 
         communityMemberRepository.delete(targetMember);
         communityRepository.updateMemberCount(community.getId(), -1);
-    }
-
-    private CommunityMemberResponseDto toResponseDto(CommunityMember member) {
-        String roleName = roleService.getRoleById(member.getRoleId()).getName();
-        return CommunityMemberResponseDto.builder()
-                .userId(member.getUser().getId())
-                .username(member.getUser().getUsername())
-                .email(member.getUser().getEmail())
-                .role(roleName)
-                .joinedAt(member.getJoinedAt())
-                .build();
     }
 }

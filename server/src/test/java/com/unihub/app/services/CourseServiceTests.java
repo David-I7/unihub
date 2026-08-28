@@ -209,7 +209,7 @@ public class CourseServiceTests {
     }
 
     @Test
-    @DisplayName("getCourseTeachers returns CourseTeachersResponseDto")
+    @DisplayName("getCourseHome returns CourseHomeResponseDto")
     public void testGetCourseTeachers_Success() {
         UUID teacherId = UUID.randomUUID();
         Teacher teacher = Teacher.builder()

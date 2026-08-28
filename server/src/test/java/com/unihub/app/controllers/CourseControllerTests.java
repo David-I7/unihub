@@ -34,9 +34,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class CourseControllerTests {
+public class CourseControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/communities/fmi-info-id/study-years/year-1/courses/asc";
 
@@ -46,33 +47,15 @@ public class CourseControllerTests {
     @MockitoBean
     private CourseService courseService;
 
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
-
     // =========================================================================
-    // GET /teachers (getCourse)
+    // GET /home (getCourseHome)
     // =========================================================================
 
     @Test
     @DisplayName("""
             Given: course exists
-            When: GET .../courses/asc/teachers is called
-            Then: 200 OK is returned with CourseTeachersResponseDto
+            When: GET .../courses/asc/home is called
+            Then: 200 OK is returned with CourseHomeResponseDto
             """)
     public void testGetCourse_Success() throws Exception {
         CourseResponseDto courseDto = CourseResponseDto.builder()
@@ -96,7 +79,7 @@ public class CourseControllerTests {
         when(courseService.getCourseHome("fmi-info-id", StudyYearName.YEAR_1, "asc"))
                 .thenReturn(courseResponse);
 
-        mockMvc.perform(get(BASE_URL + "/teachers")
+        mockMvc.perform(get(BASE_URL + "/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.course.id").value(1))

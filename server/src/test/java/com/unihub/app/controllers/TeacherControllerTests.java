@@ -46,9 +46,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class TeacherControllerTests {
+public class TeacherControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/teachers";
 
@@ -57,24 +58,6 @@ public class TeacherControllerTests {
 
     @MockitoBean
     private TeacherService teacherService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
 
     @Test
     @DisplayName("GET /api/v1/teachers returns paginated teachers")

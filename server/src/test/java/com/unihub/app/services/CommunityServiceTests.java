@@ -1,16 +1,30 @@
 package com.unihub.app.services;
 
+import com.unihub.app.domain.Permissions;
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
+import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.PageMapper;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
+import com.unihub.app.repositories.authentication.UserRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.security.JwtAuthentication;
+import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityService;
 import com.unihub.app.services.community.resources.StudyYearService;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +53,18 @@ public class CommunityServiceTests {
 
     @Mock
     private CommunityRepository communityRepository;
+
+    @Mock
+    private CommunityMemberRepository communityMemberRepository;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private RoleService roleService;
+
+    @Mock
+    private AuthorizationService authorizationService;
 
     @Mock
     private StudyYearService studyYearService;
@@ -50,6 +77,9 @@ public class CommunityServiceTests {
 
     @Spy
     private PageMapper pageMapper = new PageMapper();
+
+    @Spy
+    private UserMapper userMapper = new UserMapper(roleService);
 
     @InjectMocks
     private CommunityService communityService;
@@ -148,8 +178,8 @@ public class CommunityServiceTests {
     }
 
     @Test
-    @DisplayName("getCommunityStudyYears returns community and its study years")
-    public void testGetCommunityStudyYears_Success() {
+    @DisplayName("getCommunityHome returns community and its study years")
+    public void testGetCommunityHome_Success() {
         UUID communityId = UUID.randomUUID();
         UUID ownerId = UUID.randomUUID();
         User owner = User.builder().id(ownerId).username("david").build();
@@ -168,14 +198,14 @@ public class CommunityServiceTests {
                 .build();
 
         List<StudyYearMetricsResponseDto> studyYears = List.of(
-                new StudyYearMetricsResponseDto(1, StudyYearName.YEAR_1, 6, 0, 30),
-                new StudyYearMetricsResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
+                new StudyYearMetricsResponseDto(1, StudyYearName.YEAR_1, createdAt, 6, 0, 30),
+                new StudyYearMetricsResponseDto(2, StudyYearName.YEAR_2, createdAt, 6, 0, 30)
         );
 
         when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(studyYearService.getCommunityStudyYearMetrics("fmi-info-id")).thenReturn(studyYears);
 
-        CommunityHomeResponseDto result = communityService.getCommunityStudyYears("fmi-info-id");
+        CommunityHomeResponseDto result = communityService.getCommunityHome("fmi-info-id");
 
         assertNotNull(result);
         assertEquals("fmi-info-id", result.community().slug());
@@ -184,5 +214,64 @@ public class CommunityServiceTests {
 
         verify(communityRepository).findBySlugWithOwner("fmi-info-id");
         verify(studyYearService).getCommunityStudyYearMetrics("fmi-info-id");
+    }
+
+    @Test
+    @DisplayName("getCommunityStudyYears returns study year identifiers")
+    public void testGetCommunityStudyYears_Success() {
+        List<StudyYearIdentifiersResponseDto> identifiers = List.of(
+                new StudyYearIdentifiersResponseDto(1, StudyYearName.YEAR_1),
+                new StudyYearIdentifiersResponseDto(2, StudyYearName.YEAR_2)
+        );
+
+        when(studyYearService.getCommunityStudyYearIdentifiers("fmi-info-id")).thenReturn(identifiers);
+
+        List<StudyYearIdentifiersResponseDto> result = communityService.getCommunityStudyYears("fmi-info-id");
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0).id());
+    }
+
+    @Test
+    @DisplayName("createCommunity successfully creates community and adds owner membership")
+    public void testCreateCommunity_Success() {
+        UUID userId = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "david@example.com", "david");
+        JwtAuthentication auth = new JwtAuthentication(userDto);
+        CreateCommunityRequestDto dto = new CreateCommunityRequestDto("FMI", "fmi", "Desc", "#fff");
+
+        Role ownerRole = Role.builder().id(UUID.randomUUID()).name(RoleType.COMMUNITY_OWNER.name()).build();
+
+        when(communityRepository.findByNameOrSlug("FMI", "fmi")).thenReturn(List.of());
+        when(authorizationService.requireAuthentication()).thenReturn(auth);
+        when(authorizationService.getGlobalRoleName(userId)).thenReturn("USER");
+        when(communityRepository.save(any(Community.class))).thenAnswer(i -> {
+            Community c = i.getArgument(0);
+            c.setId(UUID.randomUUID());
+            return c;
+        });
+        when(roleService.getRoleByName(RoleType.COMMUNITY_OWNER)).thenReturn(ownerRole);
+
+        CommunityResponseDto result = communityService.createCommunity(userId, dto);
+
+        assertNotNull(result);
+        assertEquals("FMI", result.name());
+        assertEquals("fmi", result.slug());
+        verify(communityRepository).save(any(Community.class));
+        verify(communityMemberRepository).save(any(CommunityMember.class));
+    }
+
+    @Test
+    @DisplayName("deleteCommunity deletes community when found")
+    public void testDeleteCommunity_Success() {
+        UUID userId = UUID.randomUUID();
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi").build();
+
+        when(communityRepository.findBySlugWithOwner("fmi")).thenReturn(Optional.of(community));
+
+        communityService.deleteCommunity("fmi", userId);
+
+        verify(communityRepository).delete(community);
     }
 }

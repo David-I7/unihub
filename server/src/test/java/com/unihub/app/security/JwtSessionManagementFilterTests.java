@@ -41,9 +41,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class JwtSessionManagementFilterTests {
+public class JwtSessionManagementFilterTests extends BaseIntegrationTest {
 
     @Autowired
     private JwtSessionManagementFilter jwtSessionManagementFilter;
@@ -53,24 +54,6 @@ public class JwtSessionManagementFilterTests {
 
     @MockitoBean
     private ProblemDetailUtil problemDetailUtil;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
 
     @AfterEach
     public void tearDown() {

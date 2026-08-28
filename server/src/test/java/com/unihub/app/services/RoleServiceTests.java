@@ -1,5 +1,6 @@
 package com.unihub.app.services;
 
+import com.unihub.app.config.CacheConfig;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.repositories.authorization.PermissionRepository;
@@ -19,7 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@SpringBootTest
+@SpringBootTest(classes = {RoleService.class, CacheConfig.class})
 public class RoleServiceTests {
 
     @Autowired

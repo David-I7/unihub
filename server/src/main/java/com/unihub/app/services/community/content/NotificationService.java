@@ -73,14 +73,13 @@ public class NotificationService {
                     reminder.getEvent().getCourse().getName(),
                     reminder.getEvent().getStartTime());
 
-            Notification notification = Notification.builder()
-                    .user(reminder.getUser())
-                    .title(title)
-                    .message(message)
-                    .type(NotificationType.EVENT_REMINDER)
-                    .event(reminder.getEvent())
-                    .isRead(false)
-                    .build();
+            Notification notification = contentMapper.toNotificationEntity(
+                    reminder.getUser(),
+                    title,
+                    message,
+                    NotificationType.EVENT_REMINDER,
+                    reminder.getEvent()
+            );
 
             notificationRepository.save(notification);
 

@@ -70,13 +70,13 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        UserIdentity localIdentity = UserIdentity.builder()
-                .user(savedUser)
-                .provider(AuthProvider.LOCAL)
-                .providerSubject(savedUser.getEmail())
-                .providerEmail(savedUser.getEmail())
-                .createdAt(now)
-                .build();
+        UserIdentity localIdentity = userMapper.toUserIdentity(
+                savedUser,
+                AuthProvider.LOCAL,
+                savedUser.getEmail(),
+                savedUser.getEmail(),
+                now
+        );
 
         userIdentityService.save(localIdentity);
 
@@ -195,11 +195,12 @@ public class UserService {
         Optional<User> existingUser = userRepository.findByEmail(providerEmail);
 
         if (existingUser.isPresent()) {
-            UserIdentity userIdentity = buildProviderIdentity(
+            UserIdentity userIdentity = userMapper.toUserIdentity(
                     existingUser.get(),
                     provider,
                     providerSubject,
-                    providerEmail
+                    providerEmail,
+                    OffsetDateTime.now()
             );
 
             userIdentityService.save(userIdentity);
@@ -209,42 +210,26 @@ public class UserService {
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        User newUser = User.builder()
-                .email(providerEmail)
-                .username(generateUsernameFromEmail(providerEmail))
-                .password(null)
-                .createdAt(now)
-                .updatedAt(now)
-                .roleId(roleService.getRoleByName(RoleType.USER).getId())
-                .build();
+        User newUser = userMapper.toEntity(
+                providerEmail,
+                generateUsernameFromEmail(providerEmail),
+                roleService.getRoleByName(RoleType.USER).getId(),
+                now
+        );
 
         User savedUser = userRepository.save(newUser);
 
-        UserIdentity userIdentity = buildProviderIdentity(
+        UserIdentity userIdentity = userMapper.toUserIdentity(
                 savedUser,
                 provider,
                 providerSubject,
-                providerEmail
+                providerEmail,
+                OffsetDateTime.now()
         );
 
         userIdentityService.save(userIdentity);
 
         return newUser;
-    }
-
-    private UserIdentity buildProviderIdentity(
-            User user,
-            AuthProvider provider,
-            String providerSubject,
-            String providerEmail
-    ) {
-        return UserIdentity.builder()
-                .user(user)
-                .provider(provider)
-                .providerSubject(providerSubject)
-                .providerEmail(providerEmail)
-                .createdAt(OffsetDateTime.now())
-                .build();
     }
 
     private String generateUsernameFromEmail(String email) {
@@ -317,6 +302,6 @@ public class UserService {
             return userMapper.toUserEnrolledCommunityDto(community, roleName, membership.getJoinedAt());
         }).toList();
 
-        return new UserCommunitiesResponseDto(communities, permissionsByRole);
+        return userMapper.toUserCommunitiesResponseDto(communities, permissionsByRole);
     }
 }

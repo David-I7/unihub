@@ -96,27 +96,13 @@ public class CommunityService {
         String globalRoleName = authorizationService.getGlobalRoleName(userId);
 
         OffsetDateTime now = OffsetDateTime.now();
-        Community community = Community.builder()
-                .name(dto.name())
-                .slug(dto.slug())
-                .description(dto.description())
-                .backgroundColor(dto.backgroundColor())
-                .verified(globalRoleName.equals(RoleType.ROOT.name()) || globalRoleName.equals(RoleType.ADMIN.name()))
-                .memberCount(1)
-                .owner(owner)
-                .createdAt(now)
-                .build();
+        boolean verified = globalRoleName.equals(RoleType.ROOT.name()) || globalRoleName.equals(RoleType.ADMIN.name());
+        Community community = communityMapper.toCommunityEntity(dto, owner, verified, now);
 
         Community savedCommunity = communityRepository.save(community);
 
         Role ownerRole = roleService.getRoleByName(RoleType.COMMUNITY_OWNER);
-        CommunityMember member = CommunityMember.builder()
-                .id(new CommunityMembersId(savedCommunity.getId(), owner.getId()))
-                .community(savedCommunity)
-                .user(owner)
-                .roleId(ownerRole.getId())
-                .joinedAt(now)
-                .build();
+        CommunityMember member = communityMapper.toCommunityMemberEntity(savedCommunity, owner, ownerRole.getId(), now);
 
         communityMemberRepository.save(member);
 
@@ -183,13 +169,12 @@ public class CommunityService {
                 newOwnerMember.setRoleId(ownerRole.getId());
                 communityMemberRepository.save(newOwnerMember);
             } else {
-                CommunityMember newMember = CommunityMember.builder()
-                        .id(new CommunityMembersId(community.getId(), newOwner.getId()))
-                        .community(community)
-                        .user(newOwner)
-                        .roleId(ownerRole.getId())
-                        .joinedAt(OffsetDateTime.now())
-                        .build();
+                CommunityMember newMember = communityMapper.toCommunityMemberEntity(
+                        community,
+                        newOwner,
+                        ownerRole.getId(),
+                        OffsetDateTime.now()
+                );
                 communityMemberRepository.save(newMember);
                 community.setMemberCount(community.getMemberCount() + 1);
             }
