@@ -5,6 +5,7 @@ import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.dto.authentication.SessionResponseDto;
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,16 +26,12 @@ import java.net.URI;
 public class AuthController {
 
     private final UserService userService;
-
     private final SessionService sessionService;
+    private final UserMapper userMapper;
 
     @PostMapping("/login/local")
     public ResponseEntity<?> login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request) {
-        User user = User.builder()
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .build();
+        User user = userMapper.toEntity(request);
 
         var loggedInUser = userService.login(user);
         var session = sessionService.createSession(loggedInUser);
@@ -46,11 +43,7 @@ public class AuthController {
 
     @PostMapping("/register/local")
     public ResponseEntity<SessionResponseDto> register(@Valid @RequestBody LocalRegisterRequestDto request) {
-        User user = User.builder()
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(request.getPassword())
-                .build();
+        User user = userMapper.toEntity(request);
 
         var registeredUser = userService.register(user);
         JwtSession session = sessionService.createSession(registeredUser);

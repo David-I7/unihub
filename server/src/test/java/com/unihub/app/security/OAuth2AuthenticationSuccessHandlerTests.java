@@ -49,26 +49,15 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class OAuth2AuthenticationSuccessHandlerTests {
+public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";
 
     @Autowired
     private OAuth2AuthenticationSuccessHandler successHandler;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
 
     @BeforeEach
     public void setUp() {
@@ -123,7 +112,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=success&provider=GOOGLE");
 
         verify(userRepository).save(any(User.class));
         verify(userIdentityRepository).save(any(UserIdentity.class));
@@ -181,7 +170,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=success&provider=GOOGLE");
         verify(sessionRepository).save(any(Session.class));
     }
 
@@ -234,7 +223,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
         assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/success?provider=GOOGLE");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=success&provider=GOOGLE");
 
         verify(userIdentityRepository).save(any(UserIdentity.class));
         verify(sessionRepository).save(any(Session.class));
@@ -264,7 +253,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
 
         successHandler.onAuthenticationSuccess(request, response, authToken);
 
-        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2/failure?provider=INVALID_PROVIDER");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=failure&provider=INVALID_PROVIDER");
     }
 
     @Test
@@ -304,7 +293,7 @@ public class OAuth2AuthenticationSuccessHandlerTests {
 
         try {
             successHandler.onAuthenticationSuccess(request, response, authToken);
-            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2/success?provider=GOOGLE");
+            assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2?status=success&provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
             ReflectionTestUtils.setField(successHandler, "isDevelopment", true);

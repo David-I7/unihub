@@ -1,8 +1,9 @@
 package com.unihub.app.controllers;
 
-import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.repositories.authentication.SessionRepository;
@@ -23,16 +24,19 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class StudyYearControllerTests {
+public class StudyYearControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/communities/fmi-info-id/study-years";
 
@@ -42,28 +46,10 @@ public class StudyYearControllerTests {
     @MockitoBean
     private StudyYearService studyYearService;
 
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
-
     @Test
     @DisplayName("""
             Given: valid community slug and study year name
-            When: GET /api/v1/communities/{communitySlug}/study-years/{studyYearName} is called
+            When: GET /api/v1/communities/{communitySlug}/study-years/{studyYearName}/home is called
             Then: 200 OK is returned with study year details, courses, and associated teachers
             """)
     public void testGetStudyYearCourses_Success() throws Exception {
@@ -75,6 +61,7 @@ public class StudyYearControllerTests {
                 .lastName("Dragulici")
                 .averageRating(4.5f)
                 .ratingsCount(10)
+                .createdAt(OffsetDateTime.now())
                 .build();
 
         CourseResponseDto courseDto = CourseResponseDto.builder()
@@ -94,18 +81,17 @@ public class StudyYearControllerTests {
                 .build();
 
         StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
-                .id(1)
-                .studyYearName(StudyYearName.YEAR_1)
+                .studyYear(new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now()))
                 .courses(List.of(courseTeachersDto))
                 .build();
 
-        when(studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_1, false)).thenReturn(responseDto);
+        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_1, false)).thenReturn(responseDto);
 
-        mockMvc.perform(get(BASE_URL + "/year-1")
+        mockMvc.perform(get(BASE_URL + "/year-1/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.studyYearName").value("Year 1"))
+                .andExpect(jsonPath("$.studyYear.id").value(1))
+                .andExpect(jsonPath("$.studyYear.name").value("Year 1"))
                 .andExpect(jsonPath("$.courses").isArray())
                 .andExpect(jsonPath("$.courses[0].course.id").value(1))
                 .andExpect(jsonPath("$.courses[0].course.name").value("Arhitectura sistemelor de calcul"))
@@ -126,14 +112,14 @@ public class StudyYearControllerTests {
     @Test
     @DisplayName("""
             Given: non-existent study year
-            When: GET /api/v1/communities/{communitySlug}/study-years/{studyYearName} is called
+            When: GET /api/v1/communities/{communitySlug}/study-years/{studyYearName}/home is called
             Then: 404 Not Found is returned
             """)
     public void testGetStudyYearCourses_NotFound() throws Exception {
-        when(studyYearService.getStudyYearDetail("fmi-info-id", StudyYearName.YEAR_4, false))
+        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_4, false))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
-        mockMvc.perform(get(BASE_URL + "/YEAR_4")
+        mockMvc.perform(get(BASE_URL + "/YEAR_4/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Study year not found"));

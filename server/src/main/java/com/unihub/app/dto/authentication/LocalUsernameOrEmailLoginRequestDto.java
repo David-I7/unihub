@@ -1,25 +1,36 @@
 package com.unihub.app.dto.authentication;
 
+import com.unihub.app.validation.Username;
 import com.unihub.app.validation.UsernameOrEmail;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @UsernameOrEmail
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class LocalUsernameOrEmailLoginRequestDto {
+@Builder
+public record LocalUsernameOrEmailLoginRequestDto(
 
-    private String email;
+    @Email
+    String email,
 
-    private String username;
+    @Username
+    String username,
 
     @NotBlank
     @Size(min = 8, max = 100)
-    private String password;
+    String password
+    ){
+
+    public LocalUsernameOrEmailLoginRequestDto {
+        if (email != null) {
+            email = email.trim();
+        }
+        if (username != null) {
+            username = username.trim();
+        }
+        if (password != null) {
+            password = password.trim();
+        }
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.core.Ordered;
@@ -84,6 +85,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(HttpServletRequest request, HttpMessageNotReadableException e){
         ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.BAD_REQUEST, request.getRequestURI());
         problemDetail.setDetail("Invalid request body");
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(HttpServletRequest request, MissingServletRequestParameterException e){
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.BAD_REQUEST, request.getRequestURI());
+        problemDetail.setDetail("Missing required request parameter: " + e.getParameterName());
         return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
     }
 

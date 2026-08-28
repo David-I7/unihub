@@ -28,7 +28,7 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
                         .build()
                         .toUriString();
 
-        response.sendRedirect(origin + "/oauth2/failure?provider=" + extractProvider(request));
+        response.sendRedirect(origin + "/oauth2?status=failure&provider=" + extractProvider(request));
     }
 
     private String extractProvider(HttpServletRequest request) {

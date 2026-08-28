@@ -54,9 +54,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+import com.unihub.app.BaseIntegrationTest;
+
 @AutoConfigureMockMvc
-public class NotificationControllerTests {
+public class NotificationControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/notifications";
 
@@ -65,24 +66,6 @@ public class NotificationControllerTests {
 
     @MockitoBean
     private NotificationService notificationService;
-
-    @MockitoBean
-    private UserRepository userRepository;
-
-    @MockitoBean
-    private SessionRepository sessionRepository;
-
-    @MockitoBean
-    private UserIdentityRepository userIdentityRepository;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
-
-    @MockitoBean
-    private CommunityMemberRepository communityMemberRepository;
 
     private UUID userId;
     private UserDto userDto;

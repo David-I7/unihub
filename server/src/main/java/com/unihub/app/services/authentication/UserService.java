@@ -4,13 +4,18 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
+import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
+import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
+import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.Random;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +33,12 @@ import java.util.*;
 public class UserService {
 
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final UserIdentityService userIdentityService;
-
     private final RoleService roleService;
-
     private final CommunityMemberRepository communityMemberRepository;
+    private final CommunityRepository communityRepository;
+    private final UserMapper userMapper;
 
     @Transactional
     public User register(User user) {
@@ -67,13 +70,13 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        UserIdentity localIdentity = UserIdentity.builder()
-                .user(savedUser)
-                .provider(AuthProvider.LOCAL)
-                .providerSubject(savedUser.getEmail())
-                .providerEmail(savedUser.getEmail())
-                .createdAt(now)
-                .build();
+        UserIdentity localIdentity = userMapper.toUserIdentity(
+                savedUser,
+                AuthProvider.LOCAL,
+                savedUser.getEmail(),
+                savedUser.getEmail(),
+                now
+        );
 
         userIdentityService.save(localIdentity);
 
@@ -83,6 +86,83 @@ public class UserService {
     @Transactional
     public void delete(UUID userId) {
         userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    public void selfDelete(UUID userId) {
+        if (communityRepository.existsByOwnerId(userId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot delete account while owning communities. Transfer ownership or delete your communities first."
+            );
+        }
+        userRepository.deleteById(userId);
+    }
+
+    @Transactional
+    public UserProfileResponseDto updateProfile(UUID userId, UpdateUserProfileRequestDto dto) {
+        User user = findById(userId);
+
+        if (dto.username() != null) {
+            if (userRepository.findByUsername(dto.username()).isPresent()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
+            }
+            user.setUsername(dto.username());
+        }
+
+        // TODO: update to email notification for setting a new password
+        if (dto.newPassword() != null) {
+            if (user.getPassword() != null) {
+                if (dto.currentPassword() == null) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Current password is required to set a new password");
+                }
+                if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
+                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+                }
+            }
+            user.setPassword(passwordEncoder.encode(dto.newPassword()));
+        }
+
+        user.setUpdatedAt(OffsetDateTime.now());
+        User saved = userRepository.save(user);
+        return userMapper.toUserProfile(saved);
+    }
+
+    @Transactional
+    public UserProfileResponseDto updateUserRole(String targetUsername, UpdateUserRoleRequestDto dto) {
+        if(dto.role() == RoleType.ROOT){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot update role to ROOT");
+        } else if (dto.role() != RoleType.ADMIN && dto.role() != RoleType.USER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot update role to COMMUNITY_MEMBER or COMMUNITY_ADMIN. Use community endpoints for that.");
+        }
+
+        User targetUser = userRepository.findByUsername(targetUsername).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found"));
+
+        Role newRole = roleService.getRoleByName(dto.role());
+        targetUser.setRoleId(newRole.getId());
+        targetUser.setUpdatedAt(OffsetDateTime.now());
+        User saved = userRepository.save(targetUser);
+
+        return userMapper.toUserProfile(saved);
+    }
+
+    @Transactional
+    public void adminDeleteUser(String targetUsername) {
+        User targetUser = userRepository.findByUsername(targetUsername).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found"));
+        Role rootRole = roleService.getRoleByName(RoleType.ROOT);
+
+        if (targetUser.getRoleId().equals(rootRole.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete user with ROOT role");
+        }
+
+        if (communityRepository.existsByOwnerId(targetUser.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Cannot delete user who owns communities. Transfer community ownership or delete communities first."
+            );
+        }
+
+        userRepository.deleteById(targetUser.getId());
     }
 
     @Transactional
@@ -108,19 +188,19 @@ public class UserService {
         );
 
         if (existingIdentity.isPresent()) {
-            User user =  existingIdentity.get().getUser();
+            User user = existingIdentity.get().getUser();
             return user;
         }
 
         Optional<User> existingUser = userRepository.findByEmail(providerEmail);
 
         if (existingUser.isPresent()) {
-            // A user that has an account is logging in with a different provider
-            UserIdentity userIdentity = buildProviderIdentity(
+            UserIdentity userIdentity = userMapper.toUserIdentity(
                     existingUser.get(),
                     provider,
                     providerSubject,
-                    providerEmail
+                    providerEmail,
+                    OffsetDateTime.now()
             );
 
             userIdentityService.save(userIdentity);
@@ -130,42 +210,26 @@ public class UserService {
 
         OffsetDateTime now = OffsetDateTime.now();
 
-        User newUser = User.builder()
-                .email(providerEmail)
-                .username(generateUsernameFromEmail(providerEmail))
-                .password(null)
-                .createdAt(now)
-                .updatedAt(now)
-                .roleId(roleService.getRoleByName(RoleType.USER).getId())
-                .build();
+        User newUser = userMapper.toEntity(
+                providerEmail,
+                generateUsernameFromEmail(providerEmail),
+                roleService.getRoleByName(RoleType.USER).getId(),
+                now
+        );
 
         User savedUser = userRepository.save(newUser);
 
-        UserIdentity userIdentity = buildProviderIdentity(
+        UserIdentity userIdentity = userMapper.toUserIdentity(
                 savedUser,
                 provider,
                 providerSubject,
-                providerEmail
+                providerEmail,
+                OffsetDateTime.now()
         );
 
         userIdentityService.save(userIdentity);
 
         return newUser;
-    }
-
-    private UserIdentity buildProviderIdentity(
-            User user,
-            AuthProvider provider,
-            String providerSubject,
-            String providerEmail
-    ) {
-        return UserIdentity.builder()
-                .user(user)
-                .provider(provider)
-                .providerSubject(providerSubject)
-                .providerEmail(providerEmail)
-                .createdAt(OffsetDateTime.now())
-                .build();
     }
 
     private String generateUsernameFromEmail(String email) {
@@ -221,16 +285,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserProfileResponseDto getUserProfile(UUID userId) {
         User user = findById(userId);
-        String roleName = roleService.getRoleById(user.getRoleId()).getName();
-        List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
-        return  UserProfileResponseDto.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(roleName)
-                .permissions(permissions)
-                .createdAt(user.getCreatedAt())
-                .build();
+        return userMapper.toUserProfile(user);
     }
 
     @Transactional(readOnly = true)
@@ -244,16 +299,9 @@ public class UserService {
 
             permissionsByRole.computeIfAbsent(roleName, roleService::getPermissionNamesByRoleName);
 
-            return UserEnrolledCommunityDto.builder()
-                    .id(community.getId())
-                    .name(community.getName())
-                    .slug(community.getSlug())
-                    .description(community.getDescription())
-                    .memberCount(community.getMemberCount())
-                    .role(roleName)
-                    .build();
+            return userMapper.toUserEnrolledCommunityDto(community, roleName, membership.getJoinedAt());
         }).toList();
 
-        return new UserCommunitiesResponseDto(communities, permissionsByRole);
+        return userMapper.toUserCommunitiesResponseDto(communities, permissionsByRole);
     }
 }

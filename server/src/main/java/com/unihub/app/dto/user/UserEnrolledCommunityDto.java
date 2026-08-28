@@ -11,8 +11,6 @@ public record UserEnrolledCommunityDto(
         UUID id,
         String name,
         String slug,
-        String description,
-        Integer memberCount,
         String role,
         OffsetDateTime joinedAt
 ) {

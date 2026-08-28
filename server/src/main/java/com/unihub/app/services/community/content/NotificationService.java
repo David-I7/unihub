@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +54,7 @@ public class NotificationService {
         notificationRepository.markAllAsReadByUserId(userId);
     }
 
-    @Scheduled(fixedDelay = 60000)
+    @Scheduled(fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
     @Transactional
     public void processDueReminders() {
         OffsetDateTime now = OffsetDateTime.now();
@@ -72,14 +73,13 @@ public class NotificationService {
                     reminder.getEvent().getCourse().getName(),
                     reminder.getEvent().getStartTime());
 
-            Notification notification = Notification.builder()
-                    .user(reminder.getUser())
-                    .title(title)
-                    .message(message)
-                    .type(NotificationType.EVENT_REMINDER)
-                    .event(reminder.getEvent())
-                    .isRead(false)
-                    .build();
+            Notification notification = contentMapper.toNotificationEntity(
+                    reminder.getUser(),
+                    title,
+                    message,
+                    NotificationType.EVENT_REMINDER,
+                    reminder.getEvent()
+            );
 
             notificationRepository.save(notification);
 

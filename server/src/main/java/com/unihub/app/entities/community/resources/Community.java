@@ -45,7 +45,7 @@ public class Community {
     @OneToMany(mappedBy = "community")
     private List<StudyYear> studyYears;
 
-    @OneToOne()
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;
 

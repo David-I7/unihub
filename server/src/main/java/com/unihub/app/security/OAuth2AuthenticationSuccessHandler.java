@@ -55,11 +55,11 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             var session = sessionService.createSession(user);
 
             response.setHeader("Set-Cookie",session.cookie().toString());
-            response.sendRedirect(origin + "/oauth2/success?provider=" + provider.name());
+            response.sendRedirect(origin + "/oauth2?status=success&provider=" + provider.name());
 
         }catch (Exception e){
             log.error("Error occurred during OAuth2 authentication", e);
-            response.sendRedirect(origin + "/oauth2/failure?provider=" + token.getAuthorizedClientRegistrationId().toUpperCase());
+            response.sendRedirect(origin + "/oauth2?status=failure&provider=" + token.getAuthorizedClientRegistrationId().toUpperCase());
         }
     }
 }

@@ -43,7 +43,7 @@ public class RoleService {
                 ));
     }
 
-    @Cacheable(cacheNames = "rolePermissionsByName", key = "#roleName")
+    @Cacheable(cacheNames = "rolePermissionsByName", key = "#roleName", condition = "#roleName != null && !#roleName.isBlank()")
     public List<String> getPermissionNamesByRoleName(String roleName) {
         if (roleName == null || roleName.isBlank()) {
             return Collections.emptyList();
