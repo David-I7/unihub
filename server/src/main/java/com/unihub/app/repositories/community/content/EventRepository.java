@@ -1,6 +1,7 @@
 package com.unihub.app.repositories.community.content;
 
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
+import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -54,13 +55,35 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     );
 
     @Query("""
-        SELECT e FROM Event e
-        JOIN FETCH e.course c
-        JOIN FETCH e.community comm
-        LEFT JOIN FETCH e.owner
+        SELECT new com.unihub.app.dto.community.content.response.EventResponseDto(
+            e.id,
+            e.title,
+            e.type,
+            e.description,
+            e.locationDetails,
+            e.startTime,
+            e.endTime,
+            e.durationMinutes,
+            e.location,
+            c.slug,
+            c.name,
+            c.abbreviation,
+            comm.slug,
+            comm.name,
+            sy.studyYearName,
+            new com.unihub.app.dto.community.OwnerDto(
+               u.id,
+               u.username
+            ),
+            null
+        ) FROM Event e
+        JOIN e.community comm
+        JOIN e.course c
+        JOIN c.studyYear sy
+        JOIN e.owner u
         WHERE e.id = :eventId
     """)
-    Optional<Event> findEventByIdWithDetails(@Param("eventId") UUID eventId);
+    Optional<EventResponseDto> findEventById(@Param("eventId") UUID eventId);
 
     @Query("""
         SELECT e FROM Event e

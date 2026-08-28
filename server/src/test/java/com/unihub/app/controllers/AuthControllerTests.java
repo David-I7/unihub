@@ -1,29 +1,16 @@
 package com.unihub.app.controllers;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
+
 import com.unihub.app.config.SessionProperties;
-import com.unihub.app.controllers.authentication.AuthController;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.security.JwtSessionManagementFilter;
-import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
-import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
-import com.unihub.app.security.OAuth2ProviderUserInfoExtractor;
 import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.RoleService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.http.Cookie;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.repositories.authorization.PermissionRepository;

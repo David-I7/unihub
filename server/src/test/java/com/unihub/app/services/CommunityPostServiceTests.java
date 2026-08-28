@@ -106,7 +106,7 @@ public class CommunityPostServiceTests {
 
         PageRequest pageRequest = PageRequest.of(0, 10);
 
-        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(communityPostRepository.findPostsByCommunityId(eq(communityId), eq(pageRequest)))
                 .thenReturn(new PageImpl<>(List.of(post), pageRequest, 1));
         when(commentRepository.findByPostIdInOrderByCreatedAtAsc(List.of(postId)))
@@ -146,7 +146,7 @@ public class CommunityPostServiceTests {
         assertEquals(commentAuthor.getId(), commentDto.owner().id());
         assertEquals("alice", commentDto.owner().username());
 
-        verify(communityRepository).findBySlug("fmi-info-id");
+        verify(communityRepository).findBySlugWithOwner("fmi-info-id");
         verify(communityPostRepository).findPostsByCommunityId(eq(communityId), eq(pageRequest));
         verify(commentRepository).findByPostIdInOrderByCreatedAtAsc(List.of(postId));
     }
@@ -169,7 +169,7 @@ public class CommunityPostServiceTests {
                 .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(communityPostRepository.findPostsByCommunityId(eq(communityId), eq(pageRequest)))
                 .thenReturn(new PageImpl<>(List.of(), pageRequest, 0));
 
@@ -183,7 +183,7 @@ public class CommunityPostServiceTests {
     @Test
     @DisplayName("getCommunityPosts throws 404 when community does not exist")
     public void testGetCommunityPosts_NotFound() {
-        when(communityRepository.findBySlug("unknown")).thenReturn(Optional.empty());
+        when(communityRepository.findBySlugWithOwner("unknown")).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class,
                 () -> communityPostService.getCommunityPosts("unknown", PageRequest.of(0, 10)));

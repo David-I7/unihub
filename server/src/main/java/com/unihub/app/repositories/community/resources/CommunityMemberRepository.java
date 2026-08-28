@@ -2,8 +2,9 @@ package com.unihub.app.repositories.community.resources;
 
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.CommunityMembersId;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,14 +20,29 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
     @Query("SELECT COUNT(cm) > 0 FROM CommunityMember cm WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     boolean isMemberOfCommunity(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
-    @Query("SELECT cm FROM CommunityMember cm  WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
+    @Query("SELECT cm FROM CommunityMember cm WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     Optional<CommunityMember> findMemberByCommunitySlug(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
     @Query("""
         SELECT cm FROM CommunityMember cm
         JOIN FETCH cm.community c
         WHERE cm.user.id = :userId
-        """)
+    """)
     List<CommunityMember> findMembershipsByUserIdWithCommunity(@Param("userId") UUID userId);
-}
 
+    @Query(value = """
+        SELECT cm FROM CommunityMember cm
+        JOIN FETCH cm.user u
+        WHERE cm.community.slug = :communitySlug
+    """, countQuery = """
+        SELECT COUNT(cm) FROM CommunityMember cm
+        WHERE cm.community.slug = :communitySlug
+    """)
+    Page<CommunityMember> findMembersByCommunitySlug(@Param("communitySlug") String communitySlug, Pageable pageable);
+
+    @Query("SELECT cm FROM CommunityMember cm WHERE cm.community.id = :communityId AND cm.user.id = :userId")
+    Optional<CommunityMember> findByCommunityIdAndUserId(@Param("communityId") UUID communityId, @Param("userId") UUID userId);
+
+    @Query("SELECT COUNT(cm) > 0 FROM CommunityMember cm WHERE cm.community.id = :communityId AND cm.user.id = :userId")
+    boolean existsByCommunityIdAndUserId(@Param("communityId") UUID communityId, @Param("userId") UUID userId);
+}

@@ -119,7 +119,7 @@ public class CommunityServiceTests {
                 .owner(owner)
                 .build();
 
-        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
 
         CommunityResponseDto result = communityService.findBySlug("fmi-info-id");
 
@@ -136,13 +136,13 @@ public class CommunityServiceTests {
         assertEquals(ownerId, result.owner().id());
         assertEquals("david", result.owner().username());
 
-        verify(communityRepository).findBySlug("fmi-info-id");
+        verify(communityRepository).findBySlugWithOwner("fmi-info-id");
     }
 
     @Test
     @DisplayName("findBySlug throws 404 when slug does not exist")
     public void testFindBySlug_NotFound() {
-        when(communityRepository.findBySlug("non-existent")).thenReturn(Optional.empty());
+        when(communityRepository.findBySlugWithOwner("non-existent")).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> communityService.findBySlug("non-existent"));
     }
@@ -172,7 +172,7 @@ public class CommunityServiceTests {
                 new StudyYearMetricsResponseDto(2, StudyYearName.YEAR_2, 6, 0, 30)
         );
 
-        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(studyYearService.getCommunityStudyYearMetrics("fmi-info-id")).thenReturn(studyYears);
 
         CommunityHomeResponseDto result = communityService.getCommunityStudyYears("fmi-info-id");
@@ -182,7 +182,7 @@ public class CommunityServiceTests {
         assertEquals(2, result.studyYears().size());
         assertEquals(1, result.studyYears().get(0).id());
 
-        verify(communityRepository).findBySlug("fmi-info-id");
+        verify(communityRepository).findBySlugWithOwner("fmi-info-id");
         verify(studyYearService).getCommunityStudyYearMetrics("fmi-info-id");
     }
 }

@@ -31,9 +31,9 @@ public class AuthController {
     @PostMapping("/login/local")
     public ResponseEntity<?> login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request) {
         User user = User.builder()
-                .email(request.getEmail())
-                .username(request.getUsername())
-                .password(request.getPassword())
+                .email(request.email())
+                .username(request.username())
+                .password(request.password())
                 .build();
 
         var loggedInUser = userService.login(user);

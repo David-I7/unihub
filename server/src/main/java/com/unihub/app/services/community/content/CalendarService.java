@@ -1,15 +1,11 @@
 package com.unihub.app.services.community.content;
 
-import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
-import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
-import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
-import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
+import com.unihub.app.dto.community.content.response.EventResponseDto;
+import com.unihub.app.entities.community.content.EventReminder;
 import com.unihub.app.entities.community.resources.Community;
-import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -29,7 +25,6 @@ import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,34 +77,35 @@ public class CalendarService {
         return eventRepository.findEventsByCommunityIds(communityIds, courseSlug, studyYear, from, to, userId);
     }
 
-//
-//    @Transactional(readOnly = true)
-//    public CalendarEventResponseDto getEventById(UUID userId, UUID eventId) {
-//        Event event = eventRepository.findEventByIdWithDetails(eventId)
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
-//
-//        boolean isMember = communityMemberRepository.isMemberOfCommunity(event.getCommunity().getSlug(), userId);
-//        if (!isMember) {
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
-//        }
-//
-//        List<EventReminder> reminders = reminderRepository.findByUserIdAndEventId(userId, eventId);
-//        List<EventReminderResponseDto> reminderDtos = reminders.stream()
-//                .map(contentMapper::toEventReminderResponseDto)
-//                .toList();
-//
-//        return contentMapper.toEventResponseDto(event, !reminderDtos.isEmpty(), reminderDtos);
-//    }
-//
-//    @Transactional
-//    public CalendarEventResponseDto createEvent(UUID userId, CreateEventRequestDto requestDto) {
+
+    @Transactional(readOnly = true)
+    public EventResponseDto getEventById(UUID userId, UUID eventId) {
+        EventResponseDto event = eventRepository.findEventById(eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+
+        boolean isMember = communityMemberRepository.isMemberOfCommunity(event.getCommunitySlug(), userId);
+        if (!isMember) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
+        }
+
+        List<EventReminder> reminders = reminderRepository.findByUserIdAndEventId(userId, eventId);
+        List<EventReminderResponseDto> reminderDtos = reminders.stream()
+                .map(contentMapper::toEventReminderResponseDto)
+                .toList();
+
+        event.setReminders(reminderDtos);
+        return event;
+    }
+
+    @Transactional
+    public CalendarEventResponseDto createEvent(UUID userId, CreateEventRequestDto requestDto) {
 //        if (requestDto.endTime() != null && !requestDto.endTime().isAfter(requestDto.startTime())) {
 //            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endTime must be after startTime");
 //        }
 //
 //        Community community = communityRepository.findBySlug(requestDto.communitySlug())
 //                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-//
+
 //        boolean isMember = communityMemberRepository.isMemberOfCommunity(requestDto.communitySlug(), userId);
 //        if (!isMember) {
 //            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
@@ -141,7 +137,8 @@ public class CalendarService {
 //
 //        Event saved = eventRepository.save(event);
 //        return contentMapper.toEventResponseDto(saved, false, Collections.emptyList());
-//    }
+        return null;
+    }
 //
 //    @Transactional
 //    public CalendarEventResponseDto updateEvent(UUID userId, UUID eventId, UpdateEventRequestDto requestDto) {

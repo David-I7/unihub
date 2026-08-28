@@ -38,7 +38,7 @@ public class CommunityPostService {
 
     @Transactional(readOnly = true)
     public PageDto<PostResponseDto> getCommunityPosts(String slug, Pageable pageable) {
-        Community community = communityRepository.findBySlug(slug)
+        Community community = communityRepository.findBySlugWithOwner(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         Page<Post> postsPage = communityPostRepository.findPostsByCommunityId(community.getId(), pageable);

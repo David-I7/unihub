@@ -12,7 +12,6 @@ public record EventReminderResponseDto(
         UUID eventId,
         int offsetMinutes,
         OffsetDateTime remindAt,
-        ReminderStatus status,
-        OffsetDateTime createdAt
+        ReminderStatus status
 ) {
 }

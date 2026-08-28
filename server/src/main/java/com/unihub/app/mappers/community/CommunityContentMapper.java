@@ -95,7 +95,6 @@ public class CommunityContentMapper {
                 .offsetMinutes(reminder.getOffsetMinutes())
                 .remindAt(reminder.getRemindAt())
                 .status(reminder.getStatus())
-                .createdAt(reminder.getCreatedAt())
                 .build();
     }
 

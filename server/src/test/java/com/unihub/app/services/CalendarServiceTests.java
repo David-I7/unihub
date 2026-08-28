@@ -142,7 +142,7 @@ public class CalendarServiceTests {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
         when(eventRepository.findEventsByCommunityIds(eq(List.of(communityId)), eq("sd"), eq(StudyYearName.YEAR_1), eq(EventType.EXAM), any(), any()))
                 .thenReturn(List.of(event));
@@ -200,7 +200,7 @@ public class CalendarServiceTests {
         String slug = "private-comm";
         Community community = createTestCommunity(UUID.randomUUID(), slug);
 
-        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(
@@ -236,7 +236,7 @@ public class CalendarServiceTests {
                 .communitySlug(slug)
                 .build();
 
-        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityRepository.findBySlugWithOwner(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
         when(userRepository.findById(userId)).thenReturn(Optional.of(owner));
@@ -278,7 +278,7 @@ public class CalendarServiceTests {
                 .communitySlug("comm-1")
                 .build();
 
-        when(communityRepository.findBySlug("comm-1")).thenReturn(Optional.of(community1));
+        when(communityRepository.findBySlugWithOwner("comm-1")).thenReturn(Optional.of(community1));
         when(communityMemberRepository.isMemberOfCommunity("comm-1", userId)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(courseFromComm2));
 
