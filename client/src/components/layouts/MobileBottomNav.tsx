@@ -1,16 +1,10 @@
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
-import { navItems } from "./nav";
+import { navItems, isRouteActive } from "./nav";
 
 export function MobileBottomNav() {
   const location = useLocation();
 
-  const isRouteActive = (url: string) => {
-    if (url === "/") {
-      return location.pathname === "/";
-    }
-    return location.pathname.startsWith(url);
-  };
 
   return (
     <nav
@@ -18,7 +12,7 @@ export function MobileBottomNav() {
       className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t bg-background/95 px-2 backdrop-blur sm:hidden pb-safe"
     >
       {navItems.map((item) => {
-        const active = isRouteActive(item.url);
+        const active = isRouteActive(location.pathname, item.url);
         const Icon = item.icon;
 
         return (

@@ -4,7 +4,6 @@ export * from "./api/getCommunityPosts";
 export * from "./api/getCommunityStudyYear";
 export * from "./api/types";
 export * from "./components/CommunityHeader";
-export * from "./components/CommunityBreadcrumb";
 export * from "./components/CommunitySearch";
 export * from "./components/CommunityCard";
 export * from "./components/CommunityGrid";

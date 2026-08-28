@@ -29,3 +29,12 @@ export interface PaginatedRequest {
   size: number;
   sort?: string;
 }
+
+export function getPaginatedNextPageParam<T>(lastPage: PaginatedResponse<T>): number | undefined {
+  return lastPage.last ? undefined : lastPage.number + 1;
+}
+
+export function getPaginatedPrevPageParam<T>(firstPage: PaginatedResponse<T>): number | undefined {
+  return firstPage.first ? undefined : firstPage.number - 1;
+}
+

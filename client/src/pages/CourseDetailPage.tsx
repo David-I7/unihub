@@ -1,6 +1,8 @@
-import { useParams, Link } from "react-router";
-import { Info, FolderOpen, MessageSquare, ArrowLeft } from "lucide-react";
-import { CommunityBreadcrumb, CommunityPostsTab } from "@/features/communities";
+import { useParams } from "react-router";
+import { Info, FolderOpen, MessageSquare } from "lucide-react";
+import { CommunityPostsTab } from "@/features/communities";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
+import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import {
   useCourseHome,
   CourseAboutTab,
@@ -8,7 +10,6 @@ import {
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button, buttonVariants } from "@/components/ui/button";
 
 export default function CourseDetailPage() {
   const {
@@ -38,27 +39,13 @@ export default function CourseDetailPage() {
         <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
           Failed to load {courseSlug} details.
         </h1>
-        <CommunityBreadcrumb />
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center space-y-3">
-          <p className="text-sm font-semibold text-destructive">
-            Failed to load course details.
-          </p>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
-              Try Again
-            </Button>
-            <Link
-              to={`/communities/${communitySlug}/study-years/${studyYearSlug}`}
-              className={buttonVariants({
-                variant: "ghost",
-                size: "sm",
-                className: "gap-1.5",
-              })}
-            >
-              <ArrowLeft className="size-4" /> Back to Study Year
-            </Link>
-          </div>
-        </div>
+        <AppBreadcrumb />
+        <ErrorStateCard
+          message="Failed to load course details."
+          onRetry={() => refetch()}
+          backTo={`/communities/${communitySlug}/study-years/${studyYearSlug}`}
+          backLabel="Back to Study Year"
+        />
       </div>
     );
   }
@@ -69,7 +56,7 @@ export default function CourseDetailPage() {
         {courseHome.course.name}{" "}
       </h1>
 
-      <CommunityBreadcrumb />
+      <AppBreadcrumb />
 
       {/* Course Tabs (Top Navigation) */}
       <Tabs defaultValue="about" className="w-full space-y-6 min-w-0">

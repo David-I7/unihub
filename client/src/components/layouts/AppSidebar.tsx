@@ -16,19 +16,13 @@ import { NavUser } from "./NavUser";
 import { NavLoginPrompt } from "./NavLoginPrompt";
 import { useAuthStore } from "@/features/auth";
 import { Link, useLocation } from "react-router";
-import { navItems } from "./nav";
+import { navItems, isRouteActive } from "./nav";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
 
-  const isRouteActive = (url: string) => {
-    if (url === "/") {
-      return location.pathname === "/";
-    }
-    return location.pathname.startsWith(url);
-  };
 
   return (
     <Sidebar
@@ -85,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupContent>
             <SidebarMenu className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1">
               {navItems.map((item) => {
-                const active = isRouteActive(item.url);
+                const active = isRouteActive(location.pathname, item.url);
                 return (
                   <SidebarMenuItem
                     key={item.title}

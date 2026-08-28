@@ -3,6 +3,8 @@ import { Users, Star } from "lucide-react";
 import type { Teacher } from "@/features/teachers";
 import type { CourseTeachers } from "@/features/courses";
 
+import { getInitials } from "@/lib/utils";
+
 interface StudyYearTeachersRosterProps {
   courses: CourseTeachers[];
   studyYearName: string;
@@ -72,7 +74,7 @@ export function StudyYearTeachersRoster({
             <div className="space-y-1 min-w-0 flex-1 pr-2">
               <div className="flex items-center gap-2">
                 <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary text-[11px] font-bold">
-                  {teacher.lastName.slice(0, 2).toUpperCase()}
+                  {getInitials(teacher.lastName || teacher.firstName, "PR")}
                 </div>
                 <span className="text-xs font-bold text-foreground truncate">
                   Prof. {teacher.firstName} {teacher.lastName}

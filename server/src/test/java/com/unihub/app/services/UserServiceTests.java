@@ -163,7 +163,7 @@ public class UserServiceTests {
                 .joinedAt(joinedAt2)
                 .build();
 
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId))
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
                 .thenReturn(List.of(member1, member2));
         when(roleService.getPermissionNamesByRoleName("MEMBER"))
                 .thenReturn(List.of("VIEW_POSTS", "CREATE_COMMENT"));
@@ -203,7 +203,7 @@ public class UserServiceTests {
     @DisplayName("getUserEnrolledCommunities returns empty response when user has no enrolled communities")
     public void testGetUserEnrolledCommunities_EmptyMemberships() {
         UUID userId = UUID.randomUUID();
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId))
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
                 .thenReturn(Collections.emptyList());
 
         UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
@@ -231,7 +231,7 @@ public class UserServiceTests {
                 .joinedAt(OffsetDateTime.now())
                 .build();
 
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId))
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
                 .thenReturn(List.of(member));
         when(roleService.getPermissionNamesByRoleName(null))
                 .thenReturn(Collections.emptyList());

@@ -11,9 +11,11 @@ export async function getUserCommunities(): Promise<UserCommunitiesResponse> {
   return response.data;
 }
 
-export function useUserCommunities(options: { enabled?: boolean } = {}) {
+export function useUserCommunities(
+  options: { enabled?: boolean } = { enabled: true },
+) {
   const user = useAuthStore((state) => state.user);
-  const { enabled = Boolean(user) } = options;
+  const { enabled } = options;
 
   return useQuery({
     queryKey: userKeys.communities(),

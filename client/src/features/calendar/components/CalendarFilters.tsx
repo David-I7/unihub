@@ -1,5 +1,6 @@
-import { AlertCircle, FileText, Search, Video, X } from "lucide-react";
+import { FileText, Pen, Search, Video, X } from "lucide-react";
 import { useUserCommunities } from "@/features/users";
+import { useCalendarStore } from "../store/useCalendarStore";
 import type { EventType } from "../api/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,20 +15,10 @@ import { useCommunityStudyYears } from "@/features/communities";
 import {
   StudyYearNameMap,
   useStudyYearCourses,
-  type StudyYearName,
+  type StudyYearNameDto,
 } from "@/features/studyYears";
 
 interface CalendarFiltersProps {
-  communitySlug: string | null;
-  onCommunityChange: (slug: string | null) => void;
-  studyYear: string | null;
-  onStudyYearChange: (year: string | null) => void;
-  courseSlug: string | null;
-  onCourseChange: (courseSlug: string | null) => void;
-  selectedType: EventType | "ALL_TYPES";
-  onTypeChange: (type: EventType | "ALL_TYPES") => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
   examCount: number;
   assignmentCount: number;
   lectureCount: number;
@@ -35,21 +26,24 @@ interface CalendarFiltersProps {
 }
 
 export function CalendarFilters({
-  communitySlug,
-  onCommunityChange,
-  studyYear,
-  onStudyYearChange,
-  courseSlug,
-  onCourseChange,
-  selectedType,
-  onTypeChange,
-  searchQuery,
-  onSearchChange,
   examCount,
   assignmentCount,
   lectureCount,
   totalCount,
 }: CalendarFiltersProps) {
+  // Pull state directly from useCalendarStore
+  const communitySlug = useCalendarStore((s) => s.communitySlug);
+  const studyYear = useCalendarStore((s) => s.studyYear);
+  const courseSlug = useCalendarStore((s) => s.courseSlug);
+  const selectedType = useCalendarStore((s) => s.selectedType);
+  const searchQuery = useCalendarStore((s) => s.searchQuery);
+
+  const setCommunitySlug = useCalendarStore((s) => s.setCommunitySlug);
+  const setStudyYear = useCalendarStore((s) => s.setStudyYear);
+  const setCourseSlug = useCalendarStore((s) => s.setCourseSlug);
+  const setSelectedType = useCalendarStore((s) => s.setSelectedType);
+  const setSearchQuery = useCalendarStore((s) => s.setSearchQuery);
+
   // Fetch user enrolled communities list
   const { data: userCommunitiesData } = useUserCommunities();
 
@@ -74,12 +68,10 @@ export function CalendarFilters({
             Community
           </Label>
           <Select
-            value={communitySlug}
+            value={communitySlug ?? null}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_COMMUNITIES") return;
-              onCommunityChange(val);
-              onCourseChange(null);
-              onStudyYearChange(null);
+              setCommunitySlug(val);
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
@@ -93,7 +85,7 @@ export function CalendarFilters({
               )}
               {userCommunitiesData?.communities.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
-                  {c.name}
+                  <span className="truncate">{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -106,29 +98,38 @@ export function CalendarFilters({
             Study Year
           </Label>
           <Select
-            value={studyYear}
+            value={studyYear ?? "All"}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_YEARS") return;
-              const next = StudyYearNameMap[val as StudyYearName];
-              onStudyYearChange(next);
-              onCourseChange(null);
+              if (val === "All") {
+                setStudyYear(null);
+                return;
+              }
+              setStudyYear(val as StudyYearNameDto);
             }}
             disabled={!communitySlug}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="Select Year" />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              {communityStudyYears?.length === 0 && (
+              {communityStudyYears?.length === 0 ? (
                 <SelectItem value="NO_YEARS" disabled>
                   No study years found
                 </SelectItem>
+              ) : (
+                <>
+                  <SelectItem value="All">All</SelectItem>
+                  {communityStudyYears?.map((y) => {
+                    const mappedValue = StudyYearNameMap[y.studyYearName];
+                    return (
+                      <SelectItem key={y.id} value={mappedValue}>
+                        <span className="truncate">{y.studyYearName}</span>
+                      </SelectItem>
+                    );
+                  })}
+                </>
               )}
-              {communityStudyYears?.map((y) => (
-                <SelectItem key={y.id} value={y.studyYearName}>
-                  {y.studyYearName}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
@@ -139,11 +140,11 @@ export function CalendarFilters({
             Course
           </Label>
           <Select
-            value={courseSlug ?? "ALL_COURSES"}
+            value={courseSlug ?? "All"}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_COURSES") return;
-              const next = val === "ALL_COURSES" ? null : val;
-              onCourseChange(next);
+              const next = val === "All" ? null : val;
+              setCourseSlug(next);
             }}
             disabled={!studyYear}
           >
@@ -156,10 +157,10 @@ export function CalendarFilters({
                   No courses found
                 </SelectItem>
               )}
-              <SelectItem value="ALL_COURSES">All Courses</SelectItem>
+              <SelectItem value="All">All</SelectItem>
               {studyYearCourses?.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
-                  {c.name}
+                  <span className="truncate">{c.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -174,19 +175,17 @@ export function CalendarFilters({
           <Select
             value={selectedType}
             onValueChange={(val: string | null) => {
-              if (val) onTypeChange(val as EventType | "ALL_TYPES");
+              if (val) setSelectedType(val as EventType | "All");
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All Event Types" />
+              <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL_TYPES">
-                All Events ({totalCount})
-              </SelectItem>
+              <SelectItem value="All">All ({totalCount})</SelectItem>
               <SelectItem value="EXAM">
                 <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
-                  <AlertCircle className="size-3.5" /> Exams ({examCount})
+                  <Pen className="size-3.5" /> Exams ({examCount})
                 </span>
               </SelectItem>
               <SelectItem value="ASSIGNMENT">
@@ -212,13 +211,13 @@ export function CalendarFilters({
           type="text"
           placeholder="Search events, courses, rooms..."
           value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-8 pr-8 h-9 text-xs w-full bg-background"
         />
         {searchQuery && (
           <button
             type="button"
-            onClick={() => onSearchChange("")}
+            onClick={() => setSearchQuery("")}
             className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <X className="size-3.5" />

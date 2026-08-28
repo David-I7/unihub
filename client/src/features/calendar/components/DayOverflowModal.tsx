@@ -1,6 +1,16 @@
+import { useMemo } from "react";
 import { Bell, Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
-import { formatEventTime, getEventCategoryConfig } from "./CalendarEventPill";
+import { useCalendarStore } from "../store/useCalendarStore";
+import {
+  getEventCategoryConfig,
+  isEventCompleted,
+} from "../utils/eventUtils";
+import {
+  formatHeadingDate,
+  formatTime,
+  getLocalDateKey,
+} from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,71 +22,66 @@ import {
 } from "@/components/ui/dialog";
 
 interface DayOverflowModalProps {
-  dateStr: string | null;
   events: CalendarEvent[];
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectEvent: (event: CalendarEvent) => void;
-  onAddEventOnDate: (dateStr: string) => void;
+  canCreateEvent?: boolean;
 }
 
-function formatHeadingDate(dateStr?: string | null): string {
-  if (!dateStr) return "";
-  const d = new Date(dateStr + "T00:00:00");
-  if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
 
 export function DayOverflowModal({
-  dateStr,
   events,
-  isOpen,
-  onClose,
-  onSelectEvent,
-  onAddEventOnDate,
+  canCreateEvent = true,
 }: DayOverflowModalProps) {
-  if (!dateStr) return null;
+  const overflowDate = useCalendarStore((s) => s.overflowDate);
+  const closeOverflowModal = useCalendarStore((s) => s.closeOverflowModal);
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+  const openCreateModal = useCalendarStore((s) => s.openCreateModal);
+
+  const dayEvents = useMemo(() => {
+    if (!overflowDate) return [];
+    return events.filter((ev) => {
+      const d = new Date(ev.startTime);
+      if (isNaN(d.getTime())) return false;
+      return getLocalDateKey(d) === overflowDate;
+    });
+  }, [events, overflowDate]);
+
+  if (!overflowDate) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={Boolean(overflowDate)} onOpenChange={(open) => !open && closeOverflowModal()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="gap-1">
           <div className="flex items-center gap-2">
             <CalendarIcon className="size-4 text-primary" />
             <DialogTitle className="text-base font-bold font-heading">
-              {formatHeadingDate(dateStr)}
+              {formatHeadingDate(overflowDate)}
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs">
-            Showing all {events.length} event{events.length === 1 ? "" : "s"}{" "}
+            Showing all {dayEvents.length} event{dayEvents.length === 1 ? "" : "s"}{" "}
             scheduled on this day.
           </DialogDescription>
         </DialogHeader>
 
         {/* Events List */}
         <div className="space-y-2 sm:max-h-[60vh] sm:overflow-y-auto sm:pr-1">
-          {events.length === 0 ? (
+          {dayEvents.length === 0 ? (
             <p className="text-xs text-muted-foreground py-4 text-center">
               No events scheduled for this day.
             </p>
           ) : (
-            events.map((ev) => {
+            dayEvents.map((ev) => {
               const config = getEventCategoryConfig(ev.type);
               const Icon = config.icon;
-              const timeStr = formatEventTime(ev.startTime);
+              const timeStr = formatTime(ev.startTime);
               const tag = ev.courseAbbreviation?.trim() || ev.courseSlug;
 
               return (
                 <div
                   key={ev.id}
                   onClick={() => {
-                    onClose();
-                    onSelectEvent(ev);
+                    closeOverflowModal();
+                    openEventDetails(ev.id);
                   }}
                   className={`rounded-xl border p-3 transition-all cursor-pointer select-none ${config.container}`}
                 >
@@ -99,32 +104,33 @@ export function DayOverflowModal({
                     )}
                   </div>
 
-                  {ev.courseName && (
-                    <div className="mt-1 text-[11px] font-medium opacity-85 truncate">
-                      {ev.courseName}
-                    </div>
-                  )}
-
-                  {ev.description && (
-                    <p className="mt-1 text-xs opacity-90 line-clamp-2">
-                      {ev.description}
-                    </p>
-                  )}
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                    {ev.studyYear && (
+                      <span className="text-[10px] font-medium opacity-80 bg-background/50 px-1.5 py-0.5 rounded">
+                        {ev.studyYear}
+                      </span>
+                    )}
+                    {ev.courseName && (
+                      <span className="font-medium opacity-85 truncate">
+                        {ev.courseName}
+                      </span>
+                    )}
+                  </div>
 
                   <div className="mt-2 flex items-center justify-between text-[10px] opacity-80 pt-1.5 border-t border-current/20">
-                    <span>{ev.communitySlug}</span>
+                    <span>{ev.communityName || ev.communitySlug}</span>
                     <div className="flex items-center gap-2">
                       {ev.location && (
                         <span className="capitalize">
                           {ev.location.toLowerCase().replace("_", " ")}
                         </span>
                       )}
-                      {ev.isSubscribed && (
+                      {ev.isSubscribed && !isEventCompleted(ev) && (
                         <Badge
                           variant="secondary"
-                          className="h-4 px-1 text-[9px] gap-1 bg-primary/20 text-primary border-none"
+                          className="h-4 px-1.5 text-[9px] gap-1 bg-primary/20 text-primary border-none font-semibold"
                         >
-                          <Bell className="size-2.5" /> Set
+                          <Bell className="size-2.5 fill-current" /> Reminder
                         </Badge>
                       )}
                     </div>
@@ -142,11 +148,12 @@ export function DayOverflowModal({
             variant="ghost"
             size="sm"
             onClick={() => {
-              const currentD = dateStr;
-              onClose();
-              onAddEventOnDate(currentD);
+              const currentD = overflowDate;
+              closeOverflowModal();
+              openCreateModal(currentD);
             }}
-            className="text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1.5 h-8 cursor-pointer"
+            disabled={!canCreateEvent}
+            className="text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1.5 h-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-3.5" /> Add event on this day
           </Button>
@@ -155,7 +162,7 @@ export function DayOverflowModal({
             type="button"
             variant="outline"
             size="sm"
-            onClick={onClose}
+            onClick={closeOverflowModal}
             className="h-8 text-xs cursor-pointer"
           >
             Close

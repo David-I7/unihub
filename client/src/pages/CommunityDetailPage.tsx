@@ -1,15 +1,15 @@
-import { useParams, Link } from "react-router";
-import { GraduationCap, MessageSquare, ArrowLeft } from "lucide-react";
+import { useParams } from "react-router";
+import { GraduationCap, MessageSquare } from "lucide-react";
 import {
   useCommunityHome,
-  CommunityBreadcrumb,
   CommunityHero,
   CommunityStudyYearsTab,
   CommunityPostsTab,
   CommunityDetailSkeleton,
 } from "@/features/communities";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
+import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button, buttonVariants } from "@/components/ui/button";
 
 export default function CommunityDetailPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
@@ -31,31 +31,13 @@ export default function CommunityDetailPage() {
   if (isCommunityError || !community) {
     return (
       <div className="min-h-full space-y-6 pb-12">
-        <CommunityBreadcrumb />
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-12 text-center space-y-3">
-          <p className="text-sm font-semibold text-destructive">
-            Failed to load community details.
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetchCommunity()}
-            >
-              Try Again
-            </Button>
-            <Link
-              to="/communities"
-              className={buttonVariants({
-                variant: "ghost",
-                size: "sm",
-                className: "gap-1.5",
-              })}
-            >
-              <ArrowLeft className="size-4" /> Back to Communities
-            </Link>
-          </div>
-        </div>
+        <AppBreadcrumb />
+        <ErrorStateCard
+          message="Failed to load community details."
+          onRetry={() => refetchCommunity()}
+          backTo="/communities"
+          backLabel="Back to Communities"
+        />
       </div>
     );
   }

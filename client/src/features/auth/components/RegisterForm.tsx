@@ -2,16 +2,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router";
-import GoogleLogin from "./GoogleLogin";
-import GithubLogin from "./GithubLogin";
+import { SocialAuthSection } from "./SocialAuthSection";
 import { useRegisterForm } from "../hooks/useRegisterForm";
 import useProviderForm from "../hooks/useProviderForm";
 
@@ -19,7 +15,6 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const navigate = useNavigate();
   const {
     handleSuccess: handleProviderSuccess,
     handleFailure,
@@ -131,54 +126,17 @@ export function RegisterForm({
             </Button>
           </Field>
 
-          <FieldSeparator className="text-xs text-muted-foreground">
-            Or
-          </FieldSeparator>
-
-          <FieldGroup>
-            <Field>
-              <GoogleLogin
-                onOpen={() => handleOpen("GOOGLE")}
-                onSuccess={handleProviderSuccess}
-                onFailure={handleFailure}
-                onClose={handleClose}
-                disabled={activeProvider !== null}
-              />
-              {providerLoginError &&
-                providerLoginError.provider === "GOOGLE" && (
-                  <FieldError
-                    errors={[{ message: providerLoginError.message }]}
-                  />
-                )}
-            </Field>
-            <Field>
-              <GithubLogin
-                onOpen={() => handleOpen("GITHUB")}
-                onSuccess={handleProviderSuccess}
-                onFailure={handleFailure}
-                onClose={handleClose}
-                disabled={activeProvider !== null}
-              />
-              {providerLoginError &&
-                providerLoginError.provider === "GITHUB" && (
-                  <FieldError
-                    errors={[{ message: providerLoginError.message }]}
-                  />
-                )}
-            </Field>
-            <FieldDescription className="text-center text-xs">
-              Already have an account?{" "}
-              <Button
-                type="button"
-                size="link"
-                onClick={() => navigate("/login")}
-                variant="link"
-                className="text-xs font-semibold cursor-pointer"
-              >
-                Login
-              </Button>
-            </FieldDescription>
-          </FieldGroup>
+          <SocialAuthSection
+            onOpen={handleOpen}
+            onSuccess={handleProviderSuccess}
+            onFailure={handleFailure}
+            onClose={handleClose}
+            activeProvider={activeProvider}
+            providerError={providerLoginError}
+            footerText="Already have an account?"
+            footerActionText="Login"
+            footerActionTo="/login"
+          />
         </FieldGroup>
       </form>
     </div>

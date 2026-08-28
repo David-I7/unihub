@@ -1,23 +1,16 @@
 package com.unihub.app.controllers;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.config.SessionProperties;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
-import com.unihub.app.dto.community.content.response.EventResponseDto;
+import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.content.ReminderStatus;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.exceptions.GlobalExceptionHandler;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -25,18 +18,7 @@ import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.security.JwtSessionManagementFilter;
-import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
-import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
-import com.unihub.app.security.OAuth2ProviderUserInfoExtractor;
-import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.content.CalendarService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -133,7 +115,7 @@ public class CalendarControllerTests {
                 .createdAt(createdAt)
                 .build();
 
-        EventResponseDto eventDto = EventResponseDto.builder()
+        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
                 .id(eventId)
                 .title("Final Exam")
                 .description("Algorithms final exam")
@@ -244,7 +226,7 @@ public class CalendarControllerTests {
                 .communitySlug("fmi-info-id")
                 .build();
 
-        EventResponseDto responseDto = EventResponseDto.builder()
+        CalendarEventResponseDto responseDto = CalendarEventResponseDto.builder()
                 .id(eventId)
                 .title("Midterm Exam")
                 .description("Chapter 1-4")
@@ -291,7 +273,7 @@ public class CalendarControllerTests {
                 .startTime(startTime)
                 .build();
 
-        EventResponseDto responseDto = EventResponseDto.builder()
+        CalendarEventResponseDto responseDto = CalendarEventResponseDto.builder()
                 .id(eventId)
                 .title("Rescheduled Exam")
                 .type(EventType.EXAM)
@@ -347,7 +329,7 @@ public class CalendarControllerTests {
         UUID eventId = UUID.randomUUID();
         OffsetDateTime startTime = OffsetDateTime.now().plusDays(1);
 
-        EventResponseDto eventDto = EventResponseDto.builder()
+        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
                 .id(eventId)
                 .title("Lecture 1")
                 .type(EventType.LECTURE)

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface CommunityMemberRepository extends JpaRepository<CommunityMember, CommunityMembersId> {
@@ -18,13 +19,14 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
     @Query("SELECT COUNT(cm) > 0 FROM CommunityMember cm WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     boolean isMemberOfCommunity(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
-    @Query("SELECT cm FROM CommunityMember cm JOIN FETCH cm.role WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
-    java.util.Optional<CommunityMember> findMemberWithRoleByCommunitySlug(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
+    @Query("SELECT cm FROM CommunityMember cm  WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
+    Optional<CommunityMember> findMemberByCommunitySlug(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
-    @Query("SELECT cm FROM CommunityMember cm " +
-           "JOIN FETCH cm.community c " +
-           "LEFT JOIN FETCH cm.role r " +
-           "WHERE cm.user.id = :userId")
-    List<CommunityMember> findMembershipsByUserIdWithCommunityAndRole(@Param("userId") UUID userId);
+    @Query("""
+        SELECT cm FROM CommunityMember cm
+        JOIN FETCH cm.community c
+        WHERE cm.user.id = :userId
+        """)
+    List<CommunityMember> findMembershipsByUserIdWithCommunity(@Param("userId") UUID userId);
 }
 

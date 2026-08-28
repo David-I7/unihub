@@ -1,5 +1,10 @@
 import client from "@/api/client";
-import type { PaginatedRequest, PaginatedResponse } from "@/api/types";
+import {
+  getPaginatedNextPageParam,
+  getPaginatedPrevPageParam,
+  type PaginatedRequest,
+  type PaginatedResponse,
+} from "@/api/types";
 import type { Community } from "./types";
 import {
   useInfiniteQuery,
@@ -68,10 +73,8 @@ export function useInfiniteCommunities(
         ...(sort ? { sort } : {}),
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.last ? undefined : lastPage.number + 1,
-    getPreviousPageParam: (firstPage) =>
-      firstPage.first ? undefined : firstPage.number - 1,
+    getNextPageParam: getPaginatedNextPageParam,
+    getPreviousPageParam: getPaginatedPrevPageParam,
     ...options,
   });
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { computeThemeGradient } from "@/lib/gradientUtils";
 import { useThemeStore } from "@/store/useThemeStore";
-import { CommunityBreadcrumb } from "../CommunityBreadcrumb";
+import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import type { Community } from "../../api/types";
 import type { StudyYearMetrics } from "@/features/studyYears";
 
@@ -65,7 +65,7 @@ export function CommunityHero({
       <div className="relative z-10 max-w-7xl mx-auto space-y-6">
         {/* Top utility bar: Breadcrumb on left, Verified status & Action on right */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CommunityBreadcrumb className="text-white/90 [&_a]:text-white/90 [&_a:hover]:text-white [&_[data-slot=breadcrumb-page]]:text-white [&_[data-slot=breadcrumb-separator]]:text-white/60 text-xs font-medium drop-shadow-xs" />
+          <AppBreadcrumb className="text-white/90 [&_a]:text-white/90 [&_a:hover]:text-white [&_[data-slot=breadcrumb-page]]:text-white [&_[data-slot=breadcrumb-separator]]:text-white/60 text-xs font-medium drop-shadow-xs" />
 
           <div className="flex items-center gap-2.5">
             {community.verified ? (

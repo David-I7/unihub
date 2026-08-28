@@ -88,42 +88,6 @@ public class CommunityContentMapper {
                 .build();
     }
 
-    public EventResponseDto toEventResponseDto(Event event) {
-        return toEventResponseDto(event, false, Collections.emptyList());
-    }
-
-    public EventResponseDto toEventResponseDto(Event event, boolean isSubscribed) {
-        return toEventResponseDto(event, isSubscribed, Collections.emptyList());
-    }
-
-    public EventResponseDto toEventResponseDto(Event event, boolean isSubscribed, List<EventReminderResponseDto> reminders) {
-        OwnerDto owner = event.getOwner() == null
-                ? null
-                : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername());
-
-        return EventResponseDto.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .description(event.getDescription())
-                .type(event.getType())
-                .startTime(event.getStartTime())
-                .endTime(event.getEndTime())
-                .durationMinutes(event.getDurationMinutes())
-                .location(event.getLocation())
-                .locationDetails(event.getLocationDetails())
-                .courseId(event.getCourse().getId())
-                .courseSlug(event.getCourse().getSlug())
-                .courseName(event.getCourse().getName())
-                .courseAbbreviation(event.getCourse().getAbbreviation())
-                .communitySlug(event.getCommunity().getSlug())
-                .createdAt(event.getCreatedAt())
-                .updatedAt(event.getUpdatedAt())
-                .owner(owner)
-                .isSubscribed(isSubscribed)
-                .reminders(reminders != null ? reminders : Collections.emptyList())
-                .build();
-    }
-
     public EventReminderResponseDto toEventReminderResponseDto(EventReminder reminder) {
         return EventReminderResponseDto.builder()
                 .id(reminder.getId())

@@ -10,6 +10,7 @@ import type {
   CalendarEvent,
   CalendarQueryParams,
   CreateEventPayload,
+  Event,
   UpdateEventPayload,
 } from "./types";
 
@@ -42,10 +43,8 @@ export async function getEvents(
   }
 }
 
-export async function getEventById(eventId: string): Promise<CalendarEvent> {
-  const response = await client.get<CalendarEvent>(
-    `/calendar/events/${eventId}`,
-  );
+export async function getEventById(eventId: string): Promise<Event> {
+  const response = await client.get<Event>(`/calendar/events/${eventId}`);
   return response.data;
 }
 
@@ -90,14 +89,14 @@ export function useCalendarEvents(
 
 export function useCalendarEvent(
   eventId: string,
-  options: { enabled?: boolean } = {},
+  options: { enabled?: boolean } = { enabled: true },
 ) {
   const user = useAuthStore((state) => state.user);
-  const { enabled = Boolean(user) } = options;
-  return useQuery({
+  const { enabled } = options;
+  return useQuery<Event>({
     queryKey: calendarKeys.detail(eventId),
     queryFn: () => getEventById(eventId),
-    enabled: enabled && Boolean(user) && !!eventId,
+    enabled: enabled && Boolean(user) && eventId.length > 0,
   });
 }
 

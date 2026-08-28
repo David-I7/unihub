@@ -1,30 +1,14 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
+import { formatPostDate } from "@/lib/dateUtils";
 import type { Comment } from "@/types/domain";
 
 interface CommentItemProps {
   comment: Comment;
 }
 
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return dateStr;
-  }
-}
-
 export function CommentItem({ comment }: CommentItemProps) {
-  const commentInitials = comment.owner?.username
-    ? comment.owner.username.slice(0, 2).toUpperCase()
-    : "U";
+  const commentInitials = getInitials(comment.owner?.username);
 
   return (
     <div className="rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs">
@@ -40,7 +24,7 @@ export function CommentItem({ comment }: CommentItemProps) {
           </span>
         </div>
         <span className="text-[10px] text-muted-foreground">
-          {formatDate(comment.createdAt)}
+          {formatPostDate(comment.createdAt)}
         </span>
       </div>
       <p className="text-muted-foreground pl-7 leading-relaxed whitespace-pre-line">

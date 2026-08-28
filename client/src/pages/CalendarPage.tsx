@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { Link } from "react-router";
+import { Calendar as CalendarIcon, Compass, Users } from "lucide-react";
 import {
   CalendarAgendaList,
   CalendarMonthGrid,
@@ -6,100 +8,85 @@ import {
   DayOverflowModal,
   EventDetailModal,
   EventFormModal,
-  getMockCalendarEventsForMonth,
   useCalendarEvents,
-  useCalendarState,
-  type CalendarEvent,
+  useCalendarStore,
 } from "@/features/calendar";
+import { useUserCommunities } from "@/features/users";
+import { buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-
-/**
- * Temporary toggle for UI testing.
- * Set to false or delete when backend calendar events are populated.
- */
-const USE_MOCK_EVENTS = false;
-
-function getLocalDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+import { cn } from "@/lib/utils";
 
 export default function CalendarPage() {
-  const [viewMode, setViewMode] = useState<"auto" | "month" | "list">("auto");
+  const currentDate = useCalendarStore((s) => s.currentDate);
+  const communitySlug = useCalendarStore((s) => s.communitySlug);
+  const studyYear = useCalendarStore((s) => s.studyYear);
+  const courseSlug = useCalendarStore((s) => s.courseSlug);
+  const selectedType = useCalendarStore((s) => s.selectedType);
+  const searchQuery = useCalendarStore((s) => s.searchQuery);
+  const viewMode = useCalendarStore((s) => s.viewMode);
 
-  const {
-    currentDate,
-    setCurrentDate,
-    communitySlug,
-    setCommunitySlug,
-    studyYear,
-    setStudyYear,
-    courseSlug,
-    setCourseSlug,
-    selectedType,
-    setSelectedType,
-    searchQuery,
-    setSearchQuery,
-    selectedEvent,
-    setSelectedEvent,
-    isFormModalOpen,
-    setIsFormModalOpen,
-    formDefaultDate,
-    setFormDefaultDate,
-    editingEvent,
-    setEditingEvent,
-    overflowDate,
-    setOverflowDate,
-  } = useCalendarState();
+  // Fetch enrolled communities for empty-state evaluation and Add Event button permission
+  const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
+    useUserCommunities();
+  const userCommunities = userCommunitiesData?.communities ?? [];
+  const hasCommunities = userCommunities.length > 0;
 
-  // Fetch events for active year, month, and filters
+  // Server-authoritative query: executes only when communitySlug is selected
   const {
     data: rawEvents,
-    isLoading,
+    isLoading: isLoadingEvents,
     isFetching,
-  } = useCalendarEvents({
-    year: currentDate.getFullYear(),
-    month: currentDate.getMonth() + 1,
-    communitySlug: communitySlug || undefined,
-    studyYear: studyYear !== null ? studyYear : undefined,
-    courseSlug: courseSlug !== null ? courseSlug : undefined,
-    type: selectedType !== "ALL_TYPES" ? selectedType : undefined,
-  });
+  } = useCalendarEvents(
+    {
+      year: currentDate.getFullYear(),
+      month: currentDate.getMonth() + 1,
+      communitySlug: communitySlug || undefined,
+      studyYearName: studyYear || undefined,
+      courseSlug: courseSlug || undefined,
+    },
+    {
+      enabled: Boolean(communitySlug),
+    },
+  );
 
   const eventsList = useMemo(() => {
-    if (rawEvents && rawEvents.length > 0) return rawEvents;
-    if (USE_MOCK_EVENTS) {
-      return getMockCalendarEventsForMonth(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-      );
-    }
-    return [];
-  }, [rawEvents, currentDate]);
+    return rawEvents ?? [];
+  }, [rawEvents]);
 
-  // Client-side search and category filtering
+  // Client-side filtering only for eventType and search keywords
   const filteredEvents = useMemo(() => {
-    if (!searchQuery.trim()) return eventsList;
-    const q = searchQuery.toLowerCase().trim();
     return eventsList.filter((ev) => {
-      const matchTitle = ev.title.toLowerCase().includes(q);
-      const matchCourseName = ev.courseName.toLowerCase().includes(q);
-      const matchCourseSlug = ev.courseSlug.toLowerCase().includes(q);
-      const matchLocation = ev.locationDetails?.toLowerCase().includes(q);
-      const matchDescription = ev.description?.toLowerCase().includes(q);
-      return (
-        matchTitle ||
-        matchCourseName ||
-        matchCourseSlug ||
-        matchLocation ||
-        matchDescription
-      );
-    });
-  }, [eventsList, selectedType, courseSlug, searchQuery]);
+      // 1. Event Type filter (Exams, Assignments, Lectures)
+      if (selectedType !== "All") {
+        if (ev.type !== selectedType) {
+          return false;
+        }
+      }
 
-  // Counts for category badges
+      // 2. Search query filter
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchTitle = ev.title.toLowerCase().includes(q);
+        const matchCourseName = ev.courseName.toLowerCase().includes(q);
+        const matchCourseSlug = ev.courseSlug.toLowerCase().includes(q);
+        const matchAbbr = ev.courseAbbreviation?.toLowerCase().includes(q);
+        const matchComm = ev.communityName?.toLowerCase().includes(q);
+        if (
+          !matchTitle &&
+          !matchCourseName &&
+          !matchCourseSlug &&
+          !matchAbbr &&
+          !matchComm
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [eventsList, selectedType, searchQuery]);
+
+  // Category counts calculated from current server-scoped events
   const examCount = useMemo(
     () => eventsList.filter((e) => e.type === "EXAM").length,
     [eventsList],
@@ -113,59 +100,6 @@ export default function CalendarPage() {
     [eventsList],
   );
 
-  // Month navigation
-  const handlePrevMonth = () => {
-    setCurrentDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1),
-    );
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(
-      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1),
-    );
-  };
-
-  const handleToday = () => {
-    setCurrentDate(new Date());
-  };
-
-  // Modal handlers
-  const handleAddEvent = () => {
-    setFormDefaultDate(undefined);
-    setEditingEvent(null);
-    setIsFormModalOpen(true);
-  };
-
-  const handleSelectDate = (dateStr: string) => {
-    setFormDefaultDate(dateStr);
-    setEditingEvent(null);
-    setIsFormModalOpen(true);
-  };
-
-  const handleSelectEvent = (event: CalendarEvent) => {
-    setSelectedEvent(event);
-  };
-
-  const handleEditEvent = (event: CalendarEvent) => {
-    setSelectedEvent(null);
-    setEditingEvent(event);
-    setIsFormModalOpen(true);
-  };
-
-  const handleOpenOverflow = (dateStr: string) => {
-    setOverflowDate(dateStr);
-  };
-
-  // Events for overflow modal
-  const overflowEvents = useMemo(() => {
-    if (!overflowDate) return [];
-    return filteredEvents.filter((e) => {
-      const d = new Date(e.startTime);
-      return getLocalDateKey(d) === overflowDate;
-    });
-  }, [filteredEvents, overflowDate]);
-
   return (
     <div className="min-h-full space-y-6 pb-12">
       {/* Header */}
@@ -173,7 +107,7 @@ export default function CalendarPage() {
         <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           Calendar
         </h1>
-        {isFetching && !isLoading && (
+        {isFetching && !isLoadingEvents && (
           <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
             <Spinner className="size-3.5" />
             <span>Updating...</span>
@@ -183,57 +117,76 @@ export default function CalendarPage() {
 
       {/* Control Toolbar */}
       <CalendarToolbar
-        currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-        onToday={handleToday}
-        onAddEvent={handleAddEvent}
-        communitySlug={communitySlug}
-        onCommunityChange={setCommunitySlug}
-        studyYear={studyYear}
-        onStudyYearChange={setStudyYear}
-        courseSlug={courseSlug}
-        onCourseChange={setCourseSlug}
-        selectedType={selectedType}
-        onTypeChange={setSelectedType}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         examCount={examCount}
         assignmentCount={assignmentCount}
         lectureCount={lectureCount}
         totalCount={eventsList.length}
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
+        canCreateEvent={hasCommunities}
       />
 
       {/* Calendar View Container */}
-      {isLoading ? (
-        <div className="flex h-96 flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
+      {!communitySlug ? (
+        !hasCommunities && !isLoadingCommunities ? (
+          /* Empty State 1: User has no enrolled communities */
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
+            <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-4">
+              <Users className="size-6" />
+            </div>
+            <h3 className="font-heading text-base font-bold text-foreground">
+              Join a community in order to see its events.
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-sm leading-relaxed">
+              You are not currently enrolled in any community. Join a community
+              to start viewing class schedules, exam dates, and lecture times.
+            </p>
+            <Link
+              to="/communities"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "mt-4 gap-2 text-xs font-semibold cursor-pointer",
+              )}
+            >
+              <Compass className="size-4" />
+              Explore Communities
+            </Link>
+          </div>
+        ) : (
+          /* Empty State 2: User has communities, but none selected yet */
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
+            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+              <CalendarIcon className="size-6" />
+            </div>
+            <h3 className="font-heading text-base font-bold text-foreground">
+              Select a community to see its events.
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground max-w-sm leading-relaxed">
+              Choose one of your enrolled communities from the dropdown above to
+              display its calendar.
+            </p>
+          </div>
+        )
+      ) : isLoadingEvents ? (
+        /* Loading events state */
+        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
           <Spinner className="size-8 text-primary" />
           <p className="mt-3 text-xs font-semibold text-muted-foreground">
             Loading events...
           </p>
         </div>
       ) : (
+        /* Active Calendar Grid / Agenda View */
         <div className="@container w-full">
           {/* Automatic Container Query Mode */}
           {viewMode === "auto" && (
             <>
               <div className="hidden @[640px]:block">
                 <CalendarMonthGrid
-                  currentDate={currentDate}
                   events={filteredEvents}
-                  onSelectEvent={handleSelectEvent}
-                  onSelectDate={handleSelectDate}
-                  onOpenOverflow={handleOpenOverflow}
+                  canCreateEvent={hasCommunities}
                 />
               </div>
               <div className="block @[640px]:hidden">
-                <CalendarAgendaList
-                  currentDate={currentDate}
-                  events={filteredEvents}
-                  onSelectEvent={handleSelectEvent}
-                />
+                <CalendarAgendaList events={filteredEvents} />
               </div>
             </>
           )}
@@ -241,55 +194,24 @@ export default function CalendarPage() {
           {/* Explicit Month Grid Mode */}
           {viewMode === "month" && (
             <CalendarMonthGrid
-              currentDate={currentDate}
               events={filteredEvents}
-              onSelectEvent={handleSelectEvent}
-              onSelectDate={handleSelectDate}
-              onOpenOverflow={handleOpenOverflow}
+              canCreateEvent={hasCommunities}
             />
           )}
 
           {/* Explicit Agenda List Mode */}
           {viewMode === "list" && (
-            <CalendarAgendaList
-              currentDate={currentDate}
-              events={filteredEvents}
-              onSelectEvent={handleSelectEvent}
-            />
+            <CalendarAgendaList events={filteredEvents} />
           )}
         </div>
       )}
 
-      {/* Event Details Modal */}
-      <EventDetailModal
-        event={selectedEvent}
-        isOpen={Boolean(selectedEvent)}
-        onClose={() => setSelectedEvent(null)}
-        onEdit={handleEditEvent}
-      />
-
-      {/* Event Creation & Edit Modal */}
-      <EventFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setEditingEvent(null);
-        }}
-        defaultDate={formDefaultDate}
-        editingEvent={editingEvent}
-        defaultCommunitySlug={communitySlug}
-        defaultStudyYear={studyYear}
-        defaultCourseSlug={courseSlug}
-      />
-
-      {/* Crowded Day Overflow Modal */}
+      {/* Modals subscribing directly to useCalendarStore */}
+      <EventDetailModal />
+      <EventFormModal />
       <DayOverflowModal
-        dateStr={overflowDate}
-        events={overflowEvents}
-        isOpen={Boolean(overflowDate)}
-        onClose={() => setOverflowDate(null)}
-        onSelectEvent={handleSelectEvent}
-        onAddEventOnDate={handleSelectDate}
+        events={filteredEvents}
+        canCreateEvent={hasCommunities}
       />
     </div>
   );

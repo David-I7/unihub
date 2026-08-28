@@ -13,6 +13,8 @@ export type StudyYearNameDto =
 export type StudyYearName = keyof typeof StudyYearNameMap;
 
 export type StudyYearMetrics = {
+  coursesCount: number;
+  activeCoursesCount?: number;
   archivedCoursesCount: number;
   creditsCount: number;
 } & StudyYear;
@@ -32,5 +34,7 @@ export interface StudyYearHome {
   studyYear: StudyYear;
   courses: CourseHome[];
 }
+
+export type StudyYearDetail = StudyYearHome;
 
 export type StudyYearCourses = CourseIndentifiers[];

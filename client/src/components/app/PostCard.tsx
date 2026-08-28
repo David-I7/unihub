@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
+import { formatPostDate } from "@/lib/dateUtils";
 import { CommentItem } from "./CommentItem";
 import type { Post } from "@/types/domain";
 
@@ -18,22 +19,6 @@ export interface PostCardProps {
   post: Post;
   onLikeToggle?: (postId: string) => void;
   className?: string;
-}
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) return "";
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return dateStr;
-  }
 }
 
 export function PostCard({ post, onLikeToggle, className }: PostCardProps) {
@@ -48,10 +33,7 @@ export function PostCard({ post, onLikeToggle, className }: PostCardProps) {
     onLikeToggle?.(post.id);
   };
 
-  const authorInitials = post.owner?.username
-    ? post.owner.username.slice(0, 2).toUpperCase()
-    : "U";
-
+  const authorInitials = getInitials(post.owner?.username);
   const totalComments = post.commentsCount ?? post.comments?.length ?? 0;
 
   return (
@@ -77,7 +59,7 @@ export function PostCard({ post, onLikeToggle, className }: PostCardProps) {
               </span>
             </div>
             <span className="text-[11px] text-muted-foreground">
-              {formatDate(post.createdAt)}
+              {formatPostDate(post.createdAt)}
             </span>
           </div>
         </div>

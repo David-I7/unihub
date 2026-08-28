@@ -26,11 +26,11 @@ interface Crumb {
   url: string;
 }
 
-interface CommunityBreadcrumbProps {
+export interface AppBreadcrumbProps {
   className?: string;
 }
 
-export function CommunityBreadcrumb({ className }: CommunityBreadcrumbProps) {
+export function AppBreadcrumb({ className }: AppBreadcrumbProps) {
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
 
@@ -95,3 +95,5 @@ export function CommunityBreadcrumb({ className }: CommunityBreadcrumbProps) {
     </Breadcrumb>
   );
 }
+
+export default AppBreadcrumb;

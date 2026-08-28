@@ -34,3 +34,11 @@ export const navItems: NavItem[] = [
     icon: Calendar,
   },
 ];
+
+export function isRouteActive(currentPath: string, targetUrl: string): boolean {
+  if (targetUrl === "/") {
+    return currentPath === "/";
+  }
+  return currentPath.startsWith(targetUrl);
+}
+
