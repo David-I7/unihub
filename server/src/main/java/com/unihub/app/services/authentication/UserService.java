@@ -1,7 +1,6 @@
 package com.unihub.app.services.authentication;
 
 import com.unihub.app.domain.RoleType;
-import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
@@ -236,12 +235,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserCommunitiesResponseDto getUserEnrolledCommunities(UUID userId) {
-        List<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunityAndRole(userId);
+        List<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunity(userId);
         Map<String, List<String>> permissionsByRole = new HashMap<>();
 
         List<UserEnrolledCommunityDto> communities = memberships.stream().map(membership -> {
             Community community = membership.getCommunity();
-            String roleName = membership.getRole().getName();
+            String roleName = roleService.getRoleById(membership.getRoleId()).getName();
 
             permissionsByRole.computeIfAbsent(roleName, roleService::getPermissionNamesByRoleName);
 

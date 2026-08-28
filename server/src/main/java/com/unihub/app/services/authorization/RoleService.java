@@ -1,10 +1,13 @@
 package com.unihub.app.services.authorization;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RoleService {
 
+    private final CacheManager cacheManager;
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
 
@@ -45,5 +49,18 @@ public class RoleService {
             return Collections.emptyList();
         }
         return permissionRepository.findPermissionNamesByRoleName(roleName);
+    }
+
+    @PostConstruct
+    public void initializeRoles() {
+        var roles = roleRepository.findAllWithPermissions();
+        var roleCache = cacheManager.getCache("roles");
+        var rolePermissionsCache = cacheManager.getCache("rolePermissionsByName");
+
+        roles.forEach(role -> {
+            roleCache.put(role.getName(), role);
+            roleCache.put(role.getId(), role);
+            rolePermissionsCache.put(role.getName(), role.getPermissions().stream().map(Permission::getName).toList());
+        });
     }
 }

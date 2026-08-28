@@ -4,18 +4,16 @@ import {
   BellOff,
   Calendar as CalendarIcon,
   Clock,
-  ExternalLink,
   GraduationCap,
   MapPin,
   Pencil,
   Trash2,
-  User as UserIcon,
   Users,
 } from "lucide-react";
 import { Link } from "react-router";
 import { useDeleteEvent } from "../api/events";
 import { useCreateReminder, useDeleteReminder } from "../api/reminders";
-import type { CalendarEvent } from "../api/types";
+import { useCalendarStore } from "../store/useCalendarStore";
 import { getEventCategoryConfig } from "./CalendarEventPill";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,13 +32,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-
-interface EventDetailModalProps {
-  event: CalendarEvent | null;
-  isOpen: boolean;
-  onClose: () => void;
-  onEdit: (event: CalendarEvent) => void;
-}
 
 const REMINDER_OFFSETS = [
   { label: "15 minutes before", value: "15" },
@@ -72,12 +63,11 @@ function formatTime(isoStr?: string): string {
   });
 }
 
-export function EventDetailModal({
-  event,
-  isOpen,
-  onClose,
-  onEdit,
-}: EventDetailModalProps) {
+export function EventDetailModal() {
+  const event = useCalendarStore((s) => s.selectedEvent);
+  const closeEventDetails = useCalendarStore((s) => s.closeEventDetails);
+  const openEditModal = useCalendarStore((s) => s.openEditModal);
+
   const [selectedOffset, setSelectedOffset] = useState("15");
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
@@ -91,9 +81,6 @@ export function EventDetailModal({
 
   const config = getEventCategoryConfig(event.type);
   const Icon = config.icon;
-  const isUrl =
-    event.locationDetails?.startsWith("http://") ||
-    event.locationDetails?.startsWith("https://");
   const tag = event.courseAbbreviation?.trim() || event.courseSlug;
 
   const handleSetReminder = () => {
@@ -106,7 +93,6 @@ export function EventDetailModal({
   const handleRemoveReminder = () => {
     deleteReminderMutate({
       eventId: event.id,
-      reminderId: event.reminders?.[0]?.id,
     });
   };
 
@@ -114,13 +100,16 @@ export function EventDetailModal({
     deleteEventMutate(event.id, {
       onSuccess: () => {
         setIsConfirmingDelete(false);
-        onClose();
+        closeEventDetails();
       },
     });
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={Boolean(event)}
+      onOpenChange={(open) => !open && closeEventDetails()}
+    >
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Modal Header */}
         <DialogHeader className="gap-2">
@@ -139,6 +128,12 @@ export function EventDetailModal({
                   {tag}
                 </span>
               )}
+
+              {event.studyYear && (
+                <span className="text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
+                  {event.studyYear}
+                </span>
+              )}
             </div>
 
             {/* Action buttons (Edit / Delete) */}
@@ -146,9 +141,7 @@ export function EventDetailModal({
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => {
-                  onEdit(event);
-                }}
+                onClick={() => openEditModal(event)}
                 title="Edit event"
                 className="text-muted-foreground hover:text-foreground cursor-pointer"
               >
@@ -179,16 +172,9 @@ export function EventDetailModal({
                 className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
               >
                 <Users className="size-3" />
-                {event.communitySlug}
+                {event.communityName || event.communitySlug}
               </Link>
             </span>
-
-            {event.owner?.username && (
-              <span className="inline-flex items-center gap-1 text-muted-foreground">
-                <UserIcon className="size-3" />
-                <span>@{event.owner.username}</span>
-              </span>
-            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -253,23 +239,6 @@ export function EventDetailModal({
               <div className="font-semibold text-foreground capitalize">
                 {event.location.toLowerCase().replace("_", " ")}
               </div>
-              {event.locationDetails && (
-                <div className="text-xs mt-0.5">
-                  {isUrl ? (
-                    <a
-                      href={event.locationDetails}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-primary font-medium hover:underline inline-flex items-center gap-1"
-                    >
-                      {event.locationDetails}
-                      <ExternalLink className="size-3" />
-                    </a>
-                  ) : (
-                    <span>{event.locationDetails}</span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -287,13 +256,6 @@ export function EventDetailModal({
                   </div>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* Description / Notes */}
-          {event.description && (
-            <div className="mt-3 rounded-xl bg-muted/40 p-3 text-xs leading-relaxed text-foreground/90 whitespace-pre-wrap border">
-              {event.description}
             </div>
           )}
         </div>
@@ -320,9 +282,7 @@ export function EventDetailModal({
           {event.isSubscribed ? (
             <div className="flex items-center justify-between text-xs pt-1">
               <span className="text-muted-foreground">
-                {event.reminders?.[0]?.offsetMinutes
-                  ? `Notifying ${event.reminders[0].offsetMinutes} min before event`
-                  : "Notification scheduled"}
+                Notification scheduled for this event
               </span>
               <Button
                 variant="outline"

@@ -1,3 +1,8 @@
+import type {
+  StudyYearName,
+  StudyYearNameDto,
+} from "@/features/studyYears/api/types";
+
 export type EventType = "EXAM" | "LECTURE" | "ASSIGNMENT";
 export type EventLocation = "IN_PERSON" | "ONLINE" | "HYBRID";
 export type ReminderStatus = "PENDING" | "SENT" | "CANCELLED";
@@ -14,33 +19,26 @@ export interface EventReminder {
 export interface CalendarEvent {
   id: string;
   title: string;
-  description?: string;
   type: EventType;
   startTime: string;
-  endTime?: string;
-  durationMinutes?: number;
+  endTime: string;
+  durationMinutes: number;
   location: EventLocation;
-  locationDetails?: string;
-  courseId: number;
   courseSlug: string;
   courseName: string;
-  courseAbbreviation?: string;
+  courseAbbreviation: string;
   communitySlug: string;
-  createdAt: string;
-  updatedAt: string;
-  owner?: { id: string; username: string };
+  communityName: string;
+  studyYear: StudyYearName;
   isSubscribed: boolean;
-  reminders: EventReminder[];
 }
 
 export interface CalendarQueryParams {
   year?: number;
-  month?: number; // 1-12
+  month?: number;
   communitySlug?: string;
-  studyYear?: "year-1" | "year-2" | "year-3" | "year-4" | string;
-  studyYearName?: string;
+  studyYearName?: StudyYearNameDto;
   courseSlug?: string;
-  type?: EventType;
 }
 
 export interface CreateEventPayload {

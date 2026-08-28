@@ -1,34 +1,28 @@
 package com.unihub.app.dto.community.content.response;
 
-import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Builder
-public record EventResponseDto(
+public record CalendarEventResponseDto(
         UUID id,
         String title,
-        String description,
         EventType type,
         OffsetDateTime startTime,
         OffsetDateTime endTime,
         Integer durationMinutes,
         EventLocation location,
-        String locationDetails,
-        Long courseId,
         String courseSlug,
         String courseName,
         String courseAbbreviation,
         String communitySlug,
-        OffsetDateTime createdAt,
-        OffsetDateTime updatedAt,
-        OwnerDto owner,
-        boolean isSubscribed,
-        List<EventReminderResponseDto> reminders
+        String communityName,
+        StudyYearName studyYear,
+        boolean isSubscribed
 ) {
 }

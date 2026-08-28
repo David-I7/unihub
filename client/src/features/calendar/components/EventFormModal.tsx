@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router";
 import {
   AlertCircle,
-  AlertTriangle,
-  ArrowRight,
   GraduationCap,
   Info,
   Users,
@@ -16,14 +13,14 @@ import {
   type StudyYearName,
 } from "@/features/studyYears";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
+import { useCalendarStore } from "../store/useCalendarStore";
 import type {
-  CalendarEvent,
   CreateEventPayload,
   EventLocation,
   EventType,
   UpdateEventPayload,
 } from "../api/types";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -43,17 +40,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
-import { cn } from "@/lib/utils";
-
-interface EventFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  defaultDate?: string;
-  editingEvent?: CalendarEvent | null;
-  defaultCommunitySlug?: string | null;
-  defaultStudyYear?: string | null;
-  defaultCourseSlug?: string | null;
-}
 
 const EVENT_TYPES: { label: string; value: EventType }[] = [
   { label: "Exam", value: "EXAM" },
@@ -91,15 +77,15 @@ function toDatetimeLocal(isoStr?: string, defaultDateStr?: string): string {
   return `${y}-${m}-${day}T09:00`;
 }
 
-export function EventFormModal({
-  isOpen,
-  onClose,
-  defaultDate,
-  editingEvent,
-  defaultCommunitySlug,
-  defaultStudyYear,
-  defaultCourseSlug,
-}: EventFormModalProps) {
+export function EventFormModal() {
+  const isOpen = useCalendarStore((s) => s.isFormModalOpen);
+  const onClose = useCalendarStore((s) => s.closeFormModal);
+  const defaultDate = useCalendarStore((s) => s.formDefaultDate);
+  const editingEvent = useCalendarStore((s) => s.editingEvent);
+  const defaultCommunitySlug = useCalendarStore((s) => s.communitySlug);
+  const defaultStudyYear = useCalendarStore((s) => s.studyYear);
+  const defaultCourseSlug = useCalendarStore((s) => s.courseSlug);
+
   const isEditing = Boolean(editingEvent);
 
   // 1. Fetch user's enrolled communities
@@ -146,7 +132,7 @@ export function EventFormModal({
 
     if (editingEvent) {
       setTitle(editingEvent.title);
-      setDescription(editingEvent.description ?? "");
+      setDescription("");
       setType(editingEvent.type);
       setStartTime(toDatetimeLocal(editingEvent.startTime));
       setEndTime(
@@ -154,9 +140,9 @@ export function EventFormModal({
       );
       setDurationMinutes(editingEvent.durationMinutes);
       setLocation(editingEvent.location);
-      setLocationDetails(editingEvent.locationDetails ?? "");
+      setLocationDetails("");
       setFormCommunitySlug(editingEvent.communitySlug);
-      setFormCourseId(editingEvent.courseId);
+      setFormCourseId(undefined);
     } else {
       setTitle("");
       setDescription("");
@@ -371,34 +357,6 @@ export function EventFormModal({
           <div className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
             <AlertCircle className="size-4 shrink-0" />
             <span>{validationError}</span>
-          </div>
-        )}
-
-        {/* Informative banners for creation validation constraints */}
-        {!isEditing && !isLoadingCommunities && !hasCommunities && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2 text-xs">
-            <div className="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-300">
-              <AlertTriangle className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-              <span>Community Membership Required</span>
-            </div>
-            <p className="text-muted-foreground leading-relaxed">
-              You are not currently enrolled in any community. You must join a
-              community with courses before scheduling calendar events.
-            </p>
-            <div className="pt-1">
-              <Link
-                to="/communities"
-                onClick={onClose}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "sm" }),
-                  "text-xs font-semibold gap-1.5 cursor-pointer",
-                )}
-              >
-                <Users className="size-3.5" />
-                Explore Communities
-                <ArrowRight className="size-3" />
-              </Link>
-            </div>
           </div>
         )}
 

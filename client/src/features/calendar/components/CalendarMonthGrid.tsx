@@ -1,13 +1,11 @@
 import { useMemo } from "react";
 import type { CalendarEvent } from "../api/types";
+import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarDayCell } from "./CalendarDayCell";
 
 interface CalendarMonthGridProps {
-  currentDate: Date;
   events: CalendarEvent[];
-  onSelectEvent: (event: CalendarEvent) => void;
-  onSelectDate: (dateStr: string) => void;
-  onOpenOverflow: (dateStr: string) => void;
+  canCreateEvent?: boolean;
 }
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
@@ -35,12 +33,10 @@ interface GridCell {
 }
 
 export function CalendarMonthGrid({
-  currentDate,
   events,
-  onSelectEvent,
-  onSelectDate,
-  onOpenOverflow,
+  canCreateEvent = true,
 }: CalendarMonthGridProps) {
+  const currentDate = useCalendarStore((s) => s.currentDate);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-11
 
@@ -163,10 +159,8 @@ export function CalendarMonthGrid({
             isToday={cell.isToday}
             isWeekend={cell.isWeekend}
             events={cell.events}
-            onSelectDate={onSelectDate}
-            onSelectEvent={onSelectEvent}
-            onOpenOverflow={onOpenOverflow}
             borderRight={cellIdx % 7 !== 6}
+            canCreateEvent={canCreateEvent}
           />
         ))}
       </div>

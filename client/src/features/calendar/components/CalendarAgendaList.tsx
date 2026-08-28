@@ -1,19 +1,21 @@
 import { useMemo } from "react";
 import {
+  Bell,
   Calendar as CalendarIcon,
   Clock,
-  ExternalLink,
   MapPin,
 } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
-import { getEventCategoryConfig } from "./CalendarEventPill";
+import { useCalendarStore } from "../store/useCalendarStore";
+import {
+  getEventCategoryConfig,
+  isEventCompleted,
+} from "./CalendarEventPill";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface CalendarAgendaListProps {
-  currentDate: Date;
   events: CalendarEvent[];
-  onSelectEvent: (event: CalendarEvent) => void;
 }
 
 function getLocalDateKey(date: Date): string {
@@ -69,11 +71,10 @@ function formatTimeRange(startTime?: string, endTime?: string): string {
   return `${startFormatted} - ${endFormatted}`;
 }
 
-export function CalendarAgendaList({
-  currentDate,
-  events,
-  onSelectEvent,
-}: CalendarAgendaListProps) {
+export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
+  const currentDate = useCalendarStore((s) => s.currentDate);
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+
   const groupedEvents = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
 
@@ -164,14 +165,11 @@ export function CalendarAgendaList({
               const timeStr = formatTimeRange(event.startTime, event.endTime);
               const abbreviation =
                 event.courseAbbreviation?.trim() || "ABBV";
-              const isUrl =
-                event.locationDetails?.startsWith("http://") ||
-                event.locationDetails?.startsWith("https://");
 
               return (
                 <div
                   key={event.id}
-                  onClick={() => onSelectEvent(event)}
+                  onClick={() => openEventDetails(event)}
                   className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
                 >
                   <div className="min-w-0 flex-1 space-y-1.5">
@@ -191,9 +189,22 @@ export function CalendarAgendaList({
                         {abbreviation}
                       </span>
 
+                      {event.studyYear && (
+                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                          {event.studyYear}
+                        </span>
+                      )}
+
                       {event.courseName && (
                         <span className="text-[11px] font-medium text-muted-foreground truncate max-w-[200px]">
                           {event.courseName}
+                        </span>
+                      )}
+
+                      {event.isSubscribed && !isEventCompleted(event) && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          <Bell className="size-2.5 fill-current" />
+                          Reminder
                         </span>
                       )}
                     </div>
@@ -203,10 +214,10 @@ export function CalendarAgendaList({
                       {event.title}
                     </h4>
 
-                    {/* Description preview */}
-                    {event.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {event.description}
+                    {/* Community name subtitle */}
+                    {event.communityName && (
+                      <p className="text-[11px] text-muted-foreground line-clamp-1">
+                        {event.communityName}
                       </p>
                     )}
                   </div>
@@ -220,18 +231,10 @@ export function CalendarAgendaList({
                       </div>
                     )}
 
-                    {event.locationDetails && (
-                      <div className="flex items-center gap-1 text-[11px]">
+                    {event.location && (
+                      <div className="flex items-center gap-1 text-[11px] capitalize text-muted-foreground">
                         <MapPin className="size-3 text-muted-foreground shrink-0" />
-                        {isUrl ? (
-                          <span className="text-primary hover:underline inline-flex items-center gap-0.5">
-                            Online Meeting <ExternalLink className="size-2.5" />
-                          </span>
-                        ) : (
-                          <span className="truncate max-w-[150px]">
-                            {event.locationDetails}
-                          </span>
-                        )}
+                        <span>{event.location.toLowerCase().replace("_", " ")}</span>
                       </div>
                     )}
                   </div>

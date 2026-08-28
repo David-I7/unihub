@@ -1,4 +1,4 @@
-import { AlertCircle, FileText, Video } from "lucide-react";
+import { Bell, FileText, Pen, Video } from "lucide-react";
 import type { CalendarEvent, EventType } from "../api/types";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,7 @@ export function getEventCategoryConfig(type: EventType) {
         container:
           "bg-rose-500/15 text-rose-800 dark:text-rose-200 border-l-2 border-rose-500 hover:bg-rose-500/25",
         badge: "bg-rose-500 text-white",
-        icon: AlertCircle,
+        icon: Pen,
         label: "Exam",
       };
     case "ASSIGNMENT":
@@ -48,6 +48,12 @@ export function getEventCategoryConfig(type: EventType) {
   }
 }
 
+export function isEventCompleted(event: CalendarEvent): boolean {
+  if (!event.startTime) return false;
+  const d = new Date(event.startTime);
+  return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
 export function CalendarEventPill({
   event,
   onClick,
@@ -57,6 +63,7 @@ export function CalendarEventPill({
   const Icon = config.icon;
   const timeStr = formatEventTime(event.startTime);
   const abbreviation = event.courseAbbreviation?.trim() || "ABBV";
+  const hasActiveReminder = event.isSubscribed && !isEventCompleted(event);
 
   return (
     <button
@@ -66,16 +73,25 @@ export function CalendarEventPill({
         onClick(event);
       }}
       className={cn(
-        "group/pill flex w-full items-center gap-1 rounded-md px-1.5 py-0.5 text-left text-[11px] font-semibold leading-tight transition-all cursor-pointer shadow-2xs select-none truncate",
+        "group/pill flex w-full items-center justify-between gap-1.5 rounded-md px-2 py-1 min-h-[24px] text-left text-[11px] font-medium leading-tight transition-all cursor-pointer shadow-2xs select-none",
         config.container,
         className,
       )}
       title={`[${abbreviation}] ${event.title}${timeStr ? ` (${timeStr})` : ""}`}
     >
-      <Icon className="size-2.5 shrink-0 opacity-80" />
-      <span className="font-mono text-[10px] font-bold tracking-tight truncate">
-        {abbreviation}
-      </span>
+      <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
+        <Icon className="size-3 shrink-0 opacity-80" />
+        <span className="font-mono text-[10px] font-bold tracking-tight shrink-0">
+          [{abbreviation}]
+        </span>
+        <span className="truncate opacity-90 text-[11px] font-medium">
+          {event.title}
+        </span>
+      </div>
+
+      {hasActiveReminder && (
+        <Bell className="size-2.5 shrink-0 fill-current opacity-85 ml-1" />
+      )}
     </button>
   );
 }

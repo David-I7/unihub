@@ -4,7 +4,7 @@ import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDt
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
-import com.unihub.app.dto.community.content.response.EventResponseDto;
+import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.content.*;
@@ -149,13 +149,13 @@ public class CalendarServiceTests {
         when(reminderRepository.findByUserIdAndEventIdIn(userId, List.of(eventId)))
                 .thenReturn(List.of(reminder));
 
-        List<EventResponseDto> result = calendarService.getEvents(
+        List<CalendarEventResponseDto> result = calendarService.getEvents(
                 userId, 2026, 8, slug, StudyYearName.YEAR_1, "sd", EventType.EXAM
         );
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        EventResponseDto dto = result.get(0);
+        CalendarEventResponseDto dto = result.get(0);
         assertEquals(eventId, dto.id());
         assertTrue(dto.isSubscribed());
         assertEquals(1, dto.reminders().size());
@@ -173,7 +173,7 @@ public class CalendarServiceTests {
         when(eventRepository.findEventsByCommunityIds(eq(List.of(comm1, comm2)), any(), any(), any(), any(), any()))
                 .thenReturn(Collections.emptyList());
 
-        List<EventResponseDto> result = calendarService.getEvents(
+        List<CalendarEventResponseDto> result = calendarService.getEvents(
                 userId, null, null, null, null, null, null
         );
 
@@ -248,7 +248,7 @@ public class CalendarServiceTests {
             return e;
         });
 
-        EventResponseDto result = calendarService.createEvent(userId, requestDto);
+        CalendarEventResponseDto result = calendarService.createEvent(userId, requestDto);
 
         assertNotNull(result);
         assertEquals("New Exam", result.title());
@@ -327,7 +327,7 @@ public class CalendarServiceTests {
         when(reminderRepository.findByEventIdWithUser(eventId)).thenReturn(List.of(reminder));
         when(reminderRepository.findByUserIdAndEventId(ownerId, eventId)).thenReturn(Collections.emptyList());
 
-        EventResponseDto result = calendarService.updateEvent(ownerId, eventId, requestDto);
+        CalendarEventResponseDto result = calendarService.updateEvent(ownerId, eventId, requestDto);
 
         assertNotNull(result);
         assertEquals("Updated Title", event.getTitle());
@@ -417,7 +417,7 @@ public class CalendarServiceTests {
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
         when(reminderRepository.findByUserIdAndEventId(userId, eventId)).thenReturn(Collections.emptyList());
 
-        EventResponseDto dto = calendarService.getEventById(userId, eventId);
+        CalendarEventResponseDto dto = calendarService.getEventById(userId, eventId);
 
         assertNotNull(dto);
         assertEquals(eventId, dto.id());

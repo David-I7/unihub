@@ -1,5 +1,6 @@
 package com.unihub.app.repositories.community.content;
 
+import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -15,47 +16,41 @@ import java.util.UUID;
 public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @Query("""
-        SELECT e FROM Event e
-        JOIN FETCH e.course c
-        JOIN FETCH e.community comm
-        LEFT JOIN FETCH e.owner
-        WHERE comm.slug = :communitySlug
-          AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
-          AND (CAST(:studyYearName AS string) IS NULL OR c.studyYear.studyYearName = :studyYearName)
-          AND (CAST(:type AS string) IS NULL OR e.type = :type)
-          AND (CAST(:from AS string) IS NULL OR e.startTime >= :from)
-          AND (CAST(:to AS string) IS NULL OR e.startTime <= :to)
-        ORDER BY e.startTime ASC
-    """)
-    List<Event> findEvents(
-            @Param("communitySlug") String communitySlug,
-            @Param("courseSlug") String courseSlug,
-            @Param("studyYearName") StudyYearName studyYearName,
-            @Param("type") EventType type,
-            @Param("from") OffsetDateTime from,
-            @Param("to") OffsetDateTime to
-    );
-
-    @Query("""
-        SELECT e FROM Event e
-        JOIN FETCH e.course c
-        JOIN FETCH e.community comm
-        LEFT JOIN FETCH e.owner
+        SELECT new com.unihub.app.dto.community.content.response.CalendarEventResponseDto(
+                e.id,
+                e.title,
+                e.type,
+                e.startTime,
+                e.endTime,
+                e.durationMinutes,
+                e.location,
+                c.slug,
+                c.name,
+                c.abbreviation,
+                comm.slug,
+                comm.name,
+                sy.studyYearName,
+                CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
+                AND er.user.id = :userId) > 0 THEN true ELSE false END
+        ) From Event e 
+          JOIN e.community comm 
+          JOIN e.course c 
+          JOIN c.studyYear sy
+          LEFT JOIN e.reminders er ON er.user.id = :userId
         WHERE comm.id IN :communityIds
           AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
-          AND (CAST(:studyYearName AS string) IS NULL OR c.studyYear.studyYearName = :studyYearName)
-          AND (CAST(:type AS string) IS NULL OR e.type = :type)
-          AND (CAST(:from AS string) IS NULL OR e.startTime >= :from)
-          AND (CAST(:to AS string) IS NULL OR e.startTime <= :to)
+          AND (CAST(:studyYearName AS string) IS NULL OR sy.studyYearName = :studyYearName)
+          AND e.startTime >= :from
+          AND e.startTime <= :to
         ORDER BY e.startTime ASC
     """)
-    List<Event> findEventsByCommunityIds(
-            @Param("communityIds") java.util.Collection<UUID> communityIds,
+    List<CalendarEventResponseDto> findEventsByCommunityIds(
+            @Param("communityIds") List<UUID> communityIds,
             @Param("courseSlug") String courseSlug,
             @Param("studyYearName") StudyYearName studyYearName,
-            @Param("type") EventType type,
             @Param("from") OffsetDateTime from,
-            @Param("to") OffsetDateTime to
+            @Param("to") OffsetDateTime to,
+            @Param("userId") UUID userId
     );
 
     @Query("""
@@ -75,6 +70,4 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
         WHERE comm.slug = :communitySlug AND e.id = :eventId
     """)
     Optional<Event> findByCommunitySlugAndId(@Param("communitySlug") String communitySlug, @Param("eventId") UUID eventId);
-
-    List<Event> findByCourseId(Long courseId);
 }

@@ -5,33 +5,17 @@ import {
   List,
   Plus,
 } from "lucide-react";
-import type { EventType } from "../api/types";
+import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarFilters } from "./CalendarFilters";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface CalendarToolbarProps {
-  currentDate: Date;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-  onToday: () => void;
-  onAddEvent: () => void;
-  communitySlug: string | null;
-  onCommunityChange: (slug: string | null) => void;
-  studyYear: string | null;
-  onStudyYearChange: (year: string | null) => void;
-  courseSlug: string | null;
-  onCourseChange: (courseSlug: string | null) => void;
-  selectedType: EventType | "ALL_TYPES";
-  onTypeChange: (type: EventType | "ALL_TYPES") => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
   examCount: number;
   assignmentCount: number;
   lectureCount: number;
   totalCount: number;
-  viewMode: "auto" | "month" | "list";
-  onViewModeChange: (mode: "auto" | "month" | "list") => void;
+  canCreateEvent?: boolean;
 }
 
 const MONTH_NAMES = [
@@ -50,28 +34,20 @@ const MONTH_NAMES = [
 ];
 
 export function CalendarToolbar({
-  currentDate,
-  onPrevMonth,
-  onNextMonth,
-  onToday,
-  onAddEvent,
-  communitySlug,
-  onCommunityChange,
-  studyYear,
-  onStudyYearChange,
-  courseSlug,
-  onCourseChange,
-  selectedType,
-  onTypeChange,
-  searchQuery,
-  onSearchChange,
   examCount,
   assignmentCount,
   lectureCount,
   totalCount,
-  viewMode = "auto",
-  onViewModeChange,
+  canCreateEvent = true,
 }: CalendarToolbarProps) {
+  const currentDate = useCalendarStore((s) => s.currentDate);
+  const viewMode = useCalendarStore((s) => s.viewMode);
+  const goToPrevMonth = useCalendarStore((s) => s.goToPrevMonth);
+  const goToNextMonth = useCalendarStore((s) => s.goToNextMonth);
+  const goToToday = useCalendarStore((s) => s.goToToday);
+  const setViewMode = useCalendarStore((s) => s.setViewMode);
+  const openCreateModal = useCalendarStore((s) => s.openCreateModal);
+
   const monthName = MONTH_NAMES[currentDate.getMonth()];
   const yearNumber = currentDate.getFullYear();
 
@@ -84,7 +60,7 @@ export function CalendarToolbar({
           <div className="flex items-center gap-1 rounded-xl border bg-muted/40 p-1">
             <button
               type="button"
-              onClick={onPrevMonth}
+              onClick={goToPrevMonth}
               title="Previous Month"
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
@@ -92,14 +68,14 @@ export function CalendarToolbar({
             </button>
             <button
               type="button"
-              onClick={onToday}
+              onClick={goToToday}
               className="px-3 py-1 text-xs font-semibold rounded-lg text-foreground hover:bg-background transition-colors cursor-pointer"
             >
               Today
             </button>
             <button
               type="button"
-              onClick={onNextMonth}
+              onClick={goToNextMonth}
               title="Next Month"
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
@@ -117,7 +93,7 @@ export function CalendarToolbar({
           <div className="flex items-center gap-0.5 rounded-xl border bg-muted/40 p-1 text-xs">
             <button
               type="button"
-              onClick={() => onViewModeChange("auto")}
+              onClick={() => setViewMode("auto")}
               className={cn(
                 "px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer",
                 viewMode === "auto"
@@ -130,7 +106,7 @@ export function CalendarToolbar({
             </button>
             <button
               type="button"
-              onClick={() => onViewModeChange("month")}
+              onClick={() => setViewMode("month")}
               className={cn(
                 "p-1.5 rounded-lg transition-colors cursor-pointer",
                 viewMode === "month"
@@ -143,7 +119,7 @@ export function CalendarToolbar({
             </button>
             <button
               type="button"
-              onClick={() => onViewModeChange("list")}
+              onClick={() => setViewMode("list")}
               className={cn(
                 "p-1.5 rounded-lg transition-colors cursor-pointer",
                 viewMode === "list"
@@ -159,8 +135,9 @@ export function CalendarToolbar({
           {/* Add Event Button */}
           <Button
             size="sm"
-            onClick={onAddEvent}
-            className="gap-1.5 font-semibold text-xs h-9 cursor-pointer"
+            onClick={() => openCreateModal()}
+            disabled={!canCreateEvent}
+            className="gap-1.5 font-semibold text-xs h-9 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="size-4" />
             Add Event
@@ -170,16 +147,6 @@ export function CalendarToolbar({
 
       {/* Filter Selectors and Search Input */}
       <CalendarFilters
-        communitySlug={communitySlug}
-        onCommunityChange={onCommunityChange}
-        studyYear={studyYear}
-        onStudyYearChange={onStudyYearChange}
-        courseSlug={courseSlug}
-        onCourseChange={onCourseChange}
-        selectedType={selectedType}
-        onTypeChange={onTypeChange}
-        searchQuery={searchQuery}
-        onSearchChange={onSearchChange}
         examCount={examCount}
         assignmentCount={assignmentCount}
         lectureCount={lectureCount}

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "community_members")
@@ -29,9 +30,8 @@ public class CommunityMember {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @JoinColumn(name = "role_id")
-    @OneToOne
-    private Role role;
+    @Column(nullable = false, name="role_id")
+    private UUID roleId;
 
     @Column(name = "joined_at", nullable = false)
     private OffsetDateTime joinedAt;
