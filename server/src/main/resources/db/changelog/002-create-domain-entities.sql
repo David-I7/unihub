@@ -13,7 +13,7 @@ CREATE TABLE TEACHERS(
 
 CREATE TABLE TEACHER_RATINGS(
     id bigserial PRIMARY KEY,
-    user_id UUID not null REFERENCES USERS(id),
+    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     teacher_id UUID not null REFERENCES TEACHERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     title text not null,
@@ -40,7 +40,7 @@ CREATE TABLE COMMUNITIES(
     slug text not null UNIQUE,
     description text not null,
     members_count int not null default 0,
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID not null REFERENCES USERS(id) ON DELETE SET CASCADE,
     background_color text not null default '#2563eb',
     verified boolean not null default false,
     created_at timestamptz not null default now()
@@ -48,7 +48,7 @@ CREATE TABLE COMMUNITIES(
 
 CREATE TABLE COMMUNITY_MEMBERS(
    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
-   user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
+   user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
    role_id UUID not null REFERENCES ROLES(id),
    joined_at timestamptz not null default now(),
    PRIMARY KEY (community_id, user_id)
@@ -97,7 +97,7 @@ CREATE TABLE TEACHER_COMMUNITIES(
 CREATE TABLE FOLDERS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null,
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
     parent_folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now()
@@ -109,7 +109,7 @@ CREATE TYPE COMMUNICATION_CHANNEL AS ENUM(
 
 CREATE TABLE POSTS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     channel COMMUNICATION_CHANNEL not null,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -122,7 +122,7 @@ CREATE TABLE POSTS(
 
 CREATE TABLE COMMENTS(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     post_id UUID not null REFERENCES POSTS(id) ON DELETE CASCADE,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
@@ -131,7 +131,7 @@ CREATE TABLE COMMENTS(
 
 CREATE TABLE POST_LIKES(
     post_id UUID REFERENCES POSTS(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES USERS(id),
+    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     PRIMARY KEY (post_id, user_id)
 );
 
@@ -208,7 +208,7 @@ CREATE TABLE EVENTS(
     location_details text,
     course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
     community_id UUID not null REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
@@ -243,6 +243,17 @@ CREATE TABLE NOTIFICATIONS(
     created_at timestamptz not null default now()
 );
 
+CREATE TABLE COMMUNITY_JOIN_CODES(
+     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+     community_id UUID NOT NULL REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
+     code VARCHAR(8) NOT NULL UNIQUE,
+     created_by UUID REFERENCES USERS(id) ON DELETE CASCADE,
+     max_uses INTEGER DEFAULT NULL,
+     uses_count INTEGER NOT NULL DEFAULT 0,
+     expires_at TIMESTAMPTZ DEFAULT NULL,
+     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Indexes
 CREATE INDEX idx_courses_study_year_archived ON courses(study_year_id, archived);
 CREATE INDEX idx_teacher_communities_community ON teacher_communities(community_id, teacher_id);
@@ -256,3 +267,5 @@ CREATE INDEX idx_events_community_start_time ON events(community_id, start_time 
 CREATE INDEX idx_events_course_start_time ON events(course_id, start_time ASC, type);
 CREATE INDEX idx_event_reminders_pending_remind_at ON event_reminders(status, remind_at ASC);
 CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, created_at DESC);
+CREATE INDEX idx_community_join_codes_code ON COMMUNITY_JOIN_CODES(code);
+CREATE INDEX idx_community_join_codes_community_id ON COMMUNITY_JOIN_CODES(community_id);

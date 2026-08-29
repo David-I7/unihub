@@ -237,15 +237,12 @@ public class CommunityServiceTests {
     @DisplayName("createCommunity successfully creates community and adds owner membership")
     public void testCreateCommunity_Success() {
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, "david@example.com", "david");
-        JwtAuthentication auth = new JwtAuthentication(userDto);
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.USER);
         CreateCommunityRequestDto dto = new CreateCommunityRequestDto("FMI", "fmi", "Desc", "#fff");
 
         Role ownerRole = Role.builder().id(UUID.randomUUID()).name(RoleType.COMMUNITY_OWNER.name()).build();
 
         when(communityRepository.findByNameOrSlug("FMI", "fmi")).thenReturn(List.of());
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-        when(authorizationService.getGlobalRoleName(userId)).thenReturn("USER");
         when(communityRepository.save(any(Community.class))).thenAnswer(i -> {
             Community c = i.getArgument(0);
             c.setId(UUID.randomUUID());
@@ -253,7 +250,7 @@ public class CommunityServiceTests {
         });
         when(roleService.getRoleByName(RoleType.COMMUNITY_OWNER)).thenReturn(ownerRole);
 
-        CommunityResponseDto result = communityService.createCommunity(userId, dto);
+        CommunityResponseDto result = communityService.createCommunity(userDto, dto);
 
         assertNotNull(result);
         assertEquals("FMI", result.name());

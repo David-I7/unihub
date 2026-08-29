@@ -1,12 +1,9 @@
 package com.unihub.app.services;
 
-import com.unihub.app.domain.Permissions;
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.AuthorizationService;
@@ -29,14 +26,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthorizationServiceTests {
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private CommunityMemberRepository communityMemberRepository;
@@ -48,7 +41,7 @@ public class AuthorizationServiceTests {
 
     @BeforeEach
     public void setUp() {
-        authorizationService = new AuthorizationService(userRepository, communityMemberRepository, roleService);
+        authorizationService = new AuthorizationService(communityMemberRepository, roleService);
         SecurityContextHolder.clearContext();
     }
 
@@ -79,7 +72,7 @@ public class AuthorizationServiceTests {
     @Test
     @DisplayName("safeRequireAuthentication returns JwtAuthentication when authenticated")
     public void testSafeRequireAuthentication_Success() {
-        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david");
+        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", false, RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
@@ -104,7 +97,7 @@ public class AuthorizationServiceTests {
     @Test
     @DisplayName("requireAuthentication returns JwtAuthentication when authenticated")
     public void testRequireAuth_Success() {
-        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david");
+        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", false, RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
@@ -116,16 +109,13 @@ public class AuthorizationServiceTests {
     @Test
     @DisplayName("hasGlobalPermission returns true when user has permission")
     public void testHasGlobalPermission_True() {
-        UUID userId = UUID.randomUUID();
-        UUID roleId = UUID.randomUUID();
-        User user = User.builder().id(userId).roleId(roleId).build();
-        Role role = Role.builder().id(roleId).name("ADMIN").build();
+        UserDto userDto = new UserDto(UUID.randomUUID(), "admin@example.com", "admin", true, RoleType.ADMIN);
+        JwtAuthentication auth = new JwtAuthentication(userDto);
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
-        when(roleService.getRoleById(roleId)).thenReturn(role);
-        when(roleService.getPermissionNamesByRoleName("ADMIN")).thenReturn(List.of(Permissions.VERIFY_COMMUNITY));
+        when(roleService.hasPermission(RoleType.ADMIN, PermissionType.VERIFY_COMMUNITY)).thenReturn(true);
 
-        assertTrue(authorizationService.hasGlobalPermission(userId, Permissions.VERIFY_COMMUNITY));
+        assertTrue(authorizationService.hasGlobalPermission(PermissionType.VERIFY_COMMUNITY));
     }
 
     @Test
@@ -134,14 +124,15 @@ public class AuthorizationServiceTests {
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
         CommunityMember member = CommunityMember.builder().roleId(roleId).build();
-        Role role = Role.builder().id(roleId).name(RoleType.COMMUNITY_ADMIN.name()).build();
 
-        when(userRepository.findById(userId)).thenReturn(Optional.of(User.builder().id(userId).roleId(UUID.randomUUID()).build()));
-        when(roleService.getRoleById(any(UUID.class))).thenReturn(role);
+        UserDto userDto = new UserDto(userId, "member@example.com", "member", true, RoleType.USER);
+        JwtAuthentication auth = new JwtAuthentication(userDto);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
         when(communityMemberRepository.findMemberByCommunitySlug("fmi", userId)).thenReturn(Optional.of(member));
-        when(roleService.getPermissionNamesByRoleName(RoleType.COMMUNITY_ADMIN.name()))
-                .thenReturn(List.of(Permissions.CREATE_MEMBER));
+        when(roleService.getRoleTypeById(roleId)).thenReturn(RoleType.COMMUNITY_ADMIN);
+        when(roleService.hasPermission(RoleType.COMMUNITY_ADMIN, PermissionType.CREATE_MEMBER)).thenReturn(true);
 
-        assertTrue(authorizationService.hasCommunityPermission("fmi", userId, Permissions.CREATE_MEMBER));
+        assertTrue(authorizationService.hasCommunityPermission("fmi", userId, PermissionType.CREATE_MEMBER));
     }
 }

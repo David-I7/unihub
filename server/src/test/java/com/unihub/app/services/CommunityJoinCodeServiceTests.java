@@ -1,9 +1,9 @@
 package com.unihub.app.services;
 
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
-import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.mappers.GlobalResourceMapper;
@@ -11,16 +11,12 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityJoinCodeService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -47,9 +43,6 @@ public class CommunityJoinCodeServiceTests {
     @Mock
     private RoleService roleService;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     private GlobalResourceMapper globalResourceMapper;
     private CommunityResourceMapper communityMapper;
     private UserMapper userMapper;
@@ -64,8 +57,7 @@ public class CommunityJoinCodeServiceTests {
                 joinCodeRepository,
                 communityRepository,
                 userMapper,
-                communityMapper,
-                authorizationService
+                communityMapper
         );
     }
 
@@ -73,14 +65,12 @@ public class CommunityJoinCodeServiceTests {
     @DisplayName("createJoinCode successfully creates and returns join code")
     public void testCreateJoinCode_Success() {
         UUID callerId = UUID.randomUUID();
-        UserDto userDto = new UserDto(callerId, "david@example.com", "david");
-        JwtAuthentication auth = new JwtAuthentication(userDto);
+        UserDto userDto = new UserDto(callerId, "david@example.com", "david", false, RoleType.USER);
         Community community = Community.builder().id(UUID.randomUUID()).slug("fmi-info").build();
 
         CreateJoinCodeRequestDto dto = new CreateJoinCodeRequestDto(10, 24);
 
         when(communityRepository.findBySlug("fmi-info")).thenReturn(Optional.of(community));
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
         when(joinCodeRepository.existsByCode(anyString())).thenReturn(false);
         when(joinCodeRepository.save(any(CommunityJoinCode.class))).thenAnswer(invocation -> {
             CommunityJoinCode code = invocation.getArgument(0);
@@ -88,7 +78,7 @@ public class CommunityJoinCodeServiceTests {
             return code;
         });
 
-        CommunityJoinCodeResponseDto result = communityJoinCodeService.createJoinCode("fmi-info", callerId, dto);
+        CommunityJoinCodeResponseDto result = communityJoinCodeService.createJoinCode("fmi-info", userDto, dto);
 
         assertNotNull(result);
         assertNotNull(result.id());
@@ -116,7 +106,7 @@ public class CommunityJoinCodeServiceTests {
                 .build();
 
         when(communityRepository.existsBySlug("fmi-info")).thenReturn(true);
-        when(joinCodeRepository.findByCommunitySlug("fmi-info")).thenReturn(List.of(code));
+        when(joinCodeRepository.findByCommunitySlugWithCommunity("fmi-info")).thenReturn(List.of(code));
 
         List<CommunityJoinCodeResponseDto> result = communityJoinCodeService.getJoinCodes("fmi-info");
 

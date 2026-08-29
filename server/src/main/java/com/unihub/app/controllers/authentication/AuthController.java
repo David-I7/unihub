@@ -1,13 +1,12 @@
 package com.unihub.app.controllers.authentication;
 
 import com.unihub.app.domain.JwtSession;
-import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
-import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
-import com.unihub.app.dto.authentication.SessionResponseDto;
+import com.unihub.app.dto.authentication.*;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserService;
+import com.unihub.app.utils.AppUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 
@@ -28,6 +26,7 @@ public class AuthController {
     private final UserService userService;
     private final SessionService sessionService;
     private final UserMapper userMapper;
+    private final AppUtils appUtils;
 
     @PostMapping("/login/local")
     public ResponseEntity<?> login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request) {
@@ -42,15 +41,46 @@ public class AuthController {
     }
 
     @PostMapping("/register/local")
-    public ResponseEntity<SessionResponseDto> register(@Valid @RequestBody LocalRegisterRequestDto request) {
+    public ResponseEntity<MessageResponseDto> register(@Valid @RequestBody LocalRegisterRequestDto request) {
         User user = userMapper.toEntity(request);
+        MessageResponseDto message = userService.register(user);
 
-        var registeredUser = userService.register(user);
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/confirm-register")
+    public ResponseEntity<SessionResponseDto> confirmRegister(@Valid @RequestBody ConfirmRegisterRequestDto request) {
+        User registeredUser = userService.confirmRegister(request.email(), request.code());
         JwtSession session = sessionService.createSession(registeredUser);
 
-        return ResponseEntity.created(URI.create(getOrigin() + "/api/v1/auth/refresh"))
+        return ResponseEntity.created(URI.create(appUtils.getOrigin() + "/api/v1/auth/refresh"))
                 .header("Set-Cookie", session.cookie().toString())
                 .body(new SessionResponseDto(session.userDto(), session.accessToken()));
+    }
+
+    @PostMapping("/confirm-email")
+    public ResponseEntity<MessageResponseDto> confirmEmail(@Valid @RequestBody ConfirmEmailRequestDto request) {
+        MessageResponseDto message = userService.confirmEmail(request.email(), request.code());
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<MessageResponseDto> verifyEmail(@Valid @RequestBody EmailRequestDto request) {
+        MessageResponseDto message = userService.requestConfirmEmail(request.email());
+
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<MessageResponseDto> forgotPassword(@Valid @RequestBody EmailRequestDto request) {
+        MessageResponseDto message = userService.requestPasswordReset(request.email());
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<MessageResponseDto> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
+        MessageResponseDto message = userService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/logout")
@@ -74,12 +104,5 @@ public class AuthController {
         }
 
         return responseEntity;
-    }
-
-    private String getOrigin(){
-        return ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .build()
-                .toUriString();
     }
 }

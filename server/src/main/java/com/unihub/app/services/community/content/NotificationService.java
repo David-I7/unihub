@@ -6,12 +6,14 @@ import com.unihub.app.entities.community.content.EventReminder;
 import com.unihub.app.entities.community.content.Notification;
 import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.entities.community.content.ReminderStatus;
+import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,6 +34,7 @@ public class NotificationService {
     private final EventReminderRepository reminderRepository;
     private final CommunityContentMapper contentMapper;
     private final PageMapper pageMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public PageDto<NotificationResponseDto> getUserNotifications(UUID userId, Pageable pageable) {
@@ -85,6 +88,17 @@ public class NotificationService {
 
             reminder.setStatus(ReminderStatus.SENT);
             reminderRepository.save(reminder);
+
+            eventPublisher.publishEvent(new EventReminderNotificationEvent(
+                    reminder.getUser().getEmail(),
+                    reminder.getUser().getUsername(),
+                    reminder.getEvent().getTitle(),
+                    reminder.getEvent().getType().name(),
+                    reminder.getEvent().getCourse().getName(),
+                    reminder.getEvent().getStartTime(),
+                    reminder.getEvent().getLocation().name(),
+                    reminder.getEvent().getLocationDetails()
+            ));
         }
     }
 }

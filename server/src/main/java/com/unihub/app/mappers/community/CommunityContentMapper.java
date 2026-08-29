@@ -23,7 +23,7 @@ public class CommunityContentMapper {
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
-                .owner(new OwnerDto(comment.getOwner().getId(), comment.getOwner().getUsername()))
+                .owner(new OwnerDto(comment.getOwner().getId(), comment.getOwner().getUsername(), comment.getOwner().isActive()))
                 .build();
     }
 
@@ -42,7 +42,7 @@ public class CommunityContentMapper {
                 .commentsCount(post.getCommentsCount())
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
-                .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername()))
+                .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername(), post.getOwner().isActive()))
                 .comments(comments)
                 .build();
     }
@@ -50,7 +50,7 @@ public class CommunityContentMapper {
     public FolderSummaryDto toFolderSummaryDto(Folder folder) {
         OwnerDto owner = folder.getOwner() == null
                 ? null
-                : new OwnerDto(folder.getOwner().getId(), folder.getOwner().getUsername());
+                : new OwnerDto(folder.getOwner().getId(), folder.getOwner().getUsername(), folder.getOwner().isActive());
 
         return FolderSummaryDto.builder()
                 .id(folder.getId())
@@ -64,7 +64,7 @@ public class CommunityContentMapper {
     public MaterialFileDto toMaterialFileDto(MaterialFile materialFile) {
         OwnerDto owner = materialFile.getOwner() == null
                 ? null
-                : new OwnerDto(materialFile.getOwner().getId(), materialFile.getOwner().getUsername());
+                : new OwnerDto(materialFile.getOwner().getId(), materialFile.getOwner().getUsername(), materialFile.getOwner().isActive());
 
         return MaterialFileDto.builder()
                 .id(materialFile.getId())
@@ -81,7 +81,7 @@ public class CommunityContentMapper {
     public MaterialLinkDto toMaterialLinkDto(MaterialLink materialLink) {
         OwnerDto owner = materialLink.getOwner() == null
                 ? null
-                : new OwnerDto(materialLink.getOwner().getId(), materialLink.getOwner().getUsername());
+                : new OwnerDto(materialLink.getOwner().getId(), materialLink.getOwner().getUsername(), materialLink.getOwner().isActive());
 
         return MaterialLinkDto.builder()
                 .id(materialLink.getId())
@@ -155,7 +155,7 @@ public class CommunityContentMapper {
     public EventResponseDto toEventResponseDto(Event event, List<EventReminderResponseDto> reminders) {
         OwnerDto owner = event.getOwner() == null
                 ? null
-                : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername());
+                : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername(), event.getOwner().isActive());
 
         return EventResponseDto.builder()
                 .id(event.getId())

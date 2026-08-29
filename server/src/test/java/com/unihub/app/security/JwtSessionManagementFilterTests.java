@@ -71,7 +71,7 @@ public class JwtSessionManagementFilterTests extends BaseIntegrationTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
 
-        UserDto userDto = new UserDto(UUID.randomUUID(), "test@gmail.com", "testuser");
+        UserDto userDto = new UserDto(UUID.randomUUID(), "test@gmail.com", "testuser", false, com.unihub.app.domain.RoleType.USER);
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthentication(userDto));
 
         jwtSessionManagementFilter.doFilter(request, response, filterChain);
@@ -164,7 +164,7 @@ public class JwtSessionManagementFilterTests extends BaseIntegrationTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         FilterChain filterChain = mock(FilterChain.class);
 
-        UserDto userDto = new UserDto(UUID.randomUUID(), "user@gmail.com", "validuser");
+        UserDto userDto = new UserDto(UUID.randomUUID(), "user@gmail.com", "validuser", false, com.unihub.app.domain.RoleType.USER);
         when(sessionService.parseAccessToken("valid-token-string")).thenReturn(userDto);
 
         jwtSessionManagementFilter.doFilter(request, response, filterChain);

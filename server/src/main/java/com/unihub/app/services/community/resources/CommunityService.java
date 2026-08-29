@@ -1,6 +1,6 @@
 package com.unihub.app.services.community.resources;
 
-import com.unihub.app.domain.Permissions;
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -14,7 +14,6 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.entities.community.resources.CommunityMembersId;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -75,7 +74,7 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityResponseDto createCommunity(UUID userId, CreateCommunityRequestDto dto) {
+    public CommunityResponseDto createCommunity(UserDto user, CreateCommunityRequestDto dto) {
         List<Community> existingCommunities = communityRepository.findByNameOrSlug(dto.name(), dto.slug());
 
         if (existingCommunities.size() == 2) {
@@ -92,11 +91,9 @@ public class CommunityService {
             }
         }
 
-        User owner = userMapper.toEntity(authorizationService.requireAuthentication().getUserDto());
-        String globalRoleName = authorizationService.getGlobalRoleName(userId);
-
+        User owner = userMapper.toEntity(user);
+        boolean verified = user.role() == RoleType.ROOT || user.role() == RoleType.ADMIN;
         OffsetDateTime now = OffsetDateTime.now();
-        boolean verified = globalRoleName.equals(RoleType.ROOT.name()) || globalRoleName.equals(RoleType.ADMIN.name());
         Community community = communityMapper.toCommunityEntity(dto, owner, verified, now);
 
         Community savedCommunity = communityRepository.save(community);
@@ -141,7 +138,7 @@ public class CommunityService {
         }
 
         if (dto.verified() != null) {
-            if (authorizationService.hasGlobalPermission(userId, Permissions.VERIFY_COMMUNITY)) {
+            if (authorizationService.hasGlobalPermission(PermissionType.VERIFY_COMMUNITY)) {
                 community.setVerified(dto.verified());
             } else {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only platform administrators can verify communities");

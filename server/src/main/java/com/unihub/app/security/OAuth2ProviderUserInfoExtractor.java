@@ -25,7 +25,7 @@ public class OAuth2ProviderUserInfoExtractor {
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
 
         return switch (provider) {
-            case GOOGLE -> extractDefault(attributes);
+            case GOOGLE -> extractGoogle(attributes);
             case GITHUB -> extractGitHub(token, attributes);
             default -> extractDefault(attributes);
         };
@@ -35,16 +35,43 @@ public class OAuth2ProviderUserInfoExtractor {
             OAuth2AuthenticationToken token,
             Map<String, Object> attributes
     ) {
+        String email = extractGitHubEmail(token, attributes);
         return new OAuth2ProviderUserInfo(
                 Objects.toString(attributes.get("id"), null),
-                extractGitHubEmail(token, attributes)
+                email,
+                email != null
+        );
+    }
+
+    private OAuth2ProviderUserInfo extractGoogle(Map<String, Object> attributes) {
+        Object emailVerifiedObj = attributes.get("email_verified");
+        boolean isVerified = false;
+        if (emailVerifiedObj instanceof Boolean b) {
+            isVerified = b;
+        } else if (emailVerifiedObj != null) {
+            isVerified = Boolean.parseBoolean(emailVerifiedObj.toString());
+        }
+
+        return new OAuth2ProviderUserInfo(
+                Objects.toString(attributes.get("sub"), null),
+                Objects.toString(attributes.get("email"), null),
+                isVerified
         );
     }
 
     private OAuth2ProviderUserInfo extractDefault(Map<String, Object> attributes) {
+        Object emailVerifiedObj = attributes.get("email_verified");
+        boolean isVerified = false;
+        if (emailVerifiedObj instanceof Boolean b) {
+            isVerified = b;
+        } else if (emailVerifiedObj != null) {
+            isVerified = Boolean.parseBoolean(emailVerifiedObj.toString());
+        }
+
         return new OAuth2ProviderUserInfo(
                 Objects.toString(attributes.get("sub"), null),
-                Objects.toString(attributes.get("email"), null)
+                Objects.toString(attributes.get("email"), null),
+                isVerified
         );
     }
 

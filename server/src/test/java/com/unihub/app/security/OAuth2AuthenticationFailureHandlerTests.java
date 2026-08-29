@@ -44,6 +44,9 @@ public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest
     @Autowired
     private OAuth2AuthenticationFailureHandler failureHandler;
 
+    @Autowired
+    private com.unihub.app.utils.AppUtils appUtils;
+
     @Test
     @DisplayName("""
             Given: isDevelopment is true
@@ -51,8 +54,7 @@ public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest
             Then: user is redirected to clientOrigin + '/oauth2?status=failure&provider=GOOGLE'
             """)
     public void testOAuth2Failure_WhenIsDevelopmentTrue_RedirectsToClientOriginFailureUrl() throws Exception {
-        ReflectionTestUtils.setField(failureHandler, "isDevelopment", true);
-        ReflectionTestUtils.setField(failureHandler, "clientOrigin", CLIENT_ORIGIN);
+        ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties(CLIENT_ORIGIN, "http://localhost:8080", true));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/api/v1/auth/oauth2/code/google");
@@ -70,7 +72,7 @@ public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest
             Then: user is redirected to current context path + '/oauth2?status=failure&provider=GOOGLE'
             """)
     public void testOAuth2Failure_WhenIsDevelopmentFalse_RedirectsToContextPathFailureUrl() throws Exception {
-        ReflectionTestUtils.setField(failureHandler, "isDevelopment", false);
+        ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties(CLIENT_ORIGIN, "http://localhost:8080", false));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/api/v1/auth/oauth2/code/google");
@@ -87,7 +89,7 @@ public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest
             assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2?status=failure&provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
-            ReflectionTestUtils.setField(failureHandler, "isDevelopment", true);
+            ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties(CLIENT_ORIGIN, "http://localhost:8080", true));
         }
     }
 }

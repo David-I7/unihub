@@ -19,7 +19,11 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-    private SecretKey SIGN_IN_KEY;
+    public static final String PURPOSE_CLAIM = "purpose";
+    public static final String PURPOSE_EMAIL_VERIFICATION = "EMAIL_VERIFICATION";
+    public static final String PURPOSE_PASSWORD_RESET = "PASSWORD_RESET";
+
+    private final SecretKey SIGN_IN_KEY;
 
     public JwtService(@Value("${app.jwt.secret}") String JWT_SECRET){
         this.SIGN_IN_KEY =  Keys.hmacShaKeyFor(JWT_SECRET.getBytes());

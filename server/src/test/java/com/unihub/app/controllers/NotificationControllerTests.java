@@ -73,7 +73,7 @@ public class NotificationControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "david@example.com", "david");
+        userDto = new UserDto(userId, "david@example.com", "david", false, com.unihub.app.domain.RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }

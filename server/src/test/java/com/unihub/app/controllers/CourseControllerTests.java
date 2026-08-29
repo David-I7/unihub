@@ -115,7 +115,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .name("Materiale")
                 .parentFolderId(null)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         MaterialFileDto fileDto = MaterialFileDto.builder()
@@ -126,7 +126,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .mediaType("application/pdf")
                 .size(1024)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         MaterialLinkDto linkDto = MaterialLinkDto.builder()
@@ -136,7 +136,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .url("https://github.com/test/repo")
                 .linkType(MaterialLinkType.GITHUB)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         CourseMaterialsResponseDto responseDto = CourseMaterialsResponseDto.builder()
@@ -181,7 +181,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .name("Sub-item")
                 .parentFolderId(subFolderId)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         CourseMaterialsResponseDto responseDto = CourseMaterialsResponseDto.builder()

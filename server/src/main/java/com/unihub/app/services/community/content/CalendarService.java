@@ -1,5 +1,6 @@
 package com.unihub.app.services.community.content;
 
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
@@ -10,8 +11,8 @@ import com.unihub.app.entities.community.content.EventReminder;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.EventRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
@@ -38,7 +39,7 @@ public class CalendarService {
     private final CommunityRepository communityRepository;
     private final CommunityMemberRepository communityMemberRepository;
     private final CourseRepository courseRepository;
-    private final UserRepository userRepository;
+    private final UserMapper userMapper;
     private final CommunityContentMapper contentMapper;
 
     @Transactional(readOnly = true)
@@ -101,7 +102,7 @@ public class CalendarService {
     }
 
     @Transactional
-    public CalendarEventResponseDto createEvent(UUID userId, CreateEventRequestDto requestDto) {
+    public CalendarEventResponseDto createEvent(UserDto user, CreateEventRequestDto requestDto) {
         if (requestDto.endTime() != null && !requestDto.endTime().isAfter(requestDto.startTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endTime must be after startTime");
         }
@@ -109,7 +110,7 @@ public class CalendarService {
         Community community = communityRepository.findBySlug(requestDto.communitySlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        boolean isMember = communityMemberRepository.isMemberOfCommunity(requestDto.communitySlug(), userId);
+        boolean isMember = communityMemberRepository.isMemberOfCommunity(requestDto.communitySlug(), user.id());
         if (!isMember) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
         }
@@ -121,8 +122,7 @@ public class CalendarService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Course does not belong to the specified community");
         }
 
-        User owner = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        User owner = userMapper.toEntity(user);
 
         Event event = contentMapper.toEventEntity(requestDto, course, community, owner);
         Event saved = eventRepository.save(event);

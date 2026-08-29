@@ -31,8 +31,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -62,9 +64,6 @@ public class CommunityMemberServiceTests {
     @Mock
     private RoleService roleService;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     private PageMapper pageMapper;
     private GlobalResourceMapper globalResourceMapper;
     private CommunityResourceMapper communityMapper;
@@ -83,7 +82,6 @@ public class CommunityMemberServiceTests {
                 joinCodeRepository,
                 userRepository,
                 roleService,
-                authorizationService,
                 pageMapper,
                 userMapper,
                 communityMapper
@@ -98,33 +96,36 @@ public class CommunityMemberServiceTests {
     @DisplayName("getMembers returns paginated members with role name")
     public void testGetMembers_Success() {
         UUID roleId = UUID.randomUUID();
-        Role role = Role.builder().id(roleId).name(RoleType.COMMUNITY_MEMBER.name()).build();
-        User user = User.builder().id(UUID.randomUUID()).username("student").build();
+        UUID userId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
 
+        User user = User.builder().id(userId).username("student").build();
+        Role role = Role.builder().id(roleId).name("COMMUNITY_MEMBER").build();
         CommunityMember member = CommunityMember.builder()
                 .user(user)
                 .roleId(roleId)
-                .joinedAt(OffsetDateTime.now())
+                .joinedAt(now)
                 .build();
 
-        PageRequest pageRequest = PageRequest.of(0, 20);
+        Page<CommunityMember> page = new PageImpl<>(List.of(member), PageRequest.of(0, 20), 1);
 
         when(communityRepository.existsBySlug("fmi-info")).thenReturn(true);
-        when(communityMemberRepository.findMembersByCommunitySlug("fmi-info", pageRequest))
-                .thenReturn(new PageImpl<>(List.of(member), pageRequest, 1));
+        when(communityMemberRepository.findMembersByCommunitySlug(eq("fmi-info"), any(Pageable.class)))
+                .thenReturn(page);
         when(roleService.getRoleById(roleId)).thenReturn(role);
 
-        PageDto<CommunityMemberResponseDto> result = communityMemberService.getMembers("fmi-info", pageRequest);
+        PageDto<CommunityMemberResponseDto> result = communityMemberService.getMembers("fmi-info", PageRequest.of(0, 20));
 
         assertNotNull(result);
-        assertEquals(1, result.totalElements());
-        assertEquals("student", result.content().get(0).username());
-        assertEquals("COMMUNITY_MEMBER", result.content().get(0).role());
+        assertEquals(1, result.content().size());
+        CommunityMemberResponseDto memberDto = result.content().get(0);
+        assertEquals("student", memberDto.username());
+        assertEquals("COMMUNITY_MEMBER", memberDto.role());
     }
 
     @Test
     @DisplayName("getMembers throws 404 when community does not exist")
-    public void testGetMembers_NotFound() {
+    public void testGetMembers_CommunityNotFound() {
         when(communityRepository.existsBySlug("unknown")).thenReturn(false);
 
         assertThrows(ResponseStatusException.class, () -> communityMemberService.getMembers("unknown", PageRequest.of(0, 20)));
@@ -142,8 +143,7 @@ public class CommunityMemberServiceTests {
         UUID codeId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
 
-        UserDto userDto = new UserDto(userId, "david@example.com", "david");
-        JwtAuthentication auth = new JwtAuthentication(userDto);
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.USER);
         Community community = Community.builder().id(commId).slug("fmi-info").name("FMI Info").build();
         Role memberRole = Role.builder().id(roleId).name(RoleType.COMMUNITY_MEMBER.name()).build();
 
@@ -158,10 +158,9 @@ public class CommunityMemberServiceTests {
 
         when(joinCodeRepository.findByCodeWithCommunity("ABC12345")).thenReturn(Optional.of(joinCode));
         when(communityMemberRepository.existsByCommunityIdAndUserId(commId, userId)).thenReturn(false);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
         when(roleService.getRoleByName(RoleType.COMMUNITY_MEMBER)).thenReturn(memberRole);
 
-        UserEnrolledCommunityDto result = communityMemberService.joinWithCode(userId, "ABC12345");
+        UserEnrolledCommunityDto result = communityMemberService.joinWithCode(userDto, "ABC12345");
 
         assertNotNull(result);
         assertEquals(commId, result.id());
@@ -184,6 +183,7 @@ public class CommunityMemberServiceTests {
         UUID commId = UUID.randomUUID();
         UUID targetUserId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
+        UserDto callerDto = new UserDto(callerId, "owner@example.com", "owner", true, RoleType.USER);
 
         User owner = User.builder().id(callerId).username("owner").build();
         Community community = Community.builder().id(commId).slug("fmi-info").owner(owner).build();
@@ -197,7 +197,7 @@ public class CommunityMemberServiceTests {
         when(communityMemberRepository.existsByCommunityIdAndUserId(commId, targetUserId)).thenReturn(false);
         when(roleService.getRoleByName(RoleType.COMMUNITY_MEMBER)).thenReturn(memberRole);
 
-        communityMemberService.addMemberDirectly("fmi-info", callerId, dto);
+        communityMemberService.addMemberDirectly("fmi-info", callerDto, dto);
 
         verify(communityMemberRepository).save(any(CommunityMember.class));
         verify(communityRepository).updateMemberCount(commId, 1);
@@ -276,6 +276,7 @@ public class CommunityMemberServiceTests {
         UUID commId = UUID.randomUUID();
         UUID targetUserId = UUID.randomUUID();
         UUID targetRoleId = UUID.randomUUID();
+        UserDto callerDto = new UserDto(callerId, "owner@example.com", "owner", true, RoleType.USER);
 
         User owner = User.builder().id(callerId).username("owner").build();
         Community community = Community.builder().id(commId).slug("fmi-info").owner(owner).build();
@@ -291,10 +292,9 @@ public class CommunityMemberServiceTests {
         when(communityRepository.findBySlugWithOwner("fmi-info")).thenReturn(Optional.of(community));
         when(userRepository.findByUsername("student")).thenReturn(Optional.of(targetUser));
         when(communityMemberRepository.findByCommunityIdAndUserId(commId, targetUserId)).thenReturn(Optional.of(targetMember));
-        when(authorizationService.getGlobalRoleName(callerId)).thenReturn("USER");
         when(roleService.getRoleById(targetRoleId)).thenReturn(memberRole);
 
-        communityMemberService.removeMember("fmi-info", callerId, "student");
+        communityMemberService.removeMember("fmi-info", callerDto, "student");
 
         verify(communityMemberRepository).delete(targetMember);
         verify(communityRepository).updateMemberCount(commId, -1);

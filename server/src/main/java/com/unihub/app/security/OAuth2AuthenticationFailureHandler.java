@@ -1,33 +1,25 @@
 package com.unihub.app.security;
 
+import com.unihub.app.utils.AppUtils;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class OAuth2AuthenticationFailureHandler implements AuthenticationFailureHandler {
 
-    @Value("${app.is-development}")
-    private boolean isDevelopment;
-
-    @Value("${app.client-origin}")
-    private String clientOrigin;
+    private final AppUtils appUtils;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        String origin = isDevelopment ? clientOrigin :
-                ServletUriComponentsBuilder
-                        .fromCurrentContextPath()
-                        .build()
-                        .toUriString();
-
+        String origin = appUtils.getOrigin();
         response.sendRedirect(origin + "/oauth2?status=failure&provider=" + extractProvider(request));
     }
 

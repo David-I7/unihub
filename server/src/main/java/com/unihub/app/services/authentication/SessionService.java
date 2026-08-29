@@ -9,6 +9,10 @@ import com.unihub.app.exceptions.InvalidJwtTokenException;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.services.JwtService;
+import com.unihub.app.domain.RoleType;
+import com.unihub.app.security.TokenRevocationService;
+import com.unihub.app.services.authorization.RoleService;
+import com.unihub.app.utils.AppUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -16,26 +20,27 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.awt.print.Pageable;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SessionService {
 
-    @Value("${app.is-development}")
-    private boolean isDevelopment;
+    private final AppUtils appUtils;
 
     private final SessionProperties sessionProperties;
 
@@ -44,6 +49,10 @@ public class SessionService {
     private final JwtService jwtService;
 
     private final SessionRepository sessionRepository;
+
+    private final RoleService roleService;
+
+    private final TokenRevocationService tokenRevocationService;
 
     public static enum SessionStatus{
         ACTIVE,REVOKED,MALFORMED,EXPIRED,INVALID,ROTATE_REQUIRED,ABSENT
@@ -85,16 +94,27 @@ public class SessionService {
         return new JwtSession(userMapper.toDto(user), accessToken, null);
     }
 
-    public UserDto parseAccessToken(String accessToken){
+    public UserDto parseAccessToken(String accessToken) {
         Claims claims = decodeToken(accessToken);
         try {
+            UUID userId = UUID.fromString(claims.getSubject());
+            Date issuedAt = claims.getIssuedAt();
+            if (issuedAt != null && tokenRevocationService.isTokenRevoked(userId, issuedAt.toInstant())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Administration requires you to login again after some permission changes.");
+            }
+            String roleStr = claims.get("role", String.class);
+            RoleType role = roleStr != null ? RoleType.valueOf(roleStr) : null;
             return new UserDto(
-                    UUID.fromString(claims.getSubject()),
+                    userId,
                     claims.get("email", String.class),
-                    claims.get("username", String.class)
+                    claims.get("username", String.class),
+                    claims.get("emailVerified", Boolean.class),
+                    role
             );
-        }catch (Exception e){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Invalid access token.");
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid access token.");
         }
     }
 
@@ -115,6 +135,17 @@ public class SessionService {
         return clearSessionCookie();
     }
 
+    @Transactional
+    public void revokeAllUserSessions(UUID userId) {
+        sessionRepository.revokeAllByUserId(userId);
+    }
+
+    @Transactional
+    public void invalidateUserTokens(UUID userId) {
+        sessionRepository.revokeAllByUserId(userId);
+        tokenRevocationService.revokeUserTokens(userId);
+    }
+
     private UUID getSessionFamilyId(Session session) {
         return session.getInitialSessionId() == null ? session.getId() : session.getInitialSessionId();
     }
@@ -122,16 +153,20 @@ public class SessionService {
     private ResponseCookie createSessionCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(!isDevelopment)
+                .secure(!appUtils.isDevelopment())
                 .path("/api/v1/auth")
                 .maxAge(Duration.ofSeconds(sessionProperties.refreshTokenExpirationSec()))
-                .sameSite(isDevelopment ? "Lax" : "Strict")
+                .sameSite(appUtils.isDevelopment() ? "Lax" : "Strict")
                 .build();
     }
 
     private String createAccessToken(User user) {
+        String role = user.getRoleId() != null ? roleService.getRoleById(user.getRoleId()).getName() : null;
+        Map<String, Object> claims = (role != null)
+                ? Map.of("email", user.getEmail(), "username", user.getUsername(), "emailVerified", user.isEmailVerified(), "role", role)
+                : Map.of("email", user.getEmail(), "username", user.getUsername(), "emailVerified", user.isEmailVerified());
         return jwtService.generateToken(user.getId().toString(),
-                Map.of("email", user.getEmail(), "username", user.getUsername()),
+                claims,
                 sessionProperties.accessTokenExpirationSec());
     }
 
@@ -223,7 +258,6 @@ public class SessionService {
             refreshToken = Arrays.stream(request.getCookies()).filter(cookie->cookie.getName().equals("refreshToken")).findFirst().orElse(null);
         }
 
-        String path = request.getRequestURI();
         SessionAndSessionStatus sessionAndSessionStatus = new SessionAndSessionStatus(null, SessionStatus.ABSENT);
         if(refreshToken != null){
             sessionAndSessionStatus = getSessionAndSessionStatus(refreshToken.getValue());
@@ -234,16 +268,27 @@ public class SessionService {
 
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
             }
-
-            if(sessionStatus == SessionStatus.ACTIVE || sessionStatus == SessionStatus.ROTATE_REQUIRED){
-                if(path != null && !path.startsWith("/api/v1/auth/refresh") && !path.startsWith("/api/v1/auth/logout")){
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"User is already authenticated.");
-                }
-            }
         }
         return sessionAndSessionStatus;
     }
 
     private record SessionAndSessionStatus(Session session, SessionStatus sessionStatus){
+    }
+
+    @Scheduled(cron = "@daily")
+    @Transactional
+    protected void deleteExpiredSessionFamilies(){
+        List<UUID> expiredFamilyIds;
+        int deletedCount = 0;
+        do {
+            expiredFamilyIds = sessionRepository.findExpiredFamilyIds(
+                    (Pageable) PageRequest.of(0, 1000)
+            );
+            if (!expiredFamilyIds.isEmpty()) {
+                sessionRepository.deleteByFamilyIds(expiredFamilyIds);
+                deletedCount += expiredFamilyIds.size();
+            }
+        } while (!expiredFamilyIds.isEmpty());
+        log.info("Purged {} expired session records.", deletedCount);
     }
 }

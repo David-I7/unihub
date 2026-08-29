@@ -28,6 +28,12 @@ public class User {
 
     private String password;
 
+    @Column(nullable = false, name = "email_verified")
+    private boolean emailVerified;
+
+    @Column(name = "deleted_at", nullable = false)
+    private OffsetDateTime deletedAt;
+
     @Column(nullable = false, name="role_id")
     private UUID roleId;
 
@@ -37,15 +43,8 @@ public class User {
     @Column(nullable = false, name = "updated_at")
     private OffsetDateTime updatedAt;
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+    @Transient
+    public boolean isActive(){
+        return deletedAt == null;
     }
 }

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Reminder - UniHub</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+            font-family: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 580px;
+            margin: 40px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background: linear-gradient(135deg, #3f6f6b 0%, #2f5451 100%);
+            padding: 32px 24px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            font-size: 26px;
+            margin: 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .content {
+            padding: 36px 32px;
+            line-height: 1.6;
+        }
+        .content h2 {
+            font-size: 20px;
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+        .content p {
+            margin: 0 0 20px 0;
+            font-size: 15px;
+            color: #334155;
+        }
+        .event-card {
+            background-color: #f0fdfa;
+            border: 1px solid #ccfbf1;
+            border-left: 4px solid #3f6f6b;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .event-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 18px;
+            color: #134e4a;
+        }
+        .footer {
+            border-top: 1px solid #e2e8f0;
+            padding: 24px 32px;
+            text-align: center;
+            font-size: 13px;
+            color: #94a3b8;
+            background-color: #fcfdfe;
+        }
+        .footer a {
+            color: #64748b;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>UniHub</h1>
+    </div>
+    <div class="content">
+        <h2>Upcoming Event Reminder</h2>
+        <p>Hello <strong th:text="${username}">Student</strong>,</p>
+        <p>This is a reminder for an upcoming academic event on your schedule:</p>
+        
+        <div class="event-card">
+            <h3 th:text="${eventTitle}">Event Title</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 4px 0; font-weight: 600; color: #475569; width: 110px;">Course:</td>
+                    <td style="padding: 4px 0; color: #0f172a;" th:text="${courseName}">Course Name</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Event Type:</td>
+                    <td style="padding: 4px 0; color: #0f172a;" th:text="${eventType}">LECTURE</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Start Time:</td>
+                    <td style="padding: 4px 0; color: #0f172a;" th:text="${startTime}">2026-08-29 10:00</td>
+                </tr>
+                <tr>
+                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Location:</td>
+                    <td style="padding: 4px 0; color: #0f172a;" th:text="${location}">CAMPUS</td>
+                </tr>
+                <tr th:if="${locationDetails != null and !locationDetails.isEmpty()}">
+                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Details:</td>
+                    <td style="padding: 4px 0; color: #0f172a;" th:text="${locationDetails}">Hall B, Room 102</td>
+                </tr>
+            </table>
+        </div>
+
+        <p>Make sure to check your UniHub calendar for any additional updates or study materials linked to this event.</p>
+    </div>
+    <div class="footer">
+        <p>Need assistance? Contact support at <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@unihub.app</a>.</p>
+        <p>&copy; <span th:text="${year}">2026</span> UniHub. All rights reserved.</p>
+    </div>
+</div>
+</body>
+</html>

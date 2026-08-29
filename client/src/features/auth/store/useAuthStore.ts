@@ -10,6 +10,8 @@ type State = {
 type Action = {
   setAuth: (user: User, accessToken: string) => void;
   setAccessToken: (accessToken: string) => void;
+  setEmailVerified: (emailVerified: boolean) => void;
+  updateUser: (partialUser: Partial<User>) => void;
   clearAuth: () => void;
   setInitialized: () => void;
 };
@@ -24,6 +26,14 @@ const useAuthStore = create<AuthState>((set) => {
     setAuth: (user, accessToken) =>
       set({ user, accessToken, initialized: true }),
     setAccessToken: (accessToken) => set({ accessToken }),
+    setEmailVerified: (emailVerified) =>
+      set((state) => ({
+        user: state.user ? { ...state.user, emailVerified } : null,
+      })),
+    updateUser: (partialUser) =>
+      set((state) => ({
+        user: state.user ? { ...state.user, ...partialUser } : null,
+      })),
     setInitialized: () => set({ initialized: true }),
     clearAuth: () => set({ user: null, accessToken: null }),
   };

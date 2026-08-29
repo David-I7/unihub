@@ -2,29 +2,23 @@ package com.unihub.app.controllers;
 
 
 import com.unihub.app.config.SessionProperties;
+import com.unihub.app.dto.authentication.EmailRequestDto;
+import com.unihub.app.dto.authentication.JwtTokenRequestDto;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.services.JwtService;
 import jakarta.servlet.http.Cookie;
 import com.unihub.app.entities.authorization.Role;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -78,9 +72,34 @@ public class AuthControllerTests extends BaseIntegrationTest {
     @DisplayName("""
             Given: unauthenticated user
             When: /register/local endpoint is called with valid and unique credentials
-            Then: 201 created is returned with session response and set-cookie
+            Then: 200 ok is returned with verification email sent message
             """)
     public void testRegisterLocal_Success() throws Exception {
+        when(userRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(Collections.emptyList());
+
+        var request = new LocalRegisterRequestDto("test@gmail.com", "testuser", "12345678");
+
+        mockMvc.perform(post(BASE_URL + "/register/local")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Verification email sent. Please check your inbox."));
+    }
+
+    @Autowired
+    private com.unihub.app.services.authentication.VerificationCodeService verificationCodeService;
+
+    // =========================================================================
+    // POST /api/v1/auth/confirm-register
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid email verification code
+            When: /confirm-register endpoint is called
+            Then: 201 created is returned with session response and set-cookie
+            """)
+    public void testConfirmRegister_Success() throws Exception {
         when(userRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(Collections.emptyList());
         when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
@@ -95,22 +114,124 @@ public class AuthControllerTests extends BaseIntegrationTest {
             return s;
         });
 
-        var request = new LocalRegisterRequestDto("test@gmail.com", "testuser", "12345678");
+        verificationCodeService.savePendingRegistration("testuser", "test@gmail.com", "encodedPassword", "123456");
 
-        mockMvc.perform(post(BASE_URL + "/register/local")
+        var request = new com.unihub.app.dto.authentication.ConfirmRegisterRequestDto("test@gmail.com", "123456");
+
+        mockMvc.perform(post(BASE_URL + "/confirm-register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/v1/auth/refresh")))
                 .andExpect(jsonPath("$.user.id").exists())
-                .andExpect(jsonPath("$.user.username").value(request.getUsername()))
-                .andExpect(jsonPath("$.user.email").value(request.getEmail()))
+                .andExpect(jsonPath("$.user.username").value("testuser"))
+                .andExpect(jsonPath("$.user.email").value("test@gmail.com"))
+                .andExpect(jsonPath("$.user.emailVerified").value(true))
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(cookie().exists("refreshToken"));
 
         verify(userRepository).save(any(User.class));
         verify(userIdentityRepository).save(any(UserIdentity.class));
         verify(sessionRepository).save(any(Session.class));
+    }
+
+    // =========================================================================
+    // POST /api/v1/auth/confirm-email & /verify-email
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid email verification code
+            When: /confirm-email endpoint is called
+            Then: 200 OK is returned
+            """)
+    public void testConfirmEmail_Success() throws Exception {
+        User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").emailVerified(false).build();
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(user));
+
+        verificationCodeService.savePendingEmailVerification("test@gmail.com", "123456");
+
+        var request = new com.unihub.app.dto.authentication.ConfirmEmailRequestDto("test@gmail.com", "123456");
+
+        mockMvc.perform(post(BASE_URL + "/confirm-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Email has been successfully verified."));
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    @DisplayName("""
+            Given: email of an unverified user
+            When: /verify-email endpoint is called
+            Then: 200 OK is returned
+            """)
+    public void testVerifyEmail_Success() throws Exception {
+        User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").emailVerified(false).build();
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(user));
+
+        var request = new EmailRequestDto("test@gmail.com");
+
+        mockMvc.perform(post(BASE_URL + "/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If an account exists with that email, a verification code has been sent."));
+    }
+
+    // =========================================================================
+    // POST /api/v1/auth/forgot-password & /reset-password
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: forgot password request
+            When: /forgot-password endpoint is called
+            Then: 200 ok is returned
+            """)
+    public void testForgotPassword_Success() throws Exception {
+        when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(
+                User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").build()
+        ));
+
+        var request = new EmailRequestDto("test@gmail.com");
+
+        mockMvc.perform(post(BASE_URL + "/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If an account exists with that email, a password reset link has been sent."));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: valid password reset token and new password
+            When: /reset-password endpoint is called
+            Then: 200 ok is returned and password is reset
+            """)
+    public void testResetPassword_Success() throws Exception {
+        UUID userId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("test@gmail.com").username("testuser").password("oldEncoded").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        String token = jwtService.generateToken(userId.toString(), Map.of(
+                JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_PASSWORD_RESET,
+                "userId", userId.toString(),
+                "email", "test@gmail.com"
+        ), 900);
+
+        var request = new com.unihub.app.dto.authentication.ResetPasswordRequestDto(token, "newPassword123");
+
+        mockMvc.perform(post(BASE_URL + "/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password has been successfully reset. Please log in with your new password."));
+
+        verify(userRepository).save(user);
+        verify(sessionRepository).revokeAllByUserId(userId);
     }
 
     @Test
@@ -373,7 +494,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("This account does not have a password. Login using a third-party provider and set a password to use this feature."));
+                .andExpect(jsonPath("$.detail").value("This account does not have a password."));
     }
 
     @Test

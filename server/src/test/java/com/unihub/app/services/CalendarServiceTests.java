@@ -1,5 +1,7 @@
 package com.unihub.app.services;
 
+import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
@@ -13,6 +15,7 @@ import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
@@ -64,6 +67,9 @@ public class CalendarServiceTests {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserMapper userMapper;
+
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
@@ -101,79 +107,109 @@ public class CalendarServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("getEvents with valid month and communitySlug returns events")
-    public void testGetEvents_WithCommunitySlug_Success() {
+    @DisplayName("getEvents returns list of events when events exist")
+    public void testGetEvents_Success() {
         UUID userId = UUID.randomUUID();
-        UUID communityId = UUID.randomUUID();
-        UUID eventId = UUID.randomUUID();
-        String slug = "fmi-info";
+        String slug = "test-community";
+        UUID commId = UUID.randomUUID();
+        Community community = createTestCommunity(commId, slug);
 
-        Community community = createTestCommunity(communityId, slug);
-
-        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
-                .id(eventId)
-                .title("Exam")
-                .type(EventType.EXAM)
-                .startTime(OffsetDateTime.now().plusDays(2))
-                .communitySlug(slug)
-                .courseSlug("sd")
-                .isSubscribed(true)
-                .build();
+        CalendarEventResponseDto eventDto = new CalendarEventResponseDto(
+                UUID.randomUUID(),
+                "Midterm Exam",
+                EventType.EXAM,
+                OffsetDateTime.now().plusDays(1),
+                OffsetDateTime.now().plusDays(1).plusHours(2),
+                120,
+                EventLocation.IN_PERSON,
+                "pa",
+                "Programarea Algoritmilor",
+                "PA",
+                slug,
+                "FMI - Info",
+                StudyYearName.YEAR_1,
+                false
+        );
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
-        when(eventRepository.findEventsByCommunityIds(eq(List.of(communityId)), eq("sd"), eq(StudyYearName.YEAR_1), any(), any(), eq(userId)))
+        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), any(), eq(userId)))
                 .thenReturn(List.of(eventDto));
 
-        List<CalendarEventResponseDto> result = calendarService.getEvents(
-                userId, 2026, 8, slug, StudyYearName.YEAR_1, "sd"
-        );
+        List<CalendarEventResponseDto> result = calendarService.getEvents(userId, 2026, 4, slug, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        CalendarEventResponseDto dto = result.get(0);
-        assertEquals(eventId, dto.id());
-        assertTrue(dto.isSubscribed());
+        assertEquals("Midterm Exam", result.get(0).title());
+        assertEquals(slug, result.get(0).communitySlug());
+        assertFalse(result.get(0).isSubscribed());
     }
 
     @Test
-    @DisplayName("getEvents throws 400 when communitySlug is null or blank")
-    public void testGetEvents_MissingCommunitySlug() {
+    @DisplayName("getEvents throws 404 when community does not exist")
+    public void testGetEvents_CommunityNotFound() {
         UUID userId = UUID.randomUUID();
+        when(communityRepository.findBySlug("non-existent")).thenReturn(Optional.empty());
+
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> calendarService.getEvents(userId, 2026, 8, null, null, null)
+                () -> calendarService.getEvents(userId, 2026, 4, "non-existent", null, null)
         );
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("Community slug is required", ex.getReason());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
     @Test
-    @DisplayName("getEvents throws 400 when month is invalid")
-    public void testGetEvents_InvalidMonth() {
-        UUID userId = UUID.randomUUID();
-        ResponseStatusException ex = assertThrows(
-                ResponseStatusException.class,
-                () -> calendarService.getEvents(userId, 2026, 13, "fmi", null, null)
-        );
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-    }
-
-    @Test
-    @DisplayName("getEvents throws 403 when user is not member of requested community")
+    @DisplayName("getEvents throws 403 when user is not a member of the community")
     public void testGetEvents_NotMember() {
         UUID userId = UUID.randomUUID();
-        String slug = "private-comm";
+        String slug = "test-community";
         Community community = createTestCommunity(UUID.randomUUID(), slug);
-
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> calendarService.getEvents(userId, 2026, 8, slug, null, null)
+                () -> calendarService.getEvents(userId, 2026, 4, slug, null, null)
         );
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals("User is not a member of this community", ex.getReason());
+    }
+
+    @Test
+    @DisplayName("getEvents marks isSubscribed as true when user has a reminder for the event")
+    public void testGetEvents_SubscribedEvent() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-community";
+        UUID commId = UUID.randomUUID();
+        Community community = createTestCommunity(commId, slug);
+
+        CalendarEventResponseDto eventDto = new CalendarEventResponseDto(
+                UUID.randomUUID(),
+                "Midterm Exam",
+                EventType.EXAM,
+                OffsetDateTime.now().plusDays(1),
+                OffsetDateTime.now().plusDays(1).plusHours(2),
+                120,
+                EventLocation.IN_PERSON,
+                "pa",
+                "Programarea Algoritmilor",
+                "PA",
+                slug,
+                "FMI - Info",
+                StudyYearName.YEAR_1,
+                true
+        );
+
+        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
+        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), any(), eq(userId)))
+                .thenReturn(List.of(eventDto));
+
+        List<CalendarEventResponseDto> result = calendarService.getEvents(userId, 2026, 4, slug, null, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).isSubscribed());
     }
 
     // =========================================================================
@@ -181,22 +217,21 @@ public class CalendarServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("createEvent successfully creates and returns event")
+    @DisplayName("createEvent creates and returns CalendarEventResponseDto")
     public void testCreateEvent_Success() {
         UUID userId = UUID.randomUUID();
-        UUID communityId = UUID.randomUUID();
-        String slug = "fmi-info";
-
-        Community community = createTestCommunity(communityId, slug);
+        String slug = "test-community";
+        Community community = createTestCommunity(UUID.randomUUID(), slug);
         Course course = createTestCourse(community);
-        User owner = User.builder().id(userId).username("david").build();
-        OffsetDateTime startTime = OffsetDateTime.now().plusDays(2);
+        User owner = User.builder().id(userId).username("owner").build();
+        UserDto userDto = new UserDto(userId, "owner@example.com", "owner", true, RoleType.USER);
 
         CreateEventRequestDto requestDto = CreateEventRequestDto.builder()
                 .title("New Exam")
-                .description("Midterm")
+                .description("Exam description")
                 .type(EventType.EXAM)
-                .startTime(startTime)
+                .startTime(OffsetDateTime.now().plusDays(2))
+                .endTime(OffsetDateTime.now().plusDays(2).plusHours(2))
                 .location(EventLocation.IN_PERSON)
                 .courseId(1L)
                 .communitySlug(slug)
@@ -205,7 +240,7 @@ public class CalendarServiceTests {
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
-        when(userRepository.findById(userId)).thenReturn(Optional.of(owner));
+        when(userMapper.toEntity(userDto)).thenReturn(owner);
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
             Event e = invocation.getArgument(0);
             e.setId(UUID.randomUUID());
@@ -214,7 +249,7 @@ public class CalendarServiceTests {
             return e;
         });
 
-        CalendarEventResponseDto result = calendarService.createEvent(userId, requestDto);
+        CalendarEventResponseDto result = calendarService.createEvent(userDto, requestDto);
 
         assertNotNull(result);
         assertEquals("New Exam", result.title());
@@ -230,6 +265,7 @@ public class CalendarServiceTests {
         UUID userId = UUID.randomUUID();
         UUID communityId1 = UUID.randomUUID();
         UUID communityId2 = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "owner@example.com", "owner", true, RoleType.USER);
 
         Community community1 = createTestCommunity(communityId1, "comm-1");
         Community community2 = createTestCommunity(communityId2, "comm-2");
@@ -250,7 +286,7 @@ public class CalendarServiceTests {
 
         ResponseStatusException ex = assertThrows(
                 ResponseStatusException.class,
-                () -> calendarService.createEvent(userId, requestDto)
+                () -> calendarService.createEvent(userDto, requestDto)
         );
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
         assertEquals("Course does not belong to the specified community", ex.getReason());
@@ -277,7 +313,7 @@ public class CalendarServiceTests {
                 .courseSlug("asc")
                 .communitySlug("fmi")
                 .studyYear(StudyYearName.YEAR_1)
-                .owner(new OwnerDto(userId, "prof"))
+                .owner(new OwnerDto(userId, "prof",true))
                 .reminders(Collections.emptyList())
                 .build();
 

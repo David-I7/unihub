@@ -71,13 +71,12 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "david@example.com", "david");
+        userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
         when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
-        when(authorizationService.hasGlobalPermission(eq(userId), any())).thenReturn(true);
-        when(authorizationService.hasCommunityPermission(any(), eq(userId), any())).thenReturn(true);
+        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
+        when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
     }
 
     // =========================================================================
@@ -127,14 +126,14 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
     public void testAddMember_Success() throws Exception {
         AddCommunityMemberRequestDto requestDto = new AddCommunityMemberRequestDto("new_student", RoleType.COMMUNITY_MEMBER);
 
-        doNothing().when(communityMemberService).addMemberDirectly(eq("fmi-info"), eq(userId), any(AddCommunityMemberRequestDto.class));
+        doNothing().when(communityMemberService).addMemberDirectly(eq("fmi-info"), eq(userDto), any(AddCommunityMemberRequestDto.class));
 
         mockMvc.perform(post(BASE_URL + "/members")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk());
 
-        verify(communityMemberService).addMemberDirectly(eq("fmi-info"), eq(userId), any(AddCommunityMemberRequestDto.class));
+        verify(communityMemberService).addMemberDirectly(eq("fmi-info"), eq(userDto), any(AddCommunityMemberRequestDto.class));
     }
 
     // =========================================================================
@@ -187,13 +186,13 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
     @Test
     @DisplayName("DELETE /members/{username} removes member from community")
     public void testRemoveMember_Success() throws Exception {
-        doNothing().when(communityMemberService).removeMember("fmi-info", userId, "student_1");
+        doNothing().when(communityMemberService).removeMember("fmi-info", userDto, "student_1");
 
         mockMvc.perform(delete(BASE_URL + "/members/student_1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
-        verify(communityMemberService).removeMember("fmi-info", userId, "student_1");
+        verify(communityMemberService).removeMember("fmi-info", userDto, "student_1");
     }
 
     // =========================================================================
@@ -215,7 +214,7 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(communityJoinCodeService.createJoinCode(eq("fmi-info"), eq(userId), any(CreateJoinCodeRequestDto.class)))
+        when(communityJoinCodeService.createJoinCode(eq("fmi-info"), eq(userDto), any(CreateJoinCodeRequestDto.class)))
                 .thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL + "/join-codes")
