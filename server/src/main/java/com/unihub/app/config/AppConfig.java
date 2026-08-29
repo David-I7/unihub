@@ -10,7 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @Configuration
 @EnableScheduling
-@EnableConfigurationProperties(SessionProperties.class)
+@EnableConfigurationProperties({SessionProperties.class, EmailProperties.class})
 public class AppConfig {
 
     @Bean
