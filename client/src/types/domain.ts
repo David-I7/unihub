@@ -3,12 +3,14 @@ export type User = {
   username: string;
   email: string;
   emailVerified: boolean;
+  role: GlobalRole;
 };
 
 export type GlobalRole = "USER" | "ROOT" | "ADMIN";
 
 export type UserProfile = {
   emailVerified: boolean;
+  createdAt: string;
   globalRole: GlobalRole;
   globalPermissions: string[];
 } & User;
@@ -20,6 +22,7 @@ export type CommunicationChannel = "COMMUNITY" | "COURSE_OFFERING" | "GENERAL";
 export type ResourceOwner = {
   id: string;
   username: string;
+  active: boolean;
 };
 
 export interface Comment {

@@ -21,17 +21,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FieldError } from "@/components/ui/field";
-import { OtpInput } from "@/components/ui/otp-input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import type { User } from "@/types/domain";
 import { useUserProfile } from "../api/getUserProfile";
 import { useDeleteAccount } from "../api/deleteAccount";
-import { useVerifyEmail } from "@/features/auth/api/verifyEmail";
-import { useConfirmEmail } from "@/features/auth/api/confirmEmail";
-import { useForgotPassword } from "@/features/auth/api/forgotPassword";
-import useAuthStore from "@/features/auth/store/useAuthStore";
-import queryClient from "@/lib/queryClient";
+import { VerifyEmailModal } from "@/features/auth/components/VerifyEmailModal";
+import { ForgotPasswordModal } from "@/features/auth/components/ForgotPasswordModal";
 
 export interface AccountSettingsModalProps {
   user: User;
@@ -46,112 +42,27 @@ export function AccountSettingsModal({
 }: AccountSettingsModalProps) {
   const navigate = useNavigate();
   const { data: profile } = useUserProfile({ enabled: open });
-  const setEmailVerified = useAuthStore((state) => state.setEmailVerified);
 
-  // Email verification state
-  const [isVerifyingEmail, setIsVerifyingEmail] = React.useState(false);
-  const [otpCode, setOtpCode] = React.useState("");
-  const [verifyError, setVerifyError] = React.useState<string | null>(null);
-  const [cooldown, setCooldown] = React.useState(0);
+  // Dialog states for email actions
+  const [isVerifyEmailModalOpen, setIsVerifyEmailModalOpen] = React.useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = React.useState(false);
 
   // Delete account state
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
-  // Reset password state
-  const [isResetPasswordPending, setIsResetPasswordPending] = React.useState(false);
-
-  const { mutateAsync: requestEmailVerification, isPending: isRequestingVerification } =
-    useVerifyEmail();
-  const { mutateAsync: confirmEmailMutation, isPending: isConfirmingEmail } =
-    useConfirmEmail();
   const { mutateAsync: deleteAccountMutation, isPending: isDeletingAccount } =
     useDeleteAccount();
-  const { mutateAsync: forgotPasswordMutation } = useForgotPassword();
 
   const isEmailVerified = Boolean(user.emailVerified ?? profile?.emailVerified);
   const initials = getInitials(user.username || user.email);
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      setIsVerifyingEmail(false);
-      setOtpCode("");
-      setVerifyError(null);
       setIsDeleteDialogOpen(false);
       setDeleteError(null);
-      setCooldown(0);
     }
     onOpenChange(isOpen);
-  };
-
-  React.useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
-
-  const handleStartEmailVerification = async () => {
-    setVerifyError(null);
-    try {
-      await requestEmailVerification({ email: user.email });
-      setIsVerifyingEmail(true);
-      setCooldown(60);
-      toast.info("Verification code sent to your email.");
-    } catch (err) {
-      if (isAxiosError(err)) {
-        setVerifyError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to send verification code.",
-        );
-      }
-    }
-  };
-
-  const handleConfirmEmailVerification = async (codeToVerify?: string) => {
-    const code = codeToVerify ?? otpCode;
-    if (code.length !== 6) return;
-
-    setVerifyError(null);
-    try {
-      await confirmEmailMutation({ email: user.email, code });
-      setEmailVerified(true);
-      queryClient.invalidateQueries({ queryKey: ["users", "me"] });
-      setIsVerifyingEmail(false);
-      toast.success("Email verified successfully!");
-    } catch (err) {
-      if (isAxiosError(err)) {
-        setVerifyError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Invalid or expired verification code.",
-        );
-      } else {
-        setVerifyError("An unexpected error occurred. Please try again.");
-      }
-    }
-  };
-
-  const handleSendResetPassword = async () => {
-    setIsResetPasswordPending(true);
-    try {
-      await forgotPasswordMutation({ email: user.email });
-      toast.success("Password reset link sent to your email.");
-    } catch (err) {
-      if (isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to send password reset email.",
-        );
-      } else {
-        toast.error("Failed to send password reset email.");
-      }
-    } finally {
-      setIsResetPasswordPending(false);
-    }
   };
 
   const handleDeleteAccount = async () => {
@@ -230,7 +141,7 @@ export function AccountSettingsModal({
                 )}
               </div>
 
-              {!isEmailVerified && !isVerifyingEmail && (
+              {!isEmailVerified && (
                 <div className="flex flex-col gap-2 pt-1">
                   <p className="text-xs text-muted-foreground">
                     Your email is unverified. Verify your email to receive calendar reminders and notices.
@@ -239,59 +150,11 @@ export function AccountSettingsModal({
                     type="button"
                     variant="outline"
                     size="sm"
-                    disabled={isRequestingVerification}
-                    onClick={handleStartEmailVerification}
+                    onClick={() => setIsVerifyEmailModalOpen(true)}
                     className="w-fit h-8 text-xs cursor-pointer font-medium"
                   >
-                    {isRequestingVerification ? "Sending code..." : "Verify Email"}
+                    Verify Email
                   </Button>
-                </div>
-              )}
-
-              {!isEmailVerified && isVerifyingEmail && (
-                <div className="flex flex-col gap-3 pt-2">
-                  <p className="text-xs text-muted-foreground">
-                    Enter the 6-digit code sent to <span className="font-semibold text-foreground">{user.email}</span>:
-                  </p>
-
-                  {verifyError && (
-                    <FieldError className="rounded-md border border-destructive/20 bg-destructive/10 p-2 text-center text-xs">
-                      {verifyError}
-                    </FieldError>
-                  )}
-
-                  <div className="flex justify-center py-1">
-                    <OtpInput
-                      value={otpCode}
-                      onChange={setOtpCode}
-                      onComplete={handleConfirmEmailVerification}
-                      hasError={Boolean(verifyError)}
-                      disabled={isConfirmingEmail}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={cooldown > 0 || isRequestingVerification}
-                      onClick={handleStartEmailVerification}
-                      className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground cursor-pointer font-normal"
-                    >
-                      {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
-                    </Button>
-
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={isConfirmingEmail || otpCode.length !== 6}
-                      onClick={() => handleConfirmEmailVerification()}
-                      className="h-8 text-xs font-semibold cursor-pointer"
-                    >
-                      {isConfirmingEmail ? "Verifying..." : "Confirm Code"}
-                    </Button>
-                  </div>
                 </div>
               )}
             </div>
@@ -313,11 +176,10 @@ export function AccountSettingsModal({
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={isResetPasswordPending}
-                onClick={handleSendResetPassword}
+                onClick={() => setIsForgotPasswordModalOpen(true)}
                 className="h-8 text-xs cursor-pointer font-medium"
               >
-                {isResetPasswordPending ? "Sending..." : "Reset Password"}
+                Reset Password
               </Button>
             </div>
 
@@ -344,6 +206,23 @@ export function AccountSettingsModal({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Email Verification Modal */}
+      <VerifyEmailModal
+        open={isVerifyEmailModalOpen}
+        onOpenChange={setIsVerifyEmailModalOpen}
+        email={user.email}
+        mode="verify"
+        autoSend={true}
+      />
+
+      {/* Password Reset Modal */}
+      <ForgotPasswordModal
+        open={isForgotPasswordModalOpen}
+        onOpenChange={setIsForgotPasswordModalOpen}
+        initialEmail={user.email}
+        autoSend={true}
+      />
 
       {/* Self-Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

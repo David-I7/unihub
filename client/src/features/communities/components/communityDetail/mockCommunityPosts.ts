@@ -19,6 +19,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
     owner: {
       id: "owner-1",
       username: "iosub_david",
+      active: true,
     },
     comments: [
       {
@@ -30,6 +31,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "user-alex",
           username: "alexandra_m",
+          active: true,
         },
       },
       {
@@ -41,6 +43,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "owner-1",
           username: "iosub_david",
+          active: true,
         },
       },
       {
@@ -52,6 +55,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "user-marius",
           username: "marius_pop",
+          active: true,
         },
       },
     ],
@@ -70,6 +74,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
     owner: {
       id: "user-radu",
       username: "radu_ionescu",
+      active: true,
     },
     comments: [
       {
@@ -81,6 +86,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "user-elena",
           username: "elena_v",
+          active: true,
         },
       },
       {
@@ -92,6 +98,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "user-radu",
           username: "radu_ionescu",
+          active: true,
         },
       },
     ],
@@ -110,6 +117,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
     owner: {
       id: "user-matei",
       username: "matei_dev",
+      active: true,
     },
     comments: [
       {
@@ -121,6 +129,7 @@ export const MOCK_COMMUNITY_POSTS: Post[] = [
         owner: {
           id: "user-diana",
           username: "diana_s",
+          active: true,
         },
       },
     ],

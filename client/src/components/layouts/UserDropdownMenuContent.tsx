@@ -1,7 +1,5 @@
 import * as React from "react";
-import { KeyRound, LogOut, Settings, AlertTriangle } from "lucide-react";
-import { toast } from "sonner";
-import { isAxiosError } from "axios";
+import { KeyRound, LogOut, Settings, AlertTriangle, MailCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenuContent,
@@ -11,7 +9,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useLogout } from "@/features/auth/api/logout";
-import { useForgotPassword } from "@/features/auth/api/forgotPassword";
+import { ForgotPasswordModal } from "@/features/auth/components/ForgotPasswordModal";
+import { VerifyEmailModal } from "@/features/auth/components/VerifyEmailModal";
 import { AccountSettingsModal } from "@/features/users/components/AccountSettingsModal";
 import { getInitials } from "@/lib/utils";
 import { ThemeSubMenu } from "./ThemeMenu";
@@ -27,34 +26,13 @@ export function UserDropdownMenuContent({
   ...props
 }: UserDropdownMenuContentProps) {
   const [isAccountSettingsOpen, setIsAccountSettingsOpen] = React.useState(false);
-  const [isSendingReset, setIsSendingReset] = React.useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
+  const [isVerifyEmailOpen, setIsVerifyEmailOpen] = React.useState(false);
 
   const { mutate: logout, status: logoutStatus } = useLogout();
-  const { mutateAsync: sendResetPassword } = useForgotPassword();
 
   const isLoggingOut = logoutStatus === "pending";
   const initials = getInitials(user.username || user.email);
-
-  const handleResetPassword = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsSendingReset(true);
-    try {
-      await sendResetPassword({ email: user.email });
-      toast.success("Password reset link sent to your email.");
-    } catch (err) {
-      if (isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to send password reset email.",
-        );
-      } else {
-        toast.error("Failed to send password reset email.");
-      }
-    } finally {
-      setIsSendingReset(false);
-    }
-  };
 
   return (
     <>
@@ -74,12 +52,17 @@ export function UserDropdownMenuContent({
                     {user.email}
                   </span>
                   {!user.emailVerified && (
-                    <span
-                      title="Email unverified"
-                      className="inline-flex items-center text-amber-600 dark:text-amber-400 shrink-0"
+                    <button
+                      type="button"
+                      title="Email unverified - Click to verify"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsVerifyEmailOpen(true);
+                      }}
+                      className="inline-flex items-center text-amber-600 dark:text-amber-400 shrink-0 hover:underline cursor-pointer"
                     >
                       <AlertTriangle className="size-3" />
-                    </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -97,14 +80,25 @@ export function UserDropdownMenuContent({
             <Settings className="mr-2 size-4" />
             <span>Account Settings</span>
           </DropdownMenuItem>
+
+          {!user.emailVerified && (
+            <DropdownMenuItem
+              onClick={() => setIsVerifyEmailOpen(true)}
+              className="cursor-pointer text-amber-600 dark:text-amber-400 focus:text-amber-700 dark:focus:text-amber-300"
+            >
+              <MailCheck className="mr-2 size-4" />
+              <span>Verify Email</span>
+            </DropdownMenuItem>
+          )}
+
           <DropdownMenuItem
-            disabled={isSendingReset}
-            onClick={handleResetPassword}
+            onClick={() => setIsForgotPasswordOpen(true)}
             className="cursor-pointer"
           >
             <KeyRound className="mr-2 size-4" />
-            <span>{isSendingReset ? "Sending Link..." : "Reset Password"}</span>
+            <span>Reset Password</span>
           </DropdownMenuItem>
+
           <ThemeSubMenu />
         </DropdownMenuGroup>
 
@@ -126,9 +120,23 @@ export function UserDropdownMenuContent({
         open={isAccountSettingsOpen}
         onOpenChange={setIsAccountSettingsOpen}
       />
+
+      <ForgotPasswordModal
+        open={isForgotPasswordOpen}
+        onOpenChange={setIsForgotPasswordOpen}
+        initialEmail={user.email}
+        autoSend={true}
+      />
+
+      <VerifyEmailModal
+        open={isVerifyEmailOpen}
+        onOpenChange={setIsVerifyEmailOpen}
+        email={user.email}
+        mode="verify"
+        autoSend={true}
+      />
     </>
   );
 }
 
 export default UserDropdownMenuContent;
-

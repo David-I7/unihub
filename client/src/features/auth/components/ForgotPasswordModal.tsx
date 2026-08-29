@@ -1,6 +1,6 @@
 import * as React from "react";
 import { isAxiosError } from "axios";
-import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,87 +18,113 @@ import {
 import { Input } from "@/components/ui/input";
 import { emailSchema } from "../schemas/authSchemas";
 import { useForgotPassword } from "../api/forgotPassword";
+import useCountdownTimer from "@/hooks/useCountdownTimer";
 
 export interface ForgotPasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialEmail?: string;
+  autoSend?: boolean;
 }
 
 export function ForgotPasswordModal({
   open,
   onOpenChange,
+  initialEmail = "",
+  autoSend = false,
 }: ForgotPasswordModalProps) {
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(initialEmail);
   const [error, setError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
-  const [cooldown, setCooldown] = React.useState(0);
+
+  const {
+    isActive: isTimerActive,
+    timerTextRef,
+    startTimer,
+    resetTimer,
+  } = useCountdownTimer({ defaultSeconds: 60 });
 
   const { mutateAsync: sendReset, isPending } = useForgotPassword();
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      setEmail("");
+  const handleOpenChange = React.useCallback(
+    (isOpen: boolean) => {
+      if (!isOpen) {
+        setEmail(initialEmail);
+        setError(null);
+        setIsSuccess(false);
+        resetTimer();
+      }
+      onOpenChange(isOpen);
+    },
+    [initialEmail, onOpenChange, resetTimer],
+  );
+
+  const handleSendResetEmail = React.useCallback(
+    async (emailToSend: string) => {
       setError(null);
-      setIsSuccess(false);
-      setCooldown(0);
-    }
-    onOpenChange(isOpen);
-  };
+      const parseResult = emailSchema.safeParse(emailToSend);
+      if (!parseResult.success) {
+        setError(
+          parseResult.error.issues[0]?.message ||
+            "Please enter a valid email address",
+        );
+        return;
+      }
+
+      try {
+        await sendReset({ email: emailToSend.trim() });
+        setIsSuccess(true);
+        startTimer(60);
+      } catch (err) {
+        if (isAxiosError(err)) {
+          setError(
+            err.response?.data?.message ||
+              err.response?.data?.detail ||
+              "Failed to send reset email.",
+          );
+        } else {
+          setError("An unexpected error occurred. Please try again.");
+        }
+      }
+    },
+    [sendReset, startTimer],
+  );
 
   React.useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => {
-      setCooldown((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
+    if (!open) return;
+
+    if (autoSend && initialEmail) {
+      void sendReset({ email: initialEmail.trim() })
+        .then(() => {
+          setIsSuccess(true);
+          startTimer(60);
+        })
+        .catch((err) => {
+          if (isAxiosError(err)) {
+            setError(
+              err.response?.data?.message ||
+                err.response?.data?.detail ||
+                "Failed to send reset email.",
+            );
+          } else {
+            setError("An unexpected error occurred. Please try again.");
+          }
+        });
+    }
+  }, [open, autoSend, initialEmail, sendReset, startTimer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-
-    const parseResult = emailSchema.safeParse(email);
-    if (!parseResult.success) {
-      setError(
-        parseResult.error.issues[0]?.message ||
-          "Please enter a valid email address",
-      );
-      return;
-    }
-
-    try {
-      await sendReset({ email: email.trim() });
-      setIsSuccess(true);
-      setCooldown(60);
-    } catch (err) {
-      if (isAxiosError(err)) {
-        setError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to send reset email.",
-        );
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
-    }
+    await handleSendResetEmail(email || initialEmail);
   };
 
   const handleResend = async () => {
-    if (cooldown > 0 || !email) return;
-    setError(null);
-    try {
-      await sendReset({ email: email.trim() });
-      setCooldown(60);
-    } catch (err) {
-      if (isAxiosError(err)) {
-        setError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to resend reset email.",
-        );
-      }
-    }
+    const targetEmail = email || initialEmail;
+    if (isTimerActive || !targetEmail) return;
+    await handleSendResetEmail(targetEmail);
   };
+
+  const currentEmail = email || initialEmail;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -116,7 +142,7 @@ export function ForgotPasswordModal({
           </DialogTitle>
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
             {isSuccess
-              ? `If an account exists for ${email}, a password reset link has been sent with 15-minute validity.`
+              ? `If an account exists for ${currentEmail}, a password reset link has been sent with 15-minute validity.`
               : "Enter the email associated with your account, and we will send you a password reset link."}
           </DialogDescription>
         </DialogHeader>
@@ -132,13 +158,19 @@ export function ForgotPasswordModal({
             <Button
               type="button"
               variant="outline"
-              disabled={cooldown > 0 || isPending}
+              disabled={isTimerActive || isPending}
               onClick={handleResend}
               className="w-full text-xs h-9 cursor-pointer"
             >
-              {cooldown > 0
-                ? `Resend link in ${cooldown}s`
-                : "Resend reset link"}
+              {isTimerActive ? (
+                <>
+                  Resend link in <span ref={timerTextRef}>60</span>s
+                </>
+              ) : isPending ? (
+                "Sending..."
+              ) : (
+                "Resend reset link"
+              )}
             </Button>
             <Button
               type="button"
@@ -161,7 +193,7 @@ export function ForgotPasswordModal({
                 <Input
                   id="reset-email"
                   type="email"
-                  value={email}
+                  value={currentEmail}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="john@example.com"
                   autoComplete="email"
@@ -173,7 +205,7 @@ export function ForgotPasswordModal({
               <Field>
                 <Button
                   type="submit"
-                  disabled={isPending || !email.trim()}
+                  disabled={isPending || !currentEmail.trim()}
                   className="w-full h-9 text-xs font-semibold cursor-pointer"
                 >
                   {isPending ? "Sending..." : "Send reset link"}
