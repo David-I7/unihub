@@ -46,4 +46,7 @@ public interface StudyYearRepository extends JpaRepository<StudyYear, Integer> {
 
     @Query("SELECT sy FROM StudyYear sy JOIN FETCH sy.courses c JOIN sy.community d WHERE d.slug = :communitySlug AND sy.studyYearName = :studyYearName")
     Optional<StudyYear> findByCommunitySlugAndStudyYearNameWithCourses(@Param("communitySlug") String communitySlug, @Param("studyYearName") StudyYearName studyYearName);
+
+    @Query("SELECT CASE WHEN COUNT(sy) > 0 THEN true ELSE false END FROM StudyYear sy WHERE sy.community.slug = :communitySlug AND sy.studyYearName = :studyYearName")
+    boolean existsByCommunitySlugAndStudyYearName(@Param("communitySlug") String communitySlug, @Param("studyYearName") StudyYearName studyYearName);
 }

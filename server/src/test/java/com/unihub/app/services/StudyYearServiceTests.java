@@ -1,14 +1,18 @@
 package com.unihub.app.services;
 
+import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
+import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
+import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.entities.globalResources.Teacher;
 import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
+import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.repositories.community.resources.StudyYearRepository;
 import com.unihub.app.services.community.resources.StudyYearService;
@@ -27,6 +31,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +43,9 @@ public class StudyYearServiceTests {
 
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock
+    private com.unihub.app.repositories.community.resources.CommunityRepository communityRepository;
 
     @Spy
     private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
@@ -198,5 +206,60 @@ public class StudyYearServiceTests {
         assertEquals(StudyYearName.YEAR_1, result.get(0).studyYearName());
 
         verify(studyYearRepository).findStudyYearIdentifiersByCommunitySlug("fmi-info-id");
+    }
+
+    @Test
+    @DisplayName("createStudyYear creates study year when community exists and study year name is unique")
+    public void testCreateStudyYear_Success() {
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi-info-id").build();
+        CreateStudyYearRequestDto dto = new CreateStudyYearRequestDto(StudyYearName.YEAR_1);
+
+        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(studyYearRepository.existsByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1)).thenReturn(false);
+        when(studyYearRepository.save(any(StudyYear.class))).thenAnswer(i -> {
+            StudyYear sy = i.getArgument(0);
+            sy.setId(1);
+            return sy;
+        });
+
+        StudyYearResponseDto result = studyYearService.createStudyYear("fmi-info-id", dto);
+
+        assertNotNull(result);
+        assertEquals(1, result.id());
+        assertEquals(StudyYearName.YEAR_1, result.name());
+        verify(studyYearRepository).save(any(StudyYear.class));
+    }
+
+    @Test
+    @DisplayName("createStudyYear throws 409 when study year already exists in community")
+    public void testCreateStudyYear_Conflict() {
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi-info-id").build();
+        CreateStudyYearRequestDto dto = new CreateStudyYearRequestDto(StudyYearName.YEAR_1);
+
+        when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
+        when(studyYearRepository.existsByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1)).thenReturn(true);
+
+        assertThrows(ResponseStatusException.class, () -> studyYearService.createStudyYear("fmi-info-id", dto));
+    }
+
+    @Test
+    @DisplayName("deleteStudyYear deletes study year when it exists")
+    public void testDeleteStudyYear_Success() {
+        StudyYear studyYear = StudyYear.builder().id(1).studyYearName(StudyYearName.YEAR_1).build();
+        when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(studyYear));
+
+        studyYearService.deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1);
+
+        verify(studyYearRepository).delete(studyYear);
+    }
+
+    @Test
+    @DisplayName("deleteStudyYear throws 404 when study year does not exist")
+    public void testDeleteStudyYear_NotFound() {
+        when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> studyYearService.deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1));
     }
 }

@@ -108,7 +108,7 @@ public class CommunityService {
 
     @Transactional
     public CommunityResponseDto updateCommunity(String slug, UUID userId, UpdateCommunityRequestDto dto) {
-        if (dto.name() == null && dto.slug() == null && dto.description() == null && dto.backgroundColor() == null && dto.verified() == null && dto.newOwnerUsername() == null) {
+        if (dto.name() == null && dto.slug() == null && dto.description() == null && dto.readme() == null && dto.backgroundColor() == null && dto.verified() == null && dto.newOwnerUsername() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -117,6 +117,10 @@ public class CommunityService {
 
         if (dto.description() != null) {
             community.setDescription(dto.description());
+        }
+
+        if (dto.readme() != null) {
+            community.setReadme(dto.readme());
         }
 
         if (dto.slug() != null && !dto.slug().equals(community.getSlug())) {

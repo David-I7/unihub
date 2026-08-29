@@ -13,6 +13,7 @@ public final class Permissions {
 
     // Community Membership
     public static final String CREATE_JOIN_CODE = "create:joinCode";
+    public static final String UPDATE_JOIN_CODE = "update:joinCode";
     public static final String DELETE_JOIN_CODE = "delete:joinCode";
     public static final String CREATE_MEMBER = "create:member";
     public static final String UPDATE_MEMBER_ROLE = "update:memberRole";

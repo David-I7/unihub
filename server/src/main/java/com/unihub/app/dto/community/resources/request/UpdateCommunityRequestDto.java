@@ -18,6 +18,9 @@ public record UpdateCommunityRequestDto(
         @Size(max = 1000, message = "Description must not exceed 1000 characters")
         String description,
 
+        @Size(max = 50000, message = "Readme must not exceed 50000 characters")
+        String readme,
+
         @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "Background color must be a valid hex color code")
         String backgroundColor,
 
@@ -26,10 +29,15 @@ public record UpdateCommunityRequestDto(
         @Username
         String newOwnerUsername
 ) {
+        public UpdateCommunityRequestDto(String name, String slug, String description, String backgroundColor, Boolean verified, String newOwnerUsername) {
+                this(name, slug, description, null, backgroundColor, verified, newOwnerUsername);
+        }
+
         public UpdateCommunityRequestDto {
                 name = name != null ? name.trim() : name;
                 slug = slug != null ? slug.trim() : slug;
                 description = description != null ? description.trim() : description;
+                readme = readme != null ? readme.trim() : readme;
                 backgroundColor = backgroundColor != null ? backgroundColor.trim() : backgroundColor;
         }
 }

@@ -11,6 +11,7 @@ public record CommunityResponseDto(
     UUID id,
     String name,
     String description,
+    String readme,
     int memberCount,
     OffsetDateTime createdAt,
     OwnerDto owner,

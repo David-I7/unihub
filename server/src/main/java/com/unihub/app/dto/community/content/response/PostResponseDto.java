@@ -20,6 +20,7 @@ public record PostResponseDto(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         OwnerDto owner,
-        List<CommentResponseDto> comments
+        List<CommentResponseDto> comments,
+        Boolean isLiked
 ) {
 }

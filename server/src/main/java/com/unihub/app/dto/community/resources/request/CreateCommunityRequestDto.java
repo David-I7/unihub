@@ -19,15 +19,23 @@ public record CreateCommunityRequestDto(
         @Size(max = 1000, message = "Description must not exceed 1000 characters")
         String description,
 
+        @Size(max = 50000, message = "Readme must not exceed 50000 characters")
+        String readme,
+
         @NotBlank(message = "Background color is required")
         @Pattern(regexp = "^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", message = "Background color must be a valid hex color code")
         String backgroundColor
 ) {
 
+        public CreateCommunityRequestDto(String name, String slug, String description, String backgroundColor) {
+                this(name, slug, description, null, backgroundColor);
+        }
+
         public CreateCommunityRequestDto {
                 name = name != null ? name.trim() : name;
                 slug = slug != null ? slug.trim() : slug;
                 description = description != null ? description.trim() : description;
+                readme = readme != null ? readme.trim() : readme;
                 backgroundColor = backgroundColor != null ? backgroundColor.trim() : backgroundColor;
         }
 }

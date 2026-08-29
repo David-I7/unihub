@@ -70,6 +70,9 @@ public class Course {
     @Column
     private String description;
 
+    @Column(name = "readme")
+    private String readme;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

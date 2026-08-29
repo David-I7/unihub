@@ -2,6 +2,7 @@ package com.unihub.app.services.community.resources;
 
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
@@ -81,6 +82,43 @@ public class CommunityJoinCodeService {
         }
 
         joinCodeRepository.delete(joinCode);
+    }
+
+    @Transactional
+    public CommunityJoinCodeResponseDto updateJoinCode(String communitySlug, UUID codeId, UpdateJoinCodeRequestDto dto) {
+        if (dto.maxUses() == null && dto.validForHours() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
+        }
+
+        CommunityJoinCode joinCode = joinCodeRepository.findById(codeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code not found"));
+
+        if (!joinCode.getCommunity().getSlug().equals(communitySlug)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code not found in this community");
+        }
+
+        if (dto.maxUses() != null) {
+            if (dto.maxUses() == -1) {
+                joinCode.setMaxUses(null);
+            } else if (dto.maxUses() > 0) {
+                joinCode.setMaxUses(dto.maxUses());
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be -1 or greater than 0");
+            }
+        }
+
+        if (dto.validForHours() != null) {
+            if (dto.validForHours() == -1) {
+                joinCode.setExpiresAt(null);
+            } else if (dto.validForHours() > 0) {
+                joinCode.setExpiresAt(OffsetDateTime.now().plusHours(dto.validForHours()));
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "validForHours must be -1 or greater than 0");
+            }
+        }
+
+        CommunityJoinCode updated = joinCodeRepository.save(joinCode);
+        return communityMapper.toCommunityJoinCodeResponseDto(updated);
     }
 
     private String generateUniqueCode() {

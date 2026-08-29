@@ -3,6 +3,7 @@ package com.unihub.app.mappers.community;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
+import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.response.*;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.authentication.User;
@@ -27,6 +28,7 @@ public class CommunityResourceMapper {
                 .name(dto.name())
                 .slug(dto.slug())
                 .description(dto.description())
+                .readme(dto.readme())
                 .backgroundColor(dto.backgroundColor())
                 .verified(verified)
                 .memberCount(1)
@@ -92,9 +94,10 @@ public class CommunityResourceMapper {
                 .id(community.getId())
                 .name(community.getName())
                 .description(community.getDescription())
+                .readme(community.getReadme())
                 .memberCount(community.getMemberCount())
                 .createdAt(community.getCreatedAt())
-                .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername()))
+                .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername(), community.getOwner().isActive()))
                 .backgroundColor(community.getBackgroundColor())
                 .verified(community.isVerified())
                 .slug(community.getSlug())
@@ -118,6 +121,14 @@ public class CommunityResourceMapper {
         return StudyYearHomeResponseDto.builder()
                 .studyYear(toStudyYearResponseDto(studyYear))
                 .courses(courses)
+                .build();
+    }
+
+    public StudyYear toStudyYearEntity(CreateStudyYearRequestDto dto, Community community) {
+        return StudyYear.builder()
+                .studyYearName(dto.studyYearName())
+                .community(community)
+                .createdAt(OffsetDateTime.now())
                 .build();
     }
 
@@ -149,6 +160,7 @@ public class CommunityResourceMapper {
                 .creditPoints(course.getCreditPoints())
                 .archived(course.isArchived())
                 .description(course.getDescription())
+                .readme(course.getReadme())
                 .build();
     }
 

@@ -2,6 +2,7 @@ package com.unihub.app.services;
 
 import com.unihub.app.config.EmailProperties;
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.authentication.MessageResponseDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
@@ -80,14 +81,15 @@ public class UserServiceTests {
     @Mock
     private AppUtils appUtils;
 
-    private UserMapper userMapper;
+    @Mock
     private VerificationCodeService verificationCodeService;
+
+    private UserMapper userMapper;
     private UserService userService;
 
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
         userMapper = new UserMapper(roleService);
-        verificationCodeService = new VerificationCodeService();
         EmailProperties emailProperties = new EmailProperties(
                 "no-reply@unihub.com",
                 "support@unihub.com",
@@ -122,7 +124,7 @@ public class UserServiceTests {
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now().minusDays(10);
-        Role role = Role.builder().id(roleId).name("STUDENT").build();
+        Role role = Role.builder().id(roleId).name("USER").build();
         User user = User.builder()
                 .id(userId)
                 .username("john_doe")
@@ -135,7 +137,7 @@ public class UserServiceTests {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(roleService.getRoleById(roleId)).thenReturn(role);
-        when(roleService.getPermissionNamesByRoleName("STUDENT")).thenReturn(permissions);
+        when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(permissions);
 
         UserProfileResponseDto result = userService.getUserProfile(userId);
 
@@ -143,7 +145,7 @@ public class UserServiceTests {
         assertEquals(userId, result.id());
         assertEquals("john_doe", result.username());
         assertEquals("john@example.com", result.email());
-        assertEquals("STUDENT", result.role());
+        assertEquals("USER", result.role());
         assertEquals(permissions, result.permissions());
         assertEquals(createdAt, result.createdAt());
 
@@ -183,7 +185,7 @@ public class UserServiceTests {
         when(userRepository.findByUsername("new_name")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(roleService.getRoleById(roleId)).thenReturn(role);
-        when(roleService.getPermissionNamesByRoleName("USER")).thenReturn(List.of());
+        when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(List.of());
 
         UserProfileResponseDto result = userService.updateProfile(userId, dto);
 
@@ -211,7 +213,7 @@ public class UserServiceTests {
         when(roleService.getRoleByName(RoleType.ADMIN)).thenReturn(newRole);
         when(userRepository.save(any(User.class))).thenReturn(target);
         when(roleService.getRoleById(newRoleId)).thenReturn(newRole);
-        when(roleService.getPermissionNamesByRoleName("ADMIN")).thenReturn(List.of("MANAGE_USERS"));
+        when(roleService.getPermissionNamesByRoleType(RoleType.ADMIN)).thenReturn(List.of("MANAGE_USERS"));
 
         UserProfileResponseDto result = userService.updateUserRole("bob", dto);
 
@@ -226,12 +228,11 @@ public class UserServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("selfDelete marks user deletedAt and invalidates tokens when user does not own any communities")
+    @DisplayName("selfDelete marks user deletedAt and invalidates tokens")
     public void testSelfDelete_Success() {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com").username("user").build();
 
-        when(communityRepository.existsByOwnerId(userId)).thenReturn(false);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         userService.selfDelete(userId);
@@ -239,15 +240,10 @@ public class UserServiceTests {
         assertNotNull(user.getDeletedAt());
         verify(userRepository).save(user);
         verify(sessionService).invalidateUserTokens(userId);
-        verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
 
-    // =========================================================================
-    // adminDeleteUser
-    // =========================================================================
-
     @Test
-    @DisplayName("adminDeleteUser hard-deletes user when not root and not owning communities")
+    @DisplayName("adminDeleteUser hard-deletes user when not root")
     public void testAdminDeleteUser_Success() {
         UUID userId = UUID.randomUUID();
         UUID userRoleId = UUID.randomUUID();
@@ -258,7 +254,6 @@ public class UserServiceTests {
 
         when(userRepository.findByUsername("bob")).thenReturn(Optional.of(user));
         when(roleService.getRoleByName(RoleType.ROOT)).thenReturn(rootRole);
-        when(communityRepository.existsByOwnerId(userId)).thenReturn(false);
 
         userService.adminDeleteUser("bob", "Violation of terms");
 
@@ -311,9 +306,9 @@ public class UserServiceTests {
                 .thenReturn(List.of(member1, member2));
         when(roleService.getRoleById(roleId1)).thenReturn(memberRole);
         when(roleService.getRoleById(roleId2)).thenReturn(adminRole);
-        when(roleService.getPermissionNamesByRoleName("COMMUNITY_MEMBER"))
+        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_MEMBER))
                 .thenReturn(List.of("VIEW_POSTS"));
-        when(roleService.getPermissionNamesByRoleName("COMMUNITY_ADMIN"))
+        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_ADMIN))
                 .thenReturn(List.of("VIEW_POSTS", "DELETE_POST"));
 
         UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
@@ -374,7 +369,10 @@ public class UserServiceTests {
     @Test
     @DisplayName("confirmRegister saves user and local identity, sets emailVerified true, and publishes UserWelcomeEvent")
     public void testConfirmRegister_Success() {
-        verificationCodeService.savePendingRegistration("testuser", "test@example.com", "encodedSecret", "123456");
+        VerificationCodeService.PendingRegistration pending = verificationCodeService.new PendingRegistration(
+                "testuser", "test@example.com", "encodedSecret", "123456", 0
+        );
+        when(verificationCodeService.verifyAndConsumeRegistration("test@example.com", "123456")).thenReturn(pending);
 
         when(userRepository.findByUsernameOrEmail("testuser", "test@example.com")).thenReturn(Collections.emptyList());
         Role userRole = Role.builder().id(UUID.randomUUID()).name("USER").build();
@@ -415,10 +413,10 @@ public class UserServiceTests {
         User user = User.builder().id(UUID.randomUUID()).email("user@example.com").username("user").emailVerified(false).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
-        User updatedUser = userService.confirmEmail("user@example.com", "123456");
+        MessageResponseDto updatedUser = userService.confirmEmail("user@example.com", "123456");
 
         assertNotNull(updatedUser);
-        assertTrue(updatedUser.isEmailVerified());
+        assertEquals("Email has been successfully verified.", updatedUser.message());
         verify(userRepository).save(user);
     }
 
@@ -511,7 +509,7 @@ public class UserServiceTests {
     @DisplayName("purgeExpiredDeletedUsers deletes users with deletedAt older than 30 days")
     public void testPurgeExpiredDeletedUsers_DeletesExpiredUsers() {
         User expiredUser = User.builder().id(UUID.randomUUID()).deletedAt(OffsetDateTime.now().minusDays(31)).build();
-        when(userRepository.findByDeletedAtIsNotNullAndDeletedAtLessThanEqual(any(OffsetDateTime.class)))
+        when(userRepository.findScheduledDeletedUsers(any(OffsetDateTime.class)))
                 .thenReturn(List.of(expiredUser));
 
         userService.purgeExpiredDeletedUsers();

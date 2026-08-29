@@ -61,13 +61,18 @@ public class RoleService {
     @PostConstruct
     public void initializeRoles() {
         var roles = roleRepository.findAllWithPermissions();
+        if (roles == null) {
+            return;
+        }
         var roleCache = cacheManager.getCache("roles");
         var rolePermissionsCache = cacheManager.getCache("rolePermissionsByName");
 
-        roles.forEach(role -> {
-            roleCache.put(role.getName(), role);
-            roleCache.put(role.getId(), role);
-            rolePermissionsCache.put(role.getName(), role.getPermissions().stream().map(Permission::getName).toList());
-        });
+        if (roleCache != null && rolePermissionsCache != null) {
+            roles.forEach(role -> {
+                roleCache.put(role.getName(), role);
+                roleCache.put(role.getId(), role);
+                rolePermissionsCache.put(role.getName(), role.getPermissions().stream().map(Permission::getName).toList());
+            });
+        }
     }
 }

@@ -30,13 +30,13 @@ Pattern: <action>:<resource>
   create:community           |  X   |   X   |                 |                 |                  |  X
   update:community           |  X   |   X   |        X        |        X        |                  |
   delete:community           |  X   |   X   |        X        |                 |                  |
-  create:joinCode            |  X   |   X   |        x        |        x        |                  |
-  update:joinCode            |  X   |   X   |        X        |        x        |                  |
-  delete:joinCode            |  X   |   X   |        X        |        x        |                  |
   verify:community           |  X   |   X   |                 |                 |                  |
+  create:joinCode            |  X   |   X   |        X        |        X        |                  |
+  update:joinCode            |  X   |   X   |        X        |        X        |                  |
+  delete:joinCode            |  X   |   X   |        X        |        X        |                  |
+  create:member              |  X   |   X   |        X        |        X        |                  |
   update:memberRole          |  X   |   X   |        X        |                 |                  |
   delete:member              |  X   |   X   |        X        |        X        |                  |
-  create:member              |  X   |   X   |        X        |        X        |                  |
   create:studyYear           |  X   |   X   |        X        |        X        |                  |
   delete:studyYear           |  X   |   X   |        X        |                 |                  |
   create:course              |  X   |   X   |        X        |        X        |                  |
@@ -92,6 +92,7 @@ INSERT INTO PERMISSIONS (id, name, description) VALUES
 
 -- Community membership
 (gen_random_uuid(), 'create:joinCode', 'Generate an invite join code for a community'),
+(gen_random_uuid(), 'update:joinCode', 'Update max uses or expiration of a community join code'),
 (gen_random_uuid(), 'delete:joinCode', 'Delete or revoke a join code for a community'),
 (gen_random_uuid(), 'create:member', 'Directly add a user to a community without a join code'),
 (gen_random_uuid(), 'update:memberRole', 'Promote or demote members to and from community administrator'),
@@ -182,6 +183,7 @@ WHERE r.name = 'COMMUNITY_OWNER'
     'update:community',
     'delete:community',
     'create:joinCode',
+    'update:joinCode',
     'delete:joinCode',
     'create:member',
     'update:memberRole',
@@ -231,6 +233,7 @@ WHERE r.name = 'COMMUNITY_ADMIN'
   AND p.name IN (
     'update:community',
     'create:joinCode',
+    'update:joinCode',
     'delete:joinCode',
     'create:member',
     'delete:member',

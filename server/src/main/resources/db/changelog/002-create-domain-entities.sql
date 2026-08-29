@@ -39,8 +39,9 @@ CREATE TABLE COMMUNITIES(
     name text not null UNIQUE,
     slug text not null UNIQUE,
     description text not null,
+    readme text,
     members_count int not null default 0,
-    owner_id UUID not null REFERENCES USERS(id) ON DELETE SET CASCADE,
+    owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     background_color text not null default '#2563eb',
     verified boolean not null default false,
     created_at timestamptz not null default now()
@@ -76,6 +77,7 @@ CREATE TABLE COURSES(
     archived boolean not null default false,
     credit_points int not null default 5,
     description text,
+    readme text,
     created_at timestamptz not null default now(),
     UNIQUE (study_year_id, name),
     UNIQUE (study_year_id, slug)

@@ -3,6 +3,7 @@ package com.unihub.app.services;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
@@ -138,5 +139,81 @@ public class CommunityJoinCodeServiceTests {
         communityJoinCodeService.deleteJoinCode("fmi-info", codeId);
 
         verify(joinCodeRepository).delete(code);
+    }
+
+    @Test
+    @DisplayName("updateJoinCode updates maxUses and validForHours successfully")
+    public void testUpdateJoinCode_Success() {
+        UUID codeId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+        Community community = Community.builder().slug("fmi-info").build();
+        CommunityJoinCode code = CommunityJoinCode.builder()
+                .id(codeId)
+                .code("ABC12345")
+                .community(community)
+                .maxUses(10)
+                .usesCount(0)
+                .expiresAt(now.plusHours(24))
+                .createdAt(now)
+                .build();
+
+        UpdateJoinCodeRequestDto dto = new UpdateJoinCodeRequestDto(50, 72);
+
+        when(joinCodeRepository.findById(codeId)).thenReturn(Optional.of(code));
+        when(joinCodeRepository.save(any(CommunityJoinCode.class))).thenAnswer(i -> i.getArgument(0));
+
+        CommunityJoinCodeResponseDto result = communityJoinCodeService.updateJoinCode("fmi-info", codeId, dto);
+
+        assertNotNull(result);
+        assertEquals(50, result.maxUses());
+        assertNotNull(result.expiresAt());
+        verify(joinCodeRepository).save(code);
+    }
+
+    @Test
+    @DisplayName("updateJoinCode sets unlimited semantics with -1 for maxUses and validForHours")
+    public void testUpdateJoinCode_UnlimitedSemantics() {
+        UUID codeId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+        Community community = Community.builder().slug("fmi-info").build();
+        CommunityJoinCode code = CommunityJoinCode.builder()
+                .id(codeId)
+                .code("ABC12345")
+                .community(community)
+                .maxUses(10)
+                .usesCount(0)
+                .expiresAt(now.plusHours(24))
+                .createdAt(now)
+                .build();
+
+        UpdateJoinCodeRequestDto dto = new UpdateJoinCodeRequestDto(-1, -1);
+
+        when(joinCodeRepository.findById(codeId)).thenReturn(Optional.of(code));
+        when(joinCodeRepository.save(any(CommunityJoinCode.class))).thenAnswer(i -> i.getArgument(0));
+
+        CommunityJoinCodeResponseDto result = communityJoinCodeService.updateJoinCode("fmi-info", codeId, dto);
+
+        assertNotNull(result);
+        assertNull(result.maxUses());
+        assertNull(result.expiresAt());
+        verify(joinCodeRepository).save(code);
+    }
+
+    @Test
+    @DisplayName("updateJoinCode throws 404 when join code belongs to different community")
+    public void testUpdateJoinCode_WrongCommunity() {
+        UUID codeId = UUID.randomUUID();
+        Community otherCommunity = Community.builder().slug("other-community").build();
+        CommunityJoinCode code = CommunityJoinCode.builder()
+                .id(codeId)
+                .code("ABC12345")
+                .community(otherCommunity)
+                .build();
+
+        UpdateJoinCodeRequestDto dto = new UpdateJoinCodeRequestDto(20, 24);
+
+        when(joinCodeRepository.findById(codeId)).thenReturn(Optional.of(code));
+
+        assertThrows(ResponseStatusException.class, () -> communityJoinCodeService.updateJoinCode("fmi-info", codeId, dto));
     }
 }

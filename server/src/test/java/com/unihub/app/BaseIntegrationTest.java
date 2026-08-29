@@ -97,4 +97,7 @@ public abstract class BaseIntegrationTest {
 
     @MockitoBean
     protected CourseCommentRepository courseCommentRepository;
+
+    @MockitoBean
+    protected PostLikeRepository postLikeRepository;
 }

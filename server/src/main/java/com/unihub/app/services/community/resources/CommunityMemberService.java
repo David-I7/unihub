@@ -218,7 +218,7 @@ public class CommunityMemberService {
     }
 
     @Scheduled(cron="@daily")
-    private void deleteExpiredCodes(){
+    protected void deleteExpiredCodes(){
         joinCodeRepository.deleteExpiredCodes();
     }
 }

@@ -34,6 +34,6 @@ public interface CommunityJoinCodeRepository extends JpaRepository<CommunityJoin
     void incrementUsesCount(@Param("id") UUID id);
 
     @Modifying
-    @Query("DELETE FROM CommunityJoinCode jc WHERE jc.expiresAt <= now()")
+    @Query("DELETE FROM CommunityJoinCode jc WHERE jc.expiresAt <= CURRENT_TIMESTAMP")
     void deleteExpiredCodes();
 }

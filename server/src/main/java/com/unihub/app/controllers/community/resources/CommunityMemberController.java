@@ -4,6 +4,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
@@ -100,6 +101,17 @@ public class CommunityMemberController {
     ) {
         List<CommunityJoinCodeResponseDto> codes = communityJoinCodeService.getJoinCodes(communitySlug);
         return ResponseEntity.ok(codes);
+    }
+
+    @PatchMapping("/join-codes/{codeId}")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:joinCode')")
+    public ResponseEntity<CommunityJoinCodeResponseDto> updateJoinCode(
+            @PathVariable String communitySlug,
+            @PathVariable UUID codeId,
+            @Valid @RequestBody UpdateJoinCodeRequestDto requestDto
+    ) {
+        CommunityJoinCodeResponseDto response = communityJoinCodeService.updateJoinCode(communitySlug, codeId, requestDto);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/join-codes/{codeId}")

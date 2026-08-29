@@ -2,6 +2,7 @@ package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
@@ -107,12 +108,24 @@ public class CommunityController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{communitySlug}/posts")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:post')")
+    public ResponseEntity<PostResponseDto> createCommunityPost(
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody CreatePostRequestDto requestDto
+    ) {
+        PostResponseDto created = communityPostService.createCommunityPost(communitySlug, user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
     @GetMapping("/{communitySlug}/posts")
     public ResponseEntity<PageDto<PostResponseDto>> getCommunityPosts(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
-        PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, pageable);
+        PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, user, pageable);
         return ResponseEntity.ok(posts);
     }
 }

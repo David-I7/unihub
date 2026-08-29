@@ -6,6 +6,7 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.repositories.community.content.*;
+import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
@@ -108,6 +109,11 @@ public class MockRepositoriesTestConfig {
     }
 
     @Bean
+    public PostLikeRepository postLikeRepository() {
+        return Mockito.mock(PostLikeRepository.class);
+    }
+
+    @Bean
     public ResourceRepository resourceRepository() {
         return Mockito.mock(ResourceRepository.class);
     }
@@ -115,6 +121,11 @@ public class MockRepositoriesTestConfig {
     @Bean
     public CommunityMemberRepository communityMemberRepository() {
         return Mockito.mock(CommunityMemberRepository.class);
+    }
+
+    @Bean
+    public CommunityJoinCodeRepository communityJoinCodeRepository() {
+        return Mockito.mock(CommunityJoinCodeRepository.class);
     }
 
     @Bean

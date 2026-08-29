@@ -36,6 +36,9 @@ public class Community {
     @Column(name = "description", nullable = false)
     private String description;
 
+    @Column(name = "readme")
+    private String readme;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 

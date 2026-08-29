@@ -1,10 +1,13 @@
 package com.unihub.app.services.community.resources;
 
+import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.response.*;
+import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
+import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.repositories.community.resources.StudyYearRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ public class StudyYearService {
 
     private final StudyYearRepository studyYearRepository;
     private final CourseRepository courseRepository;
+    private final CommunityRepository communityRepository;
     private final CommunityResourceMapper communityMapper;
 
     @Transactional(readOnly = true)
@@ -52,5 +56,27 @@ public class StudyYearService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
         return studyYear.getCourses().stream().map(communityMapper::courseIdentifiersResponseDto).toList();
+    }
+
+    @Transactional
+    public StudyYearResponseDto createStudyYear(String communitySlug, CreateStudyYearRequestDto dto) {
+        Community community = communityRepository.findBySlug(communitySlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+
+        if (studyYearRepository.existsByCommunitySlugAndStudyYearName(communitySlug, dto.studyYearName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Study year already exists in this community");
+        }
+
+        StudyYear studyYear = communityMapper.toStudyYearEntity(dto, community);
+        StudyYear saved = studyYearRepository.save(studyYear);
+        return communityMapper.toStudyYearResponseDto(saved);
+    }
+
+    @Transactional
+    public void deleteStudyYear(String communitySlug, StudyYearName studyYearName) {
+        StudyYear studyYear = studyYearRepository.findByCommunitySlugAndStudyYearName(communitySlug, studyYearName)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
+
+        studyYearRepository.delete(studyYear);
     }
 }

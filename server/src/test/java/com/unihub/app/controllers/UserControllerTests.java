@@ -5,6 +5,7 @@ import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
+import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
 import com.unihub.app.repositories.authentication.SessionRepository;
@@ -260,12 +261,14 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 204 No Content is returned
             """)
     public void testDeleteUser_Success() throws Exception {
-        doNothing().when(userService).adminDeleteUser("bob", null);
+        AdminDeleteUserRequestDto requestDto = new AdminDeleteUserRequestDto("Violation of terms");
+        doNothing().when(userService).adminDeleteUser("bob", "Violation of terms");
 
         mockMvc.perform(delete(BASE_URL + "/bob")
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isNoContent());
 
-        verify(userService).adminDeleteUser("bob", null);
+        verify(userService).adminDeleteUser("bob", "Violation of terms");
     }
 }
