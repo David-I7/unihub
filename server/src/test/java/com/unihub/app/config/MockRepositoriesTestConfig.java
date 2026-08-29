@@ -151,4 +151,11 @@ public class MockRepositoriesTestConfig {
     public TeacherRepository teacherRepository() {
         return Mockito.mock(TeacherRepository.class);
     }
+
+    @Bean
+    public org.springframework.mail.javamail.JavaMailSender javaMailSender() {
+        org.springframework.mail.javamail.JavaMailSender sender = Mockito.mock(org.springframework.mail.javamail.JavaMailSender.class);
+        Mockito.when(sender.createMimeMessage()).thenReturn(new jakarta.mail.internet.MimeMessage((jakarta.mail.Session) null));
+        return sender;
+    }
 }

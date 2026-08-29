@@ -9,6 +9,7 @@ import com.unihub.app.exceptions.InvalidJwtTokenException;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.SessionRepository;
 import com.unihub.app.services.JwtService;
+import com.unihub.app.utils.AppUtils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -16,7 +17,6 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -34,8 +34,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class SessionService {
 
-    @Value("${app.is-development}")
-    private boolean isDevelopment;
+    private final AppUtils appUtils;
 
     private final SessionProperties sessionProperties;
 
@@ -115,6 +114,11 @@ public class SessionService {
         return clearSessionCookie();
     }
 
+    @Transactional
+    public void revokeAllUserSessions(UUID userId) {
+        sessionRepository.revokeAllByUserId(userId);
+    }
+
     private UUID getSessionFamilyId(Session session) {
         return session.getInitialSessionId() == null ? session.getId() : session.getInitialSessionId();
     }
@@ -122,10 +126,10 @@ public class SessionService {
     private ResponseCookie createSessionCookie(String refreshToken) {
         return ResponseCookie.from("refreshToken", refreshToken)
                 .httpOnly(true)
-                .secure(!isDevelopment)
+                .secure(!appUtils.isDevelopment())
                 .path("/api/v1/auth")
                 .maxAge(Duration.ofSeconds(sessionProperties.refreshTokenExpirationSec()))
-                .sameSite(isDevelopment ? "Lax" : "Strict")
+                .sameSite(appUtils.isDevelopment() ? "Lax" : "Strict")
                 .build();
     }
 

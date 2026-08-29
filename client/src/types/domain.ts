@@ -7,6 +7,7 @@ export type User = {
 export type GlobalRole = "USER" | "ROOT" | "ADMIN";
 
 export type UserProfile = {
+  emailVerified: boolean;
   globalRole: GlobalRole;
   globalPermissions: string[];
 } & User;

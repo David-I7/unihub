@@ -12,6 +12,7 @@ public record UserProfileResponseDto(
         String username,
         String email,
         String role,
+        boolean emailVerified,
         List<String> permissions,
         OffsetDateTime createdAt
 ) {

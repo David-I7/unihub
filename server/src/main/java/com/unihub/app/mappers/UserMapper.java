@@ -53,7 +53,7 @@ public class UserMapper {
                 .build();
     }
 
-    public User toEntity(String email, String username, UUID roleId, OffsetDateTime now) {
+    public User toEntity(String email, String username, UUID roleId, OffsetDateTime now, boolean emailVerified) {
         return User.builder()
                 .email(email)
                 .username(username)
@@ -61,6 +61,7 @@ public class UserMapper {
                 .createdAt(now)
                 .updatedAt(now)
                 .roleId(roleId)
+                .emailVerified(emailVerified)
                 .build();
     }
 
@@ -82,6 +83,7 @@ public class UserMapper {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(roleName)
+                .emailVerified(user.isEmailVerified())
                 .permissions(permissions)
                 .createdAt(user.getCreatedAt())
                 .build();

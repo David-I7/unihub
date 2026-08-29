@@ -34,11 +34,18 @@ spring:
             redirect-uri: "{baseUrl}/api/v1/auth/oauth2/code/{registrationId}"
 
 app:
+  mail:
+    no-reply-email: no-reply@unihub.com
+    support-email: support@unihub.com
+    notification-email: notification@unihub.com
+    email-verification-token-expiration-sec: 86400
+    password-reset-token-expiration-sec: 900
   jwt:
     secret: 1234567890123456789012345678901234567890123456789012345678901234
   session:
     access-token-expiration-sec: 3600
     refresh-token-expiration-sec: 604800
     refresh-token-rotate-window-sec: 86400
-  is-development: true
-  client-origin: http://localhost:5173
+  development:
+    client-origin: http://localhost:5173
+    is-development: true

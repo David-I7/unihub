@@ -59,6 +59,9 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
     @Autowired
     private OAuth2AuthenticationSuccessHandler successHandler;
 
+    @Autowired
+    private com.unihub.app.utils.AppUtils appUtils;
+
     @BeforeEach
     public void setUp() {
         when(roleRepository.findByName(anyString()))
@@ -80,7 +83,61 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
 
         OAuth2User oauth2User = new DefaultOAuth2User(
                 List.of(new SimpleGrantedAuthority("ROLE_USER")),
-                Map.of("sub", sub, "email", email, "name", "Google User"),
+                Map.of("sub", sub, "email", email, "name", "Google User", "email_verified", true),
+                "sub"
+        );
+
+        OAuth2AuthenticationToken authToken = new OAuth2AuthenticationToken(
+                oauth2User,
+                oauth2User.getAuthorities(),
+                "google"
+        );
+
+        when(userIdentityRepository.findByProviderAndProviderSubject(AuthProvider.GOOGLE, sub))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail(email))
+                .thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class)))
+                .thenAnswer(i -> {
+                    User u = i.getArgument(0);
+                    u.setId(UUID.randomUUID());
+                    return u;
+                });
+        when(userIdentityRepository.save(any(UserIdentity.class)))
+                .thenAnswer(i -> i.getArgument(0));
+        when(sessionRepository.save(any(Session.class)))
+                .thenAnswer(i -> {
+                    Session s = i.getArgument(0);
+                    s.setId(UUID.randomUUID());
+                    return s;
+                });
+
+        successHandler.onAuthenticationSuccess(request, response, authToken);
+
+        assertThat(response.getHeader("Set-Cookie")).contains("refreshToken=");
+        assertThat(response.getRedirectedUrl()).isEqualTo(CLIENT_ORIGIN + "/oauth2?status=success&provider=GOOGLE");
+
+        verify(userRepository).save(any(User.class));
+        verify(userIdentityRepository).save(any(UserIdentity.class));
+        verify(sessionRepository).save(any(Session.class));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: new Google OAuth2 user with unverified email
+            When: onAuthenticationSuccess is invoked
+            Then: user is registered with emailVerified false and redirected to success
+            """)
+    public void testOAuth2Success_NewUser_UnverifiedEmail_Success() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        String sub = "google-sub-unverified";
+        String email = "unverified@gmail.com";
+
+        OAuth2User oauth2User = new DefaultOAuth2User(
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                Map.of("sub", sub, "email", email, "name", "Unverified User", "email_verified", false),
                 "sub"
         );
 
@@ -263,7 +320,7 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
             Then: user is redirected to current context path + '/oauth2/success'
             """)
     public void testOAuth2Success_WhenIsDevelopmentFalse_RedirectsToContextPathSuccessUrl() throws Exception {
-        ReflectionTestUtils.setField(successHandler, "isDevelopment", false);
+        ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", false));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setServerName("unihub.com");
@@ -296,7 +353,7 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
             assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2?status=success&provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
-            ReflectionTestUtils.setField(successHandler, "isDevelopment", true);
+            ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", true));
         }
     }
 }

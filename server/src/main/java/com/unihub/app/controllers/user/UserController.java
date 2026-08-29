@@ -3,6 +3,7 @@ package com.unihub.app.controllers.user;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
+import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
 import com.unihub.app.services.authentication.UserService;
@@ -66,9 +67,11 @@ public class UserController {
     @DeleteMapping("/{username}")
     @PreAuthorize("@security.hasGlobalPermission('delete:user')")
     public ResponseEntity<Void> adminDeleteUser(
-            @PathVariable String username
+            @PathVariable String username,
+            @RequestBody(required = false) AdminDeleteUserRequestDto requestDto
     ) {
-        userService.adminDeleteUser(username);
+        String reason = requestDto != null ? requestDto.reason() : null;
+        userService.adminDeleteUser(username, reason);
         return ResponseEntity.noContent().build();
     }
 }

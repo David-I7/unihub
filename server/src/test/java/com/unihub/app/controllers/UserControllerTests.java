@@ -151,7 +151,7 @@ public class UserControllerTests extends BaseIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
         when(authorizationService.requireAuthentication()).thenReturn(auth);
 
-        UpdateUserProfileRequestDto requestDto = new UpdateUserProfileRequestDto("new_username", null, null);
+        UpdateUserProfileRequestDto requestDto = new UpdateUserProfileRequestDto("new_username");
         UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
                 .id(userId)
                 .username("new_username")
@@ -288,12 +288,12 @@ public class UserControllerTests extends BaseIntegrationTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
         when(authorizationService.requireAuthentication()).thenReturn(auth);
 
-        doNothing().when(userService).adminDeleteUser("bob");
+        doNothing().when(userService).adminDeleteUser("bob", null);
 
         mockMvc.perform(delete(BASE_URL + "/bob")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
-        verify(userService).adminDeleteUser("bob");
+        verify(userService).adminDeleteUser("bob", null);
     }
 }

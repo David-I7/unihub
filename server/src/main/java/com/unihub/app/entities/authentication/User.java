@@ -28,6 +28,9 @@ public class User {
 
     private String password;
 
+    @Column(nullable = false, name = "email_verified")
+    private boolean emailVerified;
+
     @Column(nullable = false, name="role_id")
     private UUID roleId;
 

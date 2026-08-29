@@ -37,4 +37,12 @@ public interface SessionRepository extends JpaRepository<Session, UUID> {
             """)
     int revokeSession(String refreshToken);
 
+    @Modifying
+    @Query("""
+            UPDATE Session s
+            SET s.revoked = true
+            WHERE s.user.id = :userId
+            """)
+    int revokeAllByUserId(UUID userId);
+
 }
