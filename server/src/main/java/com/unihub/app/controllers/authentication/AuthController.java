@@ -43,14 +43,14 @@ public class AuthController {
     @PostMapping("/register/local")
     public ResponseEntity<MessageResponseDto> register(@Valid @RequestBody LocalRegisterRequestDto request) {
         User user = userMapper.toEntity(request);
-        userService.register(user);
+        MessageResponseDto message = userService.register(user);
 
-        return ResponseEntity.ok(new MessageResponseDto("Verification email sent. Please check your inbox."));
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/confirm-register")
-    public ResponseEntity<SessionResponseDto> confirmRegister(@Valid @RequestBody JwtTokenRequestDto request) {
-        User registeredUser = userService.confirmRegister(request.token());
+    public ResponseEntity<SessionResponseDto> confirmRegister(@Valid @RequestBody ConfirmRegisterRequestDto request) {
+        User registeredUser = userService.confirmRegister(request.email(), request.code());
         JwtSession session = sessionService.createSession(registeredUser);
 
         return ResponseEntity.created(URI.create(appUtils.getOrigin() + "/api/v1/auth/refresh"))
@@ -59,28 +59,28 @@ public class AuthController {
     }
 
     @PostMapping("/confirm-email")
-    public ResponseEntity<MessageResponseDto> confirmEmail(@Valid @RequestBody JwtTokenRequestDto request) {
-        userService.confirmEmail(request.token());
-        return ResponseEntity.ok(new MessageResponseDto("Email has been successfully verified."));
+    public ResponseEntity<MessageResponseDto> confirmEmail(@Valid @RequestBody ConfirmEmailRequestDto request) {
+        MessageResponseDto message = userService.confirmEmail(request.email(), request.code());
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<MessageResponseDto> confirmEmail(@Valid @RequestBody EmailRequestDto request) {
-        userService.requestConfirmEmail(request.email());
+    public ResponseEntity<MessageResponseDto> verifyEmail(@Valid @RequestBody EmailRequestDto request) {
+        MessageResponseDto message = userService.requestConfirmEmail(request.email());
 
-        return ResponseEntity.ok(new MessageResponseDto("If an account exists with that email, an email verification link has been sent."));
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<MessageResponseDto> forgotPassword(@Valid @RequestBody EmailRequestDto request) {
-        userService.requestPasswordReset(request.email());
-        return ResponseEntity.ok(new MessageResponseDto("If an account exists with that email, a password reset link has been sent."));
+        MessageResponseDto message = userService.requestPasswordReset(request.email());
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<MessageResponseDto> resetPassword(@Valid @RequestBody ResetPasswordRequestDto request) {
-        userService.resetPassword(request.token(), request.newPassword());
-        return ResponseEntity.ok(new MessageResponseDto("Password has been successfully reset. Please log in with your new password."));
+        MessageResponseDto message = userService.resetPassword(request.token(), request.newPassword());
+        return ResponseEntity.ok(message);
     }
 
     @PostMapping("/logout")

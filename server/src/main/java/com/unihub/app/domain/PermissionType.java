@@ -69,5 +69,23 @@ public enum PermissionType {
     UPDATE_RATING_METRIC(Permissions.UPDATE_RATING_METRIC),
     DELETE_RATING_METRIC(Permissions.DELETE_RATING_METRIC);
 
+    public static PermissionType from(String value){
+        for (PermissionType type : PermissionType.values()) {
+            if (type.getValue().equals(value)) {
+                return type;
+            }
+        }
+        return null;
+    }
+
     private final String value;
+
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

@@ -41,9 +41,12 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
         }
 
         if(!shouldAuthenticatePath(requestPath)){
-            if(!requestPath.startsWith("/api/v1/auth/refresh") && !requestPath.startsWith("/api/v1/auth/logout")){
+            if(shouldNotBeAuthenticated(requestPath)){
                 try {
-                    sessionService.validateRefreshTokenSession(request, response);
+                    SessionService.SessionStatus status =  sessionService.validateRefreshTokenSession(request, response);
+                    if(status == SessionService.SessionStatus.ACTIVE || status == SessionService.SessionStatus.ROTATE_REQUIRED){
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"User is already authenticated.");
+                    }
                 }catch (ResponseStatusException e){
                     problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getMessage());
                     return;
@@ -73,11 +76,20 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(new JwtAuthentication(userDto));
             filterChain.doFilter(request,response);
         }catch (ResponseStatusException e){
-            problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getMessage());
+            if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                response.setHeader(HttpHeaders.SET_COOKIE, sessionService.clearSessionCookie().toString());
+            }
+            problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getReason() != null ? e.getReason() : e.getMessage());
         }
     }
 
     private boolean shouldAuthenticatePath(String path){
         return !path.startsWith("/api/v1/auth");
+    }
+
+    private boolean shouldNotBeAuthenticated(String path){
+        return path.startsWith("/api/v1/auth/login/local") ||
+                path.startsWith("/api/v1/auth/register/local") ||
+                path.startsWith("/api/v1/auth/confirm-register");
     }
 }

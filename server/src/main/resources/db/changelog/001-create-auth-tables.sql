@@ -27,6 +27,7 @@ CREATE TABLE USERS(
     username text not null UNIQUE,
     password text default null,
     email_verified boolean not null,
+    deleted_at timestamptz default null,
     role_id UUID not null references ROLES(id),
     created_at timestamptz default now(),
     updated_at timestamptz default now()

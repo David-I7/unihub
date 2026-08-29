@@ -2,6 +2,7 @@ package com.unihub.app.config;
 
 import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
 import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
+import com.unihub.app.utils.AppUtils;
 import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,10 +71,10 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource(){
+    public CorsConfigurationSource corsConfigurationSource(AppUtils appUtils){
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(Arrays.asList("*"));
+        config.setAllowedOrigins(appUtils.getAllowedOrigins());
         config.setAllowCredentials(true);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(

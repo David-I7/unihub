@@ -2,6 +2,7 @@ package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
@@ -19,12 +20,12 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,7 +42,6 @@ public class CommunityMemberService {
     private final CommunityJoinCodeRepository joinCodeRepository;
     private final UserRepository userRepository;
     private final RoleService roleService;
-    private final AuthorizationService authorizationService;
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
@@ -60,7 +60,7 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public UserEnrolledCommunityDto joinWithCode(UUID userId, String code) {
+    public UserEnrolledCommunityDto joinWithCode(UserDto userDto, String code) {
         CommunityJoinCode joinCode = joinCodeRepository.findByCodeWithCommunity(code)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid join code"));
 
@@ -74,11 +74,11 @@ public class CommunityMemberService {
 
         Community community = joinCode.getCommunity();
 
-        if (communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), userId)) {
+        if (communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), userDto.id())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You are already a member of this community");
         }
 
-        User user = userMapper.toEntity(authorizationService.requireAuthentication().getUserDto());
+        User user = userMapper.toEntity(userDto);
 
         Role memberRole = roleService.getRoleByName(RoleType.COMMUNITY_MEMBER);
         OffsetDateTime now = OffsetDateTime.now();
@@ -98,7 +98,7 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public void addMemberDirectly(String communitySlug, UUID callerId, AddCommunityMemberRequestDto dto) {
+    public void addMemberDirectly(String communitySlug, UserDto caller, AddCommunityMemberRequestDto dto) {
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
@@ -112,9 +112,8 @@ public class CommunityMemberService {
         RoleType targetRole = dto.role() != null ? dto.role() : RoleType.COMMUNITY_MEMBER;
 
         if (targetRole == RoleType.COMMUNITY_ADMIN) {
-            String callerGlobalRole = authorizationService.getGlobalRoleName(callerId);
-            boolean isPlatformAdmin = RoleType.ROOT.name().equals(callerGlobalRole) || RoleType.ADMIN.name().equals(callerGlobalRole);
-            boolean isOwner = community.getOwner().getId().equals(callerId);
+            boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
+            boolean isOwner = community.getOwner().getId().equals(caller.id());
 
             if (!isOwner && !isPlatformAdmin) {
                 throw new ResponseStatusException(
@@ -152,7 +151,7 @@ public class CommunityMemberService {
             }
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Community owner cannot leave. Transfer ownership or delete the community first."
+                    "Community owner cannot leave a community. You must delete the community, or transfer ownership if you want to leave."
             );
         }
 
@@ -173,7 +172,7 @@ public class CommunityMemberService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         if (community.getOwner().getUsername().equals(targetUsername)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change the role of the community owner");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot change the role of the community owner. Use the transferOwnership method instead.");
         }
 
         User targetUser = userRepository.findByUsername(targetUsername)
@@ -190,12 +189,12 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public void removeMember(String communitySlug, UUID callerId, String targetUsername) {
+    public void removeMember(String communitySlug, UserDto caller, String targetUsername) {
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         if (community.getOwner().getUsername().equals(targetUsername)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot remove the community owner");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot remove the community owner. Use the transferOwnership method instead.");
         }
 
         User targetUser = userRepository.findByUsername(targetUsername)
@@ -204,9 +203,8 @@ public class CommunityMemberService {
         CommunityMember targetMember = communityMemberRepository.findByCommunityIdAndUserId(community.getId(), targetUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found in this community"));
 
-        String callerGlobalRole = authorizationService.getGlobalRoleName(callerId);
-        boolean isPlatformAdmin = RoleType.ROOT.name().equals(callerGlobalRole) || RoleType.ADMIN.name().equals(callerGlobalRole);
-        boolean isOwner = community.getOwner().getId().equals(callerId);
+        boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
+        boolean isOwner = community.getOwner().getId().equals(caller.id());
 
         String targetRoleName = roleService.getRoleById(targetMember.getRoleId()).getName();
 
@@ -217,5 +215,10 @@ public class CommunityMemberService {
 
         communityMemberRepository.delete(targetMember);
         communityRepository.updateMemberCount(community.getId(), -1);
+    }
+
+    @Scheduled(cron="@daily")
+    private void deleteExpiredCodes(){
+        joinCodeRepository.deleteExpiredCodes();
     }
 }

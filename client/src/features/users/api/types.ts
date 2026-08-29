@@ -6,6 +6,7 @@ export interface UserProfileResponse {
   username: string;
   email: string;
   role: GlobalRole;
+  emailVerified: boolean;
   permissions: string[];
   createdAt: string;
 }

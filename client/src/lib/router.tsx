@@ -25,6 +25,8 @@ import {
 } from "@/features/prototypes";
 
 
+import ResetPasswordPage from "../pages/ResetPasswordPage";
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -104,6 +106,14 @@ export const router = createBrowserRouter([
         element: (
           <NonAuthenticatedRoute>
             <RegisterForm />
+          </NonAuthenticatedRoute>
+        ),
+      },
+      {
+        path: "/reset-password",
+        element: (
+          <NonAuthenticatedRoute>
+            <ResetPasswordPage />
           </NonAuthenticatedRoute>
         ),
       },

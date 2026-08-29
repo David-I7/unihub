@@ -11,7 +11,7 @@ public record CreateCommunityRequestDto(
         String name,
 
         @NotBlank(message = "Community slug is required")
-        @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$", message = "Slug must contain only lowercase alphanumeric characters and hyphens")
+        @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$", message = "Slug must contain only lowercase alphanumeric characters and hyphens in between characters")
         @Size(min = 3, max = 100, message = "Slug must be between 3 and 100 characters")
         String slug,
 

@@ -86,18 +86,20 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Verification email sent. Please check your inbox."));
     }
 
+    @Autowired
+    private com.unihub.app.services.authentication.VerificationCodeService verificationCodeService;
+
     // =========================================================================
     // POST /api/v1/auth/confirm-register
     // =========================================================================
 
     @Test
     @DisplayName("""
-            Given: valid email verification token
+            Given: valid email verification code
             When: /confirm-register endpoint is called
             Then: 201 created is returned with session response and set-cookie
             """)
     public void testConfirmRegister_Success() throws Exception {
-        String token = "valid-token";
         when(userRepository.findByUsernameOrEmail(anyString(), anyString())).thenReturn(Collections.emptyList());
         when(userRepository.save(any(User.class)))
                 .thenAnswer(invocation -> {
@@ -112,20 +114,9 @@ public class AuthControllerTests extends BaseIntegrationTest {
             return s;
         });
 
-        io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
-        when(claims.get(JwtService.PURPOSE_CLAIM, String.class)).thenReturn(JwtService.PURPOSE_EMAIL_VERIFICATION);
-        when(claims.get("username", String.class)).thenReturn("testuser");
-        when(claims.get("email", String.class)).thenReturn("test@gmail.com");
-        when(claims.get("password", String.class)).thenReturn("encodedPassword");
+        verificationCodeService.savePendingRegistration("testuser", "test@gmail.com", "encodedPassword", "123456");
 
-        var tokenClaims = jwtService.generateToken("test@gmail.com", Map.of(
-                JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_EMAIL_VERIFICATION,
-                "username", "testuser",
-                "email", "test@gmail.com",
-                "password", "encodedPassword"
-        ), 86400);
-
-        var request = new JwtTokenRequestDto(tokenClaims);
+        var request = new com.unihub.app.dto.authentication.ConfirmRegisterRequestDto("test@gmail.com", "123456");
 
         mockMvc.perform(post(BASE_URL + "/confirm-register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -135,6 +126,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.user.id").exists())
                 .andExpect(jsonPath("$.user.username").value("testuser"))
                 .andExpect(jsonPath("$.user.email").value("test@gmail.com"))
+                .andExpect(jsonPath("$.user.emailVerified").value(true))
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(cookie().exists("refreshToken"));
 
@@ -149,7 +141,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
 
     @Test
     @DisplayName("""
-            Given: valid email verification token
+            Given: valid email verification code
             When: /confirm-email endpoint is called
             Then: 200 OK is returned
             """)
@@ -157,12 +149,9 @@ public class AuthControllerTests extends BaseIntegrationTest {
         User user = User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").emailVerified(false).build();
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(user));
 
-        var tokenClaims = jwtService.generateToken("test@gmail.com", Map.of(
-                JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_EMAIL_VERIFICATION,
-                "email", "test@gmail.com"
-        ), 86400);
+        verificationCodeService.savePendingEmailVerification("test@gmail.com", "123456");
 
-        var request = new JwtTokenRequestDto(tokenClaims);
+        var request = new com.unihub.app.dto.authentication.ConfirmEmailRequestDto("test@gmail.com", "123456");
 
         mockMvc.perform(post(BASE_URL + "/confirm-email")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -189,7 +178,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("If an account exists with that email, an email verification link has been sent."));
+                .andExpect(jsonPath("$.message").value("If an account exists with that email, a verification code has been sent."));
     }
 
     // =========================================================================

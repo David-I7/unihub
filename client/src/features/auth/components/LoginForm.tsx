@@ -1,3 +1,4 @@
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { SocialAuthSection } from "./SocialAuthSection";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 import { useLoginForm } from "../hooks/useLoginForm";
 import useProviderForm from "../hooks/useProviderForm";
 
@@ -15,6 +17,8 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
+
   const {
     handleSuccess: handleProviderSuccess,
     handleFailure,
@@ -82,12 +86,13 @@ export function LoginForm({
               <FieldLabel htmlFor="password" className="text-xs font-semibold">
                 Password
               </FieldLabel>
-              <a
-                href="#"
-                className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+              <button
+                type="button"
+                onClick={() => setIsForgotPasswordOpen(true)}
+                className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline hover:text-foreground cursor-pointer"
               >
                 Forgot your password?
-              </a>
+              </button>
             </div>
             <Input
               {...getFieldProps("password")}
@@ -124,6 +129,14 @@ export function LoginForm({
           />
         </FieldGroup>
       </form>
+
+      <ForgotPasswordModal
+        open={isForgotPasswordOpen}
+        onOpenChange={setIsForgotPasswordOpen}
+      />
     </div>
   );
 }
+
+export default LoginForm;
+

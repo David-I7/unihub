@@ -65,7 +65,7 @@ app:
     no-reply-email: no-reply@${EMAIL_DOMAIN}
     support-email: support@${EMAIL_DOMAIN}
     notification-email: notification@${EMAIL_DOMAIN}
-    email-verification-token-expiration-sec: ${EMAIL_VERIFICATION_TOKEN_EXPIRATION_SEC:86400}
+    email-verification-token-expiration-sec: ${EMAIL_VERIFICATION_CODE_EXPIRATION_SEC:900}
     password-reset-token-expiration-sec: ${PASSWORD_RESET_TOKEN_EXPIRATION_SEC:900}
   jwt:
     secret: ${SESSION_SECRET}
@@ -76,3 +76,4 @@ app:
   development:
     client-origin: ${CLIENT_ORIGIN:http://localhost:5173}
     is-development: ${IS_DEVELOPMENT:false}
+    origin: ${ORIGIN:http://localhost:8080}

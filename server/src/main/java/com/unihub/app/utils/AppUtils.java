@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class AppUtils {
@@ -22,5 +24,20 @@ public class AppUtils {
 
     public boolean isDevelopment(){
         return developmentProperties.isDevelopment();
+    }
+
+    public List<String> getAllowedOrigins(){
+        if (developmentProperties == null) {
+            return List.of();
+        }
+        if (isDevelopment()){
+            return java.util.stream.Stream.of(developmentProperties.clientOrigin(), developmentProperties.origin())
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+        } else {
+            return java.util.stream.Stream.of(developmentProperties.origin())
+                    .filter(java.util.Objects::nonNull)
+                    .toList();
+        }
     }
 }

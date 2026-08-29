@@ -10,7 +10,6 @@ import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.CommunityPostService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import com.unihub.app.services.community.resources.CommunityService;
@@ -22,6 +21,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,7 +34,6 @@ public class CommunityController {
     private final CommunityService communityService;
     private final CommunityMemberService communityMemberService;
     private final CommunityPostService communityPostService;
-    private final AuthorizationService authorizationService;
 
     @GetMapping
     public ResponseEntity<PageDto<CommunityResponseDto>> getCommunities(
@@ -47,19 +46,19 @@ public class CommunityController {
     @PostMapping
     @PreAuthorize("@security.hasGlobalPermission('create:community')")
     public ResponseEntity<CommunityResponseDto> createCommunity(
+            @AuthenticationPrincipal UserDto user,
             @Valid @RequestBody CreateCommunityRequestDto requestDto
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
-        CommunityResponseDto created = communityService.createCommunity(user.id(), requestDto);
+        CommunityResponseDto created = communityService.createCommunity(user, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PostMapping("/join")
     public ResponseEntity<UserEnrolledCommunityDto> joinCommunity(
+            @AuthenticationPrincipal UserDto user,
             @Valid @RequestBody JoinCommunityRequestDto requestDto
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
-        UserEnrolledCommunityDto enrolled = communityMemberService.joinWithCode(user.id(), requestDto.joinCode());
+        UserEnrolledCommunityDto enrolled = communityMemberService.joinWithCode(user, requestDto.joinCode());
         return ResponseEntity.status(HttpStatus.CREATED).body(enrolled);
     }
 
@@ -91,9 +90,9 @@ public class CommunityController {
     @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:community')")
     public ResponseEntity<CommunityResponseDto> updateCommunity(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user,
             @Valid @RequestBody UpdateCommunityRequestDto requestDto
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
         CommunityResponseDto updated = communityService.updateCommunity(communitySlug, user.id(), requestDto);
         return ResponseEntity.ok(updated);
     }
@@ -101,9 +100,9 @@ public class CommunityController {
     @DeleteMapping("/{communitySlug}")
     @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:community')")
     public ResponseEntity<Void> deleteCommunity(
-            @PathVariable String communitySlug
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
         communityService.deleteCommunity(communitySlug, user.id());
         return ResponseEntity.noContent().build();
     }

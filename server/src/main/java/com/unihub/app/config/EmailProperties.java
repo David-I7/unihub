@@ -8,8 +8,8 @@ public record EmailProperties(
         String noReplyEmail,
         String supportEmail,
         String notificationEmail,
-        @DefaultValue("86400") long emailVerificationTokenExpirationSec,
-        @DefaultValue("900") long passwordResetTokenExpirationSec
+        long emailVerificationTokenExpirationSec,
+        long passwordResetTokenExpirationSec
 ) {
 }
 

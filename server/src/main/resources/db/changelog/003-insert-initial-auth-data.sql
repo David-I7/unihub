@@ -28,7 +28,7 @@ Pattern: <action>:<resource>
   update:userRole            |  X   |       |                 |                 |                  |
   delete:user                |  X   |       |                 |                 |                  |
   create:community           |  X   |   X   |                 |                 |                  |  X
-  update:community           |  X   |   X   |        X        |                 |                  |
+  update:community           |  X   |   X   |        X        |        X        |                  |
   delete:community           |  X   |   X   |        X        |                 |                  |
   create:joinCode            |  X   |   X   |        x        |        x        |                  |
   update:joinCode            |  X   |   X   |        X        |        x        |                  |
@@ -36,6 +36,7 @@ Pattern: <action>:<resource>
   verify:community           |  X   |   X   |                 |                 |                  |
   update:memberRole          |  X   |   X   |        X        |                 |                  |
   delete:member              |  X   |   X   |        X        |        X        |                  |
+  create:member              |  X   |   X   |        X        |        X        |                  |
   create:studyYear           |  X   |   X   |        X        |        X        |                  |
   delete:studyYear           |  X   |   X   |        X        |                 |                  |
   create:course              |  X   |   X   |        X        |        X        |                  |
@@ -228,6 +229,7 @@ SELECT r.id, p.id
 FROM ROLES r, PERMISSIONS p
 WHERE r.name = 'COMMUNITY_ADMIN'
   AND p.name IN (
+    'update:community',
     'create:joinCode',
     'delete:joinCode',
     'create:member',
@@ -307,8 +309,8 @@ WHERE r.name = 'USER'
   );
 
 -- Insert root user
-INSERT INTO USERS (id,email,username,password,created_at,updated_at,role_id)
-SELECT '1704ba53-75d6-478a-94e5-4618ac372540'::uuid,'iosubdavid77@gmail.com','iosub_david','$2a$10$Qs8AxLip4mLGbvv0asUghudNUPnxBVtADVkPGaGSVO7IJv6q5SCbm',now(),now(),id as role_id from roles where name = 'ROOT';
+INSERT INTO USERS (id,email,username,password,created_at,updated_at,role_id, email_verified)
+SELECT '1704ba53-75d6-478a-94e5-4618ac372540'::uuid,'iosubdavid77@gmail.com','iosub_david','$2a$10$Qs8AxLip4mLGbvv0asUghudNUPnxBVtADVkPGaGSVO7IJv6q5SCbm',now(),now(),id as role_id, true from roles where name = 'ROOT';
 
 INSERT INTO USER_IDENTITIES (id,user_id,provider_subject,provider_email,provider,created_at) VALUES
     ('acf21e8d-3d53-4acf-87c9-d97eb5601111'::uuid,'1704ba53-75d6-478a-94e5-4618ac372540'::uuid,'iosubdavid77@gmail.com','iosubdavid77@gmail.com','LOCAL',now());

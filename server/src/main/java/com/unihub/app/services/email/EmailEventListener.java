@@ -23,7 +23,7 @@ public class EmailEventListener {
         emailService.sendRegisterVerificationEmail(
                 event.email(),
                 event.username(),
-                event.confirmationUrl()
+                event.code()
         );
     }
 
@@ -34,7 +34,7 @@ public class EmailEventListener {
         emailService.sendEmailVerificationEmail(
                 event.email(),
                 event.username(),
-                event.confirmationUrl()
+                event.code()
         );
     }
 

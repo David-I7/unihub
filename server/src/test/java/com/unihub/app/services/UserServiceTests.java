@@ -23,6 +23,7 @@ import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserIdentityService;
 import com.unihub.app.services.authentication.UserService;
+import com.unihub.app.services.authentication.VerificationCodeService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.AppUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -79,12 +81,13 @@ public class UserServiceTests {
     private AppUtils appUtils;
 
     private UserMapper userMapper;
-
+    private VerificationCodeService verificationCodeService;
     private UserService userService;
 
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
         userMapper = new UserMapper(roleService);
+        verificationCodeService = new VerificationCodeService();
         EmailProperties emailProperties = new EmailProperties(
                 "no-reply@unihub.com",
                 "support@unihub.com",
@@ -104,7 +107,8 @@ public class UserServiceTests {
                 jwtService,
                 sessionService,
                 emailProperties,
-                appUtils
+                appUtils,
+                verificationCodeService
         );
     }
 
@@ -193,7 +197,7 @@ public class UserServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("updateUserRole updates target user role")
+    @DisplayName("updateUserRole updates target user role and invalidates user tokens")
     public void testUpdateUserRole_Success() {
         UUID targetId = UUID.randomUUID();
         UUID oldRoleId = UUID.randomUUID();
@@ -214,6 +218,7 @@ public class UserServiceTests {
         assertNotNull(result);
         assertEquals(newRoleId, target.getRoleId());
         verify(userRepository).save(target);
+        verify(sessionService).invalidateUserTokens(targetId);
     }
 
     // =========================================================================
@@ -221,7 +226,7 @@ public class UserServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("selfDelete deletes user when user does not own any communities")
+    @DisplayName("selfDelete marks user deletedAt and invalidates tokens when user does not own any communities")
     public void testSelfDelete_Success() {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com").username("user").build();
@@ -231,7 +236,9 @@ public class UserServiceTests {
 
         userService.selfDelete(userId);
 
-        verify(userRepository).deleteById(userId);
+        assertNotNull(user.getDeletedAt());
+        verify(userRepository).save(user);
+        verify(sessionService).invalidateUserTokens(userId);
         verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
 
@@ -240,7 +247,7 @@ public class UserServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("adminDeleteUser deletes user when not root and not owning communities")
+    @DisplayName("adminDeleteUser hard-deletes user when not root and not owning communities")
     public void testAdminDeleteUser_Success() {
         UUID userId = UUID.randomUUID();
         UUID userRoleId = UUID.randomUUID();
@@ -255,6 +262,7 @@ public class UserServiceTests {
 
         userService.adminDeleteUser("bob", "Violation of terms");
 
+        verify(sessionService).invalidateUserTokens(userId);
         verify(userRepository).deleteById(userId);
         verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
@@ -356,8 +364,6 @@ public class UserServiceTests {
         User user = User.builder().email("test@example.com").username("testuser").password("secret123").build();
         when(userRepository.findByUsernameOrEmail("testuser", "test@example.com")).thenReturn(Collections.emptyList());
         when(passwordEncoder.encode("secret123")).thenReturn("encodedSecret");
-        when(jwtService.generateToken(eq("test@example.com"), anyMap(), eq(86400L))).thenReturn("jwt-verify-token");
-        when(appUtils.getOrigin()).thenReturn("http://localhost:5173");
 
         userService.register(user);
 
@@ -368,14 +374,8 @@ public class UserServiceTests {
     @Test
     @DisplayName("confirmRegister saves user and local identity, sets emailVerified true, and publishes UserWelcomeEvent")
     public void testConfirmRegister_Success() {
-        String token = "valid-verify-token";
-        io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
-        when(claims.get(JwtService.PURPOSE_CLAIM, String.class)).thenReturn(JwtService.PURPOSE_EMAIL_VERIFICATION);
-        when(claims.get("username", String.class)).thenReturn("testuser");
-        when(claims.get("email", String.class)).thenReturn("test@example.com");
-        when(claims.get("password", String.class)).thenReturn("encodedSecret");
+        verificationCodeService.savePendingRegistration("testuser", "test@example.com", "encodedSecret", "123456");
 
-        when(jwtService.parseClaims(token)).thenReturn(claims);
         when(userRepository.findByUsernameOrEmail("testuser", "test@example.com")).thenReturn(Collections.emptyList());
         Role userRole = Role.builder().id(UUID.randomUUID()).name("USER").build();
         when(roleService.getRoleByName(RoleType.USER)).thenReturn(userRole);
@@ -385,7 +385,7 @@ public class UserServiceTests {
             return u;
         });
 
-        User confirmedUser = userService.confirmRegister(token);
+        User confirmedUser = userService.confirmRegister("test@example.com", "123456");
 
         assertNotNull(confirmedUser);
         assertEquals("testuser", confirmedUser.getUsername());
@@ -401,8 +401,6 @@ public class UserServiceTests {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com").username("user").emailVerified(false).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
-        when(jwtService.generateToken(eq(userId.toString()), anyMap(), eq(86400L))).thenReturn("jwt-confirm-email-token");
-        when(appUtils.getOrigin()).thenReturn("http://localhost:5173");
 
         userService.requestConfirmEmail("user@example.com");
 
@@ -412,16 +410,12 @@ public class UserServiceTests {
     @Test
     @DisplayName("confirmEmail marks existing user emailVerified true")
     public void testConfirmEmail_Success() {
-        String token = "valid-email-token";
-        io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
-        when(claims.get(JwtService.PURPOSE_CLAIM, String.class)).thenReturn(JwtService.PURPOSE_EMAIL_VERIFICATION);
-        when(claims.get("email", String.class)).thenReturn("user@example.com");
-        when(jwtService.parseClaims(token)).thenReturn(claims);
+        verificationCodeService.savePendingEmailVerification("user@example.com", "123456");
 
         User user = User.builder().id(UUID.randomUUID()).email("user@example.com").username("user").emailVerified(false).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
-        User updatedUser = userService.confirmEmail(token);
+        User updatedUser = userService.confirmEmail("user@example.com", "123456");
 
         assertNotNull(updatedUser);
         assertTrue(updatedUser.isEmailVerified());
@@ -459,5 +453,69 @@ public class UserServiceTests {
         assertEquals("newEncoded", user.getPassword());
         verify(userRepository).save(user);
         verify(sessionService).revokeAllUserSessions(userId);
+    }
+
+    // =========================================================================
+    // login & purgeExpiredDeletedUsers
+    // =========================================================================
+
+    @Test
+    @DisplayName("login reactivates soft-deleted user when deleted within 30 days")
+    public void testLogin_ReactivatesUserWithin30Days() {
+        OffsetDateTime deletedAt = OffsetDateTime.now().minusDays(5);
+        User userInDb = User.builder()
+                .id(UUID.randomUUID())
+                .username("john")
+                .email("john@example.com")
+                .password("encodedPassword")
+                .deletedAt(deletedAt)
+                .build();
+        User loginInput = User.builder().username("john").password("rawPassword").build();
+
+        when(userRepository.findByUsernameOrEmail("john", null)).thenReturn(List.of(userInDb));
+        when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
+
+        User result = userService.login(loginInput);
+
+        assertNotNull(result);
+        assertNull(result.getDeletedAt());
+        verify(userRepository).save(userInDb);
+    }
+
+    @Test
+    @DisplayName("login throws 401 when soft-deleted user is older than 30 days")
+    public void testLogin_ThrowsWhenDeletedLongerThan30Days() {
+        OffsetDateTime deletedAt = OffsetDateTime.now().minusDays(35);
+        User userInDb = User.builder()
+                .id(UUID.randomUUID())
+                .username("john")
+                .email("john@example.com")
+                .password("encodedPassword")
+                .deletedAt(deletedAt)
+                .build();
+        User loginInput = User.builder().username("john").password("rawPassword").build();
+
+        when(userRepository.findByUsernameOrEmail("john", null)).thenReturn(List.of(userInDb));
+        when(passwordEncoder.matches("rawPassword", "encodedPassword")).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> userService.login(loginInput)
+        );
+
+        assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
+        assertEquals("Account has been deleted.", ex.getReason());
+    }
+
+    @Test
+    @DisplayName("purgeExpiredDeletedUsers deletes users with deletedAt older than 30 days")
+    public void testPurgeExpiredDeletedUsers_DeletesExpiredUsers() {
+        User expiredUser = User.builder().id(UUID.randomUUID()).deletedAt(OffsetDateTime.now().minusDays(31)).build();
+        when(userRepository.findByDeletedAtIsNotNullAndDeletedAtLessThanEqual(any(OffsetDateTime.class)))
+                .thenReturn(List.of(expiredUser));
+
+        userService.purgeExpiredDeletedUsers();
+
+        verify(userRepository).deleteAll(List.of(expiredUser));
     }
 }

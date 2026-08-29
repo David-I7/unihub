@@ -5,6 +5,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
+import { Toaster } from "@/components/ui/sonner";
 
 export default function AppLayout() {
   useAppLayout();
@@ -28,6 +29,7 @@ export default function AppLayout() {
 
         {/* Simplified Mobile Bottom Navigation */}
         <MobileBottomNav />
+        <Toaster />
       </div>
     </SidebarProvider>
   );

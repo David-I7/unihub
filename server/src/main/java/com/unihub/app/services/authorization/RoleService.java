@@ -1,5 +1,6 @@
 package com.unihub.app.services.authorization;
 
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
@@ -34,7 +35,7 @@ public class RoleService {
                 ));
     }
 
-    @Cacheable(cacheNames = "roles", key = "#roleId")
+    @Cacheable(cacheNames = "roles", key = "#roleId", condition = "#roleId != null")
     public Role getRoleById(UUID roleId) {
         return roleRepository.findById(roleId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -43,13 +44,19 @@ public class RoleService {
                 ));
     }
 
-    @Cacheable(cacheNames = "rolePermissionsByName", key = "#roleName", condition = "#roleName != null && !#roleName.isBlank()")
-    public List<String> getPermissionNamesByRoleName(String roleName) {
-        if (roleName == null || roleName.isBlank()) {
+    @Cacheable(cacheNames = "rolePermissionsByName", key = "#roleType.name()", condition = "#roleType != null")
+    public List<String> getPermissionNamesByRoleType(RoleType roleType) {
+        if (roleType == null) {
             return Collections.emptyList();
         }
-        return permissionRepository.findPermissionNamesByRoleName(roleName);
+        return permissionRepository.findPermissionNamesByRoleName(roleType.name());
     }
+
+    public RoleType getRoleTypeById(UUID roleId) {
+        Role role = getRoleById(roleId);
+        return RoleType.valueOf(role.getName());
+    }
+
 
     @PostConstruct
     public void initializeRoles() {

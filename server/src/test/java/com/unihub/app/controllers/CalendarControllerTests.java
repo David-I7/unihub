@@ -1,5 +1,6 @@
 package com.unihub.app.controllers;
 
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
@@ -63,7 +64,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "david@example.com", "david");
+        userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
@@ -203,7 +204,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .isSubscribed(false)
                 .build();
 
-        when(calendarService.createEvent(eq(userId), any(CreateEventRequestDto.class))).thenReturn(responseDto);
+        when(calendarService.createEvent(eq(userDto), any(CreateEventRequestDto.class))).thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL + "/events")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -243,7 +244,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .communitySlug("fmi-info-id")
                 .communityName("FMI - Informatica ID")
                 .studyYear(StudyYearName.YEAR_1)
-                .owner(new OwnerDto(userId, "david"))
+                .owner(new OwnerDto(userId, "david", false))
                 .reminders(List.of())
                 .build();
 

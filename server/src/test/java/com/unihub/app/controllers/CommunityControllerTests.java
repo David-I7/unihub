@@ -85,13 +85,12 @@ public class CommunityControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "david@example.com", "david");
+        userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
         when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
-        when(authorizationService.hasGlobalPermission(eq(userId), any())).thenReturn(true);
-        when(authorizationService.hasCommunityPermission(any(), eq(userId), any())).thenReturn(true);
+        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
+        when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
     }
 
     // =========================================================================
@@ -118,7 +117,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .verified(true)
                 .backgroundColor("#2563eb")
                 .createdAt(createdAt)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         PageDto<CommunityResponseDto> pageDto = PageDto.<CommunityResponseDto>builder()
@@ -180,7 +179,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .owner(new OwnerDto(userId, "david"))
                 .build();
 
-        when(communityService.createCommunity(eq(userId), any(CreateCommunityRequestDto.class)))
+        when(communityService.createCommunity(eq(userDto), any(CreateCommunityRequestDto.class)))
                 .thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL)
@@ -214,7 +213,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .joinedAt(OffsetDateTime.now())
                 .build();
 
-        when(communityMemberService.joinWithCode(userId, "ABC12345")).thenReturn(responseDto);
+        when(communityMemberService.joinWithCode(eq(userDto), eq("ABC12345"))).thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL + "/join")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -249,7 +248,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .verified(true)
                 .backgroundColor("#2563eb")
                 .createdAt(createdAt)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         when(communityService.findBySlug("fmi-info-id")).thenReturn(responseDto);
@@ -395,7 +394,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .verified(true)
                 .backgroundColor("#2563eb")
                 .createdAt(createdAt)
-                .owner(new OwnerDto(ownerId, "david"))
+                .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
         List<StudyYearMetricsResponseDto> studyYears = List.of(

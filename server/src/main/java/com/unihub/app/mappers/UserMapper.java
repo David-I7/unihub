@@ -1,5 +1,6 @@
 package com.unihub.app.mappers;
 
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
@@ -26,7 +27,8 @@ public class UserMapper {
     private final RoleService roleService;
 
     public UserDto toDto(User user) {
-        return new UserDto(user.getId(), user.getEmail(), user.getUsername());
+        RoleType roleType = user.getRoleId() != null ? roleService.getRoleTypeById(user.getRoleId()) : null;
+        return new UserDto(user.getId(), user.getEmail(), user.getUsername(), user.isEmailVerified(), roleType);
     }
 
     public User toEntity(UserDto userDto){
@@ -34,6 +36,7 @@ public class UserMapper {
                 .id(userDto.id())
                 .email(userDto.email())
                 .username(userDto.username())
+                .emailVerified(userDto.emailVerified())
                 .build();
     }
 
@@ -76,13 +79,13 @@ public class UserMapper {
     }
 
     public UserProfileResponseDto toUserProfile(User user) {
-        String roleName = roleService.getRoleById(user.getRoleId()).getName();
-        List<String> permissions = roleService.getPermissionNamesByRoleName(roleName);
+        RoleType roleName = RoleType.valueOf(roleService.getRoleById(user.getRoleId()).getName());
+        List<String> permissions = roleService.getPermissionNamesByRoleType(roleName);
         return UserProfileResponseDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role(roleName)
+                .role(roleName.name())
                 .emailVerified(user.isEmailVerified())
                 .permissions(permissions)
                 .createdAt(user.getCreatedAt())

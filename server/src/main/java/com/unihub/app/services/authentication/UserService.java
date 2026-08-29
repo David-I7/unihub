@@ -2,6 +2,7 @@ package com.unihub.app.services.authentication;
 
 import com.unihub.app.config.EmailProperties;
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.authentication.MessageResponseDto;
 import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
@@ -31,6 +32,7 @@ import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UserService {
 
+    private int SCHEDULE_DELETE_DAYS = 30;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserIdentityService userIdentityService;
@@ -55,9 +58,10 @@ public class UserService {
     private final SessionService sessionService;
     private final EmailProperties emailProperties;
     private final AppUtils appUtils;
+    private final VerificationCodeService verificationCodeService;
 
-    @Transactional(readOnly = true)
-    public void register(User user) {
+    @Transactional
+    public MessageResponseDto register(User user) {
         List<User> existingUsers = userRepository.findByUsernameOrEmail(
                 user.getUsername(),
                 user.getEmail()
@@ -78,59 +82,32 @@ public class UserService {
         }
 
         String encodedPassword = passwordEncoder.encode(user.getPassword());
-
-        long expirationSec = emailProperties.emailVerificationTokenExpirationSec();
-        Map<String, Object> claims = Map.of(
-                JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_EMAIL_VERIFICATION,
-                "username", user.getUsername(),
-                "email", user.getEmail(),
-                "password", encodedPassword
-        );
-
-        String token = jwtService.generateToken(user.getEmail(), claims, expirationSec);
-        String clientOrigin = appUtils.getOrigin();
-        String confirmationUrl = clientOrigin + "/confirm-register?token=" + token;
+        String code = verificationCodeService.generateCode();
+        verificationCodeService.savePendingRegistration(user.getUsername(), user.getEmail(), encodedPassword, code);
 
         eventPublisher.publishEvent(new RegisterVerificationRequestedEvent(
                 user.getEmail(),
                 user.getUsername(),
-                token,
-                confirmationUrl
+                code
         ));
+
+        return new MessageResponseDto("Verification email sent. Please check your inbox.");
     }
 
     @Transactional
-    public User confirmRegister(String token) {
-        Claims claims;
-        try {
-            claims = jwtService.parseClaims(token);
-        } catch (InvalidJwtTokenException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired email verification token");
-        }
+    public User confirmRegister(String email, String code) {
+        VerificationCodeService.PendingRegistration pending = verificationCodeService.verifyAndConsumeRegistration(email, code);
 
-        String purpose = claims.get(JwtService.PURPOSE_CLAIM, String.class);
-        if (!JwtService.PURPOSE_EMAIL_VERIFICATION.equals(purpose)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token purpose");
-        }
-
-        String username = claims.get("username", String.class);
-        String email = claims.get("email", String.class);
-        String encodedPassword = claims.get("password", String.class);
-
-        if (username == null || email == null || encodedPassword == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed verification token");
-        }
-
-        List<User> existingUsers = userRepository.findByUsernameOrEmail(username, email);
+        List<User> existingUsers = userRepository.findByUsernameOrEmail(pending.getUsername(), pending.getEmail());
         if (!existingUsers.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
         }
 
         OffsetDateTime now = OffsetDateTime.now();
         User user = User.builder()
-                .username(username)
-                .email(email)
-                .password(encodedPassword)
+                .username(pending.getUsername())
+                .email(pending.getEmail())
+                .password(pending.getEncodedPassword())
                 .emailVerified(true)
                 .roleId(roleService.getRoleByName(RoleType.USER).getId())
                 .createdAt(now)
@@ -155,24 +132,8 @@ public class UserService {
     }
 
     @Transactional
-    public User confirmEmail(String token) {
-        Claims claims;
-        try {
-            claims = jwtService.parseClaims(token);
-        } catch (InvalidJwtTokenException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired email verification token");
-        }
-
-        String purpose = claims.get(JwtService.PURPOSE_CLAIM, String.class);
-        if (!JwtService.PURPOSE_EMAIL_VERIFICATION.equals(purpose)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token purpose");
-        }
-
-        String email = claims.get("email", String.class);
-
-        if (email == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed verification token");
-        }
+    public MessageResponseDto confirmEmail(String email, String code) {
+        verificationCodeService.verifyAndConsumeEmailVerification(email, code);
 
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -180,11 +141,11 @@ public class UserService {
         user.setUpdatedAt(OffsetDateTime.now());
         userRepository.save(user);
 
-        return user;
+        return new MessageResponseDto("Email has been successfully verified.");
     }
 
     @Transactional(readOnly = true)
-    public void requestConfirmEmail(String email) {
+    public MessageResponseDto requestConfirmEmail(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
@@ -195,25 +156,20 @@ public class UserService {
         }
 
         User user = optionalUser.get();
-        long expirationSec = emailProperties.emailVerificationTokenExpirationSec();
-        Map<String, Object> claims = Map.of(
-                JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_EMAIL_VERIFICATION,
-                "email", user.getEmail()
-        );
-
-        String token = jwtService.generateToken(user.getId().toString(), claims, expirationSec);
-        String confirmUrl = appUtils.getOrigin() + "/confirm-email?token=" + token;
+        String code = verificationCodeService.generateCode();
+        verificationCodeService.savePendingEmailVerification(user.getEmail(), code);
 
         eventPublisher.publishEvent(new EmailVerificationRequestedEvent(
                 user.getEmail(),
                 user.getUsername(),
-                token,
-                confirmUrl
+                code
         ));
+
+        return new MessageResponseDto("If an account exists with that email, a verification code has been sent.");
     }
 
     @Transactional(readOnly = true)
-    public void requestPasswordReset(String email) {
+    public MessageResponseDto requestPasswordReset(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
@@ -235,10 +191,12 @@ public class UserService {
                 token,
                 resetUrl
         ));
+
+        return new MessageResponseDto("If an account exists with that email, a password reset link has been sent.");
     }
 
     @Transactional
-    public void resetPassword(String token, String newPassword) {
+    public MessageResponseDto resetPassword(String token, String newPassword) {
         Claims claims;
         try {
             claims = jwtService.parseClaims(token);
@@ -264,6 +222,8 @@ public class UserService {
         userRepository.save(user);
 
         sessionService.revokeAllUserSessions(userId);
+
+        return new MessageResponseDto("Password has been successfully reset. Please log in with your new password.");
     }
 
     @Transactional
@@ -273,17 +233,14 @@ public class UserService {
 
     @Transactional
     public void selfDelete(UUID userId) {
-        if (communityRepository.existsByOwnerId(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Cannot delete account while owning communities. Transfer ownership or delete your communities first."
-            );
-        }
         User user = findById(userId);
         String email = user.getEmail();
         String username = user.getUsername();
 
-        userRepository.deleteById(userId);
+        user.setDeletedAt(OffsetDateTime.now());
+        userRepository.save(user);
+
+        sessionService.invalidateUserTokens(userId);
 
         eventPublisher.publishEvent(new UserDeletedEvent(email, username, false, null));
     }
@@ -323,6 +280,8 @@ public class UserService {
         targetUser.setUpdatedAt(OffsetDateTime.now());
         User saved = userRepository.save(targetUser);
 
+        sessionService.invalidateUserTokens(saved.getId());
+
         return userMapper.toUserProfile(saved);
     }
 
@@ -335,17 +294,12 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete user with ROOT role");
         }
 
-        if (communityRepository.existsByOwnerId(targetUser.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Cannot delete user who owns communities. Transfer community ownership or delete communities first."
-            );
-        }
-
         String email = targetUser.getEmail();
         String username = targetUser.getUsername();
+        UUID targetId = targetUser.getId();
 
-        userRepository.deleteById(targetUser.getId());
+        userRepository.deleteById(targetId);
+        sessionService.invalidateUserTokens(targetId);
 
         eventPublisher.publishEvent(new UserDeletedEvent(email, username, true, reason));
     }
@@ -374,6 +328,7 @@ public class UserService {
 
         if (existingIdentity.isPresent()) {
             User user = existingIdentity.get().getUser();
+            reactivateIfDeleted(user);
             setEmailVerified(user, emailVerified);
             return user;
         }
@@ -381,8 +336,10 @@ public class UserService {
         Optional<User> existingUser = userRepository.findByEmail(providerEmail);
 
         if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            reactivateIfDeleted(user);
             UserIdentity userIdentity = userMapper.toUserIdentity(
-                    existingUser.get(),
+                    user,
                     provider,
                     providerSubject,
                     providerEmail,
@@ -390,7 +347,6 @@ public class UserService {
             );
 
             userIdentityService.save(userIdentity);
-            User user = existingUser.get();
             setEmailVerified(user, emailVerified);
 
             return user;
@@ -447,7 +403,30 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
         }
 
+        reactivateIfDeleted(savedUser);
+
         return savedUser;
+    }
+
+    @Scheduled(cron = "@daily")
+    @Transactional
+    public void purgeExpiredDeletedUsers() {
+        OffsetDateTime threshold = OffsetDateTime.now().minusDays(SCHEDULE_DELETE_DAYS);
+        List<User> expiredUsers = userRepository.findScheduledDeletedUsers(threshold);
+        if (!expiredUsers.isEmpty()) {
+            userRepository.deleteAll(expiredUsers);
+        }
+    }
+
+    private void reactivateIfDeleted(User user) {
+        if (user.getDeletedAt() != null) {
+            if (user.getDeletedAt().isAfter(OffsetDateTime.now().minusDays(SCHEDULE_DELETE_DAYS))) {
+                user.setDeletedAt(null);
+                userRepository.save(user);
+            } else {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Account has been deleted.");
+            }
+        }
     }
 
     @Transactional(readOnly = true)
@@ -463,11 +442,11 @@ public class UserService {
 
         List<UserEnrolledCommunityDto> communities = memberships.stream().map(membership -> {
             Community community = membership.getCommunity();
-            String roleName = roleService.getRoleById(membership.getRoleId()).getName();
+            RoleType role = RoleType.valueOf(roleService.getRoleById(membership.getRoleId()).getName());
 
-            permissionsByRole.computeIfAbsent(roleName, roleService::getPermissionNamesByRoleName);
+            permissionsByRole.computeIfAbsent(role.name(), (k) ->roleService.getPermissionNamesByRoleType(role));
 
-            return userMapper.toUserEnrolledCommunityDto(community, roleName, membership.getJoinedAt());
+            return userMapper.toUserEnrolledCommunityDto(community, role.name(), membership.getJoinedAt());
         }).toList();
 
         return userMapper.toUserCommunitiesResponseDto(communities, permissionsByRole);
@@ -501,16 +480,6 @@ public class UserService {
 
     public User findById(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    }
-
-    public User findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-    }
-
-    public User findByEmail(String email) {
-        return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 }

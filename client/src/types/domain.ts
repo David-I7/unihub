@@ -2,6 +2,7 @@ export type User = {
   id: string;
   username: string;
   email: string;
+  emailVerified: boolean;
 };
 
 export type GlobalRole = "USER" | "ROOT" | "ADMIN";

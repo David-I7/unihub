@@ -1,16 +1,13 @@
-import { useNavigate } from "react-router";
 import { isAxiosError } from "axios";
 import { useForm } from "@/hooks/useForm";
 import { useRegister } from "../api/register";
 import { registerSchema, type RegisterFormData } from "../schemas/authSchemas";
 
 export interface UseRegisterFormOptions {
-  redirectTo?: string;
-  onSuccess?: () => void;
+  onRegistered?: (email: string) => void;
 }
 
 export function useRegisterForm(options?: UseRegisterFormOptions) {
-  const navigate = useNavigate();
   const registerMutation = useRegister();
 
   const form = useForm<RegisterFormData>({
@@ -24,16 +21,14 @@ export function useRegisterForm(options?: UseRegisterFormOptions) {
       try {
         form.setServerError(null);
         await registerMutation.mutateAsync(values);
-        if (options?.onSuccess) {
-          options.onSuccess();
-        } else {
-          navigate(options?.redirectTo ?? "/");
+        if (options?.onRegistered) {
+          options.onRegistered(values.email);
         }
       } catch (err) {
         if (isAxiosError(err)) {
           const message =
             err.response?.data?.message ||
-            err.response?.data?.error ||
+            err.response?.data?.detail ||
             (err.response?.status === 409
               ? "An account with this email or username already exists."
               : "Registration failed. Please try again.");
@@ -50,3 +45,4 @@ export function useRegisterForm(options?: UseRegisterFormOptions) {
     isLoading: registerMutation.isPending || form.isSubmitting,
   };
 }
+

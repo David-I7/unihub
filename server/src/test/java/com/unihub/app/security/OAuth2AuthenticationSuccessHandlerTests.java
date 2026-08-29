@@ -320,7 +320,7 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
             Then: user is redirected to current context path + '/oauth2/success'
             """)
     public void testOAuth2Success_WhenIsDevelopmentFalse_RedirectsToContextPathSuccessUrl() throws Exception {
-        ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", false));
+        ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", "http://localhost:8080", false));
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setServerName("unihub.com");
@@ -353,7 +353,7 @@ public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest
             assertThat(response.getRedirectedUrl()).isEqualTo("http://unihub.com/oauth2?status=success&provider=GOOGLE");
         } finally {
             RequestContextHolder.resetRequestAttributes();
-            ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", true));
+            ReflectionTestUtils.setField(appUtils, "developmentProperties", new com.unihub.app.config.DevelopmentProperties("http://localhost:5173", "http://localhost:8080", true));
         }
     }
 }

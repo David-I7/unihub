@@ -48,4 +48,5 @@ app:
     refresh-token-rotate-window-sec: 86400
   development:
     client-origin: http://localhost:5173
+    origin: http://localhost:8080
     is-development: true

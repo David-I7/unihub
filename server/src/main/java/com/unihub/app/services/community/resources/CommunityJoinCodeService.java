@@ -1,5 +1,6 @@
 package com.unihub.app.services.community.resources;
 
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.entities.authentication.User;
@@ -9,7 +10,6 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,14 +33,13 @@ public class CommunityJoinCodeService {
     private final CommunityRepository communityRepository;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
-    private final AuthorizationService authorizationService;
 
     @Transactional
-    public CommunityJoinCodeResponseDto createJoinCode(String communitySlug, UUID callerId, CreateJoinCodeRequestDto dto) {
+    public CommunityJoinCodeResponseDto createJoinCode(String communitySlug, UserDto caller, CreateJoinCodeRequestDto dto) {
         Community community = communityRepository.findBySlug(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        User caller = userMapper.toEntity(authorizationService.requireAuthentication().getUserDto());
+        User callerUser = userMapper.toEntity(caller);
 
         String code = generateUniqueCode();
         OffsetDateTime now = OffsetDateTime.now();
@@ -51,7 +50,7 @@ public class CommunityJoinCodeService {
         CommunityJoinCode joinCode = communityMapper.toCommunityJoinCodeEntity(
                 dto,
                 community,
-                caller,
+                callerUser,
                 code,
                 now,
                 expiresAt
@@ -66,7 +65,7 @@ public class CommunityJoinCodeService {
         if (!communityRepository.existsBySlug(communitySlug)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found");
         }
-        return joinCodeRepository.findByCommunitySlug(communitySlug)
+        return joinCodeRepository.findByCommunitySlugWithCommunity(communitySlug)
                 .stream()
                 .map(communityMapper::toCommunityJoinCodeResponseDto)
                 .toList();

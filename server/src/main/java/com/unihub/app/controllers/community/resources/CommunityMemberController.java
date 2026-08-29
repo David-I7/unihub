@@ -7,7 +7,6 @@ import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.resources.CommunityJoinCodeService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import jakarta.validation.Valid;
@@ -18,6 +17,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +30,6 @@ public class CommunityMemberController {
 
     private final CommunityMemberService communityMemberService;
     private final CommunityJoinCodeService communityJoinCodeService;
-    private final AuthorizationService authorizationService;
 
     @GetMapping("/members")
     public ResponseEntity<PageDto<CommunityMemberResponseDto>> getMembers(
@@ -45,18 +44,18 @@ public class CommunityMemberController {
     @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:member')")
     public ResponseEntity<Void> addMember(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto caller,
             @Valid @RequestBody AddCommunityMemberRequestDto requestDto
     ) {
-        UserDto caller = authorizationService.requireAuthentication().getUserDto();
-        communityMemberService.addMemberDirectly(communitySlug, caller.id(), requestDto);
+        communityMemberService.addMemberDirectly(communitySlug, caller, requestDto);
         return ResponseEntity.ok(null);
     }
 
     @DeleteMapping("/leave")
     public ResponseEntity<Void> leaveCommunity(
-            @PathVariable String communitySlug
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user
     ) {
-        UserDto user = authorizationService.requireAuthentication().getUserDto();
         communityMemberService.leaveCommunity(communitySlug, user.id());
         return ResponseEntity.noContent().build();
     }
@@ -76,10 +75,10 @@ public class CommunityMemberController {
     @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:member')")
     public ResponseEntity<Void> removeMember(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto caller,
             @PathVariable String username
     ) {
-        UserDto caller = authorizationService.requireAuthentication().getUserDto();
-        communityMemberService.removeMember(communitySlug, caller.id(), username);
+        communityMemberService.removeMember(communitySlug, caller, username);
         return ResponseEntity.noContent().build();
     }
 
@@ -87,10 +86,10 @@ public class CommunityMemberController {
     @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:joinCode')")
     public ResponseEntity<CommunityJoinCodeResponseDto> createJoinCode(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto caller,
             @Valid @RequestBody CreateJoinCodeRequestDto requestDto
     ) {
-        UserDto caller = authorizationService.requireAuthentication().getUserDto();
-        CommunityJoinCodeResponseDto response = communityJoinCodeService.createJoinCode(communitySlug, caller.id(), requestDto);
+        CommunityJoinCodeResponseDto response = communityJoinCodeService.createJoinCode(communitySlug, caller, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

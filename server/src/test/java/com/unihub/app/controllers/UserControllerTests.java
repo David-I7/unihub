@@ -68,13 +68,11 @@ public class UserControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "john@example.com", "john_doe");
+        userDto = new UserDto(userId, "john@example.com", "john_doe", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
         when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
-        when(authorizationService.hasGlobalPermission(eq(userId), any())).thenReturn(true);
-        when(authorizationService.hasCommunityPermission(any(), eq(userId), any())).thenReturn(true);
+        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
     }
 
     @AfterEach
@@ -93,10 +91,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 200 OK is returned with UserProfileResponseDto
             """)
     public void testGetMyProfile_Authenticated_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         OffsetDateTime createdAt = OffsetDateTime.now();
         UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
                 .id(userId)
@@ -128,8 +122,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             """)
     public void testGetMyProfile_Unauthenticated() throws Exception {
         SecurityContextHolder.clearContext();
-        when(authorizationService.requireAuthentication())
-                .thenThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Unauthenticated"));
 
         mockMvc.perform(get(BASE_URL + "/me")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -147,10 +139,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 200 OK is returned with updated profile
             """)
     public void testUpdateMyProfile_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         UpdateUserProfileRequestDto requestDto = new UpdateUserProfileRequestDto("new_username");
         UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
                 .id(userId)
@@ -181,10 +169,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 204 No Content is returned
             """)
     public void testDeleteMyAccount_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         doNothing().when(userService).selfDelete(userId);
 
         mockMvc.perform(delete(BASE_URL + "/me")
@@ -205,10 +189,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 200 OK is returned with UserCommunitiesResponseDto
             """)
     public void testGetMyCommunities_Authenticated_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         UUID commId = UUID.randomUUID();
         OffsetDateTime joinedAt = OffsetDateTime.now();
 
@@ -249,10 +229,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 200 OK is returned with updated user profile
             """)
     public void testUpdateUserRole_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         UpdateUserRoleRequestDto requestDto = new UpdateUserRoleRequestDto(RoleType.ADMIN);
         UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
                 .id(UUID.randomUUID())
@@ -284,10 +260,6 @@ public class UserControllerTests extends BaseIntegrationTest {
             Then: 204 No Content is returned
             """)
     public void testDeleteUser_Success() throws Exception {
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.requireAuthentication()).thenReturn(auth);
-
         doNothing().when(userService).adminDeleteUser("bob", null);
 
         mockMvc.perform(delete(BASE_URL + "/bob")

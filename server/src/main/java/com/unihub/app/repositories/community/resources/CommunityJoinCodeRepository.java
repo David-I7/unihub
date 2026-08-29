@@ -25,11 +25,15 @@ public interface CommunityJoinCodeRepository extends JpaRepository<CommunityJoin
         WHERE jc.community.slug = :communitySlug
         ORDER BY jc.createdAt DESC
     """)
-    List<CommunityJoinCode> findByCommunitySlug(@Param("communitySlug") String communitySlug);
+    List<CommunityJoinCode> findByCommunitySlugWithCommunity(@Param("communitySlug") String communitySlug);
 
     boolean existsByCode(String code);
 
     @Modifying
     @Query("UPDATE CommunityJoinCode jc SET jc.usesCount = jc.usesCount + 1 WHERE jc.id = :id")
     void incrementUsesCount(@Param("id") UUID id);
+
+    @Modifying
+    @Query("DELETE FROM CommunityJoinCode jc WHERE jc.expiresAt <= now()")
+    void deleteExpiredCodes();
 }

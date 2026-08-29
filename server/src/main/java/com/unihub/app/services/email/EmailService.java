@@ -23,25 +23,27 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
     private final EmailProperties emailProperties;
 
-    public void sendRegisterVerificationEmail(String to, String username, String confirmationUrl) {
+    public void sendRegisterVerificationEmail(String to, String username, String verificationCode) {
         Map<String, Object> variables = Map.of(
                 "username", username,
-                "confirmationUrl", confirmationUrl,
-                "supportEmail", emailProperties.supportEmail()
+                "verificationCode", verificationCode,
+                "supportEmail", emailProperties.supportEmail(),
+                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() * 60
         );
         sendHtmlEmail(
                 emailProperties.noReplyEmail(),
                 to,
                 "Confirm your registration - UniHub",
-                "email/verifyRegister",
+                "email/VerifyRegister",
                 variables
         );
     }
 
-    public void sendEmailVerificationEmail(String to, String username, String confirmationUrl) {
+    public void sendEmailVerificationEmail(String to, String username, String verificationCode) {
         Map<String, Object> variables = Map.of(
                 "username", username,
-                "confirmationUrl", confirmationUrl,
+                "verificationCode", verificationCode,
+                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() * 60,
                 "supportEmail", emailProperties.supportEmail()
         );
         sendHtmlEmail(
@@ -51,10 +53,6 @@ public class EmailService {
                 "email/VerifyEmail",
                 variables
         );
-    }
-
-    public void sendVerificationEmail(String to, String username, String confirmationUrl) {
-        sendEmailVerificationEmail(to, username, confirmationUrl);
     }
 
     public void sendWelcomeEmail(String to, String username) {
@@ -75,7 +73,8 @@ public class EmailService {
         Map<String, Object> variables = Map.of(
                 "username", username,
                 "resetUrl", resetUrl,
-                "supportEmail", emailProperties.supportEmail()
+                "supportEmail", emailProperties.supportEmail(),
+                "expirationMinutes", emailProperties.passwordResetTokenExpirationSec() * 60
         );
         sendHtmlEmail(
                 emailProperties.noReplyEmail(),
@@ -158,7 +157,7 @@ public class EmailService {
             context.setVariables(variables);
             String htmlContent = templateEngine.process(templateName, context);
 
-            helper.setFrom(from);
+            helper.setFrom(from, "UniHub");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
