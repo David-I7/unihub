@@ -13,6 +13,7 @@ public final class Permissions {
 
     // Community Membership
     public static final String CREATE_JOIN_CODE = "create:joinCode";
+    public static final String UPDATE_JOIN_CODE = "update:joinCode";
     public static final String DELETE_JOIN_CODE = "delete:joinCode";
     public static final String CREATE_MEMBER = "create:member";
     public static final String UPDATE_MEMBER_ROLE = "update:memberRole";
@@ -39,6 +40,7 @@ public final class Permissions {
     public static final String CREATE_POST = "create:post";
     public static final String UPDATE_POST = "update:post";
     public static final String DELETE_POST = "delete:post";
+    public static final String LIKE_POST = "like:post";
     public static final String MODERATE_POST = "moderate:post";
     public static final String PIN_POST = "pin:post";
     public static final String CREATE_COMMENT = "create:comment";

@@ -30,15 +30,15 @@ Pattern: <action>:<resource>
   create:community           |  X   |   X   |                 |                 |                  |  X
   update:community           |  X   |   X   |        X        |        X        |                  |
   delete:community           |  X   |   X   |        X        |                 |                  |
-  create:joinCode            |  X   |   X   |        x        |        x        |                  |
-  update:joinCode            |  X   |   X   |        X        |        x        |                  |
-  delete:joinCode            |  X   |   X   |        X        |        x        |                  |
   verify:community           |  X   |   X   |                 |                 |                  |
+  create:joinCode            |  X   |   X   |        X        |        X        |                  |
+  update:joinCode            |  X   |   X   |        X        |        X        |                  |
+  delete:joinCode            |  X   |   X   |        X        |        X        |                  |
+  create:member              |  X   |   X   |        X        |        X        |                  |
   update:memberRole          |  X   |   X   |        X        |                 |                  |
   delete:member              |  X   |   X   |        X        |        X        |                  |
-  create:member              |  X   |   X   |        X        |        X        |                  |
   create:studyYear           |  X   |   X   |        X        |        X        |                  |
-  delete:studyYear           |  X   |   X   |        X        |                 |                  |
+  delete:studyYear           |  X   |   X   |        X        |        X        |                  |
   create:course              |  X   |   X   |        X        |        X        |                  |
   update:course              |  X   |   X   |        X        |        X        |                  |
   archive:course             |  X   |   X   |        X        |        X        |                  |
@@ -52,6 +52,7 @@ Pattern: <action>:<resource>
   moderate:material          |  X   |   X   |        X        |        X        |                  |
   create:post                |  X   |   X   |        X        |        X        |        X         |
   update:post                |  X   |   X   |        X        |        X        |        X         |
+  like:post                  |  X   |   X   |        X        |        X        |        X         |   X
   delete:post                |  X   |   X   |        X        |        X        |        X         |
   moderate:post              |  X   |   X   |        X        |        X        |                  |
   pin:post                   |  X   |   X   |        X        |        X        |                  |
@@ -92,6 +93,7 @@ INSERT INTO PERMISSIONS (id, name, description) VALUES
 
 -- Community membership
 (gen_random_uuid(), 'create:joinCode', 'Generate an invite join code for a community'),
+(gen_random_uuid(), 'update:joinCode', 'Update max uses or expiration of a community join code'),
 (gen_random_uuid(), 'delete:joinCode', 'Delete or revoke a join code for a community'),
 (gen_random_uuid(), 'create:member', 'Directly add a user to a community without a join code'),
 (gen_random_uuid(), 'update:memberRole', 'Promote or demote members to and from community administrator'),
@@ -118,6 +120,7 @@ INSERT INTO PERMISSIONS (id, name, description) VALUES
 (gen_random_uuid(), 'create:post', 'Create a discussion post in a community or course'),
 (gen_random_uuid(), 'update:post', 'Edit own post'),
 (gen_random_uuid(), 'delete:post', 'Delete own post'),
+(gen_random_uuid(), 'like:post', 'Like a post'),
 (gen_random_uuid(), 'moderate:post', 'Delete any post within the community'),
 (gen_random_uuid(), 'pin:post', 'Pin or unpin a post within the community'),
 (gen_random_uuid(), 'create:comment', 'Comment on a post'),
@@ -182,6 +185,7 @@ WHERE r.name = 'COMMUNITY_OWNER'
     'update:community',
     'delete:community',
     'create:joinCode',
+    'update:joinCode',
     'delete:joinCode',
     'create:member',
     'update:memberRole',
@@ -200,6 +204,7 @@ WHERE r.name = 'COMMUNITY_OWNER'
     'delete:material',
     'moderate:material',
     'create:post',
+    'like:post',
     'update:post',
     'delete:post',
     'moderate:post',
@@ -231,10 +236,12 @@ WHERE r.name = 'COMMUNITY_ADMIN'
   AND p.name IN (
     'update:community',
     'create:joinCode',
+    'update:joinCode',
     'delete:joinCode',
     'create:member',
     'delete:member',
     'create:studyYear',
+    'delete:studyYear',
     'create:course',
     'update:course',
     'archive:course',
@@ -249,6 +256,7 @@ WHERE r.name = 'COMMUNITY_ADMIN'
     'create:post',
     'update:post',
     'delete:post',
+    'like:post',
     'moderate:post',
     'pin:post',
     'create:comment',
@@ -284,6 +292,7 @@ WHERE r.name = 'COMMUNITY_MEMBER'
     'delete:material',
     'create:post',
     'update:post',
+    'like:post',
     'delete:post',
     'create:comment',
     'update:comment',
@@ -299,13 +308,14 @@ WHERE r.name = 'COMMUNITY_MEMBER'
     'delete:teacherRating'
   );
 
--- USER: Platform user with permission to create a new community
+-- USER: Platform user with basic content permissions
 INSERT INTO ROLE_PERMISSIONS (role_id, permission_id)
 SELECT r.id, p.id
 FROM ROLES r, PERMISSIONS p
 WHERE r.name = 'USER'
   AND p.name IN (
-    'create:community'
+    'create:community',
+    'like:post'
   );
 
 -- Insert root user

@@ -15,10 +15,12 @@ function formatSegment(segment: string): string {
   if (lower.startsWith("year-")) {
     const num = lower.replace("year-", "");
     return `Year ${num}`;
+  } else if (lower.startsWith("courses")) {
+    return "Courses";
   }
 
   const decoded = decodeURIComponent(segment);
-  return decoded.charAt(0).toUpperCase() + decoded.slice(1);
+  return decoded;
 }
 
 interface Crumb {
@@ -34,8 +36,8 @@ export function AppBreadcrumb({ className }: AppBreadcrumbProps) {
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
 
-  // If not inside /communities, don't render or render simple root
-  if (segments.length === 0 || segments[0] !== "communities") {
+  // Breadcrumbs only appear starting from a specific community slug
+  if (segments.length < 2 || segments[0] !== "communities") {
     return null;
   }
 
@@ -45,14 +47,16 @@ export function AppBreadcrumb({ className }: AppBreadcrumbProps) {
   const isCourses = isStudyYears && segments[4] === "courses";
   const courseSlug = isCourses ? segments[5] : undefined;
 
-  const crumbs: Crumb[] = [{ label: "Communities", url: "/communities" }];
-
-  if (communitySlug) {
-    crumbs.push({
+  const crumbs: Crumb[] = [
+    {
+      label: "Communities",
+      url: "/communities",
+    },
+    {
       label: formatSegment(communitySlug),
       url: `/communities/${communitySlug}`,
-    });
-  }
+    },
+  ];
 
   if (studyYearSlug) {
     crumbs.push({

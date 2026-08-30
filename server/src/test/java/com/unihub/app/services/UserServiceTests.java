@@ -2,7 +2,8 @@ package com.unihub.app.services;
 
 import com.unihub.app.config.EmailProperties;
 import com.unihub.app.domain.RoleType;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
+import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.authentication.MessageResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
@@ -11,7 +12,10 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
+import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.events.email.EmailVerificationRequestedEvent;
 import com.unihub.app.events.email.PasswordResetRequestedEvent;
@@ -80,14 +84,16 @@ public class UserServiceTests {
     @Mock
     private AppUtils appUtils;
 
-    private UserMapper userMapper;
+    @Mock
     private VerificationCodeService verificationCodeService;
+
+    private UserMapper userMapper;
     private UserService userService;
 
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
         userMapper = new UserMapper(roleService);
-        verificationCodeService = new VerificationCodeService();
+        PageMapper pageMapper = new PageMapper();
         EmailProperties emailProperties = new EmailProperties(
                 "no-reply@unihub.com",
                 "support@unihub.com",
@@ -101,8 +107,8 @@ public class UserServiceTests {
                 userIdentityService,
                 roleService,
                 communityMemberRepository,
-                communityRepository,
                 userMapper,
+                pageMapper,
                 eventPublisher,
                 jwtService,
                 sessionService,
@@ -122,7 +128,7 @@ public class UserServiceTests {
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now().minusDays(10);
-        Role role = Role.builder().id(roleId).name("STUDENT").build();
+        Role role = Role.builder().id(roleId).name("USER").build();
         User user = User.builder()
                 .id(userId)
                 .username("john_doe")
@@ -135,7 +141,7 @@ public class UserServiceTests {
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(roleService.getRoleById(roleId)).thenReturn(role);
-        when(roleService.getPermissionNamesByRoleName("STUDENT")).thenReturn(permissions);
+        when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(permissions);
 
         UserProfileResponseDto result = userService.getUserProfile(userId);
 
@@ -143,7 +149,7 @@ public class UserServiceTests {
         assertEquals(userId, result.id());
         assertEquals("john_doe", result.username());
         assertEquals("john@example.com", result.email());
-        assertEquals("STUDENT", result.role());
+        assertEquals("USER", result.role());
         assertEquals(permissions, result.permissions());
         assertEquals(createdAt, result.createdAt());
 
@@ -183,7 +189,7 @@ public class UserServiceTests {
         when(userRepository.findByUsername("new_name")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenReturn(user);
         when(roleService.getRoleById(roleId)).thenReturn(role);
-        when(roleService.getPermissionNamesByRoleName("USER")).thenReturn(List.of());
+        when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(List.of());
 
         UserProfileResponseDto result = userService.updateProfile(userId, dto);
 
@@ -211,7 +217,7 @@ public class UserServiceTests {
         when(roleService.getRoleByName(RoleType.ADMIN)).thenReturn(newRole);
         when(userRepository.save(any(User.class))).thenReturn(target);
         when(roleService.getRoleById(newRoleId)).thenReturn(newRole);
-        when(roleService.getPermissionNamesByRoleName("ADMIN")).thenReturn(List.of("MANAGE_USERS"));
+        when(roleService.getPermissionNamesByRoleType(RoleType.ADMIN)).thenReturn(List.of("MANAGE_USERS"));
 
         UserProfileResponseDto result = userService.updateUserRole("bob", dto);
 
@@ -226,12 +232,11 @@ public class UserServiceTests {
     // =========================================================================
 
     @Test
-    @DisplayName("selfDelete marks user deletedAt and invalidates tokens when user does not own any communities")
+    @DisplayName("selfDelete marks user deletedAt and invalidates tokens")
     public void testSelfDelete_Success() {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("user@example.com").username("user").build();
 
-        when(communityRepository.existsByOwnerId(userId)).thenReturn(false);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
         userService.selfDelete(userId);
@@ -239,15 +244,10 @@ public class UserServiceTests {
         assertNotNull(user.getDeletedAt());
         verify(userRepository).save(user);
         verify(sessionService).invalidateUserTokens(userId);
-        verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
     }
 
-    // =========================================================================
-    // adminDeleteUser
-    // =========================================================================
-
     @Test
-    @DisplayName("adminDeleteUser hard-deletes user when not root and not owning communities")
+    @DisplayName("adminDeleteUser hard-deletes user when not root")
     public void testAdminDeleteUser_Success() {
         UUID userId = UUID.randomUUID();
         UUID userRoleId = UUID.randomUUID();
@@ -258,7 +258,6 @@ public class UserServiceTests {
 
         when(userRepository.findByUsername("bob")).thenReturn(Optional.of(user));
         when(roleService.getRoleByName(RoleType.ROOT)).thenReturn(rootRole);
-        when(communityRepository.existsByOwnerId(userId)).thenReturn(false);
 
         userService.adminDeleteUser("bob", "Violation of terms");
 
@@ -307,51 +306,44 @@ public class UserServiceTests {
                 .joinedAt(joinedAt2)
                 .build();
 
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
-                .thenReturn(List.of(member1, member2));
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(eq(userId), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(List.of(member1, member2), pageRequest, 2));
         when(roleService.getRoleById(roleId1)).thenReturn(memberRole);
         when(roleService.getRoleById(roleId2)).thenReturn(adminRole);
-        when(roleService.getPermissionNamesByRoleName("COMMUNITY_MEMBER"))
-                .thenReturn(List.of("VIEW_POSTS"));
-        when(roleService.getPermissionNamesByRoleName("COMMUNITY_ADMIN"))
-                .thenReturn(List.of("VIEW_POSTS", "DELETE_POST"));
 
-        UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
+        PageDto<UserEnrolledCommunityDto> result = userService.getUserEnrolledCommunities(userId, pageRequest);
 
         assertNotNull(result);
-        assertEquals(2, result.communities().size());
+        assertEquals(2, result.content().size());
 
-        UserEnrolledCommunityDto c1 = result.communities().get(0);
+        UserEnrolledCommunityDto c1 = result.content().get(0);
         assertEquals(comm1.getId(), c1.id());
         assertEquals("Computer Science", c1.name());
         assertEquals("cs", c1.slug());
         assertEquals("COMMUNITY_MEMBER", c1.role());
         assertEquals(joinedAt1, c1.joinedAt());
 
-        UserEnrolledCommunityDto c2 = result.communities().get(1);
+        UserEnrolledCommunityDto c2 = result.content().get(1);
         assertEquals(comm2.getId(), c2.id());
         assertEquals("Mathematics", c2.name());
         assertEquals("math", c2.slug());
         assertEquals("COMMUNITY_ADMIN", c2.role());
         assertEquals(joinedAt2, c2.joinedAt());
-
-        assertNotNull(result.permissionsByRole());
-        assertEquals(List.of("VIEW_POSTS"), result.permissionsByRole().get("COMMUNITY_MEMBER"));
-        assertEquals(List.of("VIEW_POSTS", "DELETE_POST"), result.permissionsByRole().get("COMMUNITY_ADMIN"));
     }
 
     @Test
     @DisplayName("getUserEnrolledCommunities returns empty response when user has no enrolled communities")
     public void testGetUserEnrolledCommunities_EmptyMemberships() {
         UUID userId = UUID.randomUUID();
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
-                .thenReturn(Collections.emptyList());
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(eq(userId), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), pageRequest, 0));
 
-        UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
+        PageDto<UserEnrolledCommunityDto> result = userService.getUserEnrolledCommunities(userId, pageRequest);
 
         assertNotNull(result);
-        assertTrue(result.communities().isEmpty());
-        assertTrue(result.permissionsByRole().isEmpty());
+        assertTrue(result.content().isEmpty());
     }
 
     // =========================================================================
@@ -374,7 +366,10 @@ public class UserServiceTests {
     @Test
     @DisplayName("confirmRegister saves user and local identity, sets emailVerified true, and publishes UserWelcomeEvent")
     public void testConfirmRegister_Success() {
-        verificationCodeService.savePendingRegistration("testuser", "test@example.com", "encodedSecret", "123456");
+        VerificationCodeService.PendingRegistration pending = verificationCodeService.new PendingRegistration(
+                "testuser", "test@example.com", "encodedSecret", "123456", 0
+        );
+        when(verificationCodeService.verifyAndConsumeRegistration("test@example.com", "123456")).thenReturn(pending);
 
         when(userRepository.findByUsernameOrEmail("testuser", "test@example.com")).thenReturn(Collections.emptyList());
         Role userRole = Role.builder().id(UUID.randomUUID()).name("USER").build();
@@ -415,10 +410,10 @@ public class UserServiceTests {
         User user = User.builder().id(UUID.randomUUID()).email("user@example.com").username("user").emailVerified(false).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
 
-        User updatedUser = userService.confirmEmail("user@example.com", "123456");
+        MessageResponseDto updatedUser = userService.confirmEmail("user@example.com", "123456");
 
         assertNotNull(updatedUser);
-        assertTrue(updatedUser.isEmailVerified());
+        assertEquals("Email has been successfully verified.", updatedUser.message());
         verify(userRepository).save(user);
     }
 
@@ -426,7 +421,7 @@ public class UserServiceTests {
     @DisplayName("requestPasswordReset publishes PasswordResetRequestedEvent when user exists")
     public void testRequestPasswordReset_Success() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder().id(userId).email("user@example.com").username("user").build();
+        User user = User.builder().id(userId).email("user@example.com").username("user").emailVerified(true).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(jwtService.generateToken(eq(userId.toString()), anyMap(), eq(900L))).thenReturn("jwt-reset-token");
 
@@ -511,7 +506,7 @@ public class UserServiceTests {
     @DisplayName("purgeExpiredDeletedUsers deletes users with deletedAt older than 30 days")
     public void testPurgeExpiredDeletedUsers_DeletesExpiredUsers() {
         User expiredUser = User.builder().id(UUID.randomUUID()).deletedAt(OffsetDateTime.now().minusDays(31)).build();
-        when(userRepository.findByDeletedAtIsNotNullAndDeletedAtLessThanEqual(any(OffsetDateTime.class)))
+        when(userRepository.findScheduledDeletedUsers(any(OffsetDateTime.class)))
                 .thenReturn(List.of(expiredUser));
 
         userService.purgeExpiredDeletedUsers();

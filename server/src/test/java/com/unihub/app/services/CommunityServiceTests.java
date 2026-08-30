@@ -38,6 +38,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -105,10 +108,10 @@ public class CommunityServiceTests {
                 .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(communityRepository.findAll(pageRequest))
+        when(communityRepository.findAllWithFilters(isNull(), isNull(), isNull(), eq(pageRequest)))
                 .thenReturn(new PageImpl<>(List.of(community), pageRequest, 1));
 
-        PageDto<CommunityResponseDto> result = communityService.findAll(pageRequest);
+        PageDto<CommunityResponseDto> result = communityService.findAll(null, null, null, null, pageRequest);
 
         assertNotNull(result);
         assertEquals(1, result.totalElements());
@@ -151,7 +154,7 @@ public class CommunityServiceTests {
 
         when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
 
-        CommunityResponseDto result = communityService.findBySlug("fmi-info-id");
+        CommunityResponseDto result = communityService.findBySlug("fmi-info-id", null);
 
         assertNotNull(result);
         assertEquals(communityId, result.id());
@@ -174,7 +177,7 @@ public class CommunityServiceTests {
     public void testFindBySlug_NotFound() {
         when(communityRepository.findBySlugWithOwner("non-existent")).thenReturn(Optional.empty());
 
-        assertThrows(ResponseStatusException.class, () -> communityService.findBySlug("non-existent"));
+        assertThrows(ResponseStatusException.class, () -> communityService.findBySlug("non-existent", null));
     }
 
     @Test
@@ -205,7 +208,7 @@ public class CommunityServiceTests {
         when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(studyYearService.getCommunityStudyYearMetrics("fmi-info-id")).thenReturn(studyYears);
 
-        CommunityHomeResponseDto result = communityService.getCommunityHome("fmi-info-id");
+        CommunityHomeResponseDto result = communityService.getCommunityHome("fmi-info-id", null);
 
         assertNotNull(result);
         assertEquals("fmi-info-id", result.community().slug());

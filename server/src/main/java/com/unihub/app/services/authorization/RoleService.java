@@ -1,6 +1,5 @@
 package com.unihub.app.services.authorization;
 
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
@@ -52,22 +51,21 @@ public class RoleService {
         return permissionRepository.findPermissionNamesByRoleName(roleType.name());
     }
 
-    public RoleType getRoleTypeById(UUID roleId) {
-        Role role = getRoleById(roleId);
-        return RoleType.valueOf(role.getName());
-    }
-
-
     @PostConstruct
     public void initializeRoles() {
         var roles = roleRepository.findAllWithPermissions();
+        if (roles == null) {
+            return;
+        }
         var roleCache = cacheManager.getCache("roles");
         var rolePermissionsCache = cacheManager.getCache("rolePermissionsByName");
 
-        roles.forEach(role -> {
-            roleCache.put(role.getName(), role);
-            roleCache.put(role.getId(), role);
-            rolePermissionsCache.put(role.getName(), role.getPermissions().stream().map(Permission::getName).toList());
-        });
+        if (roleCache != null && rolePermissionsCache != null) {
+            roles.forEach(role -> {
+                roleCache.put(role.getName(), role);
+                roleCache.put(role.getId(), role);
+                rolePermissionsCache.put(role.getName(), role.getPermissions().stream().map(Permission::getName).toList());
+            });
+        }
     }
 }

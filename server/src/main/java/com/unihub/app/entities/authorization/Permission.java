@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Entity
@@ -33,5 +34,14 @@ public class Permission {
     )
     private List<Role> roles;
 
+    @Override
+    public String toString() {
+        return "Permission{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", roles=" + Objects.toIdentityString(roles) +
+                '}';
+    }
 }
 

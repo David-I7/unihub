@@ -10,14 +10,16 @@ import { type ZodType, ZodError } from "zod";
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
 export type FormTouched<T> = Partial<Record<keyof T, boolean>>;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface UseFormOptions<T extends Record<string, any>> {
   initialValues: T;
-  schema?: ZodType<T, any, any>;
+  schema?: ZodType<T>;
   onSubmit: (values: T) => Promise<void> | void;
   validateOnChange?: boolean;
   validateOnBlur?: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useForm<T extends Record<string, any>>({
   initialValues,
   schema,

@@ -1,30 +1,96 @@
-import { Plus } from "lucide-react";
+import * as React from "react";
+import { useState, useCallback } from "react";
+import { useSearchParams } from "react-router";
+import { KeyRound, Plus, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { usePermissions } from "@/hooks/usePermissions";
+import { CreateCommunityModal } from "./CreateCommunityModal";
+import { JoinCommunityModal } from "./JoinCommunityModal";
 
-interface CommunityHeaderProps {
-  onCreateClick?: () => void;
+export interface CommunityHeaderProps {
+  canCreate?: boolean;
 }
 
-export function CommunityHeader({ onCreateClick }: CommunityHeaderProps) {
-  return (
-    <div>
-      <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-4">
-        Communities
-      </h1>
-      <div className="flex items-center justify-between gap-4">
-        <AppBreadcrumb />
+function CommunityHeaderComponent({
+  canCreate: customCanCreate,
+}: CommunityHeaderProps) {
+  const [searchParams] = useSearchParams();
+  const joinCodeParam = searchParams.get("join") || "";
 
-        <Button
-          size="sm"
-          onClick={onCreateClick}
-          className="gap-1.5 shadow-xs font-semibold shrink-0"
-        >
-          <Plus className="size-4" />
-          <span className="hidden sm:inline">Create New Community</span>
-          <span className="sm:hidden">Create</span>
-        </Button>
+  const { canCreateCommunity: defaultCanCreate } = usePermissions();
+  const canCreate = customCanCreate ?? defaultCanCreate;
+
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(Boolean(joinCodeParam));
+
+  const handleOpenCreate = useCallback(() => {
+    setCreateModalOpen(true);
+  }, []);
+
+  const handleOpenJoin = useCallback(() => {
+    setJoinModalOpen(true);
+  }, []);
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+          Communities
+        </h1>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-9 rounded-xl shadow-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                aria-label="Community actions"
+              >
+                <MoreVertical className="size-4" />
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-48 rounded-xl p-1">
+            <DropdownMenuItem
+              onClick={handleOpenJoin}
+              className="gap-2 text-xs font-medium cursor-pointer"
+            >
+              <KeyRound className="size-4 text-muted-foreground" />
+              <span>Join with Code</span>
+            </DropdownMenuItem>
+
+            {canCreate && (
+              <DropdownMenuItem
+                onClick={handleOpenCreate}
+                className="gap-2 text-xs font-medium cursor-pointer"
+              >
+                <Plus className="size-4 text-muted-foreground" />
+                <span>Create Community</span>
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </div>
+
+      <CreateCommunityModal
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+      />
+
+      <JoinCommunityModal
+        open={joinModalOpen}
+        onOpenChange={setJoinModalOpen}
+        prefilledCode={joinCodeParam}
+      />
+    </>
   );
 }
+
+export const CommunityHeader = React.memo(CommunityHeaderComponent);

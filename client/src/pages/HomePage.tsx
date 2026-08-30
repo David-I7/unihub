@@ -1,9 +1,9 @@
-import { ColorPicker } from "@/components/ui/color-picker";
-
 export default function HomePage() {
   return (
-    <section>
-      <ColorPicker />
-    </section>
+    <div className="min-h-full space-y-6">
+      <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+        Home
+      </h1>
+    </div>
   );
 }

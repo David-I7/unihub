@@ -1,40 +1,49 @@
 package com.unihub.app.controllers;
 
+import com.unihub.app.BaseIntegrationTest;
+import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.content.response.FolderSummaryDto;
 import com.unihub.app.dto.community.content.response.MaterialFileDto;
 import com.unihub.app.dto.community.content.response.MaterialLinkDto;
-import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
+import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.MaterialLinkType;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
+import com.unihub.app.security.JwtAuthentication;
+import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.services.community.content.CoursePostService;
 import com.unihub.app.services.community.resources.CourseService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.unihub.app.BaseIntegrationTest;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 public class CourseControllerTests extends BaseIntegrationTest {
@@ -44,8 +53,30 @@ public class CourseControllerTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @MockitoBean
     private CourseService courseService;
+
+    @MockitoBean
+    private CoursePostService coursePostService;
+
+    @MockitoBean
+    private AuthorizationService authorizationService;
+
+    private UUID userId;
+    private UserDto userDto;
+
+    @BeforeEach
+    public void setUp() {
+        userId = UUID.randomUUID();
+        userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
+        JwtAuthentication auth = new JwtAuthentication(userDto);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
+        when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
+    }
 
     // =========================================================================
     // GET /home (getCourseHome)
@@ -200,5 +231,69 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.folders").isArray())
                 .andExpect(jsonPath("$.folders[0].id").value(childFolderId.toString()))
                 .andExpect(jsonPath("$.folders[0].name").value("Sub-item"));
+    }
+
+    // =========================================================================
+    // GET /posts
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /posts returns paginated course posts")
+    public void testGetCoursePosts_Success() throws Exception {
+        UUID postId = UUID.randomUUID();
+        PostResponseDto postDto = PostResponseDto.builder()
+                .id(postId)
+                .title("Course Post Title")
+                .description("Course Post Desc")
+                .channel(CommunicationChannel.COURSE)
+                .isLiked(false)
+                .likesCount(0)
+                .commentsCount(0)
+                .build();
+
+        PageDto<PostResponseDto> pageDto = PageDto.<PostResponseDto>builder()
+                .content(List.of(postDto))
+                .number(0)
+                .size(10)
+                .totalElements(1)
+                .totalPages(1)
+                .build();
+
+        when(coursePostService.getCoursePosts(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(Pageable.class)))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/posts")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(postId.toString()))
+                .andExpect(jsonPath("$.content[0].title").value("Course Post Title"));
+    }
+
+    // =========================================================================
+    // POST /posts
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /posts creates a course post")
+    public void testCreateCoursePost_Success() throws Exception {
+        UUID postId = UUID.randomUUID();
+        CreatePostRequestDto requestDto = new CreatePostRequestDto("New Course Post", "Description text");
+        PostResponseDto responseDto = PostResponseDto.builder()
+                .id(postId)
+                .title("New Course Post")
+                .description("Description text")
+                .channel(CommunicationChannel.COURSE)
+                .build();
+
+        when(coursePostService.createCoursePost(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreatePostRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(postId.toString()))
+                .andExpect(jsonPath("$.title").value("New Course Post"));
     }
 }

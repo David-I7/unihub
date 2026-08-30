@@ -14,9 +14,11 @@ export async function getUserProfile(): Promise<UserProfileResponse> {
   return response.data;
 }
 
-export function useUserProfile(options: { enabled?: boolean } = {}) {
+export function useUserProfile(
+  options: { enabled?: boolean } = { enabled: true },
+) {
   const user = useAuthStore((state) => state.user);
-  const { enabled = Boolean(user) } = options;
+  const { enabled = true } = options;
 
   return useQuery({
     queryKey: userKeys.me(),

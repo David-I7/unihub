@@ -48,7 +48,7 @@ public class AuthorizationService {
         if (globalRole == null || permission == null) {
             return false;
         }
-        return roleService.getPermissionNamesByRoleType(globalRole).contains(permission.name());
+        return roleService.getPermissionNamesByRoleType(globalRole).contains(permission.getValue());
     }
 
     public boolean isCommunityMember(String communitySlug, UUID userId) {
@@ -58,13 +58,14 @@ public class AuthorizationService {
     public Optional<RoleType> getCommunityRole(String communitySlug, UUID userId) {
         return communityMemberRepository.findMemberByCommunitySlug(communitySlug, userId)
                 .map(CommunityMember::getRoleId)
-                .map(roleService::getRoleTypeById);
+                .map(roleService::getRoleById)
+                .map(role-> RoleType.valueOf(role.getName()));
     }
 
     public boolean hasCommunityPermission(String communitySlug, UUID userId, PermissionType permission) {
         RoleType globalRole = getGlobalRole();
-        if (globalRole == RoleType.ROOT || globalRole == RoleType.ADMIN) {
-            if (roleService.getPermissionNamesByRoleType(globalRole).contains(permission.name())) {
+        if (globalRole != null) {
+            if (roleService.getPermissionNamesByRoleType(globalRole).contains(permission.getValue())) {
                 return true;
             }
         }
@@ -74,6 +75,6 @@ public class AuthorizationService {
             return false;
         }
 
-        return roleService.getPermissionNamesByRoleType(communityRole.get()).contains(permission.name());
+        return roleService.getPermissionNamesByRoleType(communityRole.get()).contains(permission.getValue());
     }
 }

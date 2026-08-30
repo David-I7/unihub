@@ -1,6 +1,6 @@
 import { Calendar } from "lucide-react";
 import { StudyYearCard } from "./StudyYearCard";
-import { StudyYearNameMap, type StudyYearMetrics } from "../api/types";
+import { studyYearNameToSlug, type StudyYearMetrics } from "../api/types";
 import { useNavigate } from "react-router";
 
 interface StudyYearsGridProps {
@@ -41,7 +41,7 @@ export function StudyYearsGrid({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {studyYears.map((year) => {
-        const yearSlug = StudyYearNameMap[year.studyYearName];
+        const yearSlug = studyYearNameToSlug(year.studyYearName);
         const destination = `/communities/${communitySlug}/study-years/${yearSlug}`;
         return (
           <StudyYearCard

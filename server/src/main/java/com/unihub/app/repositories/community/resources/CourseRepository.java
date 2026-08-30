@@ -2,6 +2,8 @@ package com.unihub.app.repositories.community.resources;
 
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,21 +13,42 @@ import java.util.Optional;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
-    @Query("""
+    @Query(value = """
         SELECT DISTINCT c FROM Course c
-        LEFT JOIN FETCH c.teachers t
-        WHERE c.studyYear.id = :studyYearId AND c.archived = false
-        ORDER BY c.semester ASC, c.name ASC
-    """)
-    List<Course> findAllActiveByStudyYearIdWithTeachers(@Param("studyYearId") int studyYearId);
-
-    @Query("""
-        SELECT DISTINCT c FROM Course c
-        LEFT JOIN FETCH c.teachers t
+        LEFT JOIN c.teachers t
         WHERE c.studyYear.id = :studyYearId
-        ORDER BY c.semester ASC, c.name ASC
+          AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
+          AND (CAST(:semester AS integer) IS NULL OR c.semester = :semester)
+          AND (
+            COALESCE(:search, '') = '' OR (
+              LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(c.abbreviation) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+            )
+          )
+    """, countQuery = """
+        SELECT COUNT(DISTINCT c) FROM Course c
+        LEFT JOIN c.teachers t
+        WHERE c.studyYear.id = :studyYearId
+          AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
+          AND (CAST(:semester AS integer) IS NULL OR c.semester = :semester)
+          AND (
+            COALESCE(:search, '') = '' OR (
+              LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(c.abbreviation) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+            )
+          )
     """)
-    List<Course> findAllByStudyYearIdWithTeachers(@Param("studyYearId") int studyYearId);
+    Page<Course> findAllByStudyYearIdWithFilters(
+            @Param("studyYearId") int studyYearId,
+            @Param("semester") Integer semester,
+            @Param("archived") Boolean archived,
+            @Param("search") String search,
+            Pageable pageable
+    );
 
     @Query("""
         SELECT c FROM Course c

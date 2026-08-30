@@ -1,3 +1,4 @@
+import queryClient from "@/lib/queryClient";
 import type { User } from "@/types/domain";
 import { create } from "zustand";
 
@@ -23,8 +24,10 @@ const useAuthStore = create<AuthState>((set) => {
     user: null,
     accessToken: null,
     initialized: false,
-    setAuth: (user, accessToken) =>
-      set({ user, accessToken, initialized: true }),
+    setAuth: (user, accessToken) => {
+      set({ user, accessToken, initialized: true });
+      queryClient.invalidateQueries();
+    },
     setAccessToken: (accessToken) => set({ accessToken }),
     setEmailVerified: (emailVerified) =>
       set((state) => ({
@@ -35,7 +38,10 @@ const useAuthStore = create<AuthState>((set) => {
         user: state.user ? { ...state.user, ...partialUser } : null,
       })),
     setInitialized: () => set({ initialized: true }),
-    clearAuth: () => set({ user: null, accessToken: null }),
+    clearAuth: () => {
+      set({ user: null, accessToken: null });
+      queryClient.clear();
+    },
   };
 });
 

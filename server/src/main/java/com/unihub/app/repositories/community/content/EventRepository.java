@@ -73,7 +73,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
             sy.studyYearName,
             new com.unihub.app.dto.community.OwnerDto(
                u.id,
-               u.username
+               u.username,
+               CASE WHEN u.deletedAt = null then true else false end
             ),
             null
         ) FROM Event e

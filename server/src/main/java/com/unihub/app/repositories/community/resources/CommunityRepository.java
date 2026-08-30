@@ -31,8 +31,27 @@ public interface CommunityRepository extends JpaRepository<Community, UUID> {
     @EntityGraph(attributePaths = {"owner"})
     Page<Community> findAll(Pageable pageable);
 
-    @Query("SELECT c.id, c.slug,c.name FROM Community c WHERE c.name = :name OR c.slug = :slug")
-    List<Community> findByNameOrSlug(String name, String slug);
+    @EntityGraph(attributePaths = {"owner"})
+    @Query(value = """
+        SELECT c FROM Community c
+        WHERE COALESCE(:search, '') = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
+          AND (CAST(:verified AS boolean) IS NULL OR c.verified = :verified)
+          AND (CAST(:joinedUserId AS uuid) IS NULL OR c.id IN (SELECT cm.community.id FROM CommunityMember cm WHERE cm.user.id = :joinedUserId))
+    """, countQuery = """
+        SELECT COUNT(c) FROM Community c
+        WHERE COALESCE(:search, '') = '' OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
+          AND (CAST(:verified AS boolean) IS NULL OR c.verified = :verified)
+          AND (CAST(:joinedUserId AS uuid) IS NULL OR c.id IN (SELECT cm.community.id FROM CommunityMember cm WHERE cm.user.id = :joinedUserId))
+    """)
+    Page<Community> findAllWithFilters(
+            @Param("search") String search,
+            @Param("verified") Boolean verified,
+            @Param("joinedUserId") UUID joinedUserId,
+            Pageable pageable
+    );
+
+    @Query("SELECT c FROM Community c WHERE c.name = :name OR c.slug = :slug")
+    List<Community> findByNameOrSlug(@Param("name") String name, @Param("slug") String slug);
 
     boolean existsByName(String name);
 

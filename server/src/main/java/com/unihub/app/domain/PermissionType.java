@@ -16,6 +16,7 @@ public enum PermissionType {
 
     // Community Membership
     CREATE_JOIN_CODE(Permissions.CREATE_JOIN_CODE),
+    UPDATE_JOIN_CODE(Permissions.UPDATE_JOIN_CODE),
     DELETE_JOIN_CODE(Permissions.DELETE_JOIN_CODE),
     CREATE_MEMBER(Permissions.CREATE_MEMBER),
     UPDATE_MEMBER_ROLE(Permissions.UPDATE_MEMBER_ROLE),
@@ -42,6 +43,7 @@ public enum PermissionType {
     CREATE_POST(Permissions.CREATE_POST),
     UPDATE_POST(Permissions.UPDATE_POST),
     DELETE_POST(Permissions.DELETE_POST),
+    LIKE_POST(Permissions.LIKE_POST),
     MODERATE_POST(Permissions.MODERATE_POST),
     PIN_POST(Permissions.PIN_POST),
     CREATE_COMMENT(Permissions.CREATE_COMMENT),

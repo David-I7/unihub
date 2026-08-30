@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/field";
 import { OAuthButton } from "./OAuthButton";
 import { useNavigate } from "react-router";
-import type { OAuth2Response } from "../types";
+import type { OAuth2Response } from "../api/types";
 import type { AuthProvider } from "@/types/domain";
 
 export interface SocialAuthSectionProps {

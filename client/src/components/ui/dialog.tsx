@@ -43,44 +43,48 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  contentClassName,
   ...props
 }: DialogPrimitive.Popup.Props & {
-  showCloseButton?: boolean
+  showCloseButton?: boolean;
+  contentClassName?: string;
 }) {
   return (
     <DialogPortal>
       <DialogOverlay />
-      <DialogPrimitive.Popup
-        data-slot="dialog-content"
-        className={cn(
-          "fixed inset-0 z-50 flex h-dvh w-screen max-w-none max-h-none flex-col bg-popover p-0 text-sm text-popover-foreground outline-none duration-100 overflow-y-auto overflow-x-hidden rounded-none border-0 m-0",
-          "sm:fixed sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:h-auto sm:w-full sm:max-w-xl sm:max-h-[90vh] sm:rounded-2xl sm:border sm:shadow-2xl sm:ring-1 sm:ring-foreground/10",
-          "data-open:animate-in data-open:fade-in-0 sm:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 sm:data-closed:zoom-out-95",
-          className
-        )}
-        {...props}
-      >
-        <div className="flex flex-col gap-4 p-5 sm:p-6 w-full min-h-full">
-          {children}
-        </div>
-        {showCloseButton && (
-          <DialogPrimitive.Close
-            data-slot="dialog-close"
-            render={
-              <Button
-                variant="ghost"
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-muted-foreground hover:text-foreground cursor-pointer z-10"
-                size="icon-sm"
-              />
-            }
-          >
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Popup>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 pointer-events-none">
+        <DialogPrimitive.Popup
+          data-slot="dialog-content"
+          className={cn(
+            "pointer-events-auto relative z-50 flex flex-col bg-popover text-sm text-popover-foreground outline-none duration-100 rounded-2xl border shadow-2xl ring-1 ring-foreground/10 m-0",
+            "w-full max-w-xl max-h-full overflow-y-auto",
+            "data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+            className
+          )}
+          {...props}
+        >
+          <div className={cn("flex flex-col gap-4 p-5 sm:p-6 w-full min-h-full", contentClassName)}>
+            {children}
+          </div>
+          {showCloseButton && (
+            <DialogPrimitive.Close
+              data-slot="dialog-close"
+              render={
+                <Button
+                  variant="ghost"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 text-muted-foreground hover:text-foreground cursor-pointer z-10"
+                  size="icon-sm"
+                />
+              }
+            >
+              <XIcon className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogPrimitive.Close>
+          )}
+        </DialogPrimitive.Popup>
+      </div>
     </DialogPortal>
-  )
+  );
 }
 
 function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {

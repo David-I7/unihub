@@ -2,8 +2,8 @@ package com.unihub.app.services.authentication;
 
 import com.unihub.app.config.EmailProperties;
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.authentication.MessageResponseDto;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
@@ -20,6 +20,7 @@ import com.unihub.app.events.email.RegisterVerificationRequestedEvent;
 import com.unihub.app.events.email.UserDeletedEvent;
 import com.unihub.app.events.email.UserWelcomeEvent;
 import com.unihub.app.exceptions.InvalidJwtTokenException;
+import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
@@ -31,6 +32,8 @@ import com.unihub.app.utils.Random;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,8 +54,8 @@ public class UserService {
     private final UserIdentityService userIdentityService;
     private final RoleService roleService;
     private final CommunityMemberRepository communityMemberRepository;
-    private final CommunityRepository communityRepository;
     private final UserMapper userMapper;
+    private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final JwtService jwtService;
     private final SessionService sessionService;
@@ -175,6 +178,10 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
+        if(!optionalUser.get().isEmailVerified()){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is not verified");
+        }
+
         User user = optionalUser.get();
         long expirationSec = emailProperties.passwordResetTokenExpirationSec();
         Map<String, Object> claims = Map.of(
@@ -201,12 +208,12 @@ public class UserService {
         try {
             claims = jwtService.parseClaims(token);
         } catch (InvalidJwtTokenException e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired password reset token");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid or expired password reset token");
         }
 
         String purpose = claims.get(JwtService.PURPOSE_CLAIM, String.class);
         if (!JwtService.PURPOSE_PASSWORD_RESET.equals(purpose)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token purpose");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid token purpose");
         }
 
         String subject = claims.getSubject();
@@ -400,7 +407,7 @@ public class UserService {
         }
 
         if (!passwordEncoder.matches(user.getPassword(), savedUser.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Incorrect password");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Incorrect password");
         }
 
         reactivateIfDeleted(savedUser);
@@ -436,20 +443,13 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserCommunitiesResponseDto getUserEnrolledCommunities(UUID userId) {
-        List<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunity(userId);
-        Map<String, List<String>> permissionsByRole = new HashMap<>();
-
-        List<UserEnrolledCommunityDto> communities = memberships.stream().map(membership -> {
+    public PageDto<UserEnrolledCommunityDto> getUserEnrolledCommunities(UUID userId, Pageable pageable) {
+        Page<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunity(userId, pageable);
+        return pageMapper.toPageDto(memberships.map(membership -> {
             Community community = membership.getCommunity();
             RoleType role = RoleType.valueOf(roleService.getRoleById(membership.getRoleId()).getName());
-
-            permissionsByRole.computeIfAbsent(role.name(), (k) ->roleService.getPermissionNamesByRoleType(role));
-
             return userMapper.toUserEnrolledCommunityDto(community, role.name(), membership.getJoinedAt());
-        }).toList();
-
-        return userMapper.toUserCommunitiesResponseDto(communities, permissionsByRole);
+        }));
     }
 
     private void setEmailVerified(User user, boolean emailVerified){

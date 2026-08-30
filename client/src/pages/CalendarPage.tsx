@@ -28,7 +28,7 @@ export default function CalendarPage() {
   // Fetch enrolled communities for empty-state evaluation and Add Event button permission
   const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
     useUserCommunities();
-  const userCommunities = userCommunitiesData?.communities ?? [];
+  const userCommunities = userCommunitiesData?.content ?? [];
   const hasCommunities = userCommunities.length > 0;
 
   // Server-authoritative query: executes only when communitySlug is selected

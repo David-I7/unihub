@@ -45,6 +45,7 @@ export interface Course {
   creditPoints: number;
   archived: boolean;
   description?: string;
+  readme?: string;
   createdAt: string;
 }
 

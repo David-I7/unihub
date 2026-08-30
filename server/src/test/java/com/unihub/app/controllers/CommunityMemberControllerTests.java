@@ -5,6 +5,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
@@ -251,6 +252,36 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].id").value(codeId.toString()))
                 .andExpect(jsonPath("$[0].code").value("ABC12345"));
+    }
+
+    // =========================================================================
+    // PATCH /join-codes/{codeId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("PATCH /join-codes/{codeId} updates join code")
+    public void testUpdateJoinCode_Success() throws Exception {
+        UUID codeId = UUID.randomUUID();
+        UpdateJoinCodeRequestDto requestDto = new UpdateJoinCodeRequestDto(20, 48);
+
+        CommunityJoinCodeResponseDto responseDto = CommunityJoinCodeResponseDto.builder()
+                .id(codeId)
+                .code("ABC12345")
+                .maxUses(20)
+                .usesCount(0)
+                .expiresAt(OffsetDateTime.now().plusHours(48))
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(communityJoinCodeService.updateJoinCode(eq("fmi-info"), eq(codeId), any(UpdateJoinCodeRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(BASE_URL + "/join-codes/" + codeId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(codeId.toString()))
+                .andExpect(jsonPath("$.maxUses").value(20));
     }
 
     // =========================================================================

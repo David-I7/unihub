@@ -1,6 +1,6 @@
 import { BASE_URL } from "@/api/client";
 import client from "@/api/client";
-import type { LoginRequest, RefreshResponse } from "../types";
+import type { LoginRequest, RefreshResponse } from "./types";
 import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 

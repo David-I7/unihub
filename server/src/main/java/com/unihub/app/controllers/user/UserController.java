@@ -1,7 +1,8 @@
 package com.unihub.app.controllers.user;
 
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
+import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
@@ -9,6 +10,9 @@ import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
 import com.unihub.app.services.authentication.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,8 +32,11 @@ public class UserController {
     }
 
     @GetMapping("/me/communities")
-    public ResponseEntity<UserCommunitiesResponseDto> getMyCommunities(@AuthenticationPrincipal UserDto currentUser) {
-        UserCommunitiesResponseDto response = userService.getUserEnrolledCommunities(currentUser.id());
+    public ResponseEntity<PageDto<UserEnrolledCommunityDto>> getMyCommunities(
+            @AuthenticationPrincipal UserDto currentUser,
+            @PageableDefault(page = 0, size = 10, sort = "joinedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        PageDto<UserEnrolledCommunityDto> response = userService.getUserEnrolledCommunities(currentUser.id(), pageable);
         return ResponseEntity.ok(response);
     }
 

@@ -1,5 +1,5 @@
 import client from "@/api/client";
-import type { RefreshResponse } from "../types";
+import type { RefreshResponse } from "./types";
 import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "../store/useAuthStore";
 

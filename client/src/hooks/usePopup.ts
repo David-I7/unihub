@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-type usePopupProps = {
+type usePopupProps<T = unknown> = {
   url?: string | URL;
   target?: string;
   features?: string;
   channelName: (typeof AUTH_CHANNEL_NAME)[keyof typeof AUTH_CHANNEL_NAME];
-  onMessageReceived: (message: any) => void;
+  onMessageReceived: (message: T) => void;
   onPopupClose?: () => void;
 };
 
@@ -14,36 +14,36 @@ export const AUTH_CHANNEL_NAME = {
   GITHUB_OAUTH2: "unihub-github-oauth" as const,
 };
 
-export const usePopup = ({
+export const usePopup = <T = unknown>({
   url,
   target,
   features,
   channelName,
   onMessageReceived,
   onPopupClose,
-}: usePopupProps) => {
+}: usePopupProps<T>) => {
   const popup = useRef<WindowProxy | null>(null);
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
-  const openPopup = () => {
+  const openPopup = useCallback(() => {
     popup.current = window.open(url, target, features);
     setIsOpen(Boolean(popup.current));
-  };
+  }, [url, target, features]);
 
-  const closePopup = () => {
+  const closePopup = useCallback(() => {
     if (!isOpen || !popup.current) return;
     setIsOpen(false);
     onPopupClose?.();
     popup.current.close();
     popup.current = null;
-  };
+  }, [isOpen, onPopupClose]);
 
   useEffect(() => {
     if (!isOpen || !popup.current) return;
 
-    const pollPopupClose = (popup: WindowProxy) => {
+    const pollPopupClose = (win: WindowProxy) => {
       const intervalId = setInterval(() => {
-        if (popup.closed) {
+        if (win.closed) {
           closePopup();
           clearInterval(intervalId);
         }
@@ -63,7 +63,7 @@ export const usePopup = ({
       authChannel.close();
       clearPopupPoll();
     };
-  }, [isOpen, onMessageReceived, channelName]);
+  }, [isOpen, onMessageReceived, channelName, closePopup]);
 
   return { closePopup, openPopup, isOpen };
 };

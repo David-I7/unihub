@@ -4,7 +4,6 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.entities.authentication.AuthProvider;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -27,7 +25,7 @@ public class UserMapper {
     private final RoleService roleService;
 
     public UserDto toDto(User user) {
-        RoleType roleType = user.getRoleId() != null ? roleService.getRoleTypeById(user.getRoleId()) : null;
+        RoleType roleType = user.getRoleId() != null ? RoleType.valueOf(roleService.getRoleById(user.getRoleId()).getName()) : null;
         return new UserDto(user.getId(), user.getEmail(), user.getUsername(), user.isEmailVerified(), roleType);
     }
 
@@ -100,9 +98,5 @@ public class UserMapper {
                 .role(roleName)
                 .joinedAt(joinedAt)
                 .build();
-    }
-
-    public UserCommunitiesResponseDto toUserCommunitiesResponseDto(List<UserEnrolledCommunityDto> communities, Map<String, List<String>> permissionsByRole) {
-        return new UserCommunitiesResponseDto(communities, permissionsByRole);
     }
 }

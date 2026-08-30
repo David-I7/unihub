@@ -14,6 +14,7 @@ public record CourseResponseDto (
         int creditPoints,
         boolean archived,
         String description,
+        String readme,
         OffsetDateTime createdAt
 ) {
 }

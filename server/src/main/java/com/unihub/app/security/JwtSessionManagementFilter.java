@@ -45,9 +45,13 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
                 try {
                     SessionService.SessionStatus status =  sessionService.validateRefreshTokenSession(request, response);
                     if(status == SessionService.SessionStatus.ACTIVE || status == SessionService.SessionStatus.ROTATE_REQUIRED){
+                        log.info("An authenticated user is trying to login or register again.");
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"User is already authenticated.");
                     }
                 }catch (ResponseStatusException e){
+                    if(e.getStatusCode() == HttpStatus.UNAUTHORIZED){
+                        log.info("Found and invalid or expired refresh token for a user: {}", e.getMessage());
+                    }
                     problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getMessage());
                     return;
                 }
@@ -77,9 +81,10 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
             filterChain.doFilter(request,response);
         }catch (ResponseStatusException e){
             if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                log.info("Rejected blacklisted access token for a user: {}", e.getMessage());
                 response.setHeader(HttpHeaders.SET_COOKIE, sessionService.clearSessionCookie().toString());
-            }
-            problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getReason() != null ? e.getReason() : e.getMessage());
+            } else log.info("Rejected invalid access token for a user: {}", e.getMessage());
+            problemDetailUtil.writeProblemDetail(request,response, HttpStatus.UNAUTHORIZED, e.getReason() != null ? e.getReason() : e.getMessage());
         }
     }
 
@@ -90,6 +95,7 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
     private boolean shouldNotBeAuthenticated(String path){
         return path.startsWith("/api/v1/auth/login/local") ||
                 path.startsWith("/api/v1/auth/register/local") ||
-                path.startsWith("/api/v1/auth/confirm-register");
+                path.startsWith("/api/v1/auth/confirm-register") ||
+                path.startsWith("/api/v1/auth/oauth2/authorization");
     }
 }

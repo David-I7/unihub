@@ -39,8 +39,9 @@ CREATE TABLE COMMUNITIES(
     name text not null UNIQUE,
     slug text not null UNIQUE,
     description text not null,
+    readme text,
     members_count int not null default 0,
-    owner_id UUID not null REFERENCES USERS(id) ON DELETE SET CASCADE,
+    owner_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
     background_color text not null default '#2563eb',
     verified boolean not null default false,
     created_at timestamptz not null default now()
@@ -76,6 +77,7 @@ CREATE TABLE COURSES(
     archived boolean not null default false,
     credit_points int not null default 5,
     description text,
+    readme text,
     created_at timestamptz not null default now(),
     UNIQUE (study_year_id, name),
     UNIQUE (study_year_id, slug)
@@ -140,20 +142,11 @@ CREATE TABLE COMMUNITY_POSTS(
     community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE
 );
 
-CREATE TABLE COMMUNITY_COMMENT(
-    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
-    community_post_id UUID REFERENCES COMMUNITY_POSTS(post_id) ON DELETE CASCADE
-);
-
 CREATE TABLE COURSE_POSTS(
     post_id UUID PRIMARY KEY REFERENCES POSTS(id) ON DELETE CASCADE,
     course_id bigint REFERENCES COURSES(id) ON DELETE CASCADE
 );
 
-CREATE TABLE COURSE_COMMENT(
-    comment_id UUID PRIMARY KEY REFERENCES COMMENTS(id) ON DELETE CASCADE,
-    course_post_id UUID REFERENCES COURSE_POSTS(post_id) ON DELETE CASCADE
-);
 
 CREATE TYPE RESOURCE_TYPE AS ENUM(
   'MATERIAL_FILE', 'MATERIAL_LINK'

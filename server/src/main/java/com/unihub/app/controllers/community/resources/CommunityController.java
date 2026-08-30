@@ -2,15 +2,18 @@ package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityJoinPreviewResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.services.community.content.CommunityPostService;
+import com.unihub.app.services.community.resources.CommunityJoinCodeService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import com.unihub.app.services.community.resources.CommunityService;
 import jakarta.validation.Valid;
@@ -33,13 +36,18 @@ public class CommunityController {
 
     private final CommunityService communityService;
     private final CommunityMemberService communityMemberService;
+    private final CommunityJoinCodeService communityJoinCodeService;
     private final CommunityPostService communityPostService;
 
     @GetMapping
     public ResponseEntity<PageDto<CommunityResponseDto>> getCommunities(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean verified,
+            @RequestParam(required = false) Boolean joined,
+            @AuthenticationPrincipal UserDto user,
             @PageableDefault(page = 0, size = 10, sort = "memberCount", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        PageDto<CommunityResponseDto> page = communityService.findAll(pageable);
+        PageDto<CommunityResponseDto> page = communityService.findAll(user, search, verified, joined, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -62,6 +70,16 @@ public class CommunityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(enrolled);
     }
 
+    @GetMapping("/{communitySlug}/join-codes/preview")
+    public ResponseEntity<CommunityJoinPreviewResponseDto> getJoinCodePreview(
+            @PathVariable String communitySlug,
+            @RequestParam String code,
+            @AuthenticationPrincipal UserDto user
+    ) {
+        CommunityJoinPreviewResponseDto preview = communityJoinCodeService.getJoinCodePreview(communitySlug, code, user);
+        return ResponseEntity.ok(preview);
+    }
+
     @GetMapping("/{communitySlug}/study-years")
     public ResponseEntity<List<StudyYearIdentifiersResponseDto>> getCommunityStudyYears(
             @PathVariable String communitySlug
@@ -72,17 +90,19 @@ public class CommunityController {
 
     @GetMapping("/{communitySlug}/home")
     public ResponseEntity<CommunityHomeResponseDto> getCommunityHome(
-            @PathVariable String communitySlug
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user
     ) {
-        CommunityHomeResponseDto communityHome = communityService.getCommunityHome(communitySlug);
+        CommunityHomeResponseDto communityHome = communityService.getCommunityHome(communitySlug, user);
         return ResponseEntity.ok(communityHome);
     }
 
     @GetMapping("/{communitySlug}")
     public ResponseEntity<CommunityResponseDto> getCommunity(
-            @PathVariable String communitySlug
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user
     ) {
-        CommunityResponseDto community = communityService.findBySlug(communitySlug);
+        CommunityResponseDto community = communityService.findBySlug(communitySlug, user);
         return ResponseEntity.ok(community);
     }
 
@@ -107,12 +127,24 @@ public class CommunityController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{communitySlug}/posts")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:post')")
+    public ResponseEntity<PostResponseDto> createCommunityPost(
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody CreatePostRequestDto requestDto
+    ) {
+        PostResponseDto created = communityPostService.createCommunityPost(communitySlug, user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
     @GetMapping("/{communitySlug}/posts")
     public ResponseEntity<PageDto<PostResponseDto>> getCommunityPosts(
             @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
-        PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, pageable);
+        PageDto<PostResponseDto> posts = communityPostService.getCommunityPosts(communitySlug, user, pageable);
         return ResponseEntity.ok(posts);
     }
 }

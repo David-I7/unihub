@@ -4,6 +4,7 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
@@ -130,7 +131,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(communityService.findAll(any(Pageable.class))).thenReturn(pageDto);
+        when(communityService.findAll(any(), any(), any(), any(), any(Pageable.class))).thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -176,7 +177,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .verified(false)
                 .backgroundColor("#2563eb")
                 .createdAt(OffsetDateTime.now())
-                .owner(new OwnerDto(userId, "david"))
+                .owner(new OwnerDto(userId, "david", true))
                 .build();
 
         when(communityService.createCommunity(eq(userDto), any(CreateCommunityRequestDto.class)))
@@ -251,7 +252,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
-        when(communityService.findBySlug("fmi-info-id")).thenReturn(responseDto);
+        when(communityService.findBySlug(eq("fmi-info-id"), any())).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -270,7 +271,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
             Then: 404 Not Found is returned
             """)
     public void testGetCommunityBySlug_NotFound() throws Exception {
-        when(communityService.findBySlug("unknown-slug"))
+        when(communityService.findBySlug(eq("unknown-slug"), any()))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         mockMvc.perform(get(BASE_URL + "/unknown-slug")
@@ -308,7 +309,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .memberCount(10)
                 .verified(true)
                 .createdAt(OffsetDateTime.now())
-                .owner(new OwnerDto(userId, "david"))
+                .owner(new OwnerDto(userId, "david", true))
                 .build();
 
         when(communityService.updateCommunity(eq("fmi-info-id"), eq(userId), any(UpdateCommunityRequestDto.class)))
@@ -407,7 +408,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .studyYears(studyYears)
                 .build();
 
-        when(communityService.getCommunityHome("fmi-info-id")).thenReturn(response);
+        when(communityService.getCommunityHome(eq("fmi-info-id"), any())).thenReturn(response);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id/home")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -446,7 +447,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .content("First comment")
                 .createdAt(commentCreatedAt)
                 .updatedAt(commentUpdatedAt)
-                .owner(new OwnerDto(commentOwnerId, "alice"))
+                .owner(new OwnerDto(commentOwnerId, "alice", true))
                 .build();
 
         PostResponseDto postDto = PostResponseDto.builder()
@@ -459,8 +460,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .commentsCount(1)
                 .createdAt(postCreatedAt)
                 .updatedAt(postUpdatedAt)
-                .owner(new OwnerDto(postOwnerId, "david"))
-                .comments(List.of(commentDto))
+                .owner(new OwnerDto(postOwnerId, "david", true))
                 .build();
 
         PageDto<PostResponseDto> pageDto = PageDto.<PostResponseDto>builder()
@@ -473,7 +473,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(communityPostService.getCommunityPosts(eq("fmi-info-id"), any(Pageable.class)))
+        when(communityPostService.getCommunityPosts(eq("fmi-info-id"), any(), any(Pageable.class)))
                 .thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id/posts")
@@ -482,8 +482,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").value(postId.toString()))
                 .andExpect(jsonPath("$.content[0].title").value("Welcome to FMI"))
-                .andExpect(jsonPath("$.content[0].channel").value("COMMUNITY"))
-                .andExpect(jsonPath("$.content[0].comments[0].content").value("First comment"));
+                .andExpect(jsonPath("$.content[0].channel").value("COMMUNITY"));
     }
 
     @Test
@@ -493,12 +492,42 @@ public class CommunityControllerTests extends BaseIntegrationTest {
             Then: 404 Not Found is returned
             """)
     public void testGetCommunityPosts_NotFound() throws Exception {
-        when(communityPostService.getCommunityPosts(eq("unknown-slug"), any(Pageable.class)))
+        when(communityPostService.getCommunityPosts(eq("unknown-slug"), any(), any(Pageable.class)))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         mockMvc.perform(get(BASE_URL + "/unknown-slug/posts")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Community not found"));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: valid post payload
+            When: POST /api/v1/communities/{communitySlug}/posts is called
+            Then: 201 Created is returned with PostResponseDto
+            """)
+    public void testCreateCommunityPost_Success() throws Exception {
+        UUID postId = UUID.randomUUID();
+        CreatePostRequestDto requestDto = new CreatePostRequestDto("Welcome Post", "Welcome description");
+        PostResponseDto responseDto = PostResponseDto.builder()
+                .id(postId)
+                .title("Welcome Post")
+                .description("Welcome description")
+                .channel(CommunicationChannel.COMMUNITY)
+                .likesCount(0)
+                .commentsCount(0)
+                .owner(new OwnerDto(userId, "david", true))
+                .build();
+
+        when(communityPostService.createCommunityPost(eq("fmi-info-id"), any(), any(CreatePostRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/fmi-info-id/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(postId.toString()))
+                .andExpect(jsonPath("$.title").value("Welcome Post"));
     }
 }

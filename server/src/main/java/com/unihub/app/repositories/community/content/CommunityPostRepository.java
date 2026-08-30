@@ -26,4 +26,7 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, UU
         WHERE cp.community.id = :communityId
     """)
     Page<Post> findPostsByCommunityId(@Param("communityId") UUID communityId, Pageable pageable);
+
+    @Query("SELECT cp.community.slug FROM CommunityPost cp WHERE cp.post.id = :postId")
+    java.util.Optional<String> findCommunitySlugByPostId(@Param("postId") UUID postId);
 }

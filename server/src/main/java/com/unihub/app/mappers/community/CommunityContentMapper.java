@@ -1,7 +1,9 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.*;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
@@ -28,10 +30,10 @@ public class CommunityContentMapper {
     }
 
     public PostResponseDto toPostResponseDto(Post post) {
-        return toPostResponseDto(post, Collections.emptyList());
+        return toPostResponseDto(post, null);
     }
 
-    public PostResponseDto toPostResponseDto(Post post, List<CommentResponseDto> comments) {
+    public PostResponseDto toPostResponseDto(Post post, Boolean isLiked) {
         return PostResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -43,7 +45,27 @@ public class CommunityContentMapper {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername(), post.getOwner().isActive()))
-                .comments(comments)
+                .isLiked(isLiked)
+                .build();
+    }
+
+    public Post toPostEntity(CreatePostRequestDto dto, CommunicationChannel channel, User owner) {
+        return Post.builder()
+                .title(dto.title())
+                .description(dto.description())
+                .channel(channel)
+                .pinned(false)
+                .likesCount(0)
+                .commentsCount(0)
+                .owner(owner)
+                .build();
+    }
+
+    public Comment toCommentEntity(CreateCommentRequestDto dto, Post post, User owner) {
+        return Comment.builder()
+                .post(post)
+                .owner(owner)
+                .content(dto.content())
                 .build();
     }
 

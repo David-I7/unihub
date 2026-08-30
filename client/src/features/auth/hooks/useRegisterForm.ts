@@ -1,7 +1,7 @@
-import { isAxiosError } from "axios";
 import { useForm } from "@/hooks/useForm";
 import { useRegister } from "../api/register";
 import { registerSchema, type RegisterFormData } from "../schemas/authSchemas";
+import { getFormErrors } from "@/api/types";
 
 export interface UseRegisterFormOptions {
   onRegistered?: (email: string) => void;
@@ -25,17 +25,19 @@ export function useRegisterForm(options?: UseRegisterFormOptions) {
           options.onRegistered(values.email);
         }
       } catch (err) {
-        if (isAxiosError(err)) {
-          const message =
-            err.response?.data?.message ||
-            err.response?.data?.detail ||
-            (err.response?.status === 409
-              ? "An account with this email or username already exists."
-              : "Registration failed. Please try again.");
-          form.setServerError(message);
-        } else {
-          form.setServerError("An unexpected error occurred. Please try again.");
+        const formErrors = getFormErrors(err);
+
+        if (formErrors.server) {
+          form.setServerError(formErrors.server);
+          return;
         }
+
+        const errors: typeof form.errors = {};
+
+        for (const error of formErrors.validation!) {
+          errors[error.field as keyof typeof errors] = error.message;
+        }
+        form.setErrors(errors);
       }
     },
   });
@@ -45,4 +47,3 @@ export function useRegisterForm(options?: UseRegisterFormOptions) {
     isLoading: registerMutation.isPending || form.isSubmitting,
   };
 }
-

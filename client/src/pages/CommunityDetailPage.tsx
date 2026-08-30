@@ -1,9 +1,10 @@
 import { useParams } from "react-router";
-import { GraduationCap, MessageSquare } from "lucide-react";
+import { GraduationCap, MessageSquare, FileText } from "lucide-react";
 import {
   useCommunityHome,
   CommunityHero,
   CommunityStudyYearsTab,
+  CommunityReadmeTab,
   CommunityPostsTab,
   CommunityDetailSkeleton,
 } from "@/features/communities";
@@ -42,20 +43,31 @@ export default function CommunityDetailPage() {
     );
   }
 
+  const callerMembership = data?.callerMembership;
+
   return (
     <div className="min-h-full pb-12">
       {/* Community Hero Header */}
-      <CommunityHero community={community} studyYears={studyYears} />
+      <CommunityHero
+        community={community}
+        studyYears={studyYears}
+        callerMembership={callerMembership}
+      />
 
       {/* Main Container for Tabs and Content */}
-      <div className="max-w-7xl mx-auto space-y-6 pt-6">
-        {/* Main Community Tabs: Study Years (default) & Posts */}
+      <div className="max-w-7xl mx-auto space-y-6 pt-2">
+        {/* Main Community Tabs: Study Years (default), About/Readme & Posts */}
         <Tabs defaultValue="study-years" className="w-full space-y-6 min-w-0">
           <div className="w-full overflow-x-auto no-scrollbar">
             <TabsList className="h-10 p-1 bg-muted/60 rounded-xl gap-1 flex-nowrap shrink-0">
               <TabsTrigger value="study-years">
                 <GraduationCap className="size-4" />
                 <span>Study Years</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="readme">
+                <FileText className="size-4" />
+                <span>Readme</span>
               </TabsTrigger>
 
               <TabsTrigger value="posts">
@@ -72,11 +84,22 @@ export default function CommunityDetailPage() {
             <CommunityStudyYearsTab
               communitySlug={community.slug}
               studyYears={studyYears}
+              callerMembership={callerMembership}
+            />
+          </TabsContent>
+
+          <TabsContent value="readme" className="focus-visible:outline-none">
+            <CommunityReadmeTab
+              community={community}
+              callerMembership={callerMembership}
             />
           </TabsContent>
 
           <TabsContent value="posts" className="focus-visible:outline-none">
-            <CommunityPostsTab communitySlug={community.slug} />
+            <CommunityPostsTab
+              communitySlug={community.slug}
+              callerMembership={callerMembership}
+            />
           </TabsContent>
         </Tabs>
       </div>

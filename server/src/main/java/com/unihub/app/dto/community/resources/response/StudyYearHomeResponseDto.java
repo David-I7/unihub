@@ -1,12 +1,12 @@
 package com.unihub.app.dto.community.resources.response;
 
+import com.unihub.app.dto.PageDto;
 import lombok.Builder;
-
-import java.util.List;
 
 @Builder
 public record StudyYearHomeResponseDto(
         StudyYearResponseDto studyYear,
-        List<CourseHomeResponseDto> courses
+        PageDto<CourseHomeResponseDto> courses
 ) {
 }
+

@@ -13,6 +13,6 @@ public interface RoleRepository extends JpaRepository<Role, UUID> {
     @Query("SELECT r FROM Role r WHERE r.name = :name")
     Optional<Role> findByName(String name);
 
-    @Query("SELECT r FROM Role r JOIN FETCH r.permissions")
+    @Query("SELECT r FROM Role r LEFT JOIN FETCH r.permissions")
     List<Role> findAllWithPermissions();
 }

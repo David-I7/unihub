@@ -20,7 +20,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.unihub.app.config.EmailProperties;
+import com.unihub.app.config.SessionProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
 @SpringBootTest(classes = {RoleService.class, CacheConfig.class})
+@EnableConfigurationProperties({EmailProperties.class, SessionProperties.class})
 public class RoleServiceTests {
 
     @Autowired
@@ -46,33 +51,24 @@ public class RoleServiceTests {
     }
 
     @Test
-    @DisplayName("getPermissionNamesByRoleName returns permission names and caches result")
-    public void testGetPermissionNamesByRoleName_CachesResult() {
-        String roleName = "STUDENT";
-        List<String> permissions = List.of("CREATE_POST", "VIEW_CALENDAR");
-        when(permissionRepository.findPermissionNamesByRoleName(roleName)).thenReturn(permissions);
+    @DisplayName("getPermissionNamesByRoleType returns permission names and caches result")
+    public void testGetPermissionNamesByRoleType_CachesResult() {
+        RoleType roleType = RoleType.COMMUNITY_MEMBER;
+        List<String> permissions = List.of("create:post", "create:comment");
+        when(permissionRepository.findPermissionNamesByRoleName(roleType.name())).thenReturn(permissions);
 
-        List<String> result1 = roleService.getPermissionNamesByRoleName(roleName);
-        List<String> result2 = roleService.getPermissionNamesByRoleName(roleName);
+        List<String> result1 = roleService.getPermissionNamesByRoleType(roleType);
+        List<String> result2 = roleService.getPermissionNamesByRoleType(roleType);
 
         assertEquals(permissions, result1);
         assertEquals(permissions, result2);
-        verify(permissionRepository, times(1)).findPermissionNamesByRoleName(roleName);
+        verify(permissionRepository, times(1)).findPermissionNamesByRoleName(roleType.name());
     }
 
     @Test
-    @DisplayName("getPermissionNamesByRoleName returns empty list when roleName is null without querying repo")
-    public void testGetPermissionNamesByRoleName_NullRole() {
-        List<String> result = roleService.getPermissionNamesByRoleName(null);
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-        verifyNoInteractions(permissionRepository);
-    }
-
-    @Test
-    @DisplayName("getPermissionNamesByRoleName returns empty list when roleName is blank without querying repo")
-    public void testGetPermissionNamesByRoleName_BlankRole() {
-        List<String> result = roleService.getPermissionNamesByRoleName("   ");
+    @DisplayName("getPermissionNamesByRoleType returns empty list when roleType is null without querying repo")
+    public void testGetPermissionNamesByRoleType_NullRole() {
+        List<String> result = roleService.getPermissionNamesByRoleType(null);
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verifyNoInteractions(permissionRepository);

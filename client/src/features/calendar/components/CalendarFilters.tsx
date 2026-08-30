@@ -78,12 +78,12 @@ export function CalendarFilters({
               <SelectValue placeholder="Select Community" />
             </SelectTrigger>
             <SelectContent>
-              {userCommunitiesData?.communities.length === 0 && (
+              {userCommunitiesData?.content?.length === 0 && (
                 <SelectItem value="NO_COMMUNITIES" disabled>
                   No communities found
                 </SelectItem>
               )}
-              {userCommunitiesData?.communities.map((c) => (
+              {userCommunitiesData?.content?.map((c) => (
                 <SelectItem key={c.id} value={c.slug}>
                   <span className="truncate">{c.name}</span>
                 </SelectItem>

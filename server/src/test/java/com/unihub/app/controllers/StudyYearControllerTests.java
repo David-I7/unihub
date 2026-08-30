@@ -1,35 +1,42 @@
 package com.unihub.app.controllers;
 
+import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
+import com.unihub.app.dto.UserDto;
+import org.springframework.data.domain.Pageable;
+import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
+import com.unihub.app.security.JwtAuthentication;
+import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.resources.StudyYearService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -43,8 +50,55 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     @MockitoBean
     private StudyYearService studyYearService;
+
+    @MockitoBean
+    private AuthorizationService authorizationService;
+
+    private UUID userId;
+    private UserDto userDto;
+
+    @BeforeEach
+    public void setUp() {
+        userId = UUID.randomUUID();
+        userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
+        JwtAuthentication auth = new JwtAuthentication(userDto);
+        SecurityContextHolder.getContext().setAuthentication(auth);
+        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
+        when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
+    }
+
+    @Test
+    @DisplayName("POST /study-years creates a study year")
+    public void testCreateStudyYear_Success() throws Exception {
+        CreateStudyYearRequestDto requestDto = new CreateStudyYearRequestDto(StudyYearName.YEAR_1);
+        StudyYearResponseDto responseDto = new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now());
+
+        when(studyYearService.createStudyYear(eq("fmi-info-id"), any(CreateStudyYearRequestDto.class))).thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Year 1"));
+    }
+
+    @Test
+    @DisplayName("DELETE /study-years/{studyYearName} deletes a study year")
+    public void testDeleteStudyYear_Success() throws Exception {
+        doNothing().when(studyYearService).deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1);
+
+        mockMvc.perform(delete(BASE_URL + "/YEAR_1")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(studyYearService).deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1);
+    }
 
     @Test
     @DisplayName("""
@@ -80,33 +134,44 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
                 .teachers(List.of(teacherDto))
                 .build();
 
-        StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
-                .studyYear(new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now()))
-                .courses(List.of(courseTeachersDto))
+        PageDto<CourseHomeResponseDto> coursePageDto = PageDto.<CourseHomeResponseDto>builder()
+                .content(List.of(courseTeachersDto))
+                .number(0)
+                .size(12)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
                 .build();
 
-        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_1, false)).thenReturn(responseDto);
+        StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
+                .studyYear(new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now()))
+                .courses(coursePageDto)
+                .build();
+
+        when(studyYearService.getStudyYearHome(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), any(), any(), eq(false), any(Pageable.class)))
+                .thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/year-1/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.studyYear.id").value(1))
                 .andExpect(jsonPath("$.studyYear.name").value("Year 1"))
-                .andExpect(jsonPath("$.courses").isArray())
-                .andExpect(jsonPath("$.courses[0].course.id").value(1))
-                .andExpect(jsonPath("$.courses[0].course.name").value("Arhitectura sistemelor de calcul"))
-                .andExpect(jsonPath("$.courses[0].course.slug").value("asc"))
-                .andExpect(jsonPath("$.courses[0].course.abbreviation").value("ASC"))
-                .andExpect(jsonPath("$.courses[0].course.semester").value(1))
-                .andExpect(jsonPath("$.courses[0].course.creditPoints").value(5))
-                .andExpect(jsonPath("$.courses[0].course.archived").value(false))
-                .andExpect(jsonPath("$.courses[0].course.description").value("Course description"))
-                .andExpect(jsonPath("$.courses[0].teachers").isArray())
-                .andExpect(jsonPath("$.courses[0].teachers[0].id").value(teacherId.toString()))
-                .andExpect(jsonPath("$.courses[0].teachers[0].firstName").value("Daniel"))
-                .andExpect(jsonPath("$.courses[0].teachers[0].lastName").value("Dragulici"))
-                .andExpect(jsonPath("$.courses[0].teachers[0].averageRating").value(4.5))
-                .andExpect(jsonPath("$.courses[0].teachers[0].ratingsCount").value(10));
+                .andExpect(jsonPath("$.courses.content").isArray())
+                .andExpect(jsonPath("$.courses.content[0].course.id").value(1))
+                .andExpect(jsonPath("$.courses.content[0].course.name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.courses.content[0].course.slug").value("asc"))
+                .andExpect(jsonPath("$.courses.content[0].course.abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.courses.content[0].course.semester").value(1))
+                .andExpect(jsonPath("$.courses.content[0].course.creditPoints").value(5))
+                .andExpect(jsonPath("$.courses.content[0].course.archived").value(false))
+                .andExpect(jsonPath("$.courses.content[0].course.description").value("Course description"))
+                .andExpect(jsonPath("$.courses.content[0].teachers").isArray())
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].id").value(teacherId.toString()))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].firstName").value("Daniel"))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].lastName").value("Dragulici"))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].averageRating").value(4.5))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].ratingsCount").value(10));
     }
 
     @Test
@@ -116,7 +181,7 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
             Then: 404 Not Found is returned
             """)
     public void testGetStudyYearCourses_NotFound() throws Exception {
-        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_4, false))
+        when(studyYearService.getStudyYearHome(eq("fmi-info-id"), eq(StudyYearName.YEAR_4), any(), any(), eq(false), any(Pageable.class)))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
         mockMvc.perform(get(BASE_URL + "/YEAR_4/home")

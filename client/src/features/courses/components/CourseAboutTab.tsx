@@ -1,210 +1,147 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { Star, Award, Archive, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils";
+import { Star, Award, Calendar, FileText, Info, Users, BookOpen } from "lucide-react";
+import { UserAvatar } from "@/components/app/UserAvatar";
+import { Card } from "@/components/ui/card";
+import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import type { Teacher } from "@/features/teachers";
 import type { CourseTeachers } from "@/features/courses";
-import { SAMPLE_COURSE_MARKDOWN } from "./sampleCourseMarkdown";
 
 export function CourseAboutTab({ course, teachers = [] }: CourseTeachers) {
-  // Use course description if provided, otherwise sample rich markdown
-  const markdownContent = course.description?.trim()
-    ? course.description
-    : SAMPLE_COURSE_MARKDOWN;
+  const hasReadme = Boolean(course.readme && course.readme.trim().length > 0);
 
   return (
-    <div className="max-w-4xl space-y-8 py-2">
-      {/* Top Section: Course Details & Metadata */}
-      <div className="space-y-6">
-        {/* Title & Badges */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+      {/* Primary Column (Left 2/3): Abstract + Full Markdown Syllabus */}
+      <div className="lg:col-span-2 space-y-6">
+        {/* Course Overview */}
+        {course.description && (
+          <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-2.5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <BookOpen className="size-4 text-primary" />
+              <span>Overview</span>
+            </h2>
+            <p className="text-sm text-foreground/90 leading-relaxed font-normal">
+              {course.description}
+            </p>
+          </Card>
+        )}
+
+        {/* Full Markdown Readme */}
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-md bg-primary/10 px-2.5 py-1 font-mono text-xs font-bold text-primary">
-              {course.abbreviation}
-            </span>
-
-            <Badge variant="outline" className="text-xs font-semibold gap-1">
-              <Calendar className="size-3.5" />
-              <span>Semester {course.semester}</span>
-            </Badge>
-
-            <Badge variant="secondary" className="text-xs font-semibold gap-1">
-              <Award className="size-3.5" />
-              <span>{course.creditPoints} ECTS</span>
-            </Badge>
-
-            {course.archived && (
-              <Badge
-                variant="secondary"
-                className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-xs font-bold gap-1"
-              >
-                <Archive className="size-3" />
-                Archived
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {/* Professors & Faculty Section */}
-        <div className="space-y-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Course Faculty & Instructors
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 px-1">
+            <FileText className="size-4 text-primary" />
+            <span>Readme</span>
           </h2>
 
-          {teachers.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic">
-              No instructor assigned yet.
-            </p>
+          {hasReadme ? (
+            <Card className="rounded-2xl border bg-card p-6 md:p-8 shadow-xs">
+              <MarkdownRenderer content={course.readme} />
+            </Card>
           ) : (
-            <div className="flex flex-wrap gap-4 pt-1">
-              {teachers.map((teacher: Teacher) => {
-                const initials = getInitials(teacher.lastName || teacher.firstName, "PR");
-
-                return (
-                  <div
-                    key={teacher.id}
-                    className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2 transition-colors hover:bg-muted/50"
-                  >
-                    <Avatar className="size-8 rounded-full border border-border/80">
-                      <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-
-                    <div className="space-y-0.5">
-                      <p className="text-xs font-bold text-foreground leading-none">
-                        Prof. {teacher.firstName} {teacher.lastName}
-                      </p>
-                      <div className="flex items-center gap-1 text-[11px] text-muted-foreground leading-none">
-                        <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
-                          <Star className="size-3 fill-amber-500 text-amber-500" />
-                          {teacher.averageRating?.toFixed(1) ?? "5.0"}
-                        </span>
-                        <span>•</span>
-                        <span>{teacher.ratingsCount ?? 0} reviews</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center space-y-2">
+              <FileText className="size-8 text-muted-foreground/50" />
+              <h3 className="font-heading text-sm font-semibold text-foreground">
+                No Readme Published Yet
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                No readme has been published for this course yet.
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Divider */}
-      <hr className="border-border/60" />
+      {/* Sidebar Column (Right 1/3): Quick Specifications + Faculty Roster */}
+      <div className="space-y-6">
+        {/* Quick Course Specifications */}
+        <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b pb-3">
+            <Info className="size-3.5 text-primary" />
+            <span>Course Specifications</span>
+          </h3>
 
-      {/* Bottom Section: Markdown Description Document */}
-      <div className="space-y-4">
-        <div className="prose prose-neutral dark:prose-invert max-w-none text-foreground/90 leading-relaxed">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={{
-              h1: ({ children }) => (
-                <h1 className="font-heading text-2xl font-extrabold tracking-tight text-foreground mt-8 mb-4">
-                  {children}
-                </h1>
-              ),
-              h2: ({ children }) => (
-                <h2 className="font-heading text-xl font-bold tracking-tight text-foreground mt-6 mb-3 pb-1 border-b border-border/40">
-                  {children}
-                </h2>
-              ),
-              h3: ({ children }) => (
-                <h3 className="font-heading text-lg font-semibold text-foreground mt-5 mb-2">
-                  {children}
-                </h3>
-              ),
-              h4: ({ children }) => (
-                <h4 className="font-heading text-base font-semibold text-foreground mt-4 mb-2">
-                  {children}
-                </h4>
-              ),
-              p: ({ children }) => (
-                <p className="text-sm sm:text-base leading-relaxed text-foreground/90 my-3">
-                  {children}
-                </p>
-              ),
-              ul: ({ children }) => (
-                <ul className="list-disc list-outside pl-6 space-y-1.5 text-sm sm:text-base text-foreground/90 my-3">
-                  {children}
-                </ul>
-              ),
-              ol: ({ children }) => (
-                <ol className="list-decimal list-outside pl-6 space-y-1.5 text-sm sm:text-base text-foreground/90 my-3">
-                  {children}
-                </ol>
-              ),
-              li: ({ children }) => (
-                <li className="leading-relaxed">{children}</li>
-              ),
-              blockquote: ({ children }) => (
-                <blockquote className="border-l-4 border-primary/60 bg-muted/30 px-4 py-2 my-4 italic text-muted-foreground rounded-r-lg">
-                  {children}
-                </blockquote>
-              ),
-              code: ({ className, children }) => {
-                const isInline = !className;
-                if (isInline) {
-                  return (
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-primary font-medium">
-                      {children}
-                    </code>
-                  );
-                }
-                return (
-                  <code className="block rounded-xl bg-muted/60 p-4 border border-border/60 font-mono text-xs overflow-x-auto text-foreground my-4 leading-relaxed">
-                    {children}
-                  </code>
-                );
-              },
-              table: ({ children }) => (
-                <div className="my-6 w-full overflow-x-auto rounded-xl border border-border shadow-2xs">
-                  <table className="w-full text-left text-sm">{children}</table>
-                </div>
-              ),
-              thead: ({ children }) => (
-                <thead className="bg-muted/60 border-b border-border font-bold text-foreground">
-                  {children}
-                </thead>
-              ),
-              tbody: ({ children }) => (
-                <tbody className="divide-y divide-border/60">{children}</tbody>
-              ),
-              tr: ({ children }) => <tr>{children}</tr>,
-              th: ({ children }) => (
-                <th className="px-4 py-2.5 font-semibold text-foreground">
-                  {children}
-                </th>
-              ),
-              td: ({ children }) => (
-                <td className="px-4 py-2.5 text-foreground/90">{children}</td>
-              ),
-              a: ({ href, children }) => (
-                <a
-                  href={href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-primary underline underline-offset-4 hover:text-primary/80 font-medium"
+          <div className="space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Course Code</span>
+              <span className="font-mono font-bold text-foreground bg-primary/10 px-2 py-0.5 rounded text-primary">
+                {course.abbreviation}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Semester</span>
+              <span className="font-semibold text-foreground flex items-center gap-1">
+                <Calendar className="size-3 text-muted-foreground" />
+                Semester {course.semester}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Academic Value</span>
+              <span className="font-semibold text-foreground flex items-center gap-1">
+                <Award className="size-3 text-muted-foreground" />
+                {course.creditPoints} ECTS Credits
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Status</span>
+              <span
+                className={`font-semibold ${
+                  course.archived ? "text-amber-500" : "text-emerald-600 dark:text-emerald-400"
+                }`}
+              >
+                {course.archived ? "Archived" : "Active Curriculum"}
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        {/* Teaching Faculty Card */}
+        <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b pb-3">
+            <Users className="size-3.5 text-primary" />
+            <span>Teaching Staff ({teachers.length})</span>
+          </h3>
+
+          {teachers.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              No instructor assigned yet.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {teachers.map((teacher: Teacher) => (
+                <div
+                  key={teacher.id}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-muted/20 p-3 transition-colors hover:bg-muted/40"
                 >
-                  {children}
-                </a>
-              ),
-              hr: () => <hr className="my-6 border-border/60" />,
-              strong: ({ children }) => (
-                <strong className="font-bold text-foreground">
-                  {children}
-                </strong>
-              ),
-            }}
-          >
-            {markdownContent}
-          </ReactMarkdown>
-        </div>
+                  <UserAvatar
+                    username={teacher.lastName || teacher.firstName}
+                    className="size-9 rounded-lg"
+                    fallbackClassName="rounded-lg"
+                  />
+
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <p className="text-xs font-bold text-foreground truncate">
+                      Prof. {teacher.firstName} {teacher.lastName}
+                    </p>
+                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
+                        <Star className="size-3 fill-amber-500 text-amber-500" />
+                        {teacher.averageRating?.toFixed(1) ?? "5.0"}
+                      </span>
+                      <span>•</span>
+                      <span>{teacher.ratingsCount ?? 0} reviews</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );
 }
+
+
+

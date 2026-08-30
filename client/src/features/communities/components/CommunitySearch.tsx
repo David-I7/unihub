@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,7 @@ interface CommunitySearchProps {
   totalCount?: number;
 }
 
-export function CommunitySearch({
+function CommunitySearchComponent({
   value,
   onChange,
   placeholder = "Search communities by name (e.g. FMI, Informatica, AI, Master)...",
@@ -47,3 +48,5 @@ export function CommunitySearch({
     </div>
   );
 }
+
+export const CommunitySearch = React.memo(CommunitySearchComponent);

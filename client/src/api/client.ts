@@ -28,7 +28,6 @@ client.interceptors.request.use(
 
 type RetryableRequest = {
   _retry?: boolean;
-  retryOwner?: boolean;
 } & AxiosRequestConfig;
 
 let refreshPromise: Promise<RefreshResponse> | null = null;
@@ -53,7 +52,6 @@ client.interceptors.response.use(
           useAuthStore.getState().setAuth(data.user, data.accessToken);
           return data;
         });
-        originalRequest.retryOwner = true;
       }
 
       const { accessToken } = await refreshPromise;

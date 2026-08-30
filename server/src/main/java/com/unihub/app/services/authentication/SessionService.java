@@ -30,7 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.awt.print.Pageable;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -249,7 +248,7 @@ public class SessionService {
     }
 
     private Session getSession(String refreshToken){
-        return sessionRepository.findByRefreshToken(refreshToken).orElse(null);
+        return sessionRepository.findByRefreshTokenWithUser(refreshToken).orElse(null);
     }
 
     private SessionAndSessionStatus _validateRefreshTokenSession(HttpServletRequest request, HttpServletResponse response){
@@ -282,7 +281,7 @@ public class SessionService {
         int deletedCount = 0;
         do {
             expiredFamilyIds = sessionRepository.findExpiredFamilyIds(
-                    (Pageable) PageRequest.of(0, 1000)
+                     PageRequest.of(0, 1000)
             );
             if (!expiredFamilyIds.isEmpty()) {
                 sessionRepository.deleteByFamilyIds(expiredFamilyIds);

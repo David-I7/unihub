@@ -1,12 +1,12 @@
 import { useParams } from "react-router";
 import { Info, FolderOpen, MessageSquare } from "lucide-react";
-import { CommunityPostsTab } from "@/features/communities";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import {
   useCourseHome,
   CourseAboutTab,
   CourseMaterialsTab,
+  CoursePostsTab,
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -36,7 +36,7 @@ export default function CourseDetailPage() {
   if (isError || !courseHome) {
     return (
       <div className="min-h-full space-y-6 pb-12">
-        <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
+        <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
           Failed to load {courseSlug} details.
         </h1>
         <AppBreadcrumb />
@@ -52,8 +52,8 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
-      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
-        {courseHome.course.name}{" "}
+      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+        {courseHome.course.name}
       </h1>
 
       <AppBreadcrumb />
@@ -95,7 +95,11 @@ export default function CourseDetailPage() {
         </TabsContent>
 
         <TabsContent value="discussions" className="focus-visible:outline-none">
-          <CommunityPostsTab communitySlug={communitySlug} />
+          <CoursePostsTab
+            communitySlug={communitySlug}
+            studyYearSlug={studyYearSlug}
+            courseSlug={courseSlug}
+          />
         </TabsContent>
       </Tabs>
     </div>
