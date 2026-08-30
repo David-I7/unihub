@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Edit2, Trash2, Check, X } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { getInitials } from "@/lib/utils";
 import { formatPostDate } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -26,7 +25,6 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
     usePermissions(communitySlug);
   const updateMutation = useUpdateComment();
 
-  const commentInitials = getInitials(comment.owner?.username);
   const isAuthor = Boolean(
     user && comment.owner && String(user.id) === String(comment.owner.id),
   );
@@ -60,11 +58,11 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
       <div className="group rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs transition-colors hover:bg-muted/60">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Avatar size="sm" className="size-5 border border-border">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-                {commentInitials}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              username={comment.owner?.username}
+              className="size-5 rounded-md text-[10px]"
+              fallbackClassName="rounded-md"
+            />
             <span className="font-semibold text-foreground">
               {comment.owner?.username ?? "Anonymous"}
             </span>

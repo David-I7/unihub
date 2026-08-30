@@ -132,15 +132,6 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
               to this community.
             </p>
           </div>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={() => setCreateModalOpen(true)}
-            className="gap-1.5 font-semibold"
-          >
-            <Plus className="size-3.5" />
-            Create First Code
-          </Button>
         </div>
       ) : (
         <div className="space-y-2.5">

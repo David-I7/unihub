@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
   Pin,
   Heart,
@@ -16,7 +15,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -24,11 +23,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { cn, getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { formatPostDate } from "@/lib/dateUtils";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { getErrorMessage } from "@/api/types";
 import { useTogglePostLike } from "../api/toggleLike";
 import { usePinPost } from "../api/pinPost";
 import { useInfinitePostComments } from "@/features/comments/api/getPostComments";
@@ -58,7 +56,6 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
   const likeMutation = useTogglePostLike();
   const pinMutation = usePinPost();
 
-  // Comments infinite query enabled when comments accordion is open
   const {
     data: commentsData,
     isLoading: isCommentsLoading,
@@ -71,7 +68,6 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
     return commentsData?.pages.flatMap((p) => p.content) ?? [];
   }, [commentsData]);
 
-  const authorInitials = getInitials(post.owner?.username);
   const isPostAuthor = Boolean(
     user && post.owner && String(user.id) === String(post.owner.id),
   );
@@ -114,8 +110,8 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
         pinned: !post.pinned,
       });
       toast.success(post.pinned ? "Post unpinned." : "Post pinned to top!");
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to update pin status."));
+    } catch {
+      toast.error("Failed to update pin status.");
     }
   };
 
@@ -125,19 +121,18 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
     <>
       <Card
         className={cn(
-          "rounded-2xl border bg-card p-5 md:p-6 shadow-xs space-y-4 transition-all hover:border-border/90",
-          post.pinned && "border-primary/40 bg-primary/2",
+          "group rounded-2xl border bg-card p-5 shadow-xs transition-all space-y-4",
+          post.pinned && "border-primary/40 bg-primary/[0.02]",
           className,
         )}
       >
         {/* Header: Author info, badges, and actions */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Avatar size="default" className="border border-border">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-                {authorInitials}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              username={post.owner?.username}
+              size="default"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm text-foreground">
@@ -236,11 +231,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
           <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
             {post.title}
           </h3>
-          <div className="prose prose-neutral dark:prose-invert max-w-none text-xs md:text-sm text-foreground/90 leading-relaxed">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {post.description}
-            </ReactMarkdown>
-          </div>
+          <MarkdownRenderer content={post.description} />
         </div>
 
         {/* Actions Bar (Likes and Comments toggle) */}

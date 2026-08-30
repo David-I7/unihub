@@ -2,18 +2,16 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth";
 import { GraduationCap, LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserDropdownMenuContent } from "./UserDropdownMenuContent";
-import { getInitials } from "@/lib/utils";
 
 export function AppHeader() {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
-  const initials = getInitials(user?.username || user?.email);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background/95 px-4 backdrop-blur">
@@ -38,11 +36,11 @@ export function AppHeader() {
                   type="button"
                   className="flex items-center cursor-pointer outline-none rounded-lg focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
-                    <AvatarFallback className="rounded-lg bg-primary/15 text-primary font-semibold text-xs">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    username={user.username || user.email}
+                    className="size-8 rounded-lg"
+                    fallbackClassName="rounded-lg"
+                  />
                 </button>
               }
             />

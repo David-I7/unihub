@@ -41,9 +41,7 @@ export function DeletePostDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-destructive">
-            Delete Discussion Post
-          </DialogTitle>
+          <DialogTitle>Delete Discussion Post</DialogTitle>
           <DialogDescription>
             Are you sure you want to permanently delete{" "}
             <strong className="text-foreground">"{post.title}"</strong> and all

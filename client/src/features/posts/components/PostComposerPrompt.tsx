@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { PenLine } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth";
-import { getInitials } from "@/lib/utils";
 import { PostComposerModal } from "./PostComposerModal";
 import type { PostTarget } from "../api/types";
 
@@ -20,19 +19,17 @@ export function PostComposerPrompt({
   const [open, setOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
 
-  const userInitials = getInitials(user?.username);
-
   return (
     <>
       <Card
         onClick={() => setOpen(true)}
         className="group flex items-center gap-3.5 rounded-2xl border border-border/80 bg-card p-4 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
       >
-        <Avatar size="default" className="border border-border shrink-0">
-          <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
-            {userInitials}
-          </AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          username={user?.username}
+          size="default"
+          className="shrink-0"
+        />
 
         <div className="flex-1 rounded-xl bg-muted/50 px-4 py-2.5 text-xs sm:text-sm text-muted-foreground group-hover:text-foreground/80 group-hover:bg-muted transition-colors">
           {placeholder}

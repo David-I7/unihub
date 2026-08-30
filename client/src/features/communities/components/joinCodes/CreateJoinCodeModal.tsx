@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { KeyRound, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -85,9 +85,6 @@ export function CreateJoinCodeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <KeyRound className="size-5" />
-          </div>
           <DialogTitle>Generate Invitation Code</DialogTitle>
           <DialogDescription>
             Create an invite code with expiration limits or usage caps.

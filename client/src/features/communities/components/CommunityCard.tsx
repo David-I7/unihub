@@ -32,7 +32,7 @@ function CommunityCardComponent({ community }: CommunityCardProps) {
           {community.verified && (
             <Badge
               variant="secondary"
-              className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
+              className="bg-black/40 text-white border border-white/20 backdrop-blur-xs font-semibold gap-1 text-[11px]"
             >
               <ShieldCheck className="size-3 text-emerald-400" />
               Verified
@@ -41,10 +41,13 @@ function CommunityCardComponent({ community }: CommunityCardProps) {
         </div>
 
         {community.isJoined && (
-          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/90 bg-black/35 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-white/10">
-            <Check className="size-3 text-emerald-400" />
+          <Badge
+            variant="secondary"
+            className="bg-black/40 text-white border border-white/20 backdrop-blur-xs font-semibold gap-1 text-[11px]"
+          >
+            <Check className="size-3 text-emerald-400 stroke-[3]" />
             Joined
-          </span>
+          </Badge>
         )}
       </div>
 

@@ -55,7 +55,7 @@ export default function CommunityDetailPage() {
       />
 
       {/* Main Container for Tabs and Content */}
-      <div className="max-w-7xl mx-auto space-y-6 pt-6">
+      <div className="max-w-7xl mx-auto space-y-6 pt-2">
         {/* Main Community Tabs: Study Years (default), About/Readme & Posts */}
         <Tabs defaultValue="study-years" className="w-full space-y-6 min-w-0">
           <div className="w-full overflow-x-auto no-scrollbar">
@@ -65,9 +65,9 @@ export default function CommunityDetailPage() {
                 <span>Study Years</span>
               </TabsTrigger>
 
-              <TabsTrigger value="about">
+              <TabsTrigger value="readme">
                 <FileText className="size-4" />
-                <span>About</span>
+                <span>Readme</span>
               </TabsTrigger>
 
               <TabsTrigger value="posts">
@@ -88,8 +88,11 @@ export default function CommunityDetailPage() {
             />
           </TabsContent>
 
-          <TabsContent value="about" className="focus-visible:outline-none">
-            <CommunityReadmeTab community={community} />
+          <TabsContent value="readme" className="focus-visible:outline-none">
+            <CommunityReadmeTab
+              community={community}
+              callerMembership={callerMembership}
+            />
           </TabsContent>
 
           <TabsContent value="posts" className="focus-visible:outline-none">

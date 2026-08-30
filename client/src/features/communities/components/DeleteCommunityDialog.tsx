@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -52,12 +51,7 @@ export function DeleteCommunityDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive mb-1">
-            <AlertTriangle className="size-6" />
-          </div>
-          <DialogTitle className="text-destructive">
-            Delete Community Permanently
-          </DialogTitle>
+          <DialogTitle>Delete Community Permanently</DialogTitle>
           <DialogDescription>
             This action cannot be undone. This will permanently remove the
             community{" "}

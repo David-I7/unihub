@@ -1,10 +1,10 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { StudyYear, StudyYearNameEnum } from "./types";
+import type { StudyYear, StudyYearSlug } from "./types";
 import { communityHomeKeys } from "@/features/communities/api/getCommunityHome";
 
 export interface CreateStudyYearPayload {
-  studyYearName: StudyYearNameEnum;
+  studyYearName: StudyYearSlug;
 }
 
 export interface CreateStudyYearVariables {

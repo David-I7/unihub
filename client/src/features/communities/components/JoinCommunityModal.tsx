@@ -1,7 +1,6 @@
 import { useState, useTransition } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { KeyRound } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -130,9 +129,6 @@ export function JoinCommunityModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <KeyRound className="size-5" />
-          </div>
           <DialogTitle>Join a Community</DialogTitle>
           <DialogDescription>
             Enter an 8-character invitation code to join a private or

@@ -3,9 +3,8 @@ import { toast } from "sonner";
 import { Send, CornerDownLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/app/UserAvatar";
 import { useAuthStore } from "@/features/auth";
-import { getInitials } from "@/lib/utils";
 import { getErrorMessage } from "@/api/types";
 import { useCreateComment } from "../api/createComment";
 
@@ -17,8 +16,6 @@ export function CommentComposer({ postId }: CommentComposerProps) {
   const [content, setContent] = useState("");
   const user = useAuthStore((state) => state.user);
   const createMutation = useCreateComment();
-
-  const userInitials = getInitials(user?.username);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +43,11 @@ export function CommentComposer({ postId }: CommentComposerProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-2.5 items-start pt-2">
-      <Avatar size="sm" className="size-6 shrink-0 mt-1 border border-border">
-        <AvatarFallback className="bg-primary/10 text-primary font-bold text-[10px]">
-          {userInitials}
-        </AvatarFallback>
-      </Avatar>
+      <UserAvatar
+        username={user?.username}
+        size="sm"
+        className="size-6 shrink-0 mt-1"
+      />
 
       <div className="flex-1 space-y-2">
         <div className="relative">

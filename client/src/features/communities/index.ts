@@ -27,4 +27,5 @@ export * from "./components/communityDetail/CommunityDetailSkeleton";
 export * from "./components/joinCodes/JoinCodesTab";
 export * from "./components/joinCodes/CreateJoinCodeModal";
 export * from "./components/joinCodes/EditJoinCodeModal";
+export * from "./components/joinCodes/CommunityJoinCodesModal";
 

@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Settings2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -88,9 +87,6 @@ export function EditJoinCodeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <Settings2 className="size-5" />
-          </div>
           <DialogTitle>Edit Join Code ({joinCode.code})</DialogTitle>
           <DialogDescription>
             Adjust the usage limit or extend the expiration date for this code.

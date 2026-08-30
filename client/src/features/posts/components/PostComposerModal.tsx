@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { MessageSquarePlus, Eye, Edit3, Sparkles } from "lucide-react";
+import { Eye, Edit3 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
   Dialog,
   DialogContent,
@@ -71,9 +70,6 @@ export function PostComposerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <MessageSquarePlus className="size-5" />
-          </div>
           <DialogTitle>Create a Discussion Post</DialogTitle>
           <DialogDescription>
             Share an announcement, ask questions, or start an academic
@@ -158,11 +154,7 @@ export function PostComposerModal({
             ) : (
               <div className="min-h-[150px] max-h-[250px] overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-4 text-xs">
                 {form.values.description.trim() ? (
-                  <div className="prose prose-neutral dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {form.values.description}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={form.values.description} />
                 ) : (
                   <p className="text-muted-foreground italic text-center py-8">
                     Nothing to preview yet.
@@ -186,7 +178,6 @@ export function PostComposerModal({
               disabled={form.isSubmitting || createMutation.isPending}
               className="gap-1.5 font-bold cursor-pointer"
             >
-              <Sparkles className="size-4" />
               {form.isSubmitting || createMutation.isPending
                 ? "Publishing..."
                 : "Publish Post"}

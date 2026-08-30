@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +12,7 @@ import { getErrorMessage } from "@/api/types";
 import { useDeleteStudyYear } from "../api/deleteStudyYear";
 import {
   formatStudyYearName,
-  slugToStudyYearEnum,
+  studyYearNameToSlug,
   type StudyYearMetrics,
 } from "../api/types";
 
@@ -37,13 +36,13 @@ export function DeleteStudyYearDialog({
   if (!studyYear) return null;
 
   const displayName = formatStudyYearName(studyYear.studyYearName);
-  const enumName = slugToStudyYearEnum(studyYear.studyYearName);
+  const yearSlug = studyYearNameToSlug(studyYear.studyYearName);
 
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync({
         communitySlug,
-        studyYearName: enumName,
+        studyYearName: yearSlug,
       });
 
       toast.success(`${displayName} was deleted successfully.`);
@@ -58,12 +57,7 @@ export function DeleteStudyYearDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-11 items-center justify-center rounded-xl bg-destructive/10 text-destructive mb-1">
-            <AlertTriangle className="size-6" />
-          </div>
-          <DialogTitle className="text-destructive">
-            Delete {displayName} Curriculum?
-          </DialogTitle>
+          <DialogTitle>Delete {displayName} Curriculum?</DialogTitle>
           <DialogDescription className="space-y-2">
             <p>
               Are you sure you want to delete{" "}

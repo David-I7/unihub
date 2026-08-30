@@ -44,7 +44,7 @@ export function DeleteCommentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-destructive">Delete Comment</DialogTitle>
+          <DialogTitle>Delete Comment</DialogTitle>
           <DialogDescription>
             Are you sure you want to permanently delete this comment?
           </DialogDescription>

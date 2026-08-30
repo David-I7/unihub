@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePermissions } from "@/hooks/usePermissions";
 import {
   StudyYearsGrid,
   CreateStudyYearModal,
   type StudyYearMetrics,
 } from "@/features/studyYears";
-import { usePermissions } from "@/hooks/usePermissions";
-
 import type { CallerMembership } from "../../api/types";
 
 interface CommunityStudyYearsTabProps {
@@ -19,24 +18,22 @@ interface CommunityStudyYearsTabProps {
 
 export function CommunityStudyYearsTab({
   communitySlug,
-  studyYears: propStudyYears,
+  studyYears: propStudyYears = [],
   callerMembership,
   onStudyYearSelect,
 }: CommunityStudyYearsTabProps) {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const { canCreateStudyYear } = usePermissions(callerMembership);
-
   const canAddMoreYears = propStudyYears.length < 4;
 
   return (
-    <div className="space-y-6">
-      {/* Top action header if authorized */}
+    <div className="space-y-4">
       {canCreateStudyYear && canAddMoreYears && (
         <div className="flex justify-end">
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
-            className="gap-1.5 font-bold shadow-xs cursor-pointer"
+            className="gap-1.5 font-bold cursor-pointer"
           >
             <Plus className="size-4" />
             Add Study Year

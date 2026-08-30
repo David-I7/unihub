@@ -127,20 +127,11 @@ public class CommunityService {
                         .permissions(permissions)
                         .build();
             } else {
-                if (caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN) {
-                    List<String> adminPermissions = roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_OWNER);
-                    callerMembership = CallerMembershipDto.builder()
-                            .isMember(false)
-                            .role(caller.role().name())
-                            .permissions(adminPermissions)
-                            .build();
-                } else {
-                    callerMembership = CallerMembershipDto.builder()
-                            .isMember(false)
-                            .role(null)
-                            .permissions(Collections.emptyList())
-                            .build();
-                }
+                callerMembership = CallerMembershipDto.builder()
+                        .isMember(false)
+                        .role(null)
+                        .permissions(Collections.emptyList())
+                        .build();
             }
         }
 

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { GraduationCap, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,10 @@ import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import {
   STUDY_YEAR_OPTIONS,
-  type StudyYearNameEnum,
+  type StudyYearSlug,
   type StudyYearMetrics,
   formatStudyYearName,
+  studyYearNameToSlug,
 } from "../api/types";
 import { useCreateStudyYear } from "../api/createStudyYear";
 
@@ -33,21 +34,16 @@ export function CreateStudyYearModal({
   open,
   onOpenChange,
 }: CreateStudyYearModalProps) {
-  const existingNames = new Set(
-    existingStudyYears.map((y) => {
-      const formatted = formatStudyYearName(y.studyYearName);
-      return formatted.replace("-", "_").toUpperCase();
-    }),
+  const existingSlugs = new Set(
+    existingStudyYears.map((y) => studyYearNameToSlug(y.studyYearName)),
   );
 
   const availableOptions = STUDY_YEAR_OPTIONS.filter(
-    (opt) =>
-      !existingNames.has(opt.value) &&
-      !existingNames.has(opt.label.toUpperCase()),
+    (opt) => !existingSlugs.has(opt.value),
   );
 
-  const [selectedYear, setSelectedYear] = useState<StudyYearNameEnum>(
-    availableOptions[0]?.value ?? "YEAR_1",
+  const [selectedYear, setSelectedYear] = useState<StudyYearSlug>(
+    availableOptions[0]?.value ?? "year-1",
   );
 
   const createMutation = useCreateStudyYear();
@@ -76,9 +72,6 @@ export function CreateStudyYearModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <GraduationCap className="size-5" />
-          </div>
           <DialogTitle>Add Academic Study Year</DialogTitle>
           <DialogDescription>
             Register a new curriculum study year level for this community.
@@ -96,9 +89,7 @@ export function CreateStudyYearModal({
               <FieldLabel>Select Academic Level</FieldLabel>
               <div className="grid grid-cols-2 gap-2.5 pt-1">
                 {STUDY_YEAR_OPTIONS.map((opt) => {
-                  const alreadyExists =
-                    existingNames.has(opt.value) ||
-                    existingNames.has(opt.label.toUpperCase());
+                  const alreadyExists = existingSlugs.has(opt.value);
                   const isSelected = selectedYear === opt.value;
 
                   return (

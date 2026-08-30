@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Edit3, Eye, Check } from "lucide-react";
+import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
   Dialog,
   DialogContent,
@@ -73,9 +72,6 @@ export function EditPostModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
-            <Edit3 className="size-5" />
-          </div>
           <DialogTitle>Edit Discussion Post</DialogTitle>
           <DialogDescription>
             Update the title and content of your discussion post.
@@ -155,11 +151,7 @@ export function EditPostModal({
             ) : (
               <div className="min-h-[150px] max-h-[250px] overflow-y-auto rounded-xl border border-border/80 bg-muted/20 p-4 text-xs">
                 {form.values.description?.trim() ? (
-                  <div className="prose prose-neutral dark:prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {form.values.description}
-                    </ReactMarkdown>
-                  </div>
+                  <MarkdownRenderer content={form.values.description} />
                 ) : (
                   <p className="text-muted-foreground italic text-center py-8">
                     Nothing to preview yet.

@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { ArrowRight, Archive, Trash2 } from "lucide-react";
+import { Archive, Trash2, MoreVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatStudyYearName, type StudyYearMetrics } from "../api/types";
 import { DeleteStudyYearDialog } from "./DeleteStudyYearDialog";
@@ -50,23 +56,33 @@ export function StudyYearCard({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {canDeleteStudyYear && communitySlug && (
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={handleDeleteClick}
-                title="Delete this study year"
-                className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors z-10"
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            )}
-
-            <div className="flex size-8 items-center justify-center rounded-lg text-muted-foreground group-hover:text-primary group-hover:bg-primary/10 transition-all">
-              <ArrowRight className="size-4 group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
+          {canDeleteStudyYear && communitySlug && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                onClick={(e) => e.stopPropagation()}
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="size-8 text-muted-foreground hover:text-foreground cursor-pointer z-10"
+                    aria-label="Study year actions"
+                  >
+                    <MoreVertical className="size-4" />
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={handleDeleteClick}
+                  className="gap-2 text-xs cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Delete Study Year</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
 
         {/* Metrics Row */}

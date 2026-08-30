@@ -1,11 +1,11 @@
-import { useMemo } from "react";
-import { MessageSquare } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MessageSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteCommunityPosts } from "@/features/posts/api/getCommunityPosts";
 import { PostCard } from "@/features/posts/components/PostCard";
-import { PostComposerPrompt } from "@/features/posts/components/PostComposerPrompt";
+import { PostComposerModal } from "@/features/posts/components/PostComposerModal";
 import { usePermissions } from "@/hooks/usePermissions";
 
 import type { CallerMembership } from "../../api/types";
@@ -16,6 +16,7 @@ interface CommunityPostsTabProps {
 }
 
 export function CommunityPostsTab({ communitySlug, callerMembership }: CommunityPostsTabProps) {
+  const [composerOpen, setComposerOpen] = useState(false);
   const { canCreatePost } = usePermissions(callerMembership);
 
   const {
@@ -33,13 +34,19 @@ export function CommunityPostsTab({ communitySlug, callerMembership }: Community
   }, [data]);
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Post Composer Prompt if authorized */}
+    <div className="space-y-4 max-w-4xl">
+      {/* New Post button if authorized */}
       {canCreatePost && (
-        <PostComposerPrompt
-          target={{ type: "community", communitySlug }}
-          placeholder="Start a community discussion, ask a question, or share resources..."
-        />
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setComposerOpen(true)}
+            className="gap-1.5 font-bold cursor-pointer"
+          >
+            <Plus className="size-4" />
+            New Post
+          </Button>
+        </div>
       )}
 
       {isLoading ? (
@@ -116,6 +123,12 @@ export function CommunityPostsTab({ communitySlug, callerMembership }: Community
           )}
         </div>
       )}
+
+      <PostComposerModal
+        target={{ type: "community", communitySlug }}
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+      />
     </div>
   );
 }
