@@ -1,18 +1,20 @@
-package com.unihub.app.entities.globalResources;
+package com.unihub.app.entities.community.resources;
 
-import com.unihub.app.entities.community.resources.Course;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "teachers",
-uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "last_name","first_name"})
-})
+@Table(
+        name = "teachers",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"community_id", "last_name", "first_name"})
+        }
+)
 @Getter
 @Setter
 @Builder
@@ -24,11 +26,18 @@ public class Teacher {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_id", nullable = false)
+    private Community community;
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
     @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @Column(name = "estimated_birth_date")
+    private LocalDate estimatedBirthDate;
 
     @Column(name = "average_rating", nullable = false)
     private float averageRating;
@@ -47,13 +56,8 @@ public class Teacher {
     )
     private List<Course> coursesTaught;
 
-    @ManyToMany
-    @JoinTable(
-            name = "teacher_communities",
-            joinColumns = @JoinColumn(name = "teacher_id"),
-            inverseJoinColumns = @JoinColumn(name = "community_id")
-    )
-    private List<com.unihub.app.entities.community.resources.Community> communities;
+    @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TeacherRating> ratings;
 
     @Override
     public String toString() {
@@ -61,6 +65,7 @@ public class Teacher {
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", estimatedBirthDate=" + estimatedBirthDate +
                 ", averageRating=" + averageRating +
                 ", ratingsCount=" + ratingsCount +
                 '}';

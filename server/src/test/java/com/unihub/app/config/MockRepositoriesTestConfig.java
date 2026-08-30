@@ -11,10 +11,10 @@ import com.unihub.app.repositories.community.resources.CommunityMemberRepository
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.repositories.community.resources.StudyYearRepository;
-import com.unihub.app.repositories.globalResources.RatingMetricRepository;
-import com.unihub.app.repositories.globalResources.TeacherRatingRepository;
-import com.unihub.app.repositories.globalResources.TeacherRatingValueRepository;
-import com.unihub.app.repositories.globalResources.TeacherRepository;
+import com.unihub.app.repositories.community.resources.RatingMetricRepository;
+import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
+import com.unihub.app.repositories.community.resources.TeacherRatingValueRepository;
+import com.unihub.app.repositories.community.resources.TeacherRepository;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;

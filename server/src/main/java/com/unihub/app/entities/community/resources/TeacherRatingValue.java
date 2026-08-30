@@ -1,4 +1,4 @@
-package com.unihub.app.entities.globalResources;
+package com.unihub.app.entities.community.resources;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,12 +15,12 @@ public class TeacherRatingValue {
     @EmbeddedId
     private TeacherRatingValueId id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("teacherRatingId")
     @JoinColumn(name = "teacher_rating_id")
     private TeacherRating teacherRating;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("ratingMetricId")
     @JoinColumn(name = "rating_metric_id")
     private RatingMetric ratingMetric;

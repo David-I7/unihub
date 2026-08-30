@@ -7,7 +7,6 @@ import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
-import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
@@ -48,15 +47,13 @@ public class CommunityJoinCodeServiceTests {
     @Mock
     private RoleService roleService;
 
-    private GlobalResourceMapper globalResourceMapper;
     private CommunityResourceMapper communityMapper;
     private UserMapper userMapper;
     private CommunityJoinCodeService communityJoinCodeService;
 
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
-        globalResourceMapper = new GlobalResourceMapper();
-        communityMapper = new CommunityResourceMapper(globalResourceMapper);
+        communityMapper = new CommunityResourceMapper();
         userMapper = new UserMapper(roleService);
         communityJoinCodeService = new CommunityJoinCodeService(
                 joinCodeRepository,

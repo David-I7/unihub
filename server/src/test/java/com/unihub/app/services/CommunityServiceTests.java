@@ -15,7 +15,6 @@ import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -73,10 +72,7 @@ public class CommunityServiceTests {
     private StudyYearService studyYearService;
 
     @Spy
-    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
-
-    @Spy
-    private CommunityResourceMapper communityMapper = new CommunityResourceMapper(new GlobalResourceMapper());
+    private CommunityResourceMapper communityMapper = new CommunityResourceMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();

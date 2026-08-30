@@ -1,4 +1,4 @@
-package com.unihub.app.entities.globalResources;
+package com.unihub.app.entities.community.resources;
 
 import jakarta.persistence.*;
 import lombok.*;

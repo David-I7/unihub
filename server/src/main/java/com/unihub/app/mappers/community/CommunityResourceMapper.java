@@ -5,15 +5,16 @@ import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
+import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.response.*;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.*;
-import com.unihub.app.mappers.GlobalResourceMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.Period;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +23,70 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CommunityResourceMapper {
 
-    private final GlobalResourceMapper globalResourceMapper;
+    public TeacherResponseDto toTeacherResponseDto(Teacher teacher) {
+        Integer estimatedAge = teacher.getEstimatedBirthDate() != null
+                ? Period.between(teacher.getEstimatedBirthDate(), LocalDate.now()).getYears()
+                : null;
+
+        return TeacherResponseDto.builder()
+                .id(teacher.getId())
+                .firstName(teacher.getFirstName())
+                .lastName(teacher.getLastName())
+                .estimatedAge(estimatedAge)
+                .averageRating(teacher.getAverageRating())
+                .ratingsCount(teacher.getRatingsCount())
+                .createdAt(teacher.getCreatedAt())
+                .build();
+    }
+
+    public Teacher toTeacherEntity(CreateTeacherRequestDto dto, Community community) {
+        LocalDate estimatedBirthDate = dto.estimatedAge() != null
+                ? LocalDate.now().minusYears(dto.estimatedAge())
+                : null;
+
+        return Teacher.builder()
+                .community(community)
+                .firstName(dto.firstName())
+                .lastName(dto.lastName())
+                .estimatedBirthDate(estimatedBirthDate)
+                .averageRating(0.0f)
+                .ratingsCount(0)
+                .createdAt(OffsetDateTime.now())
+                .build();
+    }
+
+    public TeacherRatingValueResponseDto toTeacherRatingValueResponseDto(TeacherRatingValue value) {
+        return TeacherRatingValueResponseDto.builder()
+                .metricId(value.getRatingMetric().getId())
+                .metricName(value.getRatingMetric().getName())
+                .value(value.getValue())
+                .build();
+    }
+
+    public TeacherRatingResponseDto toTeacherRatingResponseDto(TeacherRating rating) {
+        OwnerDto author = null;
+        if (!rating.isAnonymous() && rating.getUser() != null) {
+            author = new OwnerDto(
+                    rating.getUser().getId(),
+                    rating.getUser().getUsername(),
+                    rating.getUser().isActive()
+            );
+        }
+
+        List<TeacherRatingValueResponseDto> values = rating.getValues() != null
+                ? rating.getValues().stream().map(this::toTeacherRatingValueResponseDto).toList()
+                : Collections.emptyList();
+
+        return TeacherRatingResponseDto.builder()
+                .id(rating.getId())
+                .title(rating.getTitle())
+                .description(rating.getDescription())
+                .createdAt(rating.getCreatedAt())
+                .isAnonymous(rating.isAnonymous())
+                .author(author)
+                .values(values)
+                .build();
+    }
 
     public Community toCommunityEntity(CreateCommunityRequestDto dto, User owner, boolean verified, OffsetDateTime createdAt) {
         return Community.builder()
@@ -108,7 +172,7 @@ public class CommunityResourceMapper {
 
     public CourseHomeResponseDto toCourseHomeResponseDto(Course course) {
         List<TeacherResponseDto> teachers = course.getTeachers() != null
-                ? course.getTeachers().stream().map(globalResourceMapper::toTeacherResponseDto).toList()
+                ? course.getTeachers().stream().map(this::toTeacherResponseDto).toList()
                 : Collections.emptyList();
 
         CourseResponseDto courseResponseDto = toCourseResponseDto(course);

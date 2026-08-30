@@ -9,8 +9,7 @@ import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.entities.globalResources.Teacher;
-import com.unihub.app.mappers.GlobalResourceMapper;
+import com.unihub.app.entities.community.resources.Teacher;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
@@ -54,10 +53,7 @@ public class StudyYearServiceTests {
     private CommunityRepository communityRepository;
 
     @Spy
-    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
-
-    @Spy
-    private CommunityResourceMapper communityMapper = new CommunityResourceMapper(new GlobalResourceMapper());
+    private CommunityResourceMapper communityMapper = new CommunityResourceMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();

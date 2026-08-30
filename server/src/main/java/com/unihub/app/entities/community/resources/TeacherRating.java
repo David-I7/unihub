@@ -1,4 +1,4 @@
-package com.unihub.app.entities.globalResources;
+package com.unihub.app.entities.community.resources;
 
 import com.unihub.app.entities.authentication.User;
 import jakarta.persistence.*;
@@ -24,12 +24,12 @@ public class TeacherRating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "teacher_id", nullable = false)
     private Teacher teacher;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Column(name = "created_at", nullable = false)
@@ -41,7 +41,11 @@ public class TeacherRating {
     @Column(name = "description")
     private String description;
 
-    @OneToMany(mappedBy = "teacherRating")
+    @Column(name = "is_anonymous", nullable = false)
+    @Builder.Default
+    private boolean isAnonymous = false;
+
+    @OneToMany(mappedBy = "teacherRating", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TeacherRatingValue> values;
 
     @Override
@@ -53,6 +57,7 @@ public class TeacherRating {
                 ", createdAt=" + createdAt +
                 ", title='" + title + '\'' +
                 ", description='" + description + '\'' +
+                ", isAnonymous=" + isAnonymous +
                 ", values=" + Objects.toIdentityString(values) +
                 '}';
     }

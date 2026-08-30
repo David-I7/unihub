@@ -1,4 +1,4 @@
-package com.unihub.app.dto.globalResources;
+package com.unihub.app.dto.community.resources.response;
 
 import lombok.Builder;
 
@@ -10,6 +10,7 @@ public record TeacherResponseDto(
         UUID id,
         String firstName,
         String lastName,
+        Integer estimatedAge,
         float averageRating,
         int ratingsCount,
         OffsetDateTime createdAt

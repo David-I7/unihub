@@ -13,7 +13,7 @@ import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
+import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.MaterialLinkType;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -100,7 +100,15 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .description("Course description")
                 .build();
 
-        TeacherResponseDto teacherDto = new TeacherResponseDto(UUID.randomUUID(), "Daniel", "Dragulici", 4.8f, 15, OffsetDateTime.now());
+        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
+                .id(UUID.randomUUID())
+                .firstName("Daniel")
+                .lastName("Dragulici")
+                .estimatedAge(42)
+                .averageRating(4.8f)
+                .ratingsCount(15)
+                .createdAt(OffsetDateTime.now())
+                .build();
 
         CourseHomeResponseDto courseResponse = CourseHomeResponseDto.builder()
                 .course(courseDto)

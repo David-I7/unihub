@@ -9,7 +9,7 @@ import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
-import com.unihub.app.dto.globalResources.TeacherResponseDto;
+import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.AuthorizationService;

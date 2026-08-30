@@ -3,7 +3,6 @@ package com.unihub.app.entities.community.resources;
 import com.unihub.app.entities.community.content.CoursePost;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.Resource;
-import com.unihub.app.entities.globalResources.Teacher;
 import jakarta.persistence.*;
 import lombok.*;
 

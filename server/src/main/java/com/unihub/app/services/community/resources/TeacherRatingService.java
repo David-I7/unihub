@@ -1,6 +1,6 @@
-package com.unihub.app.services.globalResources;
+package com.unihub.app.services.community.resources;
 
-import com.unihub.app.repositories.globalResources.TeacherRatingRepository;
+import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,5 +9,4 @@ import org.springframework.stereotype.Service;
 public class TeacherRatingService {
 
     private final TeacherRatingRepository teacherRatingRepository;
-
 }
