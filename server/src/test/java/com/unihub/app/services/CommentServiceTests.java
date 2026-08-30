@@ -8,11 +8,13 @@ import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateCommentRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.content.Comment;
+import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.*;
+import com.unihub.app.repositories.community.content.CommentRepository;
+import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.CommentService;
 import com.unihub.app.services.community.content.PostService;
@@ -41,18 +43,6 @@ public class CommentServiceTests {
 
     @Mock
     private CommentRepository commentRepository;
-
-    @Mock
-    private CommunityCommentRepository communityCommentRepository;
-
-    @Mock
-    private CourseCommentRepository courseCommentRepository;
-
-    @Mock
-    private CommunityPostRepository communityPostRepository;
-
-    @Mock
-    private CoursePostRepository coursePostRepository;
 
     @Mock
     private PostRepository postRepository;
@@ -105,13 +95,12 @@ public class CommentServiceTests {
     }
 
     @Test
-    @DisplayName("createComment creates comment on community post and increments post comment count")
-    public void testCreateComment_CommunityPost_Success() {
+    @DisplayName("createComment creates comment on post and increments post comment count")
+    public void testCreateComment_Success() {
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UserDto caller = new UserDto(userId, "alice@example.com", "alice", true, RoleType.USER);
-        Post post = Post.builder().id(postId).channel(CommunicationChannel.COMMUNITY).build();
-        CommunityPost communityPost = CommunityPost.builder().id(postId).post(post).build();
+        Post post = Post.builder().id(postId).build();
         CreateCommentRequestDto dto = new CreateCommentRequestDto("Nice post!");
 
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
@@ -124,43 +113,12 @@ public class CommentServiceTests {
             c.setUpdatedAt(OffsetDateTime.now());
             return c;
         });
-        when(communityPostRepository.findById(postId)).thenReturn(Optional.of(communityPost));
 
         CommentResponseDto result = commentService.createComment(postId, caller, dto);
 
         assertNotNull(result);
         assertEquals("Nice post!", result.content());
-        verify(communityCommentRepository).save(any(CommunityComment.class));
-        verify(postRepository).incrementCommentsCount(postId);
-    }
-
-    @Test
-    @DisplayName("createComment creates comment on course post and increments post comment count")
-    public void testCreateComment_CoursePost_Success() {
-        UUID postId = UUID.randomUUID();
-        UUID userId = UUID.randomUUID();
-        UserDto caller = new UserDto(userId, "alice@example.com", "alice", true, RoleType.USER);
-        Post post = Post.builder().id(postId).channel(CommunicationChannel.COURSE).build();
-        CoursePost coursePost = CoursePost.builder().id(postId).post(post).build();
-        CreateCommentRequestDto dto = new CreateCommentRequestDto("Question about lab");
-
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
-        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.CREATE_COMMENT)).thenReturn(true);
-        when(commentRepository.save(any(Comment.class))).thenAnswer(i -> {
-            Comment c = i.getArgument(0);
-            c.setId(UUID.randomUUID());
-            c.setCreatedAt(OffsetDateTime.now());
-            c.setUpdatedAt(OffsetDateTime.now());
-            return c;
-        });
-        when(coursePostRepository.findById(postId)).thenReturn(Optional.of(coursePost));
-
-        CommentResponseDto result = commentService.createComment(postId, caller, dto);
-
-        assertNotNull(result);
-        assertEquals("Question about lab", result.content());
-        verify(courseCommentRepository).save(any(CourseComment.class));
+        verify(commentRepository).save(any(Comment.class));
         verify(postRepository).incrementCommentsCount(postId);
     }
 
@@ -168,10 +126,11 @@ public class CommentServiceTests {
     @DisplayName("updateComment updates content when caller is author with UPDATE_COMMENT permission")
     public void testUpdateComment_AuthorSuccess() {
         UUID commentId = UUID.randomUUID();
+        UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UserDto caller = new UserDto(userId, "alice@example.com", "alice", true, RoleType.USER);
         User owner = User.builder().id(userId).username("alice").build();
-        Post post = Post.builder().id(UUID.randomUUID()).build();
+        Post post = Post.builder().id(postId).build();
 
         Comment comment = Comment.builder()
                 .id(commentId)
@@ -184,7 +143,8 @@ public class CommentServiceTests {
         UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited comment");
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(communityCommentRepository.findCommunitySlugByCommentId(commentId)).thenReturn(Optional.of("fmi-info"));
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
         when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.UPDATE_COMMENT)).thenReturn(true);
         when(commentRepository.save(any(Comment.class))).thenAnswer(i -> i.getArgument(0));
 
@@ -226,7 +186,8 @@ public class CommentServiceTests {
         Comment comment = Comment.builder().id(commentId).post(post).owner(owner).build();
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(communityCommentRepository.findCommunitySlugByCommentId(commentId)).thenReturn(Optional.of("fmi-info"));
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
         when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.DELETE_COMMENT)).thenReturn(true);
 
         commentService.deleteComment(commentId, caller);
@@ -249,7 +210,8 @@ public class CommentServiceTests {
         Comment comment = Comment.builder().id(commentId).post(post).owner(owner).build();
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(communityCommentRepository.findCommunitySlugByCommentId(commentId)).thenReturn(Optional.of("fmi-info"));
+        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
         when(authorizationService.hasCommunityPermission("fmi-info", moderatorId, PermissionType.MODERATE_COMMENT)).thenReturn(true);
 
         commentService.deleteComment(commentId, moderator);

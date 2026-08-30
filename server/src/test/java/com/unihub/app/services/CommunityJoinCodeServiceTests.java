@@ -11,6 +11,7 @@ import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityJoinCodeService;
@@ -42,6 +43,9 @@ public class CommunityJoinCodeServiceTests {
     private CommunityRepository communityRepository;
 
     @Mock
+    private CommunityMemberRepository communityMemberRepository;
+
+    @Mock
     private RoleService roleService;
 
     private GlobalResourceMapper globalResourceMapper;
@@ -57,6 +61,7 @@ public class CommunityJoinCodeServiceTests {
         communityJoinCodeService = new CommunityJoinCodeService(
                 joinCodeRepository,
                 communityRepository,
+                communityMemberRepository,
                 userMapper,
                 communityMapper
         );

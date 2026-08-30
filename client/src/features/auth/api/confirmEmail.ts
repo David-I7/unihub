@@ -1,12 +1,15 @@
 import { useMutation } from "@tanstack/react-query";
-import type { ConfirmEmailRequest, MessageResponse } from "../types";
+import type { ConfirmEmailRequest, MessageResponse } from "./types";
 import client from "@/api/client";
 import useAuthStore from "../store/useAuthStore";
 
 export const confirmEmail = async (
   request: ConfirmEmailRequest,
 ): Promise<MessageResponse> => {
-  const response = await client.post<MessageResponse>("/auth/confirm-email", request);
+  const response = await client.post<MessageResponse>(
+    "/auth/confirm-email",
+    request,
+  );
   return response.data;
 };
 

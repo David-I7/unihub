@@ -1,10 +1,9 @@
-import { useNavigate } from "react-router";
-import { isAxiosError } from "axios";
+import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "@/hooks/useForm";
 import { useLogin } from "../api/login";
-import type { LoginRequest } from "../types";
+import type { LoginRequest } from "../api/types";
 import { loginSchema, type LoginFormData } from "../schemas/authSchemas";
-import type { ApiError } from "@/api/types";
+import { getFormErrors } from "@/api/types";
 
 export interface UseLoginFormOptions {
   onSuccess?: () => void;
@@ -13,6 +12,7 @@ export interface UseLoginFormOptions {
 
 export function useLoginForm(options?: UseLoginFormOptions) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const loginMutation = useLogin();
 
   const form = useForm<LoginFormData>({
@@ -33,30 +33,28 @@ export function useLoginForm(options?: UseLoginFormOptions) {
 
         if (options?.onSuccess) {
           options.onSuccess();
-        } else navigate(options?.redirectTo ?? "/");
-      } catch (err) {
-        if (isAxiosError(err)) {
-          const apiError: ApiError = err.response!.data;
-
-          if (!apiError.errors) {
-            form.setServerError(apiError.detail || apiError.title);
-          }
-
-          const errors: typeof form.errors = {};
-
-          for (const error of apiError.errors!) {
-            if (error.type === "FIELD" && error.field === "password") {
-              errors[error.field] = error.message;
-            } else {
-              errors["identifier"] = error.message;
-            }
-          }
-          form.setErrors(errors);
         } else {
-          form.setServerError(
-            "An unexpected error occurred. Please try again.",
-          );
+          const redirectTarget = options?.redirectTo ?? searchParams.get("redirect") ?? "/";
+          navigate(redirectTarget);
         }
+      } catch (err) {
+        const formErrors = getFormErrors(err);
+
+        if (formErrors.server) {
+          form.setServerError(formErrors.server);
+          return;
+        }
+
+        const errors: typeof form.errors = {};
+
+        for (const error of formErrors.validation!) {
+          if (error.type === "FIELD" && error.field === "password") {
+            errors[error.field] = error.message;
+          } else {
+            errors["identifier"] = error.message;
+          }
+        }
+        form.setErrors(errors);
       }
     },
   });

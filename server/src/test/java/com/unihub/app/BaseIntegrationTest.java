@@ -90,13 +90,7 @@ public abstract class BaseIntegrationTest {
     protected CommunityPostRepository communityPostRepository;
 
     @MockitoBean
-    protected CommunityCommentRepository communityCommentRepository;
-
-    @MockitoBean
     protected CoursePostRepository coursePostRepository;
-
-    @MockitoBean
-    protected CourseCommentRepository courseCommentRepository;
 
     @MockitoBean
     protected PostLikeRepository postLikeRepository;

@@ -27,8 +27,4 @@ public class TokenRevocationService {
         }
         return issuedAt.isBefore(revokedAt);
     }
-
-    public void clearRevocation(UUID userId) {
-        revokedUsers.evict(userId);
-    }
 }

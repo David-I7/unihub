@@ -5,7 +5,6 @@ import com.unihub.app.entities.community.content.CommunicationChannel;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Builder
@@ -20,7 +19,6 @@ public record PostResponseDto(
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt,
         OwnerDto owner,
-        List<CommentResponseDto> comments,
         Boolean isLiked
 ) {
 }

@@ -7,11 +7,13 @@ import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateCommentRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.content.Comment;
+import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.*;
+import com.unihub.app.repositories.community.content.CommentRepository;
+import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,10 +30,6 @@ import java.util.UUID;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final CommunityCommentRepository communityCommentRepository;
-    private final CourseCommentRepository courseCommentRepository;
-    private final CommunityPostRepository communityPostRepository;
-    private final CoursePostRepository coursePostRepository;
     private final PostRepository postRepository;
     private final PostService postService;
     private final AuthorizationService authorizationService;
@@ -40,9 +38,9 @@ public class CommentService {
     private final PageMapper pageMapper;
 
     public String getCommunitySlugForComment(UUID commentId) {
-        return communityCommentRepository.findCommunitySlugByCommentId(commentId)
-                .or(() -> courseCommentRepository.findCommunitySlugByCommentId(commentId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment does not belong to any community"));
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+        return postService.getCommunitySlugForPost(comment.getPost().getId());
     }
 
     @Transactional(readOnly = true)
@@ -68,24 +66,6 @@ public class CommentService {
         User owner = userMapper.toEntity(caller);
         Comment comment = contentMapper.toCommentEntity(dto, post, owner);
         Comment savedComment = commentRepository.save(comment);
-
-        if (post.getChannel() == CommunicationChannel.COMMUNITY) {
-            CommunityPost communityPost = communityPostRepository.findById(postId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community post not found"));
-            CommunityComment communityComment = CommunityComment.builder()
-                    .comment(savedComment)
-                    .communityPost(communityPost)
-                    .build();
-            communityCommentRepository.save(communityComment);
-        } else if (post.getChannel() == CommunicationChannel.COURSE) {
-            CoursePost coursePost = coursePostRepository.findById(postId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course post not found"));
-            CourseComment courseComment = CourseComment.builder()
-                    .comment(savedComment)
-                    .coursePost(coursePost)
-                    .build();
-            courseCommentRepository.save(courseComment);
-        }
 
         postRepository.incrementCommentsCount(postId);
         return contentMapper.toCommentResponseDto(savedComment);

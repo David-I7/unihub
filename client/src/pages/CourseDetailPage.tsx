@@ -1,12 +1,12 @@
 import { useParams } from "react-router";
 import { Info, FolderOpen, MessageSquare } from "lucide-react";
-import { CommunityPostsTab } from "@/features/communities";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import {
   useCourseHome,
   CourseAboutTab,
   CourseMaterialsTab,
+  CoursePostsTab,
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -95,7 +95,11 @@ export default function CourseDetailPage() {
         </TabsContent>
 
         <TabsContent value="discussions" className="focus-visible:outline-none">
-          <CommunityPostsTab communitySlug={communitySlug} />
+          <CoursePostsTab
+            communitySlug={communitySlug}
+            studyYearSlug={studyYearSlug}
+            courseSlug={courseSlug}
+          />
         </TabsContent>
       </Tabs>
     </div>

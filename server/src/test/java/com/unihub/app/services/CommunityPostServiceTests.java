@@ -5,10 +5,8 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
-import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.CommunityPost;
 import com.unihub.app.entities.community.content.Post;
@@ -16,7 +14,6 @@ import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.CommunityPostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
@@ -58,9 +55,6 @@ public class CommunityPostServiceTests {
 
     @Mock
     private CommunityPostRepository communityPostRepository;
-
-    @Mock
-    private CommentRepository commentRepository;
 
     @Mock
     private PostLikeRepository postLikeRepository;
@@ -127,13 +121,12 @@ public class CommunityPostServiceTests {
     }
 
     @Test
-    @DisplayName("getCommunityPosts returns posts with sorted comments, non-null fields, and isLiked true")
+    @DisplayName("getCommunityPosts returns posts with non-null fields and isLiked true")
     public void testGetCommunityPosts_Success() {
         UUID communityId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
         User author = User.builder().id(userId).username("david").build();
-        User commentAuthor = User.builder().id(UUID.randomUUID()).username("alice").build();
 
         Community community = Community.builder()
                 .id(communityId)
@@ -163,25 +156,11 @@ public class CommunityPostServiceTests {
                 .owner(author)
                 .build();
 
-        UUID commentId = UUID.randomUUID();
-        OffsetDateTime commentCreatedAt = OffsetDateTime.now().minusMinutes(30);
-        OffsetDateTime commentUpdatedAt = OffsetDateTime.now().minusMinutes(30);
-        Comment comment = Comment.builder()
-                .id(commentId)
-                .post(post)
-                .content("Thanks!")
-                .owner(commentAuthor)
-                .createdAt(commentCreatedAt)
-                .updatedAt(commentUpdatedAt)
-                .build();
-
         PageRequest pageRequest = PageRequest.of(0, 10);
 
         when(communityRepository.findBySlugWithOwner("fmi-info-id")).thenReturn(Optional.of(community));
         when(communityPostRepository.findPostsByCommunityId(eq(communityId), eq(pageRequest)))
                 .thenReturn(new PageImpl<>(List.of(post), pageRequest, 1));
-        when(commentRepository.findByPostIdInOrderByCreatedAtAsc(List.of(postId)))
-                .thenReturn(List.of(comment));
         when(postLikeRepository.findLikedPostIdsByUserIdAndPostIdIn(userId, List.of(postId)))
                 .thenReturn(Set.of(postId));
 
@@ -207,22 +186,8 @@ public class CommunityPostServiceTests {
         assertEquals(author.getId(), postDto.owner().id());
         assertEquals("david", postDto.owner().username());
 
-        assertNotNull(postDto.comments());
-        assertEquals(1, postDto.comments().size());
-        CommentResponseDto commentDto = postDto.comments().get(0);
-        assertNotNull(commentDto.id());
-        assertEquals(commentId, commentDto.id());
-        assertEquals(postId, commentDto.postId());
-        assertEquals("Thanks!", commentDto.content());
-        assertEquals(commentCreatedAt, commentDto.createdAt());
-        assertEquals(commentUpdatedAt, commentDto.updatedAt());
-        assertNotNull(commentDto.owner());
-        assertEquals(commentAuthor.getId(), commentDto.owner().id());
-        assertEquals("alice", commentDto.owner().username());
-
         verify(communityRepository).findBySlugWithOwner("fmi-info-id");
         verify(communityPostRepository).findPostsByCommunityId(eq(communityId), eq(pageRequest));
-        verify(commentRepository).findByPostIdInOrderByCreatedAtAsc(List.of(postId));
     }
 
     @Test

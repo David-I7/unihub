@@ -74,7 +74,7 @@ export function EventFormModal() {
   // 1. Fetch user's enrolled communities
   const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
     useUserCommunities();
-  const communities = userCommunitiesData?.communities ?? [];
+  const communities = userCommunitiesData?.content ?? [];
   const hasCommunities = communities.length > 0;
 
   // Mutations

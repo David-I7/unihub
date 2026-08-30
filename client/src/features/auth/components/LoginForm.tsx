@@ -125,7 +125,11 @@ export function LoginForm({
             providerError={providerLoginError}
             footerText="Don't have an account?"
             footerActionText="Sign up"
-            footerActionTo="/register"
+            footerActionTo={
+              new URLSearchParams(window.location.search).get("redirect")
+                ? `/register?redirect=${encodeURIComponent(new URLSearchParams(window.location.search).get("redirect")!)}`
+                : "/register"
+            }
           />
         </FieldGroup>
       </form>

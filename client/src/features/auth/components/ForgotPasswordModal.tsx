@@ -1,5 +1,4 @@
 import * as React from "react";
-import { isAxiosError } from "axios";
 import { Mail, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
@@ -19,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { emailSchema } from "../schemas/authSchemas";
 import { useForgotPassword } from "../api/forgotPassword";
 import useCountdownTimer from "@/hooks/useCountdownTimer";
+import { getErrorMessage } from "@/api/types";
 
 export interface ForgotPasswordModalProps {
   open: boolean;
@@ -76,15 +76,7 @@ export function ForgotPasswordModal({
         setIsSuccess(true);
         startTimer(60);
       } catch (err) {
-        if (isAxiosError(err)) {
-          setError(
-            err.response?.data?.message ||
-              err.response?.data?.detail ||
-              "Failed to send reset email.",
-          );
-        } else {
-          setError("An unexpected error occurred. Please try again.");
-        }
+        setError(getErrorMessage(err, "Failed to send reset email."));
       }
     },
     [sendReset, startTimer],
@@ -94,26 +86,18 @@ export function ForgotPasswordModal({
     if (!open) return;
 
     if (autoSend && initialEmail) {
-      void sendReset({ email: initialEmail.trim() })
+      sendReset({ email: initialEmail.trim() })
         .then(() => {
           setIsSuccess(true);
           startTimer(60);
         })
         .catch((err) => {
-          if (isAxiosError(err)) {
-            setError(
-              err.response?.data?.message ||
-                err.response?.data?.detail ||
-                "Failed to send reset email.",
-            );
-          } else {
-            setError("An unexpected error occurred. Please try again.");
-          }
+          setError(getErrorMessage(err, "Failed to send reset email."));
         });
     }
   }, [open, autoSend, initialEmail, sendReset, startTimer]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     await handleSendResetEmail(email || initialEmail);
   };

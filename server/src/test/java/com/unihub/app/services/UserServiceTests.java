@@ -2,8 +2,8 @@ package com.unihub.app.services;
 
 import com.unihub.app.config.EmailProperties;
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.authentication.MessageResponseDto;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
@@ -12,7 +12,10 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
+import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.events.email.EmailVerificationRequestedEvent;
 import com.unihub.app.events.email.PasswordResetRequestedEvent;
@@ -90,6 +93,7 @@ public class UserServiceTests {
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
         userMapper = new UserMapper(roleService);
+        PageMapper pageMapper = new PageMapper();
         EmailProperties emailProperties = new EmailProperties(
                 "no-reply@unihub.com",
                 "support@unihub.com",
@@ -103,8 +107,8 @@ public class UserServiceTests {
                 userIdentityService,
                 roleService,
                 communityMemberRepository,
-                communityRepository,
                 userMapper,
+                pageMapper,
                 eventPublisher,
                 jwtService,
                 sessionService,
@@ -302,51 +306,44 @@ public class UserServiceTests {
                 .joinedAt(joinedAt2)
                 .build();
 
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
-                .thenReturn(List.of(member1, member2));
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(eq(userId), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(List.of(member1, member2), pageRequest, 2));
         when(roleService.getRoleById(roleId1)).thenReturn(memberRole);
         when(roleService.getRoleById(roleId2)).thenReturn(adminRole);
-        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_MEMBER))
-                .thenReturn(List.of("VIEW_POSTS"));
-        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_ADMIN))
-                .thenReturn(List.of("VIEW_POSTS", "DELETE_POST"));
 
-        UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
+        PageDto<UserEnrolledCommunityDto> result = userService.getUserEnrolledCommunities(userId, pageRequest);
 
         assertNotNull(result);
-        assertEquals(2, result.communities().size());
+        assertEquals(2, result.content().size());
 
-        UserEnrolledCommunityDto c1 = result.communities().get(0);
+        UserEnrolledCommunityDto c1 = result.content().get(0);
         assertEquals(comm1.getId(), c1.id());
         assertEquals("Computer Science", c1.name());
         assertEquals("cs", c1.slug());
         assertEquals("COMMUNITY_MEMBER", c1.role());
         assertEquals(joinedAt1, c1.joinedAt());
 
-        UserEnrolledCommunityDto c2 = result.communities().get(1);
+        UserEnrolledCommunityDto c2 = result.content().get(1);
         assertEquals(comm2.getId(), c2.id());
         assertEquals("Mathematics", c2.name());
         assertEquals("math", c2.slug());
         assertEquals("COMMUNITY_ADMIN", c2.role());
         assertEquals(joinedAt2, c2.joinedAt());
-
-        assertNotNull(result.permissionsByRole());
-        assertEquals(List.of("VIEW_POSTS"), result.permissionsByRole().get("COMMUNITY_MEMBER"));
-        assertEquals(List.of("VIEW_POSTS", "DELETE_POST"), result.permissionsByRole().get("COMMUNITY_ADMIN"));
     }
 
     @Test
     @DisplayName("getUserEnrolledCommunities returns empty response when user has no enrolled communities")
     public void testGetUserEnrolledCommunities_EmptyMemberships() {
         UUID userId = UUID.randomUUID();
-        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(userId))
-                .thenReturn(Collections.emptyList());
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(communityMemberRepository.findMembershipsByUserIdWithCommunity(eq(userId), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), pageRequest, 0));
 
-        UserCommunitiesResponseDto result = userService.getUserEnrolledCommunities(userId);
+        PageDto<UserEnrolledCommunityDto> result = userService.getUserEnrolledCommunities(userId, pageRequest);
 
         assertNotNull(result);
-        assertTrue(result.communities().isEmpty());
-        assertTrue(result.permissionsByRole().isEmpty());
+        assertTrue(result.content().isEmpty());
     }
 
     // =========================================================================
@@ -424,7 +421,7 @@ public class UserServiceTests {
     @DisplayName("requestPasswordReset publishes PasswordResetRequestedEvent when user exists")
     public void testRequestPasswordReset_Success() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder().id(userId).email("user@example.com").username("user").build();
+        User user = User.builder().id(userId).email("user@example.com").username("user").emailVerified(true).build();
         when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
         when(jwtService.generateToken(eq(userId.toString()), anyMap(), eq(900L))).thenReturn("jwt-reset-token");
 

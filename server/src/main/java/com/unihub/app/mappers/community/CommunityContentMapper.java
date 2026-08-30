@@ -30,18 +30,10 @@ public class CommunityContentMapper {
     }
 
     public PostResponseDto toPostResponseDto(Post post) {
-        return toPostResponseDto(post, Collections.emptyList(), null);
+        return toPostResponseDto(post, null);
     }
 
     public PostResponseDto toPostResponseDto(Post post, Boolean isLiked) {
-        return toPostResponseDto(post, Collections.emptyList(), isLiked);
-    }
-
-    public PostResponseDto toPostResponseDto(Post post, List<CommentResponseDto> comments) {
-        return toPostResponseDto(post, comments, null);
-    }
-
-    public PostResponseDto toPostResponseDto(Post post, List<CommentResponseDto> comments, Boolean isLiked) {
         return PostResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -53,7 +45,6 @@ public class CommunityContentMapper {
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername(), post.getOwner().isActive()))
-                .comments(comments)
                 .isLiked(isLiked)
                 .build();
     }

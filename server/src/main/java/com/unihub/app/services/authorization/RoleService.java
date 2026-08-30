@@ -1,6 +1,5 @@
 package com.unihub.app.services.authorization;
 
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
@@ -51,12 +50,6 @@ public class RoleService {
         }
         return permissionRepository.findPermissionNamesByRoleName(roleType.name());
     }
-
-    public RoleType getRoleTypeById(UUID roleId) {
-        Role role = getRoleById(roleId);
-        return RoleType.valueOf(role.getName());
-    }
-
 
     @PostConstruct
     public void initializeRoles() {

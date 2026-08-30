@@ -58,12 +58,13 @@ public class AuthorizationService {
     public Optional<RoleType> getCommunityRole(String communitySlug, UUID userId) {
         return communityMemberRepository.findMemberByCommunitySlug(communitySlug, userId)
                 .map(CommunityMember::getRoleId)
-                .map(roleService::getRoleTypeById);
+                .map(roleService::getRoleById)
+                .map(role-> RoleType.valueOf(role.getName()));
     }
 
     public boolean hasCommunityPermission(String communitySlug, UUID userId, PermissionType permission) {
         RoleType globalRole = getGlobalRole();
-        if (globalRole == RoleType.ROOT || globalRole == RoleType.ADMIN) {
+        if (globalRole != null) {
             if (roleService.getPermissionNamesByRoleType(globalRole).contains(permission.name())) {
                 return true;
             }

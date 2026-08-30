@@ -1,0 +1,140 @@
+import { useState, useTransition } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+import { KeyRound, Sparkles } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { getErrorMessage } from "@/api/types";
+import { useJoinCommunity } from "../api/joinCommunity";
+
+interface JoinCommunityModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  prefilledCode?: string;
+}
+
+export function JoinCommunityModal({
+  open,
+  onOpenChange,
+  prefilledCode = "",
+}: JoinCommunityModalProps) {
+  const [code, setCode] = useState(prefilledCode);
+  const [error, setError] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const navigate = useNavigate();
+  const joinMutation = useJoinCommunity();
+
+  const handleJoin = async (joinCodeToUse?: string) => {
+    const rawCode = (joinCodeToUse ?? code).trim().toUpperCase();
+    if (rawCode.length !== 8) {
+      setError("Join code must be exactly 8 alphanumeric characters.");
+      return;
+    }
+
+    setError(null);
+    try {
+      const enrolled = await joinMutation.mutateAsync({ joinCode: rawCode });
+      toast.success(`Successfully joined "${enrolled.name}"!`);
+      onOpenChange(false);
+      setCode("");
+      startTransition(() => {
+        navigate(`/communities/${enrolled.slug}`);
+      });
+    } catch (err: unknown) {
+      const message = getErrorMessage(
+        err,
+        "Invalid or expired join code. Please verify and try again.",
+      );
+      setError(message);
+      toast.error(message);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedText = e.clipboardData.getData("text").trim().toUpperCase();
+    if (pastedText.length === 8) {
+      e.preventDefault();
+      setCode(pastedText);
+      handleJoin(pastedText);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary mb-1">
+            <KeyRound className="size-5" />
+          </div>
+          <DialogTitle>Join a Community</DialogTitle>
+          <DialogDescription>
+            Enter an 8-character invitation code to join a private or
+            member-only academic community.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {error && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+              {error}
+            </div>
+          )}
+
+          <Field>
+            <FieldLabel htmlFor="joinCode">Invitation Code</FieldLabel>
+            <Input
+              id="joinCode"
+              placeholder="e.g. 9ABCDEF4"
+              value={code}
+              onChange={(e) => {
+                setError(null);
+                setCode(e.target.value.toUpperCase());
+              }}
+              onPaste={handlePaste}
+              maxLength={8}
+              className="text-center font-mono text-lg tracking-widest uppercase font-bold"
+              autoFocus
+            />
+            <FieldDescription>
+              Tip: Paste the 8-character code to join immediately.
+            </FieldDescription>
+          </Field>
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={() => handleJoin()}
+            disabled={joinMutation.isPending || code.trim().length !== 8}
+            className="gap-2 font-bold cursor-pointer"
+          >
+            {joinMutation.isPending ? (
+              "Joining..."
+            ) : (
+              <>
+                <Sparkles className="size-4" />
+                Join Community
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

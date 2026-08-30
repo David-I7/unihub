@@ -30,7 +30,7 @@ export interface Comment {
   postId: string;
   content: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   owner: ResourceOwner;
 }
 
@@ -43,7 +43,7 @@ export interface Post {
   likesCount: number;
   commentsCount: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   owner: ResourceOwner;
-  comments: Comment[];
+  isLiked?: boolean;
 }

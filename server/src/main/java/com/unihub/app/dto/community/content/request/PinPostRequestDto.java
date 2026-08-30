@@ -4,6 +4,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record PinPostRequestDto(
         @NotNull(message = "Pinned status must be specified")
-        Boolean pinned
+        boolean pinned
 ) {
 }

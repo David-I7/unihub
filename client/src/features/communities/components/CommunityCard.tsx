@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ShieldCheck, Users, User, ShieldAlert } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -9,25 +8,25 @@ import type { Community } from "../api/types";
 
 interface CommunityCardProps {
   community: Community;
-  onJoinToggle?: (communityId: string, isJoined: boolean) => void;
-  isInitiallyJoined?: boolean;
+  onJoinClick?: (community: Community) => void;
 }
 
 export function CommunityCard({
   community,
-  onJoinToggle,
-  isInitiallyJoined = false,
+  onJoinClick,
 }: CommunityCardProps) {
   const navigate = useNavigate();
-  const [isJoined, setIsJoined] = useState(isInitiallyJoined);
-
   const gradientBg = computeGradient(community.backgroundColor);
 
   const handleJoinClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const nextState = !isJoined;
-    setIsJoined(nextState);
-    onJoinToggle?.(community.id, nextState);
+    if (community.isJoined) {
+      navigate(`/communities/${community.slug}`);
+    } else if (onJoinClick) {
+      onJoinClick(community);
+    } else {
+      navigate(`/communities/${community.slug}/join`);
+    }
   };
 
   const handleCardClick = () => {
@@ -44,7 +43,7 @@ export function CommunityCard({
         className="relative flex h-24 w-full items-end justify-between p-4 text-white transition-all duration-300"
         style={{ background: gradientBg }}
       >
-        {community.verified && (
+        {community.verified ? (
           <Badge
             variant="secondary"
             className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
@@ -52,9 +51,7 @@ export function CommunityCard({
             <ShieldCheck className="size-3 text-emerald-400" />
             Verified Community
           </Badge>
-        )}
-
-        {!community.verified && (
+        ) : (
           <Badge
             variant="secondary"
             className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
@@ -67,15 +64,15 @@ export function CommunityCard({
         <Button
           type="button"
           size="xs"
-          variant={isJoined ? "secondary" : "default"}
+          variant={community.isJoined ? "secondary" : "default"}
           onClick={handleJoinClick}
           className={
-            isJoined
+            community.isJoined
               ? "bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs"
               : "bg-white text-neutral-900 hover:bg-white/90 font-bold text-xs shadow-xs"
           }
         >
-          {isJoined ? "Joined ✓" : "+ Join"}
+          {community.isJoined ? "Joined ✓" : "+ Join"}
         </Button>
       </div>
 

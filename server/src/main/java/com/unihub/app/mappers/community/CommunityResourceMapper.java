@@ -89,7 +89,7 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CommunityResponseDto toCommunityResponseDto(Community community) {
+    public CommunityResponseDto toCommunityResponseDto(Community community, boolean isJoined) {
         return CommunityResponseDto.builder()
                 .id(community.getId())
                 .name(community.getName())
@@ -101,6 +101,7 @@ public class CommunityResourceMapper {
                 .backgroundColor(community.getBackgroundColor())
                 .verified(community.isVerified())
                 .slug(community.getSlug())
+                .isJoined(isJoined)
                 .build();
     }
 
@@ -164,10 +165,28 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CommunityHomeResponseDto toCommunityHomeResponseDto(CommunityResponseDto community, List<StudyYearMetricsResponseDto> studyYears) {
+    public CommunityHomeResponseDto toCommunityHomeResponseDto(
+            CommunityResponseDto community,
+            List<StudyYearMetricsResponseDto> studyYears,
+            CallerMembershipDto callerMembership
+    ) {
         return CommunityHomeResponseDto.builder()
                 .community(community)
                 .studyYears(studyYears)
+                .callerMembership(callerMembership)
+                .build();
+    }
+
+    public CommunityJoinPreviewResponseDto toCommunityJoinPreviewResponseDto(Community community, boolean isMember) {
+        return CommunityJoinPreviewResponseDto.builder()
+                .communityId(community.getId())
+                .name(community.getName())
+                .slug(community.getSlug())
+                .description(community.getDescription())
+                .backgroundColor(community.getBackgroundColor())
+                .memberCount(community.getMemberCount())
+                .verified(community.isVerified())
+                .isMember(isMember)
                 .build();
     }
 }

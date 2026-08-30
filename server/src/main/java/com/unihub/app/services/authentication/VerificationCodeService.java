@@ -58,17 +58,17 @@ public class VerificationCodeService {
         PendingRegistration pending = pendingRegistrations.get(key,PendingRegistration.class);
 
         if (pending == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Verification code has expired or is invalid.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Verification code has expired or is invalid.");
         }
 
         if (pending.getAttempts() >= MAX_ATTEMPTS) {
             pendingRegistrations.evict(key);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Too many failed attempts. Please register again.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Too many failed attempts. Please register again.");
         }
 
         if (!pending.getCode().equals(code)) {
             pending.setAttempts(pending.getAttempts() + 1);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid verification code.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid verification code.");
         }
 
         pendingRegistrations.evict(key);
@@ -85,17 +85,17 @@ public class VerificationCodeService {
         PendingEmailVerification pending = pendingEmailVerifications.get(key, PendingEmailVerification.class);
 
         if (pending == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Verification code has expired or is invalid.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Verification code has expired or is invalid.");
         }
 
         if (pending.getAttempts() >= MAX_ATTEMPTS) {
             pendingEmailVerifications.evict(key);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Too many failed attempts. Please request a new verification code.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Too many failed attempts. Please request a new verification code.");
         }
 
         if (!pending.getCode().equals(code)) {
             pending.setAttempts(pending.getAttempts() + 1);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid verification code.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid verification code.");
         }
 
         pendingEmailVerifications.evict(key);

@@ -1,13 +1,10 @@
 package com.unihub.app.services.community.content;
 
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
-import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.CoursePost;
 import com.unihub.app.entities.community.content.Post;
@@ -16,7 +13,6 @@ import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
@@ -32,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,9 +36,7 @@ public class CoursePostService {
     private final CourseRepository courseRepository;
     private final PostRepository postRepository;
     private final CoursePostRepository coursePostRepository;
-    private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
-    private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
@@ -59,10 +52,6 @@ public class CoursePostService {
         Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearName(courseSlug, communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
 
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create post");
-        }
-
         User owner = userMapper.toEntity(caller);
         Post post = contentMapper.toPostEntity(dto, CommunicationChannel.COURSE, owner);
         Post savedPost = postRepository.save(post);
@@ -73,7 +62,7 @@ public class CoursePostService {
                 .build();
         coursePostRepository.save(coursePost);
 
-        return contentMapper.toPostResponseDto(savedPost, Collections.emptyList(), false);
+        return contentMapper.toPostResponseDto(savedPost, false);
     }
 
     @Transactional(readOnly = true)
@@ -97,12 +86,6 @@ public class CoursePostService {
                 .map(Post::getId)
                 .toList();
 
-        List<Comment> comments = commentRepository.findByPostIdInOrderByCreatedAtAsc(postIds);
-
-        Map<UUID, List<CommentResponseDto>> commentsByPostId = comments.stream()
-                .map(contentMapper::toCommentResponseDto)
-                .collect(Collectors.groupingBy(CommentResponseDto::postId));
-
         Set<UUID> likedPostIds = (caller != null)
                 ? postLikeRepository.findLikedPostIdsByUserIdAndPostIdIn(caller.id(), postIds)
                 : Collections.emptySet();
@@ -110,11 +93,7 @@ public class CoursePostService {
         List<PostResponseDto> postDtos = postsPage.getContent().stream()
                 .map(post -> {
                     Boolean isLiked = (caller != null) ? likedPostIds.contains(post.getId()) : null;
-                    return contentMapper.toPostResponseDto(
-                            post,
-                            commentsByPostId.getOrDefault(post.getId(), Collections.emptyList()),
-                            isLiked
-                    );
+                    return contentMapper.toPostResponseDto(post, isLiked);
                 })
                 .toList();
 

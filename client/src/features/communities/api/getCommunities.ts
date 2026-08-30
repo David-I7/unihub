@@ -17,10 +17,19 @@ import {
 export interface CommunitiesQueryParams {
   size?: number;
   sort?: string;
+  search?: string;
+  verified?: boolean;
+  joined?: boolean;
+}
+
+export interface CommunitiesPaginatedRequest extends PaginatedRequest {
+  search?: string;
+  verified?: boolean;
+  joined?: boolean;
 }
 
 export async function getCommunities(
-  request: PaginatedRequest,
+  request: CommunitiesPaginatedRequest,
 ): Promise<PaginatedResponse<Community>> {
   const response = await client.get<PaginatedResponse<Community>>(
     "/communities",
@@ -31,13 +40,13 @@ export async function getCommunities(
 
 export const communityKeys = {
   all: ["communities"] as const,
-  list: (params: PaginatedRequest) =>
+  list: (params: CommunitiesPaginatedRequest) =>
     [...communityKeys.all, "list", params] as const,
   infinite: (params: CommunitiesQueryParams) =>
     [...communityKeys.all, "infinite", params] as const,
 };
 
-export function useCommunities(params: PaginatedRequest) {
+export function useCommunities(params: CommunitiesPaginatedRequest) {
   return useQuery({
     queryKey: communityKeys.list(params),
     queryFn: () => getCommunities(params),
@@ -62,15 +71,18 @@ export function useInfiniteCommunities(
     | "getPreviousPageParam"
   >,
 ) {
-  const { size = 10, sort } = params;
+  const { size = 12, sort, search, verified, joined } = params;
 
   return useInfiniteQuery({
-    queryKey: communityKeys.infinite({ size, sort }),
+    queryKey: communityKeys.infinite({ size, sort, search, verified, joined }),
     queryFn: ({ pageParam }) =>
       getCommunities({
         page: pageParam,
         size,
         ...(sort ? { sort } : {}),
+        ...(search ? { search } : {}),
+        ...(verified !== undefined ? { verified } : {}),
+        ...(joined !== undefined ? { joined } : {}),
       }),
     initialPageParam: 0,
     getNextPageParam: getPaginatedNextPageParam,

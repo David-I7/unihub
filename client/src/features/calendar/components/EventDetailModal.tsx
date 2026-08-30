@@ -105,6 +105,7 @@ export function EventDetailModal() {
   const [customUnit, setCustomUnit] = useState<"minutes" | "hours" | "days" | "weeks">("hours");
   const [reminderError, setReminderError] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [currentTime] = useState(() => Date.now());
 
   const { mutate: deleteEventMutate, isPending: isDeleting } = useDeleteEvent();
   const { mutate: createReminderMutate, isPending: isCreatingReminder } =
@@ -118,8 +119,8 @@ export function EventDetailModal() {
     Boolean(val && (val.startsWith("http://") || val.startsWith("https://")));
 
   const startTimeMs = event?.startTime ? new Date(event.startTime).getTime() : 0;
-  const timeUntilStartMinutes = Math.floor((startTimeMs - Date.now()) / (1000 * 60));
-  const isConcluded = Boolean(startTimeMs && startTimeMs <= Date.now());
+  const timeUntilStartMinutes = Math.floor((startTimeMs - currentTime) / (1000 * 60));
+  const isConcluded = Boolean(startTimeMs && startTimeMs <= currentTime);
 
   // Existing reminder offsets
   const existingOffsets = new Set(event?.reminders?.map((r) => r.offsetMinutes) ?? []);

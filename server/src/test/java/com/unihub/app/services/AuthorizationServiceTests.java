@@ -3,6 +3,7 @@ package com.unihub.app.services;
 import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
@@ -129,8 +130,9 @@ public class AuthorizationServiceTests {
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
+        when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(List.of());
         when(communityMemberRepository.findMemberByCommunitySlug("fmi", userId)).thenReturn(Optional.of(member));
-        when(roleService.getRoleTypeById(roleId)).thenReturn(RoleType.COMMUNITY_ADMIN);
+        when(roleService.getRoleById(roleId)).thenReturn(Role.builder().id(roleId).name("COMMUNITY_ADMIN").build());
         when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_ADMIN)).thenReturn(List.of(PermissionType.CREATE_MEMBER.name()));
 
         assertTrue(authorizationService.hasCommunityPermission("fmi", userId, PermissionType.CREATE_MEMBER));

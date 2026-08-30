@@ -4,6 +4,7 @@ import OAuth2CallbackPage from "../pages/OAuth2CallbackPage";
 import HomePage from "../pages/HomePage";
 import CommunitiesPage from "../pages/CommunitiesPage";
 import CommunityDetailPage from "../pages/CommunityDetailPage";
+import CommunityJoinPage from "../pages/CommunityJoinPage";
 import StudyYearDetailPage from "../pages/StudyYearDetailPage";
 import CourseDetailPage from "../pages/CourseDetailPage";
 import CalendarPage from "../pages/CalendarPage";
@@ -14,17 +15,6 @@ import {
   NonAuthenticatedRoute,
   AuthenticatedRoute,
 } from "@/features/auth";
-import {
-  ProtoHomePage,
-  ProtoCommunitiesListPage,
-  ProtoCommunityPage,
-  ProtoStudyYearPage,
-  ProtoCoursePage,
-  ProtoCalendarPage,
-  ProtoTeachersPage,
-} from "@/features/prototypes";
-
-
 import ResetPasswordPage from "../pages/ResetPasswordPage";
 
 export const router = createBrowserRouter([
@@ -37,34 +27,6 @@ export const router = createBrowserRouter([
         element: <HomePage />,
       },
       {
-        path: "/proto",
-        element: <ProtoHomePage />,
-      },
-      {
-        path: "/proto/communities",
-        element: <ProtoCommunitiesListPage />,
-      },
-      {
-        path: "/proto/communities/:communityId",
-        element: <ProtoCommunityPage />,
-      },
-      {
-        path: "/proto/communities/:communityId/year/:yearId",
-        element: <ProtoStudyYearPage />,
-      },
-      {
-        path: "/proto/communities/:communityId/year/:yearId/course/:courseOfferingId",
-        element: <ProtoCoursePage />,
-      },
-      {
-        path: "/proto/teachers",
-        element: <ProtoTeachersPage />,
-      },
-      {
-        path: "/proto/calendar",
-        element: <ProtoCalendarPage />,
-      },
-      {
         path: "/calendar",
         element: (
           <AuthenticatedRoute>
@@ -74,8 +36,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "/communities",
-
         element: <CommunitiesPage />,
+      },
+      {
+        path: "/communities/:communitySlug/join",
+        element: <CommunityJoinPage />,
       },
       {
         path: "/communities/:communitySlug",

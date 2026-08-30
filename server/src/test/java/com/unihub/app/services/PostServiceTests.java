@@ -48,9 +48,6 @@ public class PostServiceTests {
     private CoursePostRepository coursePostRepository;
 
     @Mock
-    private CommentRepository commentRepository;
-
-    @Mock
     private PostLikeRepository postLikeRepository;
 
     @Mock
@@ -66,7 +63,7 @@ public class PostServiceTests {
     private PostService postService;
 
     @Test
-    @DisplayName("getPostById returns post response dto with comments and like status")
+    @DisplayName("getPostById returns post response dto with like status")
     public void testGetPostById_Success() {
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -86,7 +83,6 @@ public class PostServiceTests {
                 .build();
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(commentRepository.findByPostIdInOrderByCreatedAtAsc(List.of(postId))).thenReturn(Collections.emptyList());
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
         PostResponseDto result = postService.getPostById(postId, userDto);
@@ -245,7 +241,7 @@ public class PostServiceTests {
 
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
         when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.isCommunityMember("fmi-info", userId)).thenReturn(true);
+        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.LIKE_POST)).thenReturn(true);
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(false);
 
         postService.likePost(postId, caller);
@@ -262,6 +258,8 @@ public class PostServiceTests {
         UserDto caller = new UserDto(userId, "user@example.com", "user", true, RoleType.USER);
 
         when(postRepository.existsById(postId)).thenReturn(true);
+        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
+        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.LIKE_POST)).thenReturn(true);
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
         postService.unlikePost(postId, caller);

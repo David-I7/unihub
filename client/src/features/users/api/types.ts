@@ -15,14 +15,6 @@ export interface UserEnrolledCommunity {
   id: string;
   name: string;
   slug: string;
-  description: string;
-  memberCount: number;
   role: CommunityMemberRole;
-  permissions: string[];
   joinedAt: string;
-}
-
-export interface UserCommunitiesResponse {
-  communities: UserEnrolledCommunity[];
-  permissionsByRole: Record<CommunityMemberRole, string[]>;
 }

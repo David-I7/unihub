@@ -6,6 +6,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
@@ -23,6 +24,8 @@ import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -30,8 +33,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -49,23 +55,96 @@ public class CommunityService {
     private final StudyYearService studyYearService;
 
     @Transactional(readOnly = true)
-    public PageDto<CommunityResponseDto> findAll(Pageable pageable) {
-        return pageMapper.toPageDto(communityRepository.findAll(pageable)
-                .map(communityMapper::toCommunityResponseDto));
+    public PageDto<CommunityResponseDto> findAll(
+            UserDto caller,
+            String search,
+            Boolean verified,
+            Boolean joined,
+            Pageable pageable
+    ) {
+        String normalizedSearch = (search != null && !search.isBlank()) ? search.trim() : null;
+        UUID joinedUserId = null;
+
+        if (Boolean.TRUE.equals(joined)) {
+            if (caller == null) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required to filter by joined communities");
+            }
+            joinedUserId = caller.id();
+        }
+
+        Page<Community> page = communityRepository.findAllWithFilters(normalizedSearch, verified, joinedUserId, pageable);
+
+        if (page.isEmpty()) {
+            return pageMapper.toPageDto(page.map(c -> communityMapper.toCommunityResponseDto(c, false)));
+        }
+
+        Set<UUID> enrolledIds = Collections.emptySet();
+        if (caller != null) {
+            List<UUID> pageIds = page.getContent().stream().map(Community::getId).toList();
+            enrolledIds = new HashSet<>(communityMemberRepository.findEnrolledCommunityIdsByUserIdAndCommunityIdIn(caller.id(), pageIds));
+        }
+
+        final Set<UUID> finalEnrolledIds = enrolledIds;
+        List<CommunityResponseDto> dtos = page.getContent().stream()
+                .map(community -> communityMapper.toCommunityResponseDto(community, finalEnrolledIds.contains(community.getId())))
+                .toList();
+
+        Page<CommunityResponseDto> dtoPage = new PageImpl<>(dtos, pageable, page.getTotalElements());
+        return pageMapper.toPageDto(dtoPage);
     }
 
     @Transactional(readOnly = true)
-    public CommunityResponseDto findBySlug(String slug) {
+    public CommunityResponseDto findBySlug(String slug, UserDto caller) {
         Community community = communityRepository.findBySlugWithOwner(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-        return communityMapper.toCommunityResponseDto(community);
+        boolean isJoined = (caller != null) && communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), caller.id());
+        return communityMapper.toCommunityResponseDto(community, isJoined);
     }
 
     @Transactional(readOnly = true)
-    public CommunityHomeResponseDto getCommunityHome(String communitySlug) {
-        CommunityResponseDto community = findBySlug(communitySlug);
+    public CommunityHomeResponseDto getCommunityHome(String communitySlug, UserDto caller) {
+        CommunityResponseDto community = findBySlug(communitySlug, caller);
         List<StudyYearMetricsResponseDto> studyYears = studyYearService.getCommunityStudyYearMetrics(communitySlug);
-        return communityMapper.toCommunityHomeResponseDto(community, studyYears);
+
+        CallerMembershipDto callerMembership;
+        if (caller == null) {
+            callerMembership = CallerMembershipDto.builder()
+                    .isMember(false)
+                    .role(null)
+                    .permissions(Collections.emptyList())
+                    .build();
+        } else {
+            Optional<CommunityMember> memberOpt = communityMemberRepository.findMemberByCommunitySlug(communitySlug, caller.id());
+            if (memberOpt.isPresent()) {
+                CommunityMember member = memberOpt.get();
+                Role role = roleService.getRoleById(member.getRoleId());
+                RoleType roleType = RoleType.valueOf(role.getName());
+                List<String> permissions = roleService.getPermissionNamesByRoleType(roleType);
+
+                callerMembership = CallerMembershipDto.builder()
+                        .isMember(true)
+                        .role(role.getName())
+                        .permissions(permissions)
+                        .build();
+            } else {
+                if (caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN) {
+                    List<String> adminPermissions = roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_OWNER);
+                    callerMembership = CallerMembershipDto.builder()
+                            .isMember(false)
+                            .role(caller.role().name())
+                            .permissions(adminPermissions)
+                            .build();
+                } else {
+                    callerMembership = CallerMembershipDto.builder()
+                            .isMember(false)
+                            .role(null)
+                            .permissions(Collections.emptyList())
+                            .build();
+                }
+            }
+        }
+
+        return communityMapper.toCommunityHomeResponseDto(community, studyYears, callerMembership);
     }
 
     @Transactional(readOnly = true)
@@ -103,7 +182,7 @@ public class CommunityService {
 
         communityMemberRepository.save(member);
 
-        return communityMapper.toCommunityResponseDto(savedCommunity);
+        return communityMapper.toCommunityResponseDto(savedCommunity, true);
     }
 
     @Transactional
@@ -184,7 +263,7 @@ public class CommunityService {
         }
 
         Community saved = communityRepository.save(community);
-        return communityMapper.toCommunityResponseDto(saved);
+        return communityMapper.toCommunityResponseDto(saved, true);
     }
 
     @Transactional

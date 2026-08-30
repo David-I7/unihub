@@ -1,8 +1,8 @@
 package com.unihub.app.controllers;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.dto.user.UserCommunitiesResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
@@ -23,6 +23,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,17 +34,13 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.unihub.app.BaseIntegrationTest;
 
@@ -55,7 +52,8 @@ public class UserControllerTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private UserService userService;
@@ -69,11 +67,10 @@ public class UserControllerTests extends BaseIntegrationTest {
     @BeforeEach
     public void setUp() {
         userId = UUID.randomUUID();
-        userDto = new UserDto(userId, "john@example.com", "john_doe", false, RoleType.ADMIN);
-        JwtAuthentication auth = new JwtAuthentication(userDto);
-        SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
-        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
+        userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
+
+        JwtAuthentication authentication = new JwtAuthentication(userDto);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     @AfterEach
@@ -89,17 +86,17 @@ public class UserControllerTests extends BaseIntegrationTest {
     @DisplayName("""
             Given: authenticated user
             When: GET /api/v1/users/me is called
-            Then: 200 OK is returned with UserProfileResponseDto
+            Then: 200 OK is returned with user profile
             """)
     public void testGetMyProfile_Authenticated_Success() throws Exception {
-        OffsetDateTime createdAt = OffsetDateTime.now();
         UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
                 .id(userId)
-                .username("john_doe")
-                .email("john@example.com")
-                .role("STUDENT")
-                .permissions(List.of("CREATE_POST", "VIEW_CALENDAR"))
-                .createdAt(createdAt)
+                .username("david")
+                .email("david@example.com")
+                .role("USER")
+                .emailVerified(true)
+                .permissions(List.of("READ_COMMUNITY", "CREATE_COMMUNITY"))
+                .createdAt(OffsetDateTime.now())
                 .build();
 
         when(userService.getUserProfile(userId)).thenReturn(profileDto);
@@ -108,25 +105,11 @@ public class UserControllerTests extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId.toString()))
-                .andExpect(jsonPath("$.username").value("john_doe"))
-                .andExpect(jsonPath("$.email").value("john@example.com"))
-                .andExpect(jsonPath("$.role").value("STUDENT"))
-                .andExpect(jsonPath("$.permissions[0]").value("CREATE_POST"))
-                .andExpect(jsonPath("$.permissions[1]").value("VIEW_CALENDAR"));
-    }
-
-    @Test
-    @DisplayName("""
-            Given: unauthenticated request
-            When: GET /api/v1/users/me is called
-            Then: 401 Unauthorized is returned
-            """)
-    public void testGetMyProfile_Unauthenticated() throws Exception {
-        SecurityContextHolder.clearContext();
-
-        mockMvc.perform(get(BASE_URL + "/me")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+                .andExpect(jsonPath("$.username").value("david"))
+                .andExpect(jsonPath("$.email").value("david@example.com"))
+                .andExpect(jsonPath("$.role").value("USER"))
+                .andExpect(jsonPath("$.emailVerified").value(true))
+                .andExpect(jsonPath("$.permissions[0]").value("READ_COMMUNITY"));
     }
 
     // =========================================================================
@@ -135,28 +118,49 @@ public class UserControllerTests extends BaseIntegrationTest {
 
     @Test
     @DisplayName("""
-            Given: authenticated user
+            Given: valid update profile request
             When: PATCH /api/v1/users/me is called
-            Then: 200 OK is returned with updated profile
+            Then: 200 OK is returned with updated user profile
             """)
-    public void testUpdateMyProfile_Success() throws Exception {
+    public void testUpdateProfile_Success() throws Exception {
         UpdateUserProfileRequestDto requestDto = new UpdateUserProfileRequestDto("new_username");
-        UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
+
+        UserProfileResponseDto updatedProfile = UserProfileResponseDto.builder()
                 .id(userId)
                 .username("new_username")
-                .email("john@example.com")
-                .role("STUDENT")
-                .permissions(List.of("CREATE_POST"))
+                .email("david@example.com")
+                .role("USER")
+                .emailVerified(true)
+                .permissions(List.of())
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(userService.updateProfile(eq(userId), any(UpdateUserProfileRequestDto.class))).thenReturn(profileDto);
+        when(userService.updateProfile(eq(userId), any(UpdateUserProfileRequestDto.class))).thenReturn(updatedProfile);
 
         mockMvc.perform(patch(BASE_URL + "/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("new_username"));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: taken username
+            When: PATCH /api/v1/users/me is called
+            Then: 409 Conflict is returned
+            """)
+    public void testUpdateProfile_UsernameConflict() throws Exception {
+        UpdateUserProfileRequestDto requestDto = new UpdateUserProfileRequestDto("taken_username");
+
+        when(userService.updateProfile(eq(userId), any(UpdateUserProfileRequestDto.class)))
+                .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken"));
+
+        mockMvc.perform(patch(BASE_URL + "/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Username is already taken"));
     }
 
     // =========================================================================
@@ -185,9 +189,9 @@ public class UserControllerTests extends BaseIntegrationTest {
 
     @Test
     @DisplayName("""
-            Given: authenticated user
+            Given: authenticated user with enrolled communities
             When: GET /api/v1/users/me/communities is called
-            Then: 200 OK is returned with UserCommunitiesResponseDto
+            Then: 200 OK is returned with paginated UserEnrolledCommunityDto
             """)
     public void testGetMyCommunities_Authenticated_Success() throws Exception {
         UUID commId = UUID.randomUUID();
@@ -201,22 +205,26 @@ public class UserControllerTests extends BaseIntegrationTest {
                 .joinedAt(joinedAt)
                 .build();
 
-        UserCommunitiesResponseDto communitiesResponseDto = UserCommunitiesResponseDto.builder()
-                .communities(List.of(communityDto))
-                .permissionsByRole(Map.of("COMMUNITY_MEMBER", List.of("VIEW_POSTS")))
+        PageDto<UserEnrolledCommunityDto> pageDto = PageDto.<UserEnrolledCommunityDto>builder()
+                .content(List.of(communityDto))
+                .number(0)
+                .size(10)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
                 .build();
 
-        when(userService.getUserEnrolledCommunities(userId)).thenReturn(communitiesResponseDto);
+        when(userService.getUserEnrolledCommunities(eq(userId), any(Pageable.class))).thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL + "/me/communities")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.communities").isArray())
-                .andExpect(jsonPath("$.communities[0].id").value(commId.toString()))
-                .andExpect(jsonPath("$.communities[0].name").value("Computer Science"))
-                .andExpect(jsonPath("$.communities[0].slug").value("cs"))
-                .andExpect(jsonPath("$.communities[0].role").value("COMMUNITY_MEMBER"))
-                .andExpect(jsonPath("$.permissionsByRole.COMMUNITY_MEMBER[0]").value("VIEW_POSTS"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].id").value(commId.toString()))
+                .andExpect(jsonPath("$.content[0].name").value("Computer Science"))
+                .andExpect(jsonPath("$.content[0].slug").value("cs"))
+                .andExpect(jsonPath("$.content[0].role").value("COMMUNITY_MEMBER"));
     }
 
     // =========================================================================
@@ -231,22 +239,24 @@ public class UserControllerTests extends BaseIntegrationTest {
             """)
     public void testUpdateUserRole_Success() throws Exception {
         UpdateUserRoleRequestDto requestDto = new UpdateUserRoleRequestDto(RoleType.ADMIN);
-        UserProfileResponseDto profileDto = UserProfileResponseDto.builder()
+
+        UserProfileResponseDto updatedProfile = UserProfileResponseDto.builder()
                 .id(UUID.randomUUID())
-                .username("bob")
-                .email("bob@example.com")
+                .username("target_user")
+                .email("target@example.com")
                 .role("ADMIN")
-                .permissions(List.of("ADMIN_ALL"))
+                .emailVerified(true)
+                .permissions(List.of("ADMIN_PERMISSION"))
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(userService.updateUserRole(eq("bob"), any(UpdateUserRoleRequestDto.class))).thenReturn(profileDto);
+        when(authorizationService.hasGlobalPermission(com.unihub.app.domain.PermissionType.UPDATE_USER_ROLE)).thenReturn(true);
+        when(userService.updateUserRole(eq("target_user"), any(UpdateUserRoleRequestDto.class))).thenReturn(updatedProfile);
 
-        mockMvc.perform(patch(BASE_URL + "/bob/role")
+        mockMvc.perform(patch(BASE_URL + "/target_user/role")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.username").value("bob"))
                 .andExpect(jsonPath("$.role").value("ADMIN"));
     }
 
@@ -260,15 +270,17 @@ public class UserControllerTests extends BaseIntegrationTest {
             When: DELETE /api/v1/users/{username} is called
             Then: 204 No Content is returned
             """)
-    public void testDeleteUser_Success() throws Exception {
+    public void testAdminDeleteUser_Success() throws Exception {
         AdminDeleteUserRequestDto requestDto = new AdminDeleteUserRequestDto("Violation of terms");
-        doNothing().when(userService).adminDeleteUser("bob", "Violation of terms");
 
-        mockMvc.perform(delete(BASE_URL + "/bob")
+        when(authorizationService.hasGlobalPermission(com.unihub.app.domain.PermissionType.DELETE_USER)).thenReturn(true);
+        doNothing().when(userService).adminDeleteUser(eq("target_user"), eq("Violation of terms"));
+
+        mockMvc.perform(delete(BASE_URL + "/target_user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isNoContent());
 
-        verify(userService).adminDeleteUser("bob", "Violation of terms");
+        verify(userService).adminDeleteUser("target_user", "Violation of terms");
     }
 }

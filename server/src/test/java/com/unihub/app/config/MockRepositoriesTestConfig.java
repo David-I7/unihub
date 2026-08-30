@@ -54,18 +54,8 @@ public class MockRepositoriesTestConfig {
     }
 
     @Bean
-    public CommunityCommentRepository communityCommentRepository() {
-        return Mockito.mock(CommunityCommentRepository.class);
-    }
-
-    @Bean
     public CommunityPostRepository communityPostRepository() {
         return Mockito.mock(CommunityPostRepository.class);
-    }
-
-    @Bean
-    public CourseCommentRepository courseCommentRepository() {
-        return Mockito.mock(CourseCommentRepository.class);
     }
 
     @Bean

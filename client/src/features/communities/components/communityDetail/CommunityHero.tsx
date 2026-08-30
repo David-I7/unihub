@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, ShieldAlert } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Settings, Check } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,23 +7,28 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { computeThemeGradient } from "@/lib/gradientUtils";
 import { useThemeStore } from "@/store/useThemeStore";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
-import type { Community } from "../../api/types";
+import { usePermissions } from "@/hooks/usePermissions";
+import { CommunitySettingsModal } from "../CommunitySettingsModal";
+import { JoinCommunityModal } from "../JoinCommunityModal";
+import type { CallerMembership, Community } from "../../api/types";
 import type { StudyYearMetrics } from "@/features/studyYears";
 
 interface CommunityHeroProps {
   community: Community;
   studyYears?: StudyYearMetrics[];
-  isInitiallyJoined?: boolean;
-  onJoinToggle?: (communityId: string, isJoined: boolean) => void;
+  callerMembership?: CallerMembership | null;
 }
 
 export function CommunityHero({
   community,
   studyYears = [],
-  isInitiallyJoined = false,
-  onJoinToggle,
+  callerMembership,
 }: CommunityHeroProps) {
-  const [isJoined, setIsJoined] = useState(isInitiallyJoined);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const { isMember, canEditCommunity, canManageJoinCodes } =
+    usePermissions(callerMembership);
+
   const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
   const isDark = resolvedTheme === "dark";
 
@@ -33,11 +38,7 @@ export function CommunityHero({
     180,
   );
 
-  const handleJoinClick = () => {
-    const nextState = !isJoined;
-    setIsJoined(nextState);
-    onJoinToggle?.(community.id, nextState);
-  };
+  const canManageCommunity = canEditCommunity || canManageJoinCodes;
 
   const totalCourses = studyYears.reduce(
     (acc: number, year: StudyYearMetrics) =>
@@ -63,7 +64,7 @@ export function CommunityHero({
       <div className="absolute inset-x-0 bottom-0 h-14 sm:h-20 bg-gradient-to-b from-transparent via-background/30 to-background pointer-events-none" />
 
       <div className="relative z-10 max-w-7xl mx-auto space-y-6">
-        {/* Top utility bar: Breadcrumb on left, Verified status & Action on right */}
+        {/* Top utility bar: Breadcrumb on left, Verified status & Actions on right */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <AppBreadcrumb className="text-white/90 [&_a]:text-white/90 [&_a:hover]:text-white [&_[data-slot=breadcrumb-page]]:text-white [&_[data-slot=breadcrumb-separator]]:text-white/60 text-xs font-medium drop-shadow-xs" />
 
@@ -86,18 +87,35 @@ export function CommunityHero({
               </Badge>
             )}
 
-            <Button
-              size="sm"
-              variant={isJoined ? "secondary" : "default"}
-              onClick={handleJoinClick}
-              className={
-                isJoined
-                  ? "bg-emerald-600 text-white hover:bg-emerald-700 font-bold shadow-xs transition-colors cursor-pointer"
-                  : "bg-white text-neutral-900 hover:bg-white/90 font-bold shadow-xs transition-colors cursor-pointer"
-              }
-            >
-              {isJoined ? "Joined ✓" : "+ Join Community"}
-            </Button>
+            {isMember ? (
+              <Badge
+                variant="secondary"
+                className="bg-emerald-600/90 text-white border border-emerald-400/30 backdrop-blur-md font-bold gap-1.5 py-1 px-3 text-xs shadow-xs"
+              >
+                <Check className="size-3.5 stroke-[3]" />
+                Joined Member
+              </Badge>
+            ) : (
+              <Button
+                size="sm"
+                onClick={() => setJoinModalOpen(true)}
+                className="bg-white text-neutral-900 hover:bg-white/90 font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                + Join Community
+              </Button>
+            )}
+
+            {canManageCommunity && (
+              <Button
+                size="icon-sm"
+                variant="secondary"
+                onClick={() => setSettingsOpen(true)}
+                className="bg-black/30 text-white hover:bg-black/50 border border-white/20 backdrop-blur-md shadow-xs cursor-pointer"
+                title="Community Settings"
+              >
+                <Settings className="size-4" />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -171,6 +189,17 @@ export function CommunityHero({
           </div>
         </div>
       </div>
+
+      <CommunitySettingsModal
+        community={community}
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+      />
+
+      <JoinCommunityModal
+        open={joinModalOpen}
+        onOpenChange={setJoinModalOpen}
+      />
     </div>
   );
 }

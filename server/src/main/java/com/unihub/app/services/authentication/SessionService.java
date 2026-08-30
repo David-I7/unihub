@@ -248,7 +248,7 @@ public class SessionService {
     }
 
     private Session getSession(String refreshToken){
-        return sessionRepository.findByRefreshToken(refreshToken).orElse(null);
+        return sessionRepository.findByRefreshTokenWithUser(refreshToken).orElse(null);
     }
 
     private SessionAndSessionStatus _validateRefreshTokenSession(HttpServletRequest request, HttpServletResponse response){

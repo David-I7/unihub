@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { isAxiosError } from "axios";
 import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
 import {
   Dialog,
@@ -18,6 +17,7 @@ import { useConfirmRegister } from "../api/confirmRegister";
 import useCountdownTimer from "@/hooks/useCountdownTimer";
 import useAuthStore from "../store/useAuthStore";
 import queryClient from "@/lib/queryClient";
+import { getErrorMessage } from "@/api/types";
 
 export interface VerifyEmailModalProps {
   open: boolean;
@@ -52,9 +52,14 @@ export function VerifyEmailModal({
     resetTimer,
   } = useCountdownTimer({ defaultSeconds: 60 });
 
-  const { mutateAsync: sendVerifyCode, isPending: isSendingCode } = useVerifyEmail();
-  const { mutateAsync: confirmEmailMutation, isPending: isConfirmingEmail } = useConfirmEmail();
-  const { mutateAsync: confirmRegisterMutation, isPending: isConfirmingRegister } = useConfirmRegister();
+  const { mutateAsync: sendVerifyCode, isPending: isSendingCode } =
+    useVerifyEmail();
+  const { mutateAsync: confirmEmailMutation, isPending: isConfirmingEmail } =
+    useConfirmEmail();
+  const {
+    mutateAsync: confirmRegisterMutation,
+    isPending: isConfirmingRegister,
+  } = useConfirmRegister();
 
   const isSubmitting = isConfirmingEmail || isConfirmingRegister;
 
@@ -78,15 +83,7 @@ export function VerifyEmailModal({
       await sendVerifyCode({ email });
       startTimer(60);
     } catch (err) {
-      if (isAxiosError(err)) {
-        setError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            "Failed to send verification code.",
-        );
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
+      getErrorMessage(err, "Failed to send verification code.");
     }
   }, [email, sendVerifyCode, startTimer]);
 
@@ -94,26 +91,13 @@ export function VerifyEmailModal({
     if (!open) return;
 
     if (autoSend && email) {
-      void sendVerifyCode({ email })
+      sendVerifyCode({ email })
         .then(() => {
           startTimer(60);
         })
         .catch((err) => {
-          if (isAxiosError(err)) {
-            setError(
-              err.response?.data?.message ||
-                err.response?.data?.detail ||
-                "Failed to send verification code.",
-            );
-          } else {
-            setError("An unexpected error occurred. Please try again.");
-          }
+          setError(getErrorMessage(err, "Failed to send verification code."));
         });
-    } else {
-      const timer = window.setTimeout(() => {
-        startTimer(60);
-      }, 0);
-      return () => window.clearTimeout(timer);
     }
   }, [open, autoSend, email, sendVerifyCode, startTimer]);
 
@@ -137,17 +121,7 @@ export function VerifyEmailModal({
         onSuccess?.();
       }
     } catch (err) {
-      if (isAxiosError(err)) {
-        setError(
-          err.response?.data?.message ||
-            err.response?.data?.detail ||
-            (mode === "register"
-              ? "Verification failed. Invalid or expired code."
-              : "Invalid or expired verification code."),
-        );
-      } else {
-        setError("An unexpected error occurred. Please try again.");
-      }
+      setError(getErrorMessage(err, "Invalid verification code."));
     }
   };
 
@@ -177,14 +151,14 @@ export function VerifyEmailModal({
             ) : isRegister ? (
               <>
                 We sent a 6-digit verification code to{" "}
-                <span className="font-semibold text-foreground">{email}</span>. Enter
-                the code below to complete your registration.
+                <span className="font-semibold text-foreground">{email}</span>.
+                Enter the code below to complete your registration.
               </>
             ) : (
               <>
                 Enter the 6-digit verification code sent to{" "}
-                <span className="font-semibold text-foreground">{email}</span> to verify your
-                account.
+                <span className="font-semibold text-foreground">{email}</span>{" "}
+                to verify your account.
               </>
             )}
           </DialogDescription>

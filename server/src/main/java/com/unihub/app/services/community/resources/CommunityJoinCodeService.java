@@ -4,12 +4,14 @@ import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityJoinPreviewResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
+import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -32,8 +34,27 @@ public class CommunityJoinCodeService {
 
     private final CommunityJoinCodeRepository joinCodeRepository;
     private final CommunityRepository communityRepository;
+    private final CommunityMemberRepository communityMemberRepository;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
+
+    @Transactional
+    public CommunityJoinPreviewResponseDto getJoinCodePreview(String communitySlug, String code, UserDto caller) {
+        CommunityJoinCode joinCode = joinCodeRepository.findByCodeWithCommunity(code)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code not found"));
+
+        if (!joinCode.getCommunity().getSlug().equalsIgnoreCase(communitySlug)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code does not belong to this community");
+        }
+
+        if (joinCode.isExpired() || joinCode.isUsageLimitReached()) {
+            joinCodeRepository.delete(joinCode);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code has expired or reached usage limit");
+        }
+
+        boolean isMember = (caller != null) && communityMemberRepository.existsByCommunityIdAndUserId(joinCode.getCommunity().getId(), caller.id());
+        return communityMapper.toCommunityJoinPreviewResponseDto(joinCode.getCommunity(), isMember);
+    }
 
     @Transactional
     public CommunityJoinCodeResponseDto createJoinCode(String communitySlug, UserDto caller, CreateJoinCodeRequestDto dto) {

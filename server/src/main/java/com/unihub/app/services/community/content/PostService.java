@@ -5,16 +5,13 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
-import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.community.content.PostLike;
 import com.unihub.app.entities.community.content.PostLikeId;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.CommunityPostRepository;
 import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
@@ -26,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -36,7 +32,6 @@ public class PostService {
     private final PostRepository postRepository;
     private final CommunityPostRepository communityPostRepository;
     private final CoursePostRepository coursePostRepository;
-    private final CommentRepository commentRepository;
     private final PostLikeRepository postLikeRepository;
     private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
@@ -53,14 +48,8 @@ public class PostService {
         Post post = postRepository.findByIdWithOwner(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        List<Comment> comments = commentRepository.findByPostIdInOrderByCreatedAtAsc(List.of(postId));
-        List<CommentResponseDto> commentDtos = comments.stream()
-                .map(contentMapper::toCommentResponseDto)
-                .toList();
-
         Boolean isLiked = caller != null ? postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id()) : null;
-
-        return contentMapper.toPostResponseDto(post, commentDtos, isLiked);
+        return contentMapper.toPostResponseDto(post, isLiked);
     }
 
     @Transactional
@@ -136,10 +125,8 @@ public class PostService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         String communitySlug = getCommunitySlugForPost(postId);
-        boolean isMember = authorizationService.isCommunityMember(communitySlug, caller.id());
-        RoleType globalRole = authorizationService.getGlobalRole();
-        if (!isMember && globalRole != RoleType.ROOT && globalRole != RoleType.ADMIN) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only community members can like posts");
+        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.LIKE_POST)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to like the post");
         }
 
         if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {
@@ -161,6 +148,11 @@ public class PostService {
     public void unlikePost(UUID postId, UserDto caller) {
         if (!postRepository.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+
+        String communitySlug = getCommunitySlugForPost(postId);
+        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.LIKE_POST)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to like the post");
         }
 
         if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {

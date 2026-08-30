@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AUTH_CHANNEL_NAME, usePopup } from "@/hooks/usePopup";
 import { GITHUB_LOGIN_URL, GOOGLE_LOGIN_URL } from "../api/login";
-import type { OAuth2Response } from "../types";
+import type { OAuth2Response } from "../api/types";
 import type { AuthProvider } from "@/types/domain";
 
 export interface OAuthButtonProps {

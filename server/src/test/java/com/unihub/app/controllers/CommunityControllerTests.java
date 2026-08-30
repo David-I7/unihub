@@ -131,7 +131,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(communityService.findAll(any(Pageable.class))).thenReturn(pageDto);
+        when(communityService.findAll(any(), any(), any(), any(), any(Pageable.class))).thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -252,7 +252,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .owner(new OwnerDto(ownerId, "david",true))
                 .build();
 
-        when(communityService.findBySlug("fmi-info-id")).thenReturn(responseDto);
+        when(communityService.findBySlug(eq("fmi-info-id"), any())).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -271,7 +271,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
             Then: 404 Not Found is returned
             """)
     public void testGetCommunityBySlug_NotFound() throws Exception {
-        when(communityService.findBySlug("unknown-slug"))
+        when(communityService.findBySlug(eq("unknown-slug"), any()))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         mockMvc.perform(get(BASE_URL + "/unknown-slug")
@@ -408,7 +408,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .studyYears(studyYears)
                 .build();
 
-        when(communityService.getCommunityHome("fmi-info-id")).thenReturn(response);
+        when(communityService.getCommunityHome(eq("fmi-info-id"), any())).thenReturn(response);
 
         mockMvc.perform(get(BASE_URL + "/fmi-info-id/home")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -461,7 +461,6 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .createdAt(postCreatedAt)
                 .updatedAt(postUpdatedAt)
                 .owner(new OwnerDto(postOwnerId, "david", true))
-                .comments(List.of(commentDto))
                 .build();
 
         PageDto<PostResponseDto> pageDto = PageDto.<PostResponseDto>builder()
@@ -483,8 +482,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].id").value(postId.toString()))
                 .andExpect(jsonPath("$.content[0].title").value("Welcome to FMI"))
-                .andExpect(jsonPath("$.content[0].channel").value("COMMUNITY"))
-                .andExpect(jsonPath("$.content[0].comments[0].content").value("First comment"));
+                .andExpect(jsonPath("$.content[0].channel").value("COMMUNITY"));
     }
 
     @Test

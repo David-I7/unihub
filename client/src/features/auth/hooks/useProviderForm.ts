@@ -1,7 +1,7 @@
 import type { AuthProvider } from "@/types/domain";
 import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
-import type { OAuth2Response } from "../types";
+import { useNavigate, useSearchParams } from "react-router";
+import type { OAuth2Response } from "../api/types";
 import { useRefresh } from "../api/refresh";
 
 type ProviderError = {
@@ -11,25 +11,11 @@ type ProviderError = {
 
 export default function useProviderForm() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const refreshMutation = useRefresh();
   const [error, setError] = useState<ProviderError | null>(null);
   const [activeProvider, setActiveProvider] = useState<AuthProvider | null>(
     null,
-  );
-
-  const handleSuccess = useCallback(
-    async (message: OAuth2Response) => {
-      try {
-        await refreshMutation.mutateAsync();
-        navigate("/");
-      } catch (error) {
-        handleFailure({
-          provider: message.provider,
-          type: "OAUTH_FAILURE",
-        });
-      }
-    },
-    [navigate],
   );
 
   const handleFailure = useCallback((message: OAuth2Response) => {
@@ -41,6 +27,22 @@ export default function useProviderForm() {
         ". Please try again.",
     });
   }, []);
+
+  const handleSuccess = useCallback(
+    async (message: OAuth2Response) => {
+      try {
+        await refreshMutation.mutateAsync();
+        const redirectTarget = searchParams.get("redirect") ?? "/";
+        navigate(redirectTarget);
+      } catch {
+        handleFailure({
+          provider: message.provider,
+          type: "OAUTH_FAILURE",
+        });
+      }
+    },
+    [navigate, refreshMutation, handleFailure, searchParams],
+  );
 
   const handleOpen = useCallback((provider: AuthProvider) => {
     setActiveProvider(provider);

@@ -43,6 +43,7 @@ public enum PermissionType {
     CREATE_POST(Permissions.CREATE_POST),
     UPDATE_POST(Permissions.UPDATE_POST),
     DELETE_POST(Permissions.DELETE_POST),
+    LIKE_POST(Permissions.LIKE_POST),
     MODERATE_POST(Permissions.MODERATE_POST),
     PIN_POST(Permissions.PIN_POST),
     CREATE_COMMENT(Permissions.CREATE_COMMENT),

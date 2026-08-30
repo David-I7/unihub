@@ -45,7 +45,7 @@ public class SecurityConfig {
             .csrf(config->config.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterAfter(jwtSessionManagementFilter, OAuth2LoginAuthenticationFilter.class)
+            .addFilterBefore(jwtSessionManagementFilter, OAuth2LoginAuthenticationFilter.class)
             .authorizeHttpRequests((authorize) ->
                 authorize
                     .requestMatchers("/api/v1/auth/**").permitAll()

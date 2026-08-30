@@ -18,7 +18,11 @@ import { verifyEmail, useVerifyEmail } from "./api/verifyEmail";
 import { confirmEmail, useConfirmEmail } from "./api/confirmEmail";
 import { forgotPassword, useForgotPassword } from "./api/forgotPassword";
 import { resetPassword, useResetPassword } from "./api/resetPassword";
-import type { RefreshResponse, SessionResponse, MessageResponse } from "./types";
+import type {
+  RefreshResponse,
+  SessionResponse,
+  MessageResponse,
+} from "./api/types";
 import type { ForgotPasswordModalProps } from "@/features/auth/components/ForgotPasswordModal";
 import type { VerifyEmailModalProps } from "@/features/auth/components/VerifyEmailModal";
 

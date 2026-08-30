@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public interface SessionRepository extends JpaRepository<Session, UUID> {
 
-    @Query("SELECT s from Session s WHERE s.refreshToken = :refreshToken")
-    Optional<Session> findByRefreshToken(String refreshToken);
+    @Query("SELECT s from Session s JOIN FETCH s.user WHERE s.refreshToken = :refreshToken")
+    Optional<Session> findByRefreshTokenWithUser(String refreshToken);
 
     @Modifying
     @Query("""

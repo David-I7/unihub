@@ -17,6 +17,9 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
     @Query("SELECT cm.community.id FROM CommunityMember cm WHERE cm.user.id = :userId")
     List<UUID> findCommunityIdsByUserId(@Param("userId") UUID userId);
 
+    @Query("SELECT cm.community.id FROM CommunityMember cm WHERE cm.user.id = :userId AND cm.community.id IN :communityIds")
+    List<UUID> findEnrolledCommunityIdsByUserIdAndCommunityIdIn(@Param("userId") UUID userId, @Param("communityIds") List<UUID> communityIds);
+
     @Query("SELECT COUNT(cm) > 0 FROM CommunityMember cm WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     boolean isMemberOfCommunity(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
@@ -29,6 +32,16 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
         WHERE cm.user.id = :userId
     """)
     List<CommunityMember> findMembershipsByUserIdWithCommunity(@Param("userId") UUID userId);
+
+    @Query(value = """
+        SELECT cm FROM CommunityMember cm
+        JOIN FETCH cm.community c
+        WHERE cm.user.id = :userId
+    """, countQuery = """
+        SELECT COUNT(cm) FROM CommunityMember cm
+        WHERE cm.user.id = :userId
+    """)
+    Page<CommunityMember> findMembershipsByUserIdWithCommunity(@Param("userId") UUID userId, Pageable pageable);
 
     @Query(value = """
         SELECT cm FROM CommunityMember cm

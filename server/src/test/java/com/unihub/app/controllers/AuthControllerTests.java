@@ -3,7 +3,6 @@ package com.unihub.app.controllers;
 
 import com.unihub.app.config.SessionProperties;
 import com.unihub.app.dto.authentication.EmailRequestDto;
-import com.unihub.app.dto.authentication.JwtTokenRequestDto;
 import com.unihub.app.dto.authentication.LocalRegisterRequestDto;
 import com.unihub.app.dto.authentication.LocalUsernameOrEmailLoginRequestDto;
 import com.unihub.app.entities.authentication.Session;
@@ -193,7 +192,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
             """)
     public void testForgotPassword_Success() throws Exception {
         when(userRepository.findByEmail("test@gmail.com")).thenReturn(Optional.of(
-                User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").build()
+                User.builder().id(UUID.randomUUID()).email("test@gmail.com").username("testuser").emailVerified(true).build()
         ));
 
         var request = new EmailRequestDto("test@gmail.com");
@@ -369,7 +368,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(activeSession));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(activeSession));
 
         var request = new LocalRegisterRequestDto("test@gmail.com", "testuser", "12345678");
 
@@ -510,6 +509,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .username("testuser")
                 .email("test@gmail.com")
                 .password(encodedPassword)
+                .emailVerified(true)
                 .build();
 
         when(userRepository.findByUsernameOrEmail("testuser", null)).thenReturn(List.of(existingUser));
@@ -519,7 +519,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/login/local")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.detail").value("Incorrect password"));
     }
 
@@ -558,7 +558,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(activeSession));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(activeSession));
 
         var request = new LocalUsernameOrEmailLoginRequestDto("active@gmail.com", null, "password123");
 
@@ -595,7 +595,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(5))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
 
         mockMvc.perform(post(BASE_URL + "/logout")
                         .cookie(new Cookie("refreshToken", token)))
@@ -626,7 +626,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(5))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
 
         mockMvc.perform(post(BASE_URL + "/logout")
                         .cookie(new Cookie("refreshToken", token)))
@@ -658,7 +658,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         UUID userId = UUID.randomUUID();
         String token = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.empty());
 
         mockMvc.perform(post(BASE_URL + "/logout")
                         .cookie(new Cookie("refreshToken", token)))
@@ -688,7 +688,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(revokedSession));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(revokedSession));
 
         mockMvc.perform(post(BASE_URL + "/logout")
                         .cookie(new Cookie("refreshToken", token)))
@@ -753,7 +753,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(5))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -783,7 +783,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusHours(12))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
         when(sessionRepository.save(any(Session.class))).thenAnswer(i -> {
             Session s = i.getArgument(0);
             if (s.getId() == null) s.setId(UUID.randomUUID());
@@ -823,7 +823,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         UUID userId = UUID.randomUUID();
         String token = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.empty());
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -853,7 +853,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshToken(token)).thenReturn(Optional.of(revokedSession));
+        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(revokedSession));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))

@@ -65,10 +65,12 @@ public class CommunityMemberService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid join code"));
 
         if (joinCode.isExpired()) {
+            joinCodeRepository.delete(joinCode);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join code has expired");
         }
 
         if (joinCode.isUsageLimitReached()) {
+            joinCodeRepository.delete(joinCode);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Join code usage limit reached");
         }
 

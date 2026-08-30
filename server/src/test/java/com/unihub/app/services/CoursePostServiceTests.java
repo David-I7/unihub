@@ -15,7 +15,6 @@ import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
@@ -34,7 +33,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,9 +55,6 @@ public class CoursePostServiceTests {
 
     @Mock
     private CoursePostRepository coursePostRepository;
-
-    @Mock
-    private CommentRepository commentRepository;
 
     @Mock
     private PostLikeRepository postLikeRepository;
@@ -89,8 +84,6 @@ public class CoursePostServiceTests {
 
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearName("asc", "fmi-info", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.CREATE_POST))
-                .thenReturn(true);
         when(postRepository.save(any(Post.class))).thenAnswer(i -> {
             Post p = i.getArgument(0);
             p.setId(UUID.randomUUID());
@@ -132,8 +125,6 @@ public class CoursePostServiceTests {
                 .thenReturn(Optional.of(course));
         when(coursePostRepository.findPostsByCourseId(eq(10L), eq(pageRequest)))
                 .thenReturn(new PageImpl<>(List.of(post), pageRequest, 1));
-        when(commentRepository.findByPostIdInOrderByCreatedAtAsc(List.of(postId)))
-                .thenReturn(Collections.emptyList());
         when(postLikeRepository.findLikedPostIdsByUserIdAndPostIdIn(userId, List.of(postId)))
                 .thenReturn(Set.of(postId));
 
