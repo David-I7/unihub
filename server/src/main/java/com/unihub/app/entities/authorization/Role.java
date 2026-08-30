@@ -28,4 +28,13 @@ public class Role {
     @ManyToMany(mappedBy = "roles")
     private List<Permission> permissions;
 
+    @Override
+    public String toString() {
+        return "Role{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", permissions=" + permissions +
+                '}';
+    }
 }

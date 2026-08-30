@@ -1,33 +1,18 @@
+import * as React from "react";
 import { useNavigate } from "react-router";
-import { ShieldCheck, Users, User, ShieldAlert } from "lucide-react";
+import { ShieldCheck, Users, User, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { computeGradient } from "@/lib/gradientUtils";
 import type { Community } from "../api/types";
 
 interface CommunityCardProps {
   community: Community;
-  onJoinClick?: (community: Community) => void;
 }
 
-export function CommunityCard({
-  community,
-  onJoinClick,
-}: CommunityCardProps) {
+function CommunityCardComponent({ community }: CommunityCardProps) {
   const navigate = useNavigate();
   const gradientBg = computeGradient(community.backgroundColor);
-
-  const handleJoinClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (community.isJoined) {
-      navigate(`/communities/${community.slug}`);
-    } else if (onJoinClick) {
-      onJoinClick(community);
-    } else {
-      navigate(`/communities/${community.slug}/join`);
-    }
-  };
 
   const handleCardClick = () => {
     navigate(`/communities/${community.slug}`);
@@ -43,37 +28,24 @@ export function CommunityCard({
         className="relative flex h-24 w-full items-end justify-between p-4 text-white transition-all duration-300"
         style={{ background: gradientBg }}
       >
-        {community.verified ? (
-          <Badge
-            variant="secondary"
-            className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
-          >
-            <ShieldCheck className="size-3 text-emerald-400" />
-            Verified Community
-          </Badge>
-        ) : (
-          <Badge
-            variant="secondary"
-            className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
-          >
-            <ShieldAlert className="size-3 text-red-400" />
-            Unverified Community
-          </Badge>
-        )}
+        <div>
+          {community.verified && (
+            <Badge
+              variant="secondary"
+              className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
+            >
+              <ShieldCheck className="size-3 text-emerald-400" />
+              Verified
+            </Badge>
+          )}
+        </div>
 
-        <Button
-          type="button"
-          size="xs"
-          variant={community.isJoined ? "secondary" : "default"}
-          onClick={handleJoinClick}
-          className={
-            community.isJoined
-              ? "bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs"
-              : "bg-white text-neutral-900 hover:bg-white/90 font-bold text-xs shadow-xs"
-          }
-        >
-          {community.isJoined ? "Joined ✓" : "+ Join"}
-        </Button>
+        {community.isJoined && (
+          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/90 bg-black/35 backdrop-blur-xs px-2.5 py-0.5 rounded-full border border-white/10">
+            <Check className="size-3 text-emerald-400" />
+            Joined
+          </span>
+        )}
       </div>
 
       {/* Card Header & Content */}
@@ -108,3 +80,5 @@ export function CommunityCard({
     </Card>
   );
 }
+
+export const CommunityCard = React.memo(CommunityCardComponent);

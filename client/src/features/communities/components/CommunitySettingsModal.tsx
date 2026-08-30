@@ -206,8 +206,6 @@ export function CommunitySettingsModal({
                   <ColorPicker
                     value={form.values.backgroundColor}
                     onChange={(hex) => form.setValue("backgroundColor", hex)}
-                    showPreview={true}
-                    showPresets={true}
                   />
                 </Field>
 

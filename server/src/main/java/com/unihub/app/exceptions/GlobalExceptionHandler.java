@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -92,6 +93,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ProblemDetail> handleHttpMessageNotReadableException(HttpServletRequest request, MissingServletRequestParameterException e){
         ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.BAD_REQUEST, request.getRequestURI());
         problemDetail.setDetail("Missing required request parameter: " + e.getParameterName());
+        return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
+    }
+
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAuthorizationDeniedException(HttpServletRequest request, AuthorizationDeniedException e) {
+        ProblemDetail problemDetail = problemDetailUtil.defaultProblemDetail(HttpStatus.FORBIDDEN, request.getRequestURI());
+        problemDetail.setDetail("Access denied");
         return ResponseEntity.status(problemDetail.getStatus()).body(problemDetail);
     }
 

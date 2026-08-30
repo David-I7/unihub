@@ -1,7 +1,7 @@
 import { useState, useTransition } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
-import { KeyRound, Sparkles } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -22,11 +22,13 @@ interface JoinCommunityModalProps {
   prefilledCode?: string;
 }
 
-export function JoinCommunityModal({
-  open,
-  onOpenChange,
+function JoinCommunityForm({
+  onClose,
   prefilledCode = "",
-}: JoinCommunityModalProps) {
+}: {
+  onClose: () => void;
+  prefilledCode?: string;
+}) {
   const [code, setCode] = useState(prefilledCode);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -44,7 +46,7 @@ export function JoinCommunityModal({
     try {
       const enrolled = await joinMutation.mutateAsync({ joinCode: rawCode });
       toast.success(`Successfully joined "${enrolled.name}"!`);
-      onOpenChange(false);
+      onClose();
       setCode("");
       startTransition(() => {
         navigate(`/communities/${enrolled.slug}`);
@@ -69,6 +71,62 @@ export function JoinCommunityModal({
   };
 
   return (
+    <>
+      <div className="space-y-4 py-2">
+        {error && (
+          <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+            {error}
+          </div>
+        )}
+
+        <Field>
+          <FieldLabel htmlFor="joinCode">Invitation Code</FieldLabel>
+          <Input
+            id="joinCode"
+            placeholder="e.g. 9ABCDEF4"
+            value={code}
+            onChange={(e) => {
+              setError(null);
+              setCode(e.target.value.toUpperCase());
+            }}
+            onPaste={handlePaste}
+            maxLength={8}
+            className="text-center font-mono text-lg tracking-widest uppercase font-bold"
+            autoFocus
+          />
+          <FieldDescription>
+            Tip: Paste the 8-character code to join immediately.
+          </FieldDescription>
+        </Field>
+      </div>
+
+      <DialogFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          onClick={() => handleJoin()}
+          disabled={joinMutation.isPending || code.trim().length !== 8}
+          className="font-bold cursor-pointer"
+        >
+          {joinMutation.isPending ? "Joining..." : "Join Community"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+export function JoinCommunityModal({
+  open,
+  onOpenChange,
+  prefilledCode = "",
+}: JoinCommunityModalProps) {
+  return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -82,58 +140,12 @@ export function JoinCommunityModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          {error && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-              {error}
-            </div>
-          )}
-
-          <Field>
-            <FieldLabel htmlFor="joinCode">Invitation Code</FieldLabel>
-            <Input
-              id="joinCode"
-              placeholder="e.g. 9ABCDEF4"
-              value={code}
-              onChange={(e) => {
-                setError(null);
-                setCode(e.target.value.toUpperCase());
-              }}
-              onPaste={handlePaste}
-              maxLength={8}
-              className="text-center font-mono text-lg tracking-widest uppercase font-bold"
-              autoFocus
-            />
-            <FieldDescription>
-              Tip: Paste the 8-character code to join immediately.
-            </FieldDescription>
-          </Field>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={() => handleJoin()}
-            disabled={joinMutation.isPending || code.trim().length !== 8}
-            className="gap-2 font-bold cursor-pointer"
-          >
-            {joinMutation.isPending ? (
-              "Joining..."
-            ) : (
-              <>
-                <Sparkles className="size-4" />
-                Join Community
-              </>
-            )}
-          </Button>
-        </DialogFooter>
+        {open && (
+          <JoinCommunityForm
+            onClose={() => onOpenChange(false)}
+            prefilledCode={prefilledCode}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

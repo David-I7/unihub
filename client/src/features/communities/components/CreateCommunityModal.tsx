@@ -16,7 +16,6 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import {
   ColorPicker,
@@ -24,6 +23,8 @@ import {
 } from "@/components/ui/color-picker";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
+import { useAuthStore } from "@/features/auth";
+import { CommunityCard } from "./CommunityCard";
 import {
   createCommunitySchema,
   type CreateCommunityFormData,
@@ -44,11 +45,9 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export function CreateCommunityModal({
-  open,
-  onOpenChange,
-}: CreateCommunityModalProps) {
+function CreateCommunityForm({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const createMutation = useCreateCommunity();
   const [slugTouchedManually, setSlugTouchedManually] = useState(false);
 
@@ -57,7 +56,6 @@ export function CreateCommunityModal({
       name: "",
       slug: "",
       description: "",
-      readme: "",
       backgroundColor: DEFAULT_COMMUNITY_PRESETS[0]!,
     },
     schema: createCommunitySchema,
@@ -68,13 +66,11 @@ export function CreateCommunityModal({
           name: values.name.trim(),
           slug: values.slug.trim(),
           description: values.description.trim(),
-          readme: values.readme?.trim() || undefined,
           backgroundColor: values.backgroundColor,
         });
 
         toast.success(`Community "${created.name}" created successfully!`);
-        onOpenChange(false);
-        form.reset();
+        onClose();
         navigate(`/communities/${created.slug}`);
       } catch (err: unknown) {
         const message = getErrorMessage(
@@ -100,30 +96,28 @@ export function CreateCommunityModal({
     form.setValue("slug", slugify(e.target.value));
   };
 
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    form.setValue("description", e.target.value);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Create a New Community</DialogTitle>
-          <DialogDescription>
-            Set up an academic community hub for your university, faculty, or
-            specialization.
-          </DialogDescription>
-        </DialogHeader>
+    <form onSubmit={form.handleSubmit} className="space-y-6 py-2">
+      {form.serverError && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+          {form.serverError}
+        </div>
+      )}
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
-          {form.serverError && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-              {form.serverError}
-            </div>
-          )}
-
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Form Fields */}
+        <div className="lg:col-span-7 space-y-4">
           {/* Name Field */}
           <Field>
             <FieldLabel htmlFor="name">Community Name *</FieldLabel>
             <Input
               id="name"
-              placeholder="e.g. Faculty of Mathematics and Informatics"
+              name="name"
+              placeholder="e.g. Faculty of Informatics"
               value={form.values.name}
               onChange={handleNameChange}
               onBlur={form.handleBlur}
@@ -137,6 +131,7 @@ export function CreateCommunityModal({
             <FieldLabel htmlFor="slug">Community Slug (URL path) *</FieldLabel>
             <Input
               id="slug"
+              name="slug"
               placeholder="fmi-faculty"
               value={form.values.slug}
               onChange={handleSlugChange}
@@ -144,9 +139,6 @@ export function CreateCommunityModal({
               aria-invalid={form.isInvalid("slug")}
               className="font-mono text-xs"
             />
-            <FieldDescription>
-              Will be accessible at: /communities/{form.values.slug || "slug"}
-            </FieldDescription>
             <FieldError errors={[{ message: form.errors.slug }]} />
           </Field>
 
@@ -157,76 +149,108 @@ export function CreateCommunityModal({
             </FieldLabel>
             <Textarea
               id="description"
-              placeholder="A short summary of this community displayed in hero cards..."
+              name="description"
+              placeholder="A short summary of this community displayed in catalog cards..."
               rows={3}
               value={form.values.description}
-              onChange={form.handleChange}
+              onChange={handleDescriptionChange}
               onBlur={form.handleBlur}
               aria-invalid={form.isInvalid("description")}
               maxLength={1000}
             />
             <div className="flex justify-between text-[11px] text-muted-foreground">
-              <span>Shown in community banners and catalog cards.</span>
+              <span>Shown in banners and cards.</span>
               <span>{form.values.description.length} / 1000</span>
             </div>
             <FieldError errors={[{ message: form.errors.description }]} />
           </Field>
 
-          {/* Optional Readme Markdown */}
+          {/* Minimal Color Picker */}
           <Field>
-            <FieldLabel htmlFor="readme">
-              Overview / Readme (Markdown Optional)
-            </FieldLabel>
-            <Textarea
-              id="readme"
-              placeholder="# Welcome to our Faculty&#10;&#10;Here you can find all course curricula, study years, and discussions..."
-              rows={4}
-              value={form.values.readme ?? ""}
-              onChange={form.handleChange}
-              onBlur={form.handleBlur}
-              aria-invalid={form.isInvalid("readme")}
-              maxLength={50000}
-              className="font-mono text-xs"
-            />
-            <div className="flex justify-between text-[11px] text-muted-foreground">
-              <span>Full markdown document rendered in the About tab.</span>
-              <span>{(form.values.readme ?? "").length} / 50000</span>
-            </div>
-            <FieldError errors={[{ message: form.errors.readme }]} />
-          </Field>
-
-          {/* Color Picker */}
-          <Field>
-            <FieldLabel>Community Accent & Gradient Theme</FieldLabel>
+            <FieldLabel>Theme Accent & Gradient</FieldLabel>
             <ColorPicker
               value={form.values.backgroundColor}
               onChange={(hex) => form.setValue("backgroundColor", hex)}
-              showPreview={true}
-              showPresets={true}
-              presets={DEFAULT_COMMUNITY_PRESETS}
             />
             <FieldError errors={[{ message: form.errors.backgroundColor }]} />
           </Field>
+        </div>
 
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={form.isSubmitting || createMutation.isPending}
-              className="font-bold cursor-pointer"
-            >
-              {form.isSubmitting || createMutation.isPending
-                ? "Creating Community..."
-                : "Create Community"}
-            </Button>
-          </DialogFooter>
-        </form>
+        {/* Right Column: Live Community Preview */}
+        <div className="lg:col-span-5 space-y-3 sticky top-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">
+              Live Preview
+            </span>
+          </div>
+          <div className="rounded-2xl border border-border/80 bg-muted/20 p-2 sm:p-3 pointer-events-none">
+            <CommunityCard
+              community={{
+                id: "preview",
+                name: form.values.name.trim() || "Community Name",
+                slug: form.values.slug.trim() || "community-slug",
+                description:
+                  form.values.description.trim() ||
+                  "Your community description will appear here as you type.",
+                backgroundColor: form.values.backgroundColor,
+                verified: false,
+                memberCount: 1,
+                isJoined: true,
+                createdAt: new Date().toISOString(),
+                owner: {
+                  id: user?.id ?? "preview-user",
+                  username: user?.username ?? "You",
+                  active: true,
+                },
+              }}
+            />
+          </div>
+
+          <div className="text-[11px] font-mono text-muted-foreground bg-muted/40 rounded-xl px-3 py-2 border border-border/60 truncate">
+            <span className="text-muted-foreground">Will be accessible at: </span>
+            <span className="text-foreground font-semibold">/communities/{form.values.slug || "slug"}</span>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter className="pt-2 border-t border-border">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={form.isSubmitting || createMutation.isPending}
+          className="font-bold cursor-pointer"
+        >
+          {form.isSubmitting || createMutation.isPending
+            ? "Creating Community..."
+            : "Create Community"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function CreateCommunityModal({
+  open,
+  onOpenChange,
+}: CreateCommunityModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl lg:max-w-4xl max-h-[92vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create a New Community</DialogTitle>
+          <DialogDescription>
+            Set up an academic community hub for your university, faculty, or
+            specialization.
+          </DialogDescription>
+        </DialogHeader>
+
+        {open && <CreateCommunityForm onClose={() => onOpenChange(false)} />}
       </DialogContent>
     </Dialog>
   );

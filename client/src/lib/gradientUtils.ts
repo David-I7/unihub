@@ -147,6 +147,8 @@ export function computeDarkShade(
   return hslToHex(newH, newS, targetLightness);
 }
 
+const gradientCache = new Map<string, string>();
+
 /**
  * Computes a linear gradient CSS string fading from the provided hex start color to a darker shade.
  *
@@ -158,7 +160,16 @@ export function computeGradient(
   startHex: string,
   options: GradientOptions = {}
 ): string {
-  return computeGradientDetails(startHex, options).css;
+  const cacheKey = `${startHex}_${options.angle ?? 135}_${options.stops ?? 3}_${options.midLightness ?? 22}_${options.endLightness ?? 8}_${options.hueShift ?? 10}`;
+  const cached = gradientCache.get(cacheKey);
+  if (cached) return cached;
+
+  const result = computeGradientDetails(startHex, options).css;
+  if (gradientCache.size > 200) {
+    gradientCache.clear();
+  }
+  gradientCache.set(cacheKey, result);
+  return result;
 }
 
 /**

@@ -114,7 +114,7 @@ public class AuthorizationServiceTests {
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(roleService.getPermissionNamesByRoleType(RoleType.ADMIN)).thenReturn(List.of(PermissionType.VERIFY_COMMUNITY.name()));
+        when(roleService.getPermissionNamesByRoleType(RoleType.ADMIN)).thenReturn(List.of(PermissionType.VERIFY_COMMUNITY.getValue()));
 
         assertTrue(authorizationService.hasGlobalPermission(PermissionType.VERIFY_COMMUNITY));
     }
@@ -133,7 +133,7 @@ public class AuthorizationServiceTests {
         when(roleService.getPermissionNamesByRoleType(RoleType.USER)).thenReturn(List.of());
         when(communityMemberRepository.findMemberByCommunitySlug("fmi", userId)).thenReturn(Optional.of(member));
         when(roleService.getRoleById(roleId)).thenReturn(Role.builder().id(roleId).name("COMMUNITY_ADMIN").build());
-        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_ADMIN)).thenReturn(List.of(PermissionType.CREATE_MEMBER.name()));
+        when(roleService.getPermissionNamesByRoleType(RoleType.COMMUNITY_ADMIN)).thenReturn(List.of(PermissionType.CREATE_MEMBER.getValue()));
 
         assertTrue(authorizationService.hasCommunityPermission("fmi", userId, PermissionType.CREATE_MEMBER));
     }
