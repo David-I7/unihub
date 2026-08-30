@@ -1,11 +1,11 @@
-import { useMemo } from "react";
-import { MessageSquare } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MessageSquare, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInfiniteCoursePosts } from "@/features/posts/api/getCoursePosts";
 import { PostCard } from "@/features/posts/components/PostCard";
-import { PostComposerPrompt } from "@/features/posts/components/PostComposerPrompt";
+import { PostComposerModal } from "@/features/posts/components/PostComposerModal";
 import { usePermissions } from "@/hooks/usePermissions";
 
 interface CoursePostsTabProps {
@@ -19,6 +19,7 @@ export function CoursePostsTab({
   studyYearSlug,
   courseSlug,
 }: CoursePostsTabProps) {
+  const [composerOpen, setComposerOpen] = useState(false);
   const { canCreatePost } = usePermissions(communitySlug);
 
   const {
@@ -38,18 +39,19 @@ export function CoursePostsTab({
   }, [data]);
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Course-level post composer prompt if user is member */}
+    <div className="space-y-4 max-w-4xl">
+      {/* New Post button if authorized */}
       {canCreatePost && (
-        <PostComposerPrompt
-          target={{
-            type: "course",
-            communitySlug,
-            studyYearSlug,
-            courseSlug,
-          }}
-          placeholder="Ask a question about this course, lectures, homework, or exam prep..."
-        />
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setComposerOpen(true)}
+            className="gap-1.5 font-bold cursor-pointer"
+          >
+            <Plus className="size-4" />
+            New Post
+          </Button>
+        </div>
       )}
 
       {isLoading ? (
@@ -90,8 +92,8 @@ export function CoursePostsTab({
               No Discussions in this Course Yet
             </h3>
             <p className="text-xs text-muted-foreground max-w-sm">
-              Ask fellow students questions about homework, course projects, or
-              exam tips.
+              Be the first to start an academic discussion or ask a question about
+              this course.
             </p>
           </div>
         </div>
@@ -119,13 +121,25 @@ export function CoursePostsTab({
                     <Spinner className="size-4" /> Loading more posts...
                   </>
                 ) : (
-                  "Load More Discussions"
+                  "Load More Posts"
                 )}
               </Button>
             </div>
           )}
         </div>
       )}
+
+      <PostComposerModal
+        target={{
+          type: "course",
+          communitySlug,
+          studyYearSlug,
+          courseSlug,
+        }}
+        open={composerOpen}
+        onOpenChange={setComposerOpen}
+      />
     </div>
   );
 }
+

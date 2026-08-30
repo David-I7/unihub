@@ -36,7 +36,7 @@ export default function CourseDetailPage() {
   if (isError || !courseHome) {
     return (
       <div className="min-h-full space-y-6 pb-12">
-        <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
+        <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
           Failed to load {courseSlug} details.
         </h1>
         <AppBreadcrumb />
@@ -52,8 +52,8 @@ export default function CourseDetailPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
-      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-black drop-shadow-xs">
-        {courseHome.course.name}{" "}
+      <h1 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+        {courseHome.course.name}
       </h1>
 
       <AppBreadcrumb />

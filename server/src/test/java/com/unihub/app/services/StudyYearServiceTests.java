@@ -11,6 +11,7 @@ import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.entities.globalResources.Teacher;
 import com.unihub.app.mappers.GlobalResourceMapper;
+import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
@@ -23,6 +24,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -32,6 +36,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -45,13 +51,16 @@ public class StudyYearServiceTests {
     private CourseRepository courseRepository;
 
     @Mock
-    private com.unihub.app.repositories.community.resources.CommunityRepository communityRepository;
+    private CommunityRepository communityRepository;
 
     @Spy
     private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
 
     @Spy
     private CommunityResourceMapper communityMapper = new CommunityResourceMapper(new GlobalResourceMapper());
+
+    @Spy
+    private PageMapper pageMapper = new PageMapper();
 
     @InjectMocks
     private StudyYearService studyYearService;
@@ -88,17 +97,24 @@ public class StudyYearServiceTests {
 
         when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(studyYear));
-        when(courseRepository.findAllActiveByStudyYearIdWithTeachers(1))
-                .thenReturn(List.of(course));
+        when(courseRepository.findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(false), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(course), PageRequest.of(0, 12), 1));
 
-        StudyYearHomeResponseDto result = studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_1, false);
+        StudyYearHomeResponseDto result = studyYearService.getStudyYearHome(
+                "fmi-info-id",
+                StudyYearName.YEAR_1,
+                null,
+                null,
+                false,
+                PageRequest.of(0, 12)
+        );
 
         assertNotNull(result);
         assertEquals(1, result.studyYear().id());
         assertEquals(StudyYearName.YEAR_1, result.studyYear().name());
-        assertEquals(1, result.courses().size());
+        assertEquals(1, result.courses().content().size());
 
-        var courseTeacherDto = result.courses().get(0);
+        var courseTeacherDto = result.courses().content().get(0);
         var courseDto = courseTeacherDto.course();
         assertEquals(1L, courseDto.id());
         assertEquals("Arhitectura sistemelor de calcul", courseDto.name());
@@ -111,24 +127,15 @@ public class StudyYearServiceTests {
         assertEquals("Daniel", courseTeacherDto.teachers().get(0).firstName());
 
         verify(studyYearRepository).findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1);
-        verify(courseRepository).findAllActiveByStudyYearIdWithTeachers(1);
+        verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(false), isNull(), any(Pageable.class));
     }
 
     @Test
-    @DisplayName("getStudyYearHome with includeArchived true returns all courses")
-    public void testGetStudyYearHome_IncludeArchived() {
+    @DisplayName("getStudyYearHome with archived true returns archived courses")
+    public void testGetStudyYearHome_Archived() {
         StudyYear studyYear = StudyYear.builder()
                 .id(1)
                 .studyYearName(StudyYearName.YEAR_1)
-                .build();
-
-        Course activeCourse = Course.builder()
-                .id(1L)
-                .name("ASC")
-                .slug("asc")
-                .abbreviation("ASC")
-                .archived(false)
-                .creditPoints(5)
                 .build();
 
         Course archivedCourse = Course.builder()
@@ -142,17 +149,23 @@ public class StudyYearServiceTests {
 
         when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(studyYear));
-        when(courseRepository.findAllByStudyYearIdWithTeachers(1))
-                .thenReturn(List.of(activeCourse, archivedCourse));
+        when(courseRepository.findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(true), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(archivedCourse), PageRequest.of(0, 12), 1));
 
-        StudyYearHomeResponseDto result = studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_1, true);
+        StudyYearHomeResponseDto result = studyYearService.getStudyYearHome(
+                "fmi-info-id",
+                StudyYearName.YEAR_1,
+                null,
+                null,
+                true,
+                PageRequest.of(0, 12)
+        );
 
         assertNotNull(result);
-        assertEquals(2, result.courses().size());
-        assertFalse(result.courses().get(0).course().archived());
-        assertTrue(result.courses().get(1).course().archived());
+        assertEquals(1, result.courses().content().size());
+        assertTrue(result.courses().content().get(0).course().archived());
 
-        verify(courseRepository).findAllByStudyYearIdWithTeachers(1);
+        verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(true), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -162,7 +175,7 @@ public class StudyYearServiceTests {
                 .thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () ->
-                studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_4, false));
+                studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_4, null, null, false, PageRequest.of(0, 12)));
     }
 
     @Test
@@ -252,6 +265,44 @@ public class StudyYearServiceTests {
         studyYearService.deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1);
 
         verify(studyYearRepository).delete(studyYear);
+    }
+
+    @Test
+    @DisplayName("getStudyYearHome with search and semester filters")
+    public void testGetStudyYearHome_WithSearchAndSemester() {
+        StudyYear studyYear = StudyYear.builder()
+                .id(1)
+                .studyYearName(StudyYearName.YEAR_1)
+                .build();
+
+        Course course = Course.builder()
+                .id(1L)
+                .name("Algoritmi")
+                .slug("algoritmi")
+                .abbreviation("ALG")
+                .semester(1)
+                .archived(false)
+                .build();
+
+        when(studyYearRepository.findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(studyYear));
+        when(courseRepository.findAllByStudyYearIdWithFilters(eq(1), eq(1), eq(false), eq("algo"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(course), PageRequest.of(0, 12), 1));
+
+        StudyYearHomeResponseDto result = studyYearService.getStudyYearHome(
+                "fmi-info-id",
+                StudyYearName.YEAR_1,
+                "  algo  ",
+                1,
+                false,
+                PageRequest.of(0, 12)
+        );
+
+        assertNotNull(result);
+        assertEquals(1, result.courses().content().size());
+        assertEquals("Algoritmi", result.courses().content().get(0).course().name());
+
+        verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), eq(1), eq(false), eq("algo"), any(Pageable.class));
     }
 
     @Test

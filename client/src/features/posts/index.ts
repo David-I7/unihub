@@ -7,7 +7,6 @@ export * from "./api/deletePost";
 export * from "./api/pinPost";
 export * from "./api/toggleLike";
 export * from "./components/PostCard";
-export * from "./components/PostComposerPrompt";
 export * from "./components/PostComposerModal";
 export * from "./components/EditPostModal";
 export * from "./components/DeletePostDialog";

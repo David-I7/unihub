@@ -1,5 +1,6 @@
 package com.unihub.app.mappers.community;
 
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
@@ -118,7 +119,7 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public StudyYearHomeResponseDto toStudyYearHomeResponseDto(StudyYear studyYear, List<CourseHomeResponseDto> courses) {
+    public StudyYearHomeResponseDto toStudyYearHomeResponseDto(StudyYear studyYear, PageDto<CourseHomeResponseDto> courses) {
         return StudyYearHomeResponseDto.builder()
                 .studyYear(toStudyYearResponseDto(studyYear))
                 .courses(courses)

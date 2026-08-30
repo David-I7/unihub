@@ -1,7 +1,9 @@
 package com.unihub.app.controllers;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import org.springframework.data.domain.Pageable;
 import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
@@ -132,33 +134,44 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
                 .teachers(List.of(teacherDto))
                 .build();
 
-        StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
-                .studyYear(new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now()))
-                .courses(List.of(courseTeachersDto))
+        PageDto<CourseHomeResponseDto> coursePageDto = PageDto.<CourseHomeResponseDto>builder()
+                .content(List.of(courseTeachersDto))
+                .number(0)
+                .size(12)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
                 .build();
 
-        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_1, false)).thenReturn(responseDto);
+        StudyYearHomeResponseDto responseDto = StudyYearHomeResponseDto.builder()
+                .studyYear(new StudyYearResponseDto(1, StudyYearName.YEAR_1, OffsetDateTime.now()))
+                .courses(coursePageDto)
+                .build();
+
+        when(studyYearService.getStudyYearHome(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), any(), any(), eq(false), any(Pageable.class)))
+                .thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/year-1/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.studyYear.id").value(1))
                 .andExpect(jsonPath("$.studyYear.name").value("Year 1"))
-                .andExpect(jsonPath("$.courses").isArray())
-                .andExpect(jsonPath("$.courses[0].course.id").value(1))
-                .andExpect(jsonPath("$.courses[0].course.name").value("Arhitectura sistemelor de calcul"))
-                .andExpect(jsonPath("$.courses[0].course.slug").value("asc"))
-                .andExpect(jsonPath("$.courses[0].course.abbreviation").value("ASC"))
-                .andExpect(jsonPath("$.courses[0].course.semester").value(1))
-                .andExpect(jsonPath("$.courses[0].course.creditPoints").value(5))
-                .andExpect(jsonPath("$.courses[0].course.archived").value(false))
-                .andExpect(jsonPath("$.courses[0].course.description").value("Course description"))
-                .andExpect(jsonPath("$.courses[0].teachers").isArray())
-                .andExpect(jsonPath("$.courses[0].teachers[0].id").value(teacherId.toString()))
-                .andExpect(jsonPath("$.courses[0].teachers[0].firstName").value("Daniel"))
-                .andExpect(jsonPath("$.courses[0].teachers[0].lastName").value("Dragulici"))
-                .andExpect(jsonPath("$.courses[0].teachers[0].averageRating").value(4.5))
-                .andExpect(jsonPath("$.courses[0].teachers[0].ratingsCount").value(10));
+                .andExpect(jsonPath("$.courses.content").isArray())
+                .andExpect(jsonPath("$.courses.content[0].course.id").value(1))
+                .andExpect(jsonPath("$.courses.content[0].course.name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.courses.content[0].course.slug").value("asc"))
+                .andExpect(jsonPath("$.courses.content[0].course.abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.courses.content[0].course.semester").value(1))
+                .andExpect(jsonPath("$.courses.content[0].course.creditPoints").value(5))
+                .andExpect(jsonPath("$.courses.content[0].course.archived").value(false))
+                .andExpect(jsonPath("$.courses.content[0].course.description").value("Course description"))
+                .andExpect(jsonPath("$.courses.content[0].teachers").isArray())
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].id").value(teacherId.toString()))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].firstName").value("Daniel"))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].lastName").value("Dragulici"))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].averageRating").value(4.5))
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].ratingsCount").value(10));
     }
 
     @Test
@@ -168,7 +181,7 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
             Then: 404 Not Found is returned
             """)
     public void testGetStudyYearCourses_NotFound() throws Exception {
-        when(studyYearService.getStudyYearHome("fmi-info-id", StudyYearName.YEAR_4, false))
+        when(studyYearService.getStudyYearHome(eq("fmi-info-id"), eq(StudyYearName.YEAR_4), any(), any(), eq(false), any(Pageable.class)))
                 .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
         mockMvc.perform(get(BASE_URL + "/YEAR_4/home")

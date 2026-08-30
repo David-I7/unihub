@@ -8,6 +8,8 @@ import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.resources.StudyYearService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,9 +48,19 @@ public class StudyYearController {
     public ResponseEntity<StudyYearHomeResponseDto> getStudyYearHome(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
-            @RequestParam(name = "include_archived", required = false, defaultValue = "false") boolean includeArchived
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "semester", required = false) Integer semester,
+            @RequestParam(name = "archived", required = false, defaultValue = "false") boolean archived,
+            @PageableDefault(page = 0, size = 12) Pageable pageable
     ) {
-        StudyYearHomeResponseDto studyYear = studyYearService.getStudyYearHome(communitySlug, studyYearName, includeArchived);
+        StudyYearHomeResponseDto studyYear = studyYearService.getStudyYearHome(
+                communitySlug,
+                studyYearName,
+                search,
+                semester,
+                archived,
+                pageable
+        );
         return ResponseEntity.ok(studyYear);
     }
 

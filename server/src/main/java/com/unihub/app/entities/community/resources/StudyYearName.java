@@ -13,8 +13,7 @@ public enum StudyYearName {
         if (source == null || source.isBlank()) {
             return null;
         }
-        String normalized = source.trim().replace('-', '_').
-                toUpperCase();
+        String normalized = source.trim().replaceAll("[\\s-]+", "_").toUpperCase();
         try {
             return StudyYearName.valueOf(normalized);
         } catch (IllegalArgumentException ex) {

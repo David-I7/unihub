@@ -5,9 +5,7 @@ export * from "./api/createStudyYear";
 export * from "./api/deleteStudyYear";
 export * from "./components/StudyYearCard";
 export * from "./components/StudyYearsGrid";
-export * from "./components/StudyYearHero";
 export * from "./components/StudyYearCoursesList";
-export * from "./components/StudyYearSkeleton";
 export * from "./components/CreateStudyYearModal";
 export * from "./components/DeleteStudyYearDialog";
 

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import {
   ShieldCheck,
-  Check,
   MoreVertical,
   Settings,
   KeyRound,
