@@ -43,6 +43,8 @@ const LINK_TYPE_OPTIONS: Array<{
   { value: "GITHUB", label: "GitHub" },
   { value: "DRIVE", label: "Google Drive" },
   { value: "VIDEO", label: "Video" },
+  { value: "DOCS", label: "Docs" },
+  { value: "DOCX", label: "Word" },
   { value: "OTHER", label: "Other" },
 ];
 

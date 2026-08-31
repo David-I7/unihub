@@ -82,4 +82,15 @@ public class MaterialLinkValidatorTests {
                 validator.validate("https://example.com/materials/article", MaterialLinkType.OTHER)
         );
     }
+
+    @Test
+    @DisplayName("Valid HTTPS URL with DOCS and DOCX link types passes")
+    public void testValidDocsAndDocxLink() {
+        assertDoesNotThrow(() ->
+                validator.validate("https://docs.google.com/document/d/123/edit", MaterialLinkType.DOCS)
+        );
+        assertDoesNotThrow(() ->
+                validator.validate("https://example.com/files/report.docx", MaterialLinkType.DOCX)
+        );
+    }
 }

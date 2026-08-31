@@ -10,6 +10,7 @@ import com.unihub.app.entities.community.content.CoursePost;
 import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import com.unihub.app.events.notification.CoursePostCreatedNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
@@ -19,6 +20,7 @@ import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -40,6 +42,7 @@ public class CoursePostService {
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponseDto createCoursePost(
@@ -61,6 +64,8 @@ public class CoursePostService {
                 .course(course)
                 .build();
         coursePostRepository.save(coursePost);
+
+        eventPublisher.publishEvent(new CoursePostCreatedNotificationEvent(savedPost, course, owner));
 
         return contentMapper.toPostResponseDto(savedPost, false);
     }

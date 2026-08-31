@@ -53,6 +53,16 @@ const LINK_TYPE_OPTIONS: Array<{
     hint: "youtube.com, youtu.be, vimeo.com, loom.com, twitch.tv",
   },
   {
+    value: "DOCS",
+    label: "Documents / Notes",
+    hint: "docs.google.com, notion.so, office.com",
+  },
+  {
+    value: "DOCX",
+    label: "Word / DOCX",
+    hint: "Office documents, docx files, SharePoint",
+  },
+  {
     value: "OTHER",
     label: "Other Resource",
     hint: "Any valid HTTPS URL",

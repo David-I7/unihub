@@ -3,6 +3,7 @@ package com.unihub.app.entities.community.content;
 import com.unihub.app.entities.authentication.User;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
@@ -13,15 +14,18 @@ import java.util.UUID;
 @Table(
         name = "notifications",
         indexes = {
+                @Index(name = "idx_notifications_user_category_created", columnList = "user_id, category, created_at DESC"),
                 @Index(name = "idx_notifications_user_unread", columnList = "user_id, is_read, created_at DESC")
         }
 )
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "category", discriminatorType = DiscriminatorType.STRING)
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Notification {
+public abstract class Notification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -39,12 +43,8 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(nullable = false)
-    private NotificationType type;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
-    private Event event;
+    @Column(nullable = false, insertable = false, updatable = false)
+    private NotificationCategory category;
 
     @Column(name = "is_read", nullable = false)
     @Builder.Default
@@ -55,6 +55,8 @@ public class Notification {
 
     @PrePersist
     private void prePersist() {
-        createdAt = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
     }
 }

@@ -29,4 +29,7 @@ public interface CommunityPostRepository extends JpaRepository<CommunityPost, UU
 
     @Query("SELECT cp.community.slug FROM CommunityPost cp WHERE cp.post.id = :postId")
     java.util.Optional<String> findCommunitySlugByPostId(@Param("postId") UUID postId);
+
+    @Query("SELECT cp FROM CommunityPost cp JOIN FETCH cp.community comm WHERE cp.post.id = :postId")
+    java.util.Optional<CommunityPost> findByPostIdWithCommunity(@Param("postId") UUID postId);
 }

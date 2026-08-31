@@ -99,7 +99,7 @@ public class MaterialLinkValidator {
                     );
                 }
             }
-            case OTHER -> {
+            case DOCS, DOCX, OTHER -> {
                 // Any valid HTTPS URL is allowed
             }
         }

@@ -1,40 +1,21 @@
 package com.unihub.app.controllers;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.config.SessionProperties;
+import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.response.EventNotificationResponseDto;
 import com.unihub.app.dto.community.content.response.NotificationResponseDto;
-import com.unihub.app.entities.community.content.NotificationType;
-import com.unihub.app.exceptions.GlobalExceptionHandler;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.PageMapper;
-import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
+import com.unihub.app.dto.community.content.response.PostNotificationResponseDto;
+import com.unihub.app.entities.community.content.EventNotificationType;
+import com.unihub.app.entities.community.content.NotificationCategory;
+import com.unihub.app.entities.community.content.PostNotificationType;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.security.JwtSessionManagementFilter;
-import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
-import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
-import com.unihub.app.security.OAuth2ProviderUserInfoExtractor;
-import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.content.NotificationService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
@@ -53,8 +34,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import com.unihub.app.BaseIntegrationTest;
 
 @AutoConfigureMockMvc
 public class NotificationControllerTests extends BaseIntegrationTest {
@@ -84,48 +63,100 @@ public class NotificationControllerTests extends BaseIntegrationTest {
 
     @Test
     @DisplayName("""
-            Given: user has notifications
+            Given: user has event and post notifications
             When: GET /api/v1/notifications is called
-            Then: 200 OK is returned with paginated notifications
+            Then: 200 OK is returned with polymorphic serialized notifications
             """)
     public void testGetNotifications_Success() throws Exception {
-        UUID notificationId = UUID.randomUUID();
+        UUID eventNotificationId = UUID.randomUUID();
+        UUID postNotificationId = UUID.randomUUID();
         UUID eventId = UUID.randomUUID();
+        UUID postId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        NotificationResponseDto notificationDto = NotificationResponseDto.builder()
-                .id(notificationId)
+        EventNotificationResponseDto eventDto = EventNotificationResponseDto.builder()
+                .id(eventNotificationId)
                 .title("Reminder: Exam")
                 .message("Exam starts soon")
-                .type(NotificationType.EVENT_REMINDER)
+                .category(NotificationCategory.EVENT)
+                .type(EventNotificationType.REMINDER)
                 .eventId(eventId)
+                .communitySlug("fmi-hub")
+                .isRead(false)
+                .createdAt(createdAt)
+                .build();
+
+        PostNotificationResponseDto postDto = PostNotificationResponseDto.builder()
+                .id(postNotificationId)
+                .title("New post in Algorithms")
+                .message("Alice posted: 'Homework 1 discussion'")
+                .category(NotificationCategory.POST)
+                .type(PostNotificationType.COURSE_POST)
+                .postId(postId)
+                .actor(new OwnerDto(UUID.randomUUID(), "alice", true))
+                .communitySlug("fmi-hub")
+                .studyYear("YEAR_2")
+                .courseSlug("algorithms")
                 .isRead(false)
                 .createdAt(createdAt)
                 .build();
 
         PageDto<NotificationResponseDto> pageDto = PageDto.<NotificationResponseDto>builder()
-                .content(List.of(notificationDto))
+                .content(List.of(eventDto, postDto))
                 .number(0)
                 .size(20)
-                .totalElements(1)
+                .totalElements(2)
                 .totalPages(1)
                 .first(true)
                 .last(true)
                 .build();
 
-        when(notificationService.getUserNotifications(eq(userId), any(Pageable.class))).thenReturn(pageDto);
+        when(notificationService.getUserNotifications(eq(userId), eq(null), eq(null), eq(null), any(Pageable.class)))
+                .thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
-                .andExpect(jsonPath("$.content[0].id").value(notificationId.toString()))
-                .andExpect(jsonPath("$.content[0].title").value("Reminder: Exam"))
-                .andExpect(jsonPath("$.content[0].message").value("Exam starts soon"))
-                .andExpect(jsonPath("$.content[0].type").value("EVENT_REMINDER"))
+                .andExpect(jsonPath("$.content[0].category").value("EVENT"))
+                .andExpect(jsonPath("$.content[0].type").value("REMINDER"))
                 .andExpect(jsonPath("$.content[0].eventId").value(eventId.toString()))
-                .andExpect(jsonPath("$.content[0].isRead").value(false))
-                .andExpect(jsonPath("$.totalElements").value(1));
+                .andExpect(jsonPath("$.content[0].communitySlug").value("fmi-hub"))
+                .andExpect(jsonPath("$.content[1].category").value("POST"))
+                .andExpect(jsonPath("$.content[1].type").value("COURSE_POST"))
+                .andExpect(jsonPath("$.content[1].postId").value(postId.toString()))
+                .andExpect(jsonPath("$.content[1].courseSlug").value("algorithms"))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: category and type filters
+            When: GET /api/v1/notifications?category=EVENT&type=REMINDER is called
+            Then: filters are passed to service
+            """)
+    public void testGetNotifications_WithFilters() throws Exception {
+        PageDto<NotificationResponseDto> pageDto = PageDto.<NotificationResponseDto>builder()
+                .content(List.of())
+                .number(0)
+                .size(20)
+                .totalElements(0)
+                .totalPages(0)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(notificationService.getUserNotifications(eq(userId), eq(NotificationCategory.EVENT), eq("REMINDER"), eq(true), any(Pageable.class)))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL)
+                        .param("category", "EVENT")
+                        .param("type", "REMINDER")
+                        .param("isRead", "true")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.totalElements").value(0));
     }
 
     // =========================================================================
@@ -139,12 +170,28 @@ public class NotificationControllerTests extends BaseIntegrationTest {
             Then: 200 OK is returned with unread count
             """)
     public void testGetUnreadCount_Success() throws Exception {
-        when(notificationService.getUnreadCount(userId)).thenReturn(5L);
+        when(notificationService.getUnreadCount(userId, null)).thenReturn(5L);
 
         mockMvc.perform(get(BASE_URL + "/unread-count")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.unreadCount").value(5));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: category filter
+            When: GET /api/v1/notifications/unread-count?category=EVENT is called
+            Then: category is passed to service
+            """)
+    public void testGetUnreadCount_WithCategory() throws Exception {
+        when(notificationService.getUnreadCount(userId, NotificationCategory.EVENT)).thenReturn(2L);
+
+        mockMvc.perform(get(BASE_URL + "/unread-count")
+                        .param("category", "EVENT")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.unreadCount").value(2));
     }
 
     // =========================================================================

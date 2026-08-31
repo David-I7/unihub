@@ -56,7 +56,7 @@ export interface CourseHome {
 
 export type CourseTeachers = CourseHome;
 
-export type MaterialLinkType = "VIDEO" | "DRIVE" | "GITHUB" | "OTHER";
+export type MaterialLinkType = "VIDEO" | "DRIVE" | "GITHUB" | "DOCS" | "DOCX" | "OTHER";
 
 export interface CreateFolderPayload {
   name: string;
