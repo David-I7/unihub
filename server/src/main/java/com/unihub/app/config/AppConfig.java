@@ -12,7 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration
 @EnableScheduling
 @EnableAsync
-@EnableConfigurationProperties({SessionProperties.class, EmailProperties.class, DevelopmentProperties.class})
+@EnableConfigurationProperties({SessionProperties.class, EmailProperties.class, DevelopmentProperties.class,AwsProperties.class})
 public class AppConfig {
 
     @Bean

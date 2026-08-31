@@ -77,3 +77,8 @@ app:
     client-origin: ${CLIENT_ORIGIN:http://localhost:5173}
     is-development: ${IS_DEVELOPMENT:false}
     origin: ${ORIGIN:http://localhost:8080}
+  aws:
+     bucket-name: ${AWS_BUCKET_NAME}
+     region: ${AWS_REGION}
+     access-key: ${AWS_ACCESS_KEY}
+     secret-key: ${AWS_SECRET_KEY}

@@ -1,5 +1,6 @@
 package com.unihub.app.repositories.community.resources;
 
+import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.entities.community.resources.Teacher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,65 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
     Page<Teacher> findByCommunitySlugAndSearch(
             @Param("communitySlug") String communitySlug,
             @Param("search") String search,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                SELECT DISTINCT t FROM Teacher t
+                JOIN t.coursesTaught c
+                WHERE t.community.slug = :communitySlug
+                AND (CAST(:studyYear AS string) IS NULL OR c.studyYear.studyYearName = :studyYear)
+                AND (:semester IS NULL OR c.semester = :semester)
+            """,
+            countQuery = """
+                SELECT COUNT(DISTINCT t) FROM Teacher t
+                JOIN t.coursesTaught c
+                WHERE t.community.slug = :communitySlug
+                AND (CAST(:studyYear AS string) IS NULL OR c.studyYear.studyYearName = :studyYear)
+                AND (:semester IS NULL OR c.semester = :semester)
+            """
+    )
+    Page<Teacher> findByCommunitySlugAndFilters(
+            @Param("communitySlug") String communitySlug,
+            @Param("studyYear") StudyYearName studyYear,
+            @Param("semester") Integer semester,
+            Pageable pageable
+    );
+
+    @Query(
+            value = """
+                SELECT DISTINCT t FROM Teacher t
+                JOIN t.coursesTaught c
+                WHERE t.community.slug = :communitySlug
+                AND (CAST(:studyYear AS string) IS NULL OR c.studyYear.studyYearName = :studyYear)
+                AND (:semester IS NULL OR c.semester = :semester)
+                AND (
+                    LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(CONCAT(t.firstName, ' ', t.lastName)) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(CONCAT(t.lastName, ' ', t.firstName)) LIKE LOWER(CONCAT('%', :search, '%'))
+                )
+            """,
+            countQuery = """
+                SELECT COUNT(DISTINCT t) FROM Teacher t
+                JOIN t.coursesTaught c
+                WHERE t.community.slug = :communitySlug
+                AND (CAST(:studyYear AS string) IS NULL OR c.studyYear.studyYearName = :studyYear)
+                AND (:semester IS NULL OR c.semester = :semester)
+                AND (
+                    LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(CONCAT(t.firstName, ' ', t.lastName)) LIKE LOWER(CONCAT('%', :search, '%'))
+                    OR LOWER(CONCAT(t.lastName, ' ', t.firstName)) LIKE LOWER(CONCAT('%', :search, '%'))
+                )
+            """
+    )
+    Page<Teacher> findByCommunitySlugAndFiltersAndSearch(
+            @Param("communitySlug") String communitySlug,
+            @Param("search") String search,
+            @Param("studyYear") StudyYearName studyYear,
+            @Param("semester") Integer semester,
             Pageable pageable
     );
 

@@ -6,6 +6,7 @@ import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.response.TeacherDetailResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.resources.TeacherService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,9 +41,11 @@ public class TeacherController {
     public ResponseEntity<PageDto<TeacherResponseDto>> getCommunityTeachers(
             @PathVariable String communitySlug,
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) StudyYearName studyYear,
+            @RequestParam(required = false) Integer semester,
             @PageableDefault(page = 0, size = 20, sort = "lastName", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        PageDto<TeacherResponseDto> page = teacherService.getPaginatedTeachers(communitySlug, search, pageable);
+        PageDto<TeacherResponseDto> page = teacherService.getPaginatedTeachers(communitySlug, search, studyYear, semester, pageable);
         return ResponseEntity.ok(page);
     }
 
@@ -66,10 +70,9 @@ public class TeacherController {
 
     @GetMapping("/api/v1/teachers/{teacherId}")
     public ResponseEntity<TeacherDetailResponseDto> getTeacherDetail(
-            @PathVariable UUID teacherId,
-            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @PathVariable UUID teacherId
     ) {
-        TeacherDetailResponseDto detail = teacherService.getTeacherDetail(teacherId, pageable);
+        TeacherDetailResponseDto detail = teacherService.getTeacherDetail(teacherId);
         return ResponseEntity.ok(detail);
     }
 }

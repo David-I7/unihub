@@ -206,7 +206,7 @@ public class TeacherServiceTests {
     }
 
     @Test
-    @DisplayName("getPaginatedTeachers returns list of teachers for community")
+    @DisplayName("getPaginatedTeachers returns list of teachers for community without filters")
     public void testGetPaginatedTeachers_Success() {
         UUID teacherId = UUID.randomUUID();
         Teacher teacher = Teacher.builder()
@@ -224,7 +224,7 @@ public class TeacherServiceTests {
         when(teacherRepository.findByCommunitySlug("fmi-info-id", pageRequest))
                 .thenReturn(new PageImpl<>(List.of(teacher), pageRequest, 1));
 
-        PageDto<TeacherResponseDto> result = teacherService.getPaginatedTeachers("fmi-info-id", null, pageRequest);
+        PageDto<TeacherResponseDto> result = teacherService.getPaginatedTeachers("fmi-info-id", null, null, null, pageRequest);
 
         assertNotNull(result);
         assertEquals(1, result.totalElements());
@@ -232,7 +232,33 @@ public class TeacherServiceTests {
     }
 
     @Test
-    @DisplayName("getTeacherDetail returns details with courses, metrics breakdown and ratings")
+    @DisplayName("getPaginatedTeachers with filters calls findByCommunitySlugAndFilters")
+    public void testGetPaginatedTeachers_WithFilters() {
+        UUID teacherId = UUID.randomUUID();
+        Teacher teacher = Teacher.builder()
+                .id(teacherId)
+                .community(community)
+                .firstName("Daniel")
+                .lastName("Dragulici")
+                .averageRating(4.8f)
+                .ratingsCount(12)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+        when(communityRepository.existsBySlug("fmi-info-id")).thenReturn(true);
+        when(teacherRepository.findByCommunitySlugAndFilters("fmi-info-id", null, 1, pageRequest))
+                .thenReturn(new PageImpl<>(List.of(teacher), pageRequest, 1));
+
+        PageDto<TeacherResponseDto> result = teacherService.getPaginatedTeachers("fmi-info-id", null, null, 1, pageRequest);
+
+        assertNotNull(result);
+        assertEquals(1, result.totalElements());
+        verify(teacherRepository).findByCommunitySlugAndFilters("fmi-info-id", null, 1, pageRequest);
+    }
+
+    @Test
+    @DisplayName("getTeacherDetail returns details with courses and metrics breakdown without ratings list")
     public void testGetTeacherDetail_Success() {
         UUID teacherId = UUID.randomUUID();
         Teacher teacher = Teacher.builder()
@@ -247,32 +273,12 @@ public class TeacherServiceTests {
                 .coursesTaught(Collections.emptyList())
                 .build();
 
-        User ratingUser = User.builder()
-                .id(UUID.randomUUID())
-                .username("student1")
-                .email("student1@example.com")
-                .build();
-
-        TeacherRating rating = TeacherRating.builder()
-                .id(1L)
-                .teacher(teacher)
-                .user(ratingUser)
-                .title("Great teacher")
-                .description("Loved the lectures")
-                .isAnonymous(false)
-                .createdAt(OffsetDateTime.now())
-                .values(Collections.emptySet())
-                .build();
-
-        PageRequest pageRequest = PageRequest.of(0, 10);
         when(teacherRepository.findByIdWithCommunityAndCourses(teacherId)).thenReturn(Optional.of(teacher));
         when(teacherRatingRepository.findMetricBreakdownByTeacherId(teacherId)).thenReturn(List.<Object[]>of(
                 new Object[]{1, "Teaching ability", "Delivers content", 4.5, 1L}
         ));
-        when(teacherRatingRepository.findByTeacherId(teacherId, pageRequest))
-                .thenReturn(new PageImpl<>(List.of(rating), pageRequest, 1));
 
-        TeacherDetailResponseDto result = teacherService.getTeacherDetail(teacherId, pageRequest);
+        TeacherDetailResponseDto result = teacherService.getTeacherDetail(teacherId);
 
         assertNotNull(result);
         assertEquals(teacherId, result.id());
@@ -280,7 +286,5 @@ public class TeacherServiceTests {
         assertEquals(43, result.estimatedAge());
         assertEquals(1, result.detailedRatings().size());
         assertEquals("Teaching ability", result.detailedRatings().get(0).metricName());
-        assertEquals(1, result.ratings().totalElements());
-        assertEquals("student1", result.ratings().content().get(0).author().username());
     }
 }

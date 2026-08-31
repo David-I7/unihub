@@ -1,6 +1,5 @@
 package com.unihub.app.dto.community.resources.response;
 
-import com.unihub.app.dto.PageDto;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
@@ -17,7 +16,6 @@ public record TeacherDetailResponseDto(
         int ratingsCount,
         OffsetDateTime createdAt,
         List<CourseIdentifiersResponseDto> coursesTaught,
-        List<TeacherMetricRatingDto> detailedRatings,
-        PageDto<TeacherRatingResponseDto> ratings
+        List<TeacherMetricRatingDto> detailedRatings
 ) {
 }

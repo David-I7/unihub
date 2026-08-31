@@ -28,7 +28,7 @@ public class EmailService {
                 "username", username,
                 "verificationCode", verificationCode,
                 "supportEmail", emailProperties.supportEmail(),
-                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() * 60
+                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() / 60
         );
         sendHtmlEmail(
                 emailProperties.noReplyEmail(),
@@ -43,7 +43,7 @@ public class EmailService {
         Map<String, Object> variables = Map.of(
                 "username", username,
                 "verificationCode", verificationCode,
-                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() * 60,
+                "expirationMinutes", emailProperties.emailVerificationTokenExpirationSec() / 60,
                 "supportEmail", emailProperties.supportEmail()
         );
         sendHtmlEmail(
@@ -74,7 +74,7 @@ public class EmailService {
                 "username", username,
                 "resetUrl", resetUrl,
                 "supportEmail", emailProperties.supportEmail(),
-                "expirationMinutes", emailProperties.passwordResetTokenExpirationSec() * 60
+                "expirationMinutes", emailProperties.passwordResetTokenExpirationSec() / 60
         );
         sendHtmlEmail(
                 emailProperties.noReplyEmail(),

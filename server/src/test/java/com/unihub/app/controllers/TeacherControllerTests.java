@@ -120,10 +120,10 @@ public class TeacherControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(teacherService.getPaginatedTeachers(eq("fmi-info-id"), any(), any(Pageable.class)))
+        when(teacherService.getPaginatedTeachers(eq("fmi-info-id"), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(pageDto);
 
-        mockMvc.perform(get("/api/v1/communities/fmi-info-id/teachers")
+        mockMvc.perform(get("/api/v1/communities/fmi-info-id/teachers?studyYear=YEAR_1&semester=1")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -187,24 +187,6 @@ public class TeacherControllerTests extends BaseIntegrationTest {
                 .ratingsCount(10)
                 .build();
 
-        TeacherRatingResponseDto ratingDto = TeacherRatingResponseDto.builder()
-                .id(1L)
-                .title("Great teacher")
-                .description("Loved the class")
-                .createdAt(OffsetDateTime.now())
-                .isAnonymous(false)
-                .author(new OwnerDto(UUID.randomUUID(), "student1", true))
-                .values(Collections.emptyList())
-                .build();
-
-        PageDto<TeacherRatingResponseDto> ratingsPage = PageDto.<TeacherRatingResponseDto>builder()
-                .content(List.of(ratingDto))
-                .number(0)
-                .size(10)
-                .totalElements(1)
-                .totalPages(1)
-                .build();
-
         TeacherDetailResponseDto detailDto = TeacherDetailResponseDto.builder()
                 .id(teacherId)
                 .firstName("Daniel")
@@ -215,10 +197,9 @@ public class TeacherControllerTests extends BaseIntegrationTest {
                 .createdAt(OffsetDateTime.now())
                 .coursesTaught(Collections.emptyList())
                 .detailedRatings(List.of(metricDto))
-                .ratings(ratingsPage)
                 .build();
 
-        when(teacherService.getTeacherDetail(eq(teacherId), any(Pageable.class)))
+        when(teacherService.getTeacherDetail(eq(teacherId)))
                 .thenReturn(detailDto);
 
         mockMvc.perform(get("/api/v1/teachers/" + teacherId)
@@ -227,7 +208,6 @@ public class TeacherControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.id").value(teacherId.toString()))
                 .andExpect(jsonPath("$.firstName").value("Daniel"))
                 .andExpect(jsonPath("$.estimatedAge").value(42))
-                .andExpect(jsonPath("$.detailedRatings[0].metricName").value("Teaching ability"))
-                .andExpect(jsonPath("$.ratings.content[0].title").value("Great teacher"));
+                .andExpect(jsonPath("$.detailedRatings[0].metricName").value("Teaching ability"));
     }
 }

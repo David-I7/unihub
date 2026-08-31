@@ -7,6 +7,7 @@ import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.response.*;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.entities.community.resources.Teacher;
 import com.unihub.app.entities.community.resources.TeacherRating;
 import com.unihub.app.mappers.PageMapper;
@@ -43,15 +44,15 @@ public class TeacherService {
 
     @Transactional
     public TeacherResponseDto createTeacher(String communitySlug, UserDto caller, CreateTeacherRequestDto dto) {
-        if (caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_TEACHER)) {
+        if(caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_TEACHER)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create teacher");
         }
 
         Community community = communityRepository.findBySlug(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        String firstName = dto.firstName().trim();
-        String lastName = dto.lastName().trim();
+        String firstName = dto.firstName();
+        String lastName = dto.lastName();
 
         Optional<Teacher> existing = teacherRepository.findByCommunityIdAndFirstNameAndLastName(
                 community.getId(), firstName, lastName
@@ -61,9 +62,6 @@ public class TeacherService {
         }
 
         Teacher teacher = resourceMapper.toTeacherEntity(dto, community);
-        teacher.setFirstName(firstName);
-        teacher.setLastName(lastName);
-
         Teacher saved = teacherRepository.save(teacher);
         return resourceMapper.toTeacherResponseDto(saved);
     }
@@ -78,16 +76,14 @@ public class TeacherService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
         String communitySlug = teacher.getCommunity().getSlug();
+
         if (caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.UPDATE_TEACHER)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update teacher");
         }
 
-        String newFirstName = dto.firstName() != null ? dto.firstName().trim() : teacher.getFirstName();
-        String newLastName = dto.lastName() != null ? dto.lastName().trim() : teacher.getLastName();
-
-        if (!newFirstName.equalsIgnoreCase(teacher.getFirstName()) || !newLastName.equalsIgnoreCase(teacher.getLastName())) {
+        if (!dto.firstName().equalsIgnoreCase(teacher.getFirstName()) || !dto.lastName().equalsIgnoreCase(teacher.getLastName())) {
             Optional<Teacher> duplicate = teacherRepository.findByCommunityIdAndFirstNameAndLastName(
-                    teacher.getCommunity().getId(), newFirstName, newLastName
+                    teacher.getCommunity().getId(), dto.firstName(), dto.lastName()
             );
             if (duplicate.isPresent() && !duplicate.get().getId().equals(teacherId)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Teacher with the same name already exists in this community");
@@ -95,10 +91,10 @@ public class TeacherService {
         }
 
         if (dto.firstName() != null) {
-            teacher.setFirstName(newFirstName);
+            teacher.setFirstName(dto.firstName());
         }
         if (dto.lastName() != null) {
-            teacher.setLastName(newLastName);
+            teacher.setLastName(dto.lastName());
         }
         if (dto.estimatedAge() != null) {
             teacher.setEstimatedBirthDate(LocalDate.now().minusYears(dto.estimatedAge()));
@@ -122,20 +118,44 @@ public class TeacherService {
     }
 
     @Transactional(readOnly = true)
-    public PageDto<TeacherResponseDto> getPaginatedTeachers(String communitySlug, String search, Pageable pageable) {
+    public PageDto<TeacherResponseDto> getPaginatedTeachers(
+            String communitySlug,
+            String search,
+            StudyYearName studyYear,
+            Integer semester,
+            Pageable pageable
+    ) {
         if (!communityRepository.existsBySlug(communitySlug)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found");
         }
 
-        Page<Teacher> page = (search != null && !search.isBlank())
-                ? teacherRepository.findByCommunitySlugAndSearch(communitySlug, search.trim(), pageable)
-                : teacherRepository.findByCommunitySlug(communitySlug, pageable);
+        boolean hasSearch = search != null && !search.isBlank();
+        boolean hasFilters = studyYear != null || semester != null;
+
+        Page<Teacher> page;
+        if (hasSearch && hasFilters) {
+            page = teacherRepository.findByCommunitySlugAndFiltersAndSearch(
+                    communitySlug, search.trim(), studyYear, semester, pageable
+            );
+        } else if (hasFilters) {
+            page = teacherRepository.findByCommunitySlugAndFilters(
+                    communitySlug, studyYear, semester, pageable
+            );
+        } else if (hasSearch) {
+            page = teacherRepository.findByCommunitySlugAndSearch(
+                    communitySlug, search.trim(), pageable
+            );
+        } else {
+            page = teacherRepository.findByCommunitySlug(
+                    communitySlug, pageable
+            );
+        }
 
         return pageMapper.toPageDto(page.map(resourceMapper::toTeacherResponseDto));
     }
 
     @Transactional(readOnly = true)
-    public TeacherDetailResponseDto getTeacherDetail(UUID teacherId, Pageable pageable) {
+    public TeacherDetailResponseDto getTeacherDetail(UUID teacherId) {
         Teacher teacher = teacherRepository.findByIdWithCommunityAndCourses(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
@@ -159,11 +179,6 @@ public class TeacherService {
                     .build();
         }).toList();
 
-        Page<TeacherRating> ratingsPage = teacherRatingRepository.findByTeacherId(teacherId, pageable);
-        PageDto<TeacherRatingResponseDto> ratingsDto = pageMapper.toPageDto(
-                ratingsPage.map(resourceMapper::toTeacherRatingResponseDto)
-        );
-
         Integer estimatedAge = teacher.getEstimatedBirthDate() != null
                 ? Period.between(teacher.getEstimatedBirthDate(), LocalDate.now()).getYears()
                 : null;
@@ -178,7 +193,6 @@ public class TeacherService {
                 .createdAt(teacher.getCreatedAt())
                 .coursesTaught(coursesTaught)
                 .detailedRatings(detailedRatings)
-                .ratings(ratingsDto)
                 .build();
     }
 }

@@ -14,8 +14,30 @@ import java.util.UUID;
 
 public interface TeacherRatingRepository extends JpaRepository<TeacherRating, Long> {
 
-    @Query("SELECT tr FROM TeacherRating tr LEFT JOIN FETCH tr.user WHERE tr.teacher.id = :teacherId")
-    Page<TeacherRating> findByTeacherId(@Param("teacherId") UUID teacherId, Pageable pageable);
+    @Query( value = """
+        SELECT tr FROM TeacherRating tr
+        LEFT JOIN FETCH tr.user
+        LEFT JOIN FETCH tr.values v
+        LEFT JOIN FETCH v.ratingMetric
+        WHERE tr.teacher.id = :teacherId
+    """,
+    countQuery = """
+        SELECT COUNT(tr) FROM TeacherRating tr
+        WHERE tr.teacher.id = :teacherId
+    """
+    )
+    Page<TeacherRating> findByTeacherIdWithAuthorAndValues(@Param("teacherId") UUID teacherId, Pageable pageable);
+
+    @Query("""
+        SELECT tr FROM TeacherRating tr
+        JOIN FETCH tr.teacher t
+        JOIN FETCH t.community
+        LEFT JOIN FETCH tr.user
+        LEFT JOIN FETCH tr.values v
+        LEFT JOIN FETCH v.ratingMetric
+        WHERE tr.id = :id
+    """)
+    Optional<TeacherRating> findByIdWithTeacherAndValues(@Param("id") Long id);
 
     @Query("""
         SELECT rm.id, rm.name, rm.description, COALESCE(AVG(trv.value * 1.0), 0.0), COUNT(trv.value)
@@ -25,8 +47,6 @@ public interface TeacherRatingRepository extends JpaRepository<TeacherRating, Lo
         ORDER BY rm.id ASC
     """)
     List<Object[]> findMetricBreakdownByTeacherId(@Param("teacherId") UUID teacherId);
-
-    Optional<TeacherRating> findByTeacherIdAndUserId(UUID teacherId, UUID userId);
 
     boolean existsByTeacherIdAndUserId(UUID teacherId, UUID userId);
 }

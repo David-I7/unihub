@@ -13,4 +13,8 @@ public record CreateTeacherRequestDto(
 
         Integer estimatedAge
 ) {
+        public CreateTeacherRequestDto {
+                firstName = firstName != null ? firstName.trim() : firstName;
+                lastName = lastName != null ? lastName.trim() : lastName;
+        }
 }

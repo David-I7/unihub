@@ -59,18 +59,6 @@ public class Teacher {
     @OneToMany(mappedBy = "teacher", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TeacherRating> ratings;
 
-    @Override
-    public String toString() {
-        return "Teacher{" +
-                "id=" + id +
-                ", firstName='" + firstName + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", estimatedBirthDate=" + estimatedBirthDate +
-                ", averageRating=" + averageRating +
-                ", ratingsCount=" + ratingsCount +
-                '}';
-    }
-
     @PrePersist
     void onCreate() {
         createdAt = OffsetDateTime.now();

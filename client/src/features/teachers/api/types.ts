@@ -1,4 +1,6 @@
-import { Page } from "@/types/page";
+import type { CallerMembership } from "@/features/communities/api/types";
+
+export type { CallerMembership };
 
 export interface Teacher {
   id: string;
@@ -58,7 +60,6 @@ export interface TeacherDetail {
   createdAt: string;
   coursesTaught: CourseIdentifier[];
   detailedRatings: TeacherMetricRating[];
-  ratings: Page<TeacherRating>;
 }
 
 export interface CreateTeacherRequest {
@@ -71,4 +72,23 @@ export interface UpdateTeacherRequest {
   firstName?: string;
   lastName?: string;
   estimatedAge?: number;
+}
+
+export interface TeacherMetricRatingInput {
+  metricId: number;
+  value: number;
+}
+
+export interface CreateTeacherRatingRequest {
+  title: string;
+  description?: string;
+  isAnonymous: boolean;
+  values: TeacherMetricRatingInput[];
+}
+
+export interface UpdateTeacherRatingRequest {
+  title: string;
+  description?: string;
+  isAnonymous: boolean;
+  values: TeacherMetricRatingInput[];
 }
