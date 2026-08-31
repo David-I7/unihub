@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
-  Pin,
   Heart,
   MessageSquare,
   ChevronDown,
@@ -10,8 +9,8 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
-  PinOff,
-} from "lucide-react";
+} from "@/components/ui/icons";
+import { Pin, PinOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -121,18 +120,15 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
     <>
       <Card
         className={cn(
-          "group rounded-2xl border bg-card p-5 shadow-xs transition-all space-y-4",
+          "group rounded-2xl border bg-card p-5 shadow-xs transition-all space-y-0",
           post.pinned && "border-primary/40 bg-primary/[0.02]",
           className,
         )}
       >
         {/* Header: Author info, badges, and actions */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <UserAvatar
-              username={post.owner?.username}
-              size="default"
-            />
+            <UserAvatar username={post.owner?.username} size="default" />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm text-foreground">
@@ -153,8 +149,9 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
           <div className="flex items-center gap-1.5">
             {post.pinned && (
               <Badge
-                variant="secondary"
-                className="bg-primary/15 text-primary border-primary/20 font-semibold text-[11px] gap-1 py-0.5 px-2"
+                variant="verified"
+                size="xs"
+                className="font-semibold gap-1"
               >
                 <Pin className="size-3 fill-primary/30" />
                 Pinned
@@ -227,7 +224,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
         </div>
 
         {/* Post Content */}
-        <div className="space-y-2">
+        <div>
           <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
             {post.title}
           </h3>
@@ -299,7 +296,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                 thoughts!
               </p>
             ) : (
-              <div className="space-y-2.5 pl-2 border-l-2 border-primary/20">
+              <div className="space-y-2.5">
                 {fetchedComments.map((comment) => (
                   <CommentItem
                     key={comment.id}

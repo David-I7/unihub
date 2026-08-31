@@ -1,18 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, X, UserPlus, Users, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useState, useMemo } from "react";
+import { UserPlus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchInput } from "@/components/app/SearchInput";
+import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObserver } from "@/hooks/useObserver";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useInfiniteCommunityMembers } from "../../api/getCommunityMembers";
 import { MemberCard } from "./MemberCard";
 import { MemberCardSkeleton } from "./MemberCardSkeleton";
@@ -35,16 +30,13 @@ export function CommunityMembersTab({
   callerMembership,
 }: CommunityMembersTabProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const [selectedRole, setSelectedRole] = useState<string>("ALL");
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
-  const {
-    canAddMember,
-    isOwner,
-    globalPermissions,
-  } = usePermissions(callerMembership);
+  const { canAddMember, isOwner, globalPermissions } =
+    usePermissions(callerMembership);
 
   const canAssignAdmin =
     isOwner ||
@@ -53,19 +45,8 @@ export function CommunityMembersTab({
     user?.role === "ADMIN" ||
     user?.role === "ROOT";
 
-  // 350ms debounce for search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-    }, 350);
-
-    return () => clearTimeout(handler);
-  }, [searchInput]);
-
   const roleParam =
-    selectedRole !== "ALL"
-      ? (selectedRole as CommunityMemberRole)
-      : undefined;
+    selectedRole !== "ALL" ? (selectedRole as CommunityMemberRole) : undefined;
 
   const {
     data,
@@ -101,37 +82,23 @@ export function CommunityMembersTab({
 
   const handleClearFilters = () => {
     setSearchInput("");
-    setDebouncedSearch("");
     setSelectedRole("ALL");
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Toolbar */}
+      {/* 2-tier Header Toolbar */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search Bar */}
-          <div className="relative flex items-center flex-1 max-w-md">
-            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search members by username..."
+          <div className="flex-1 max-w-md">
+            <SearchInput
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-10 pr-10 h-10 text-xs sm:text-sm rounded-xl"
+              onChange={setSearchInput}
+              placeholder="Search members by username..."
+              totalCount={totalMembers}
+              resultLabel="members"
             />
-            {searchInput && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setSearchInput("")}
-                className="absolute right-2.5 size-6 text-muted-foreground hover:text-foreground cursor-pointer"
-                title="Clear search"
-              >
-                <X className="size-3.5" />
-              </Button>
-            )}
           </div>
 
           {/* Add Member Button */}
@@ -146,35 +113,15 @@ export function CommunityMembersTab({
           )}
         </div>
 
-        {/* Filter Row */}
+        {/* Filter Strip */}
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mr-1">
-            <Filter className="size-3.5" />
-            <span className="font-semibold uppercase tracking-wider text-[11px]">
-              Filters:
-            </span>
-          </div>
-
           {/* Role Filter Select */}
-          <div className="w-36">
-            <Select
-              value={selectedRole}
-              onValueChange={(val: string | null) => {
-                if (val) setSelectedRole(val);
-              }}
-            >
-              <SelectTrigger className="h-9 bg-card text-xs rounded-xl">
-                <SelectValue placeholder="Role" />
-              </SelectTrigger>
-              <SelectContent>
-                {ROLE_FILTER_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Role"
+            value={selectedRole}
+            onChange={setSelectedRole}
+            options={ROLE_FILTER_OPTIONS}
+          />
 
           {/* Reset Filters Shortcut */}
           {hasActiveFilters && (
@@ -236,16 +183,6 @@ export function CommunityMembersTab({
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Users className="size-3.5" />
-              <span>
-                Showing {members.length} of {totalMembers}{" "}
-                {totalMembers === 1 ? "member" : "members"}
-              </span>
-            </span>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {members.map((member) => (
               <MemberCard

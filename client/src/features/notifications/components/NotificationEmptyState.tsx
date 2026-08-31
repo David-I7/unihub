@@ -1,4 +1,5 @@
-import { BellOff, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "@/components/ui/icons";
+import { BellOff } from "lucide-react";
 import type { NotificationCategory } from "../api/types";
 
 interface NotificationEmptyStateProps {

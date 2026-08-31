@@ -4,7 +4,7 @@ import {
   Calendar,
   Bell,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 export interface NavItem {
   title: string;
@@ -41,4 +41,3 @@ export function isRouteActive(currentPath: string, targetUrl: string): boolean {
   }
   return currentPath.startsWith(targetUrl);
 }
-

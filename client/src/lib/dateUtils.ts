@@ -43,6 +43,30 @@ export function formatPostDate(dateStr?: string): string {
 }
 
 /**
+ * Formats full date and time in 24h format (e.g., "Aug 28, 2026, 14:30").
+ */
+export function formatDateTime24h(isoStr?: string | null): string {
+  if (!isoStr) return "";
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const datePart = d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+    const timePart = d.toLocaleTimeString(undefined, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    return `${datePart}, ${timePart}`;
+  } catch {
+    return isoStr;
+  }
+}
+
+/**
  * Formats full calendar date with weekday (e.g., "Friday, August 28, 2026").
  */
 export function formatFullDate(isoStr?: string): string {

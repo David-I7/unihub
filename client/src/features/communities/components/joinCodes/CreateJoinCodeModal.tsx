@@ -87,7 +87,8 @@ export function CreateJoinCodeModal({
         <DialogHeader>
           <DialogTitle>Generate Invitation Code</DialogTitle>
           <DialogDescription>
-            Create an invite code with expiration limits or usage caps.
+            The code is automatically deleted when it expired or reaches its
+            usage limit. You can also revoke it manually at any time.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,9 +187,6 @@ export function CreateJoinCodeModal({
                 />
               )}
             </div>
-            <FieldDescription>
-              Leaves open until max uses is reached or code is revoked.
-            </FieldDescription>
           </Field>
 
           <DialogFooter className="pt-3">
@@ -204,7 +202,6 @@ export function CreateJoinCodeModal({
               disabled={createMutation.isPending}
               className="gap-2 font-bold cursor-pointer"
             >
-              <Sparkles className="size-4" />
               {createMutation.isPending ? "Generating..." : "Generate Code"}
             </Button>
           </DialogFooter>

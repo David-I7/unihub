@@ -1,4 +1,4 @@
-import { GraduationCap, PanelLeft } from "lucide-react";
+import { GraduationCap, PanelLeft } from "@/components/ui/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -19,6 +19,7 @@ import { useAuthStore } from "@/features/auth";
 import { useUnreadNotificationCount } from "@/features/notifications";
 import { Link, useLocation } from "react-router";
 import { navItems, isRouteActive } from "./nav";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
@@ -83,6 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               {navItems.map((item) => {
                 const active = isRouteActive(location.pathname, item.url);
                 const isNotifications = item.url === "/notifications";
+                const Icon = item.icon;
 
                 return (
                   <SidebarMenuItem
@@ -97,18 +99,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           : item.title
                       }
                       render={<Link to={item.url} />}
+                      className={cn(
+                        "transition-colors",
+                        active &&
+                          "bg-primary/10 text-primary font-semibold data-active:bg-primary/10 data-active:text-primary hover:bg-primary/15 hover:text-primary",
+                      )}
                     >
                       <div className="relative flex items-center justify-center">
-                        <item.icon className="size-4.5 sm:size-5" />
+                        <Icon
+                          className={cn(
+                            "size-4.5 sm:size-5 transition-all",
+                            active
+                              ? "text-primary stroke-[2.25]"
+                              : "text-sidebar-foreground/80",
+                          )}
+                        />
                         {isNotifications && totalUnread > 0 && (
-                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-sidebar group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
+                          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary ring-2 ring-sidebar group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
                         )}
                       </div>
-                      <span className="truncate">{item.title}</span>
+                      <span className="truncate group-data-[collapsible=icon]:hidden">
+                        {item.title}
+                      </span>
                       {isNotifications && totalUnread > 0 && (
                         <Badge
-                          variant="secondary"
-                          className="ml-auto bg-primary/15 text-primary border-primary/20 text-[10px] font-bold px-1.5 py-0 h-4.5 min-w-4.5 flex items-center justify-center rounded-full group-data-[collapsible=icon]:hidden"
+                          variant="verified"
+                          size="xs"
+                          className="ml-auto font-bold rounded-full group-data-[collapsible=icon]:hidden"
                         >
                           {totalUnread > 99 ? "99+" : totalUnread}
                         </Badge>

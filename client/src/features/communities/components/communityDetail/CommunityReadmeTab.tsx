@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileText, Edit3, Plus } from "lucide-react";
+import { FileText, Edit2 as Edit3, Plus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -19,7 +19,7 @@ export function CommunityReadmeTab({ community, callerMembership }: CommunityRea
   const hasReadme = Boolean(community.readme && community.readme.trim().length > 0);
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       {/* Dynamic Action Button (Edit Readme if exists, Create Readme if not) */}
       {canEditCommunity && (
         <div className="flex justify-end">

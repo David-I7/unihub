@@ -1,20 +1,18 @@
-import { useState, useEffect, useMemo } from "react";
-import { Search, X, Plus, GraduationCap, Users, Filter } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { useState, useMemo } from "react";
+import { Plus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { SearchInput } from "@/components/app/SearchInput";
+import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObserver } from "@/hooks/useObserver";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useCommunityStudyYears } from "@/features/communities";
-import { formatStudyYearName, slugToStudyYearEnum } from "@/features/studyYears";
+import {
+  formatStudyYearName,
+  slugToStudyYearEnum,
+} from "@/features/studyYears";
 import { useInfiniteCommunityTeachers } from "../api/getCommunityTeachers";
 import { TeacherCard } from "./TeacherCard";
 import { TeacherCardSkeleton } from "./TeacherCardSkeleton";
@@ -37,7 +35,7 @@ export function CommunityTeachersTab({
   callerMembership,
 }: CommunityTeachersTabProps) {
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const [selectedStudyYear, setSelectedStudyYear] = useState<string>("ALL");
   const [selectedSemester, setSelectedSemester] = useState<string>("ALL");
   const [createTeacherOpen, setCreateTeacherOpen] = useState(false);
@@ -74,17 +72,10 @@ export function CommunityTeachersTab({
       user?.role === "ADMIN" ||
       user?.role === "ROOT");
 
-  // 350ms debounce for search query
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-    }, 350);
-
-    return () => clearTimeout(handler);
-  }, [searchInput]);
-
-  const studyYearParam = selectedStudyYear !== "ALL" ? selectedStudyYear : undefined;
-  const semesterParam = selectedSemester !== "ALL" ? parseInt(selectedSemester, 10) : undefined;
+  const studyYearParam =
+    selectedStudyYear !== "ALL" ? selectedStudyYear : undefined;
+  const semesterParam =
+    selectedSemester !== "ALL" ? parseInt(selectedSemester, 10) : undefined;
 
   const {
     data,
@@ -124,38 +115,24 @@ export function CommunityTeachersTab({
 
   const handleClearFilters = () => {
     setSearchInput("");
-    setDebouncedSearch("");
     setSelectedStudyYear("ALL");
     setSelectedSemester("ALL");
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Toolbar */}
+      {/* 2-tier Header Toolbar */}
       <div className="flex flex-col gap-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           {/* Search Bar */}
-          <div className="relative flex items-center flex-1 max-w-md">
-            <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search teachers by first or last name..."
+          <div className="flex-1 max-w-md">
+            <SearchInput
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="pl-10 pr-10 h-10 text-xs sm:text-sm rounded-xl"
+              onChange={setSearchInput}
+              placeholder="Search teachers by name..."
+              totalCount={totalTeachers}
+              resultLabel="teachers"
             />
-            {searchInput && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => setSearchInput("")}
-                className="absolute right-2.5 size-6 text-muted-foreground hover:text-foreground cursor-pointer"
-                title="Clear search"
-              >
-                <X className="size-3.5" />
-              </Button>
-            )}
           </div>
 
           {/* Add Teacher Button */}
@@ -170,57 +147,24 @@ export function CommunityTeachersTab({
           )}
         </div>
 
-        {/* Filter Dropdowns Row */}
+        {/* Filter Strip */}
         <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mr-1">
-            <Filter className="size-3.5" />
-            <span className="font-semibold uppercase tracking-wider text-[11px]">
-              Filters:
-            </span>
-          </div>
-
           {/* Study Year Select */}
-          <div className="w-36">
-            <Select
-              value={selectedStudyYear}
-              onValueChange={(val: string | null) => {
-                if (val) setSelectedStudyYear(val);
-              }}
-              disabled={isStudyYearsLoading}
-            >
-              <SelectTrigger className="h-9 bg-card text-xs rounded-xl">
-                <SelectValue placeholder="Study Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {studyYearOptions.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Year"
+            value={selectedStudyYear}
+            onChange={setSelectedStudyYear}
+            options={studyYearOptions}
+            disabled={isStudyYearsLoading}
+          />
 
           {/* Semester Select */}
-          <div className="w-36">
-            <Select
-              value={selectedSemester}
-              onValueChange={(val: string | null) => {
-                if (val) setSelectedSemester(val);
-              }}
-            >
-              <SelectTrigger className="h-9 bg-card text-xs rounded-xl">
-                <SelectValue placeholder="Semester" />
-              </SelectTrigger>
-              <SelectContent>
-                {SEMESTER_FILTER_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FilterSelect
+            label="Semester"
+            value={selectedSemester}
+            onChange={setSelectedSemester}
+            options={SEMESTER_FILTER_OPTIONS}
+          />
 
           {/* Reset Filters Shortcut */}
           {hasActiveFilters && (
@@ -238,32 +182,38 @@ export function CommunityTeachersTab({
 
       {/* Main Teachers Grid & States */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {Array.from({ length: 6 }).map((_, idx) => (
             <TeacherCardSkeleton key={idx} />
           ))}
         </div>
       ) : isError ? (
         <ErrorStateCard
-          message={error instanceof Error ? error.message : "Failed to load community teachers roster."}
+          message={
+            error instanceof Error
+              ? error.message
+              : "Failed to load community teachers."
+          }
           onRetry={() => refetch()}
         />
       ) : teachers.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center space-y-3">
           <div className="size-12 rounded-2xl bg-muted/50 flex items-center justify-center text-muted-foreground">
-            <GraduationCap className="size-6" />
+            <Users className="size-6" />
           </div>
           <div className="space-y-1 max-w-md">
             <h3 className="font-heading text-base font-bold text-foreground">
-              {hasActiveFilters ? "No Teachers Match Filters" : "No Teachers Registered Yet"}
+              {hasActiveFilters
+                ? "No Teachers Match Filters"
+                : "No Teachers Added Yet"}
             </h3>
             <p className="text-xs text-muted-foreground">
               {hasActiveFilters
-                ? "No faculty members matched the current search and filter criteria. Try resetting your filters."
-                : "This community currently does not have any teachers registered in its catalog."}
+                ? "No instructors matched your current search and filter criteria. Try adjusting your query."
+                : "This community has not registered any instructors or professors yet."}
             </p>
           </div>
-          {hasActiveFilters ? (
+          {hasActiveFilters && (
             <Button
               variant="outline"
               size="xs"
@@ -272,31 +222,11 @@ export function CommunityTeachersTab({
             >
               Reset Filters
             </Button>
-          ) : (
-            canAddTeacher && (
-              <Button
-                size="xs"
-                onClick={() => setCreateTeacherOpen(true)}
-                className="mt-2 gap-1.5 text-xs font-semibold cursor-pointer"
-              >
-                <Plus className="size-3.5" />
-                Add First Teacher
-              </Button>
-            )
           )}
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span className="flex items-center gap-1.5 font-medium">
-              <Users className="size-3.5" />
-              <span>
-                Showing {teachers.length} of {totalTeachers} {totalTeachers === 1 ? "teacher" : "teachers"}
-              </span>
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {teachers.map((teacher) => (
               <TeacherCard
                 key={teacher.id}
@@ -308,7 +238,10 @@ export function CommunityTeachersTab({
           </div>
 
           {/* Infinite Scroll Sentinel */}
-          <div ref={sentinelRef} className="py-4 text-center text-xs text-muted-foreground">
+          <div
+            ref={sentinelRef}
+            className="py-4 text-center text-xs text-muted-foreground"
+          >
             {isFetchingNextPage && (
               <div className="flex items-center justify-center gap-2">
                 <div className="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -319,7 +252,7 @@ export function CommunityTeachersTab({
         </div>
       )}
 
-      {/* Create Teacher Modal */}
+      {/* Add Teacher Dialog */}
       <CreateTeacherDialog
         communitySlug={communitySlug}
         open={createTeacherOpen}

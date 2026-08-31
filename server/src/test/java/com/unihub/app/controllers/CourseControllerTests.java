@@ -16,6 +16,8 @@ import com.unihub.app.dto.community.content.response.MaterialFileDto;
 import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.content.response.PresignedUploadUrlResponseDto;
+import com.unihub.app.dto.community.resources.request.CreateCourseRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateCourseRequestDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
@@ -47,16 +49,17 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
 public class CourseControllerTests extends BaseIntegrationTest {
 
-    private static final String BASE_URL = "/api/v1/communities/fmi-info-id/study-years/year-1/courses/asc";
+    private static final String COURSES_BASE_URL = "/api/v1/communities/fmi-info-id/study-years/year-1/courses";
+    private static final String COURSE_URL = "/api/v1/communities/fmi-info-id/study-years/year-1/courses/asc";
 
     @Autowired
     private MockMvc mockMvc;
@@ -93,6 +96,164 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
         when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
         when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
+    }
+
+    // =========================================================================
+    // POST / (createCourse)
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST .../courses creates a new course")
+    public void testCreateCourse_Success() throws Exception {
+        CreateCourseRequestDto requestDto = CreateCourseRequestDto.builder()
+                .name("Arhitectura sistemelor de calcul")
+                .slug("asc")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(5)
+                .description("Course description")
+                .build();
+
+        CourseResponseDto responseDto = CourseResponseDto.builder()
+                .id(1L)
+                .name("Arhitectura sistemelor de calcul")
+                .slug("asc")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(5)
+                .archived(false)
+                .description("Course description")
+                .build();
+
+        when(courseService.createCourse(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), any(CreateCourseRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(COURSES_BASE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.slug").value("asc"))
+                .andExpect(jsonPath("$.abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.semester").value(1))
+                .andExpect(jsonPath("$.creditPoints").value(5))
+                .andExpect(jsonPath("$.archived").value(false));
+    }
+
+    // =========================================================================
+    // PATCH /{courseSlug} (updateCourse)
+    // =========================================================================
+
+    @Test
+    @DisplayName("PATCH .../courses/asc partially updates course")
+    public void testUpdateCourse_Success() throws Exception {
+        UpdateCourseRequestDto requestDto = UpdateCourseRequestDto.builder()
+                .name("ASC Avansat")
+                .creditPoints(6)
+                .build();
+
+        CourseResponseDto responseDto = CourseResponseDto.builder()
+                .id(1L)
+                .name("ASC Avansat")
+                .slug("asc")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(6)
+                .archived(false)
+                .build();
+
+        when(courseService.updateCourse(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(UpdateCourseRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(COURSE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.name").value("ASC Avansat"))
+                .andExpect(jsonPath("$.creditPoints").value(6));
+    }
+
+    // =========================================================================
+    // DELETE /{courseSlug} (deleteCourse)
+    // =========================================================================
+
+    @Test
+    @DisplayName("DELETE .../courses/asc deletes course")
+    public void testDeleteCourse_Success() throws Exception {
+        mockMvc.perform(delete(COURSE_URL))
+                .andExpect(status().isNoContent());
+
+        verify(courseService).deleteCourse("fmi-info-id", StudyYearName.YEAR_1, "asc");
+    }
+
+    // =========================================================================
+    // PATCH /{courseSlug}/archive (archiveCourse)
+    // =========================================================================
+
+    @Test
+    @DisplayName("PATCH .../courses/asc/archive archives course")
+    public void testArchiveCourse_Success() throws Exception {
+        CourseResponseDto responseDto = CourseResponseDto.builder()
+                .id(1L)
+                .slug("asc")
+                .archived(true)
+                .build();
+
+        when(courseService.archiveCourse("fmi-info-id", StudyYearName.YEAR_1, "asc", true))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(COURSE_URL + "/archive")
+                        .param("archived", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.archived").value(true));
+    }
+
+    // =========================================================================
+    // POST & DELETE /{courseSlug}/teachers/{teacherId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST .../courses/asc/teachers/{teacherId} adds teacher to course")
+    public void testAddTeacher_Success() throws Exception {
+        UUID teacherId = UUID.randomUUID();
+        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
+                .id(teacherId)
+                .firstName("Daniel")
+                .lastName("Dragulici")
+                .build();
+
+        CourseHomeResponseDto responseDto = CourseHomeResponseDto.builder()
+                .course(CourseResponseDto.builder().id(1L).slug("asc").build())
+                .teachers(List.of(teacherDto))
+                .build();
+
+        when(courseService.addTeacher("fmi-info-id", StudyYearName.YEAR_1, "asc", teacherId))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(COURSE_URL + "/teachers/" + teacherId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teachers[0].id").value(teacherId.toString()))
+                .andExpect(jsonPath("$.teachers[0].firstName").value("Daniel"));
+    }
+
+    @Test
+    @DisplayName("DELETE .../courses/asc/teachers/{teacherId} removes teacher from course")
+    public void testRemoveTeacher_Success() throws Exception {
+        UUID teacherId = UUID.randomUUID();
+        CourseHomeResponseDto responseDto = CourseHomeResponseDto.builder()
+                .course(CourseResponseDto.builder().id(1L).slug("asc").build())
+                .teachers(List.of())
+                .build();
+
+        when(courseService.removeTeacher("fmi-info-id", StudyYearName.YEAR_1, "asc", teacherId))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(delete(COURSE_URL + "/teachers/" + teacherId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teachers").isEmpty());
     }
 
     // =========================================================================
@@ -135,7 +296,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(courseService.getCourseHome("fmi-info-id", StudyYearName.YEAR_1, "asc"))
                 .thenReturn(courseResponse);
 
-        mockMvc.perform(get(BASE_URL + "/home")
+        mockMvc.perform(get(COURSE_URL + "/home")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.course.id").value(1))
@@ -204,7 +365,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, "asc", null))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(get(BASE_URL + "/materials")
+        mockMvc.perform(get(COURSE_URL + "/materials")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.folders").isArray())
@@ -249,7 +410,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(courseService.getMaterials("fmi-info-id", StudyYearName.YEAR_1, "asc", subFolderId))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(get(BASE_URL + "/materials")
+        mockMvc.perform(get(COURSE_URL + "/materials")
                         .param("folderId", subFolderId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -263,7 +424,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /folders creates a folder in course")
+    @DisplayName("POST .../folders creates a folder in course")
     public void testCreateFolder_Success() throws Exception {
         UUID folderId = UUID.randomUUID();
         CreateFolderRequestDto requestDto = new CreateFolderRequestDto("New Folder", null);
@@ -276,7 +437,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(folderService.createFolder(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateFolderRequestDto.class)))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(post(BASE_URL + "/folders")
+        mockMvc.perform(post(COURSE_URL + "/folders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
@@ -289,7 +450,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /materials/upload-url generates presigned upload url")
+    @DisplayName("POST .../materials/upload-url generates presigned upload url")
     public void testRequestUploadUrl_Success() throws Exception {
         PresignedUploadUrlRequestDto requestDto = new PresignedUploadUrlRequestDto("slides.pdf", "application/pdf", 1024L);
         PresignedUploadUrlResponseDto responseDto = PresignedUploadUrlResponseDto.builder()
@@ -300,7 +461,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(materialFileService.requestPresignedUploadUrl(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(PresignedUploadUrlRequestDto.class)))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(post(BASE_URL + "/materials/upload-url")
+        mockMvc.perform(post(COURSE_URL + "/materials/upload-url")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
@@ -313,7 +474,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /materials/files creates a material file")
+    @DisplayName("POST .../materials/files creates a material file")
     public void testCreateMaterialFile_Success() throws Exception {
         UUID materialId = UUID.randomUUID();
         CreateMaterialFileRequestDto requestDto = new CreateMaterialFileRequestDto(
@@ -330,7 +491,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(materialFileService.createMaterialFile(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateMaterialFileRequestDto.class)))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(post(BASE_URL + "/materials/files")
+        mockMvc.perform(post(COURSE_URL + "/materials/files")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
@@ -343,7 +504,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /materials/links creates a material link")
+    @DisplayName("POST .../materials/links creates a material link")
     public void testCreateMaterialLink_Success() throws Exception {
         UUID materialId = UUID.randomUUID();
         CreateMaterialLinkRequestDto requestDto = new CreateMaterialLinkRequestDto(
@@ -360,7 +521,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(materialLinkService.createMaterialLink(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateMaterialLinkRequestDto.class)))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(post(BASE_URL + "/materials/links")
+        mockMvc.perform(post(COURSE_URL + "/materials/links")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
@@ -373,7 +534,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("GET /posts returns paginated course posts")
+    @DisplayName("GET .../posts returns paginated course posts")
     public void testGetCoursePosts_Success() throws Exception {
         UUID postId = UUID.randomUUID();
         PostResponseDto postDto = PostResponseDto.builder()
@@ -397,7 +558,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(coursePostService.getCoursePosts(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(Pageable.class)))
                 .thenReturn(pageDto);
 
-        mockMvc.perform(get(BASE_URL + "/posts")
+        mockMvc.perform(get(COURSE_URL + "/posts")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
@@ -410,7 +571,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
     // =========================================================================
 
     @Test
-    @DisplayName("POST /posts creates a course post")
+    @DisplayName("POST .../posts creates a course post")
     public void testCreateCoursePost_Success() throws Exception {
         UUID postId = UUID.randomUUID();
         CreatePostRequestDto requestDto = new CreatePostRequestDto("New Course Post", "Description text");
@@ -424,7 +585,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
         when(coursePostService.createCoursePost(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreatePostRequestDto.class)))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(post(BASE_URL + "/posts")
+        mockMvc.perform(post(COURSE_URL + "/posts")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
@@ -36,7 +36,7 @@ export function CommunityStudyYearsTab({
             className="gap-1.5 font-bold cursor-pointer"
           >
             <Plus className="size-4" />
-            Add Study Year
+            <span>Add Study Year</span>
           </Button>
         </div>
       )}
@@ -58,4 +58,3 @@ export function CommunityStudyYearsTab({
     </div>
   );
 }
-

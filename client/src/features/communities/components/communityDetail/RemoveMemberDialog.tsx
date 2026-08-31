@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { UserMinus } from "lucide-react";
+import { UserMinus } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -51,11 +51,11 @@ export function RemoveMemberDialog({
           <DialogDescription>
             Are you sure you want to remove{" "}
             <strong className="text-foreground">@{member.username}</strong> from
-            this community? They will lose all access to community resources.
+            this community?
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-border/60">
+        <DialogFooter className="gap-2 pt-2 border-t border-border/60">
           <Button
             type="button"
             variant="outline"
@@ -71,7 +71,6 @@ export function RemoveMemberDialog({
             disabled={removeMutation.isPending}
             className="gap-1.5 font-bold cursor-pointer"
           >
-            <UserMinus className="size-4" />
             {removeMutation.isPending ? "Removing..." : "Remove Member"}
           </Button>
         </DialogFooter>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, Award, Calendar, FileText, Info, Users, BookOpen } from "lucide-react";
+import { Star, Award, Calendar, FileText, Info, Users, BookOpen } from "@/components/ui/icons";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Card } from "@/components/ui/card";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";

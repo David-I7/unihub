@@ -47,11 +47,11 @@ export function DeleteReviewAlertDialog({
         <DialogHeader>
           <DialogTitle>Delete Review</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this review? This action cannot be undone and will recalculate the teacher&apos;s aggregate rating.
+            Are you sure you want to delete this review?
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"

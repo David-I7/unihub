@@ -24,6 +24,7 @@ public final class Permissions {
     public static final String DELETE_STUDY_YEAR = "delete:studyYear";
     public static final String CREATE_COURSE = "create:course";
     public static final String UPDATE_COURSE = "update:course";
+    public static final String DELETE_COURSE = "delete:course";
     public static final String ARCHIVE_COURSE = "archive:course";
 
     // Course Content (Folders & Materials)

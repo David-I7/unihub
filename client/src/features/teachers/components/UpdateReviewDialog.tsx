@@ -12,18 +12,43 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { StarRatingInput } from "./StarRatingInput";
 import { useUpdateTeacherRating } from "../api/updateTeacherRating";
 import type { TeacherMetricRating, TeacherRating } from "../api/types";
 
 const FALLBACK_METRICS = [
-  { metricId: 1, metricName: "Teaching ability", description: "Effectiveness in explaining concepts and engaging students" },
-  { metricId: 2, metricName: "Punctuality", description: "Punctual schedule adherence and timely responsiveness" },
-  { metricId: 3, metricName: "Communication", description: "Clear and accessible communication with students" },
-  { metricId: 4, metricName: "Knowledge", description: "Deep understanding and mastery of the course material" },
-  { metricId: 5, metricName: "Fairness", description: "Impartial grading and fair treatment of all students" },
+  {
+    metricId: 1,
+    metricName: "Teaching ability",
+    description: "Effectiveness in explaining concepts and engaging students",
+  },
+  {
+    metricId: 2,
+    metricName: "Punctuality",
+    description: "Punctual schedule adherence and timely responsiveness",
+  },
+  {
+    metricId: 3,
+    metricName: "Communication",
+    description: "Clear and accessible communication with students",
+  },
+  {
+    metricId: 4,
+    metricName: "Knowledge",
+    description: "Deep understanding and mastery of the course material",
+  },
+  {
+    metricId: 5,
+    metricName: "Fairness",
+    description: "Impartial grading and fair treatment of all students",
+  },
 ];
 
 interface UpdateReviewDialogProps {
@@ -54,14 +79,16 @@ function UpdateReviewForm({
   const [title, setTitle] = useState(rating.title || "");
   const [description, setDescription] = useState(rating.description || "");
   const [isAnonymous, setIsAnonymous] = useState(rating.isAnonymous || false);
-  const [metricValues, setMetricValues] = useState<Record<number, number>>(() => {
-    const initial: Record<number, number> = {};
-    activeMetrics.forEach((m) => {
-      const existing = rating.values?.find((v) => v.metricId === m.metricId);
-      initial[m.metricId] = existing ? existing.value : 5;
-    });
-    return initial;
-  });
+  const [metricValues, setMetricValues] = useState<Record<number, number>>(
+    () => {
+      const initial: Record<number, number> = {};
+      activeMetrics.forEach((m) => {
+        const existing = rating.values?.find((v) => v.metricId === m.metricId);
+        initial[m.metricId] = existing ? existing.value : 5;
+      });
+      return initial;
+    },
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -123,7 +150,7 @@ function UpdateReviewForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 py-2">
+    <form onSubmit={handleSubmit} className="space-y-5 pt-2">
       {serverError && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
           {serverError}
@@ -132,7 +159,7 @@ function UpdateReviewForm({
 
       {/* Review Title */}
       <Field>
-        <FieldLabel htmlFor="editReviewTitle">Headline / Summary *</FieldLabel>
+        <FieldLabel htmlFor="editReviewTitle">Title *</FieldLabel>
         <Input
           id="editReviewTitle"
           placeholder="e.g. Excellent lectures, very supportive during office hours"
@@ -147,11 +174,43 @@ function UpdateReviewForm({
         {errors.title && <FieldError errors={[{ message: errors.title }]} />}
       </Field>
 
+      {/* Detailed Written Feedback */}
+      <Field>
+        <FieldLabel htmlFor="editReviewDescription">Body (Optional)</FieldLabel>
+        <Textarea
+          id="editReviewDescription"
+          placeholder="Share your detailed experience regarding exams, workload, and course materials (Markdown supported)..."
+          rows={4}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          maxLength={2000}
+        />
+        <div className="flex justify-between text-[11px] text-muted-foreground">
+          <span>Be constructive and respectful.</span>
+          <span>{description.length} / 2000</span>
+        </div>
+      </Field>
+
+      {/* Anonymous Posting Toggle */}
+      <div className="flex items-center justify-between rounded-xl">
+        <div className="space-y-0.5">
+          <FieldLabel htmlFor="editAnonymousSwitch" className="cursor-pointer">
+            Post Anonymously
+          </FieldLabel>
+          <FieldDescription>
+            Hide your username and avatar from other students on this review.
+          </FieldDescription>
+        </div>
+        <Switch
+          id="editAnonymousSwitch"
+          checked={isAnonymous}
+          onCheckedChange={setIsAnonymous}
+        />
+      </div>
+
       {/* Detailed Ratings Section */}
       <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Performance Metrics Breakdown
-        </h4>
+        <h4 className="text-xs font-bold">Performance Metrics Breakdown</h4>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {activeMetrics.map((metric) => (
             <div
@@ -173,42 +232,6 @@ function UpdateReviewForm({
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Detailed Written Feedback */}
-      <Field>
-        <FieldLabel htmlFor="editReviewDescription">
-          Detailed Feedback (Optional)
-        </FieldLabel>
-        <Textarea
-          id="editReviewDescription"
-          placeholder="Share your detailed experience regarding exams, workload, and course materials (Markdown supported)..."
-          rows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={2000}
-        />
-        <div className="flex justify-between text-[11px] text-muted-foreground">
-          <span>Be constructive and respectful.</span>
-          <span>{description.length} / 2000</span>
-        </div>
-      </Field>
-
-      {/* Anonymous Posting Toggle */}
-      <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 p-3.5">
-        <div className="space-y-0.5">
-          <FieldLabel htmlFor="editAnonymousSwitch" className="cursor-pointer">
-            Post Anonymously
-          </FieldLabel>
-          <FieldDescription>
-            Hide your username and avatar from other students on this review.
-          </FieldDescription>
-        </div>
-        <Switch
-          id="editAnonymousSwitch"
-          checked={isAnonymous}
-          onCheckedChange={setIsAnonymous}
-        />
       </div>
 
       <DialogFooter className="pt-2 border-t border-border/60">

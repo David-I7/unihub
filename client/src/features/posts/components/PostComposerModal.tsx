@@ -70,14 +70,14 @@ export function PostComposerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a Discussion Post</DialogTitle>
+          <DialogTitle>Create a Post</DialogTitle>
           <DialogDescription>
             Share an announcement, ask questions, or start an academic
             discussion.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
           {form.serverError && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
               {form.serverError}
@@ -145,9 +145,7 @@ export function PostComposerModal({
                   className="font-mono text-xs leading-relaxed"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
-                  <span>
-                    Markdown formatting (links, bold, code) is supported.
-                  </span>
+                  <span>Markdown formatting is supported.</span>
                   <span>{form.values.description.length} / 20000</span>
                 </div>
               </div>

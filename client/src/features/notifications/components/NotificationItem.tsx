@@ -1,14 +1,16 @@
 import {
   Bell,
   Calendar,
-  CalendarOff,
   Check,
   GraduationCap,
   Heart,
   Info,
-  Megaphone,
   MessageSquare,
   Users,
+} from "@/components/ui/icons";
+import {
+  CalendarOff,
+  Megaphone,
   Wrench,
 } from "lucide-react";
 import type { AppNotification } from "../api/types";

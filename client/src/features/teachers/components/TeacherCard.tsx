@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Star, MoreVertical, Edit2, Trash2 } from "lucide-react";
+import { Star, MoreVertical, Edit2, Trash2 } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,8 +53,8 @@ export function TeacherCard({
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             <UserAvatar
               username={teacher.lastName || teacher.firstName}
-              className="size-12 rounded-xl text-base font-bold ring-1 ring-primary/20 shrink-0 transition-transform group-hover:scale-105"
-              fallbackClassName="rounded-xl"
+              size="lg"
+              className="ring-1 ring-primary/20 shrink-0 transition-transform group-hover:scale-105"
             />
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -63,7 +63,7 @@ export function TeacherCard({
                 </h3>
               </div>
               {teacher.estimatedAge && (
-                <Badge variant="outline" className="text-[10px] font-mono py-0 px-1.5">
+                <Badge variant="outline" size="xs" className="font-mono">
                   {teacher.estimatedAge} yrs old
                 </Badge>
               )}
@@ -94,7 +94,7 @@ export function TeacherCard({
                     className="gap-2 cursor-pointer text-xs"
                   >
                     <Edit2 className="size-3.5" />
-                    Edit
+                    <span>Edit</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
@@ -102,7 +102,7 @@ export function TeacherCard({
                     className="gap-2 cursor-pointer text-xs"
                   >
                     <Trash2 className="size-3.5" />
-                    Delete
+                    <span>Delete</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

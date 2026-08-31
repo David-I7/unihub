@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Lock, LogIn, UserPlus } from "lucide-react";
+import { Lock, LogIn, UserPlus } from "@/components/ui/icons";
 import useAuthStore from "../store/useAuthStore";
 import { Button } from "@/components/ui/button";
 

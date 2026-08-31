@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { formatDateTime24h } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { useUpdateJoinCode } from "../../api/joinCodes";
 import type { CommunityJoinCode } from "../../api/types";
@@ -83,17 +84,25 @@ export function EditJoinCodeModal({
     }
   };
 
+  const formattedCurrentExpiration = joinCode.expiresAt
+    ? formatDateTime24h(joinCode.expiresAt)
+    : "Never expires";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Edit Join Code ({joinCode.code})</DialogTitle>
+          <DialogTitle>Edit Join Code</DialogTitle>
           <DialogDescription>
-            Adjust the usage limit or extend the expiration date for this code.
+            Adjust the usage limit or extend expiration for code{" "}
+            <strong className="font-mono text-foreground font-bold">
+              {joinCode.code}
+            </strong>
+            .
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {/* Max Uses Config */}
           <Field>
             <FieldLabel htmlFor="editMaxUses">Max Uses</FieldLabel>
@@ -122,7 +131,11 @@ export function EditJoinCodeModal({
               </Button>
             </div>
             <FieldDescription>
-              Currently used: {joinCode.usesCount} times.
+              Currently used:{" "}
+              <strong className="text-foreground font-semibold">
+                {joinCode.usesCount}
+              </strong>{" "}
+              times.
             </FieldDescription>
           </Field>
 
@@ -155,6 +168,13 @@ export function EditJoinCodeModal({
                 {isUnlimitedDuration ? "Never Expires ✓" : "Never Expire"}
               </Button>
             </div>
+            <FieldDescription>
+              Current expiration:{" "}
+              <strong className="text-foreground font-semibold">
+                {formattedCurrentExpiration}
+              </strong>
+              .
+            </FieldDescription>
           </Field>
 
           <DialogFooter className="pt-3">

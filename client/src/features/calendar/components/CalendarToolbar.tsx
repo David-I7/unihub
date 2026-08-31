@@ -1,14 +1,9 @@
-import {
-  ChevronLeft,
-  ChevronRight,
-  LayoutGrid,
-  List,
-  Plus,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "@/components/ui/icons";
+import { LayoutGrid, List } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarFilters } from "./CalendarFilters";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 interface CalendarToolbarProps {
   examCount: number;
@@ -52,7 +47,7 @@ export function CalendarToolbar({
   const yearNumber = currentDate.getFullYear();
 
   return (
-    <div className="rounded-2xl border bg-card p-4 shadow-xs space-y-4">
+    <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs space-y-4">
       {/* Top Row: Date Navigation & Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Navigation Controls + Month Title */}
@@ -88,64 +83,54 @@ export function CalendarToolbar({
           </h2>
         </div>
 
-        {/* Right Action buttons (View Switcher & Add Event) */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-0.5 rounded-xl border bg-muted/40 p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => setViewMode("auto")}
-              className={cn(
-                "px-2 py-1 text-[11px] font-semibold rounded-lg transition-colors cursor-pointer",
-                viewMode === "auto"
-                  ? "bg-background text-foreground shadow-2xs font-bold"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title="Auto responsive mode (<640px = list, >=640px = grid)"
-            >
-              Auto
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("month")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer",
-                viewMode === "month"
-                  ? "bg-background text-primary shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title="Month grid view"
-            >
-              <LayoutGrid className="size-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "p-1.5 rounded-lg transition-colors cursor-pointer",
-                viewMode === "list"
-                  ? "bg-background text-primary shadow-2xs"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              title="Agenda list view"
-            >
-              <List className="size-3.5" />
-            </button>
-          </div>
+        {/* Right Action buttons (View Switcher Tabs & Add Event) */}
+        <div className="flex flex-wrap items-center gap-3">
+          <Tabs
+            value={viewMode}
+            onValueChange={(val) =>
+              setViewMode(val as "auto" | "month" | "list")
+            }
+            className="w-auto"
+          >
+            <TabsList className="h-9 p-1 bg-muted/60 rounded-xl gap-1">
+              <TabsTrigger
+                value="auto"
+                className="h-7 text-xs px-2.5"
+                title="Auto responsive mode"
+              >
+                Auto
+              </TabsTrigger>
+              <TabsTrigger
+                value="month"
+                className="h-7 px-2"
+                title="Month grid view"
+              >
+                <LayoutGrid className="size-3.5" />
+              </TabsTrigger>
+              <TabsTrigger
+                value="list"
+                className="h-7 px-2"
+                title="Agenda list view"
+              >
+                <List className="size-3.5" />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {/* Add Event Button */}
           <Button
             size="sm"
             onClick={() => openCreateModal()}
             disabled={!canCreateEvent}
-            className="gap-1.5 font-semibold text-xs h-9 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="gap-1.5 font-bold text-xs h-9 px-3.5 rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
           >
             <Plus className="size-4" />
-            Add Event
+            <span>Add Event</span>
           </Button>
         </div>
       </div>
 
-      {/* Filter Selectors and Search Input */}
+      {/* Filter Selectors and Standard Search Input */}
       <CalendarFilters
         examCount={examCount}
         assignmentCount={assignmentCount}

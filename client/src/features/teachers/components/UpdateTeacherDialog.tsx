@@ -33,13 +33,11 @@ const updateTeacherSchema: z.ZodType<UpdateTeacherFormValues> = z.object({
     .trim()
     .min(1, "Last name is required")
     .max(50, "Last name must be under 50 characters"),
-  estimatedAge: z
-    .string()
-    .refine((val) => {
-      if (!val || val.trim() === "") return true;
-      const num = parseInt(val, 10);
-      return !isNaN(num) && num >= 18 && num <= 120;
-    }, "Age must be a number between 18 and 120"),
+  estimatedAge: z.string().refine((val) => {
+    if (!val || val.trim() === "") return true;
+    const num = parseInt(val, 10);
+    return !isNaN(num) && num >= 18 && num <= 120;
+  }, "Age must be a number between 18 and 120"),
 });
 
 interface UpdateTeacherDialogProps {
@@ -86,7 +84,9 @@ function UpdateTeacherForm({
           },
         });
 
-        toast.success(`Prof. ${updated.firstName} ${updated.lastName} updated!`);
+        toast.success(
+          `Prof. ${updated.firstName} ${updated.lastName} updated!`,
+        );
         onSuccess?.(updated);
         onClose();
       } catch (err: unknown) {
@@ -98,7 +98,7 @@ function UpdateTeacherForm({
   });
 
   return (
-    <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
+    <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
       {form.serverError && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
           {form.serverError}
@@ -136,7 +136,9 @@ function UpdateTeacherForm({
       </div>
 
       <Field>
-        <FieldLabel htmlFor="editEstimatedAge">Estimated Age (optional)</FieldLabel>
+        <FieldLabel htmlFor="editEstimatedAge">
+          Estimated Age (optional)
+        </FieldLabel>
         <Input
           id="editEstimatedAge"
           name="estimatedAge"
@@ -184,7 +186,8 @@ export function UpdateTeacherDialog({
         <DialogHeader>
           <DialogTitle>Edit Teacher</DialogTitle>
           <DialogDescription>
-            Update profile details for Prof. {teacher.firstName} {teacher.lastName}.
+            Update profile details for Prof. {teacher.firstName}{" "}
+            {teacher.lastName}.
           </DialogDescription>
         </DialogHeader>
 

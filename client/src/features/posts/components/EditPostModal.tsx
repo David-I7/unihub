@@ -78,7 +78,7 @@ export function EditPostModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
           {form.serverError && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
               {form.serverError}
@@ -175,7 +175,6 @@ export function EditPostModal({
               disabled={form.isSubmitting || updateMutation.isPending}
               className="gap-1.5 font-bold cursor-pointer"
             >
-              <Check className="size-4" />
               {form.isSubmitting || updateMutation.isPending
                 ? "Saving..."
                 : "Save Changes"}

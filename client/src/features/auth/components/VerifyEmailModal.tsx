@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { Mail, CheckCircle2, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle2, ArrowLeft } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

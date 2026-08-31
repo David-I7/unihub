@@ -90,24 +90,21 @@ export function usePermissions(
   );
 
   const canEditComment = useCallback(
-    (commentOwnerId: string) => {
+    (commentOwnerId?: string | number | null) => {
       if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
         return true;
       }
-      return hasPermission(PERMISSIONS.UPDATE_COMMENT);
+      return false;
     },
-    [user, hasPermission],
+    [user],
   );
 
   const canDeleteComment = useCallback(
-    (commentOwnerId: string) => {
+    (commentOwnerId?: string | number | null) => {
       if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
         return true;
       }
-      return (
-        hasPermission(PERMISSIONS.DELETE_COMMENT) ||
-        hasPermission(PERMISSIONS.MODERATE_COMMENT)
-      );
+      return hasPermission(PERMISSIONS.MODERATE_COMMENT);
     },
     [user, hasPermission],
   );

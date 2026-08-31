@@ -1,17 +1,9 @@
 import { useState } from "react";
-import {
-  MoreVertical,
-  ShieldCheck,
-  User,
-  Crown,
-  Calendar,
-  UserMinus,
-  UserCog,
-} from "lucide-react";
+import { MoreVertical, Calendar, User, Settings } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { RoleBadge } from "@/components/app/RoleBadge";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -39,12 +31,8 @@ export function MemberCard({
   const [removeOpen, setRemoveOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
-  const {
-    isOwner,
-    canRemoveMember,
-    canUpdateMemberRole,
-    globalPermissions,
-  } = usePermissions(callerMembership);
+  const { isOwner, canRemoveMember, canUpdateMemberRole, globalPermissions } =
+    usePermissions(callerMembership);
 
   const isPlatformAdmin =
     globalPermissions.includes("ADMIN") ||
@@ -77,13 +65,13 @@ export function MemberCard({
 
   return (
     <>
-      <Card className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between space-y-3.5">
-        <div className="flex items-start justify-between gap-3">
+      <Card className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between space-y-1">
+        <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <UserAvatar
               username={member.username}
-              className="size-11 rounded-xl text-sm font-bold ring-1 ring-border shrink-0"
-              fallbackClassName="rounded-xl"
+              size="md"
+              className="ring-1 ring-border shrink-0"
             />
             <div className="space-y-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
@@ -96,41 +84,12 @@ export function MemberCard({
                   </span>
                 )}
               </div>
-              {member.email && (
-                <p className="text-xs text-muted-foreground truncate">
-                  {member.email}
-                </p>
-              )}
             </div>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            {/* Role Badge */}
-            {member.role === "COMMUNITY_OWNER" ? (
-              <Badge
-                variant="outline"
-                className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 font-semibold gap-1 text-[11px] px-2 py-0.5"
-              >
-                <Crown className="size-3 text-amber-500" />
-                Owner
-              </Badge>
-            ) : member.role === "COMMUNITY_ADMIN" ? (
-              <Badge
-                variant="outline"
-                className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 font-semibold gap-1 text-[11px] px-2 py-0.5"
-              >
-                <ShieldCheck className="size-3 text-blue-500" />
-                Admin
-              </Badge>
-            ) : (
-              <Badge
-                variant="secondary"
-                className="bg-muted text-muted-foreground font-medium gap-1 text-[11px] px-2 py-0.5"
-              >
-                <User className="size-3 text-muted-foreground" />
-                Member
-              </Badge>
-            )}
+            {/* Unified Role Badge */}
+            <RoleBadge role={member.role} size="xs" />
 
             {/* Actions Menu */}
             {hasAnyActions && (
@@ -153,7 +112,7 @@ export function MemberCard({
                       onClick={() => setChangeRoleOpen(true)}
                       className="gap-2 cursor-pointer text-xs"
                     >
-                      <UserCog className="size-3.5" />
+                      <Settings className="size-3.5" />
                       <span>Change Role</span>
                     </DropdownMenuItem>
                   )}
@@ -163,7 +122,7 @@ export function MemberCard({
                       onClick={() => setRemoveOpen(true)}
                       className="gap-2 cursor-pointer text-xs"
                     >
-                      <UserMinus className="size-3.5" />
+                      <User className="size-3.5" />
                       <span>Remove Member</span>
                     </DropdownMenuItem>
                   )}
@@ -173,29 +132,35 @@ export function MemberCard({
           </div>
         </div>
 
-        {/* Footer with joined date */}
-        <div className="pt-2.5 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5 text-[11px]">
-            <Calendar className="size-3 text-muted-foreground/70" />
-            <span>Joined {formattedJoinedDate ?? "recently"}</span>
-          </span>
-        </div>
+        {/* Card Footer Info */}
+        {formattedJoinedDate && (
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2.5 border-t border-border/60">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="size-3 text-muted-foreground/70" />
+              <span>Joined {formattedJoinedDate}</span>
+            </span>
+          </div>
+        )}
       </Card>
 
       {/* Action Dialogs */}
-      <ChangeMemberRoleModal
-        member={member}
-        communitySlug={communitySlug}
-        open={changeRoleOpen}
-        onOpenChange={setChangeRoleOpen}
-      />
+      {canEditRole && (
+        <ChangeMemberRoleModal
+          communitySlug={communitySlug}
+          member={member}
+          open={changeRoleOpen}
+          onOpenChange={setChangeRoleOpen}
+        />
+      )}
 
-      <RemoveMemberDialog
-        member={member}
-        communitySlug={communitySlug}
-        open={removeOpen}
-        onOpenChange={setRemoveOpen}
-      />
+      {canRemove && (
+        <RemoveMemberDialog
+          communitySlug={communitySlug}
+          member={member}
+          open={removeOpen}
+          onOpenChange={setRemoveOpen}
+        />
+      )}
     </>
   );
 }

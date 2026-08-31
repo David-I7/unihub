@@ -1,4 +1,4 @@
-import { Bell } from "lucide-react";
+import { Bell } from "@/components/ui/icons";
 import { Link } from "react-router";
 import { useUnreadNotificationCount } from "../api/notifications";
 import { useAuthStore } from "@/features/auth";

@@ -4,13 +4,12 @@ import {
   Calendar as CalendarIcon,
   Clock,
   MapPin,
+  Globe,
+  ChevronRight,
 } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
-import {
-  getEventCategoryConfig,
-  isEventCompleted,
-} from "../utils/eventUtils";
+import { getEventCategoryConfig } from "../utils/eventUtils";
 import {
   formatDayHeader,
   formatTimeRange,
@@ -23,6 +22,15 @@ interface CalendarAgendaListProps {
   events: CalendarEvent[];
 }
 
+function formatDuration(minutes?: number): string | null {
+  if (!minutes || minutes <= 0) return null;
+  if (minutes >= 60) {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  }
+  return `${minutes} min`;
+}
 
 export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
@@ -81,18 +89,15 @@ export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {groupedEvents.map((group) => (
-        <div
-          key={group.dateStr}
-          className="overflow-hidden rounded-2xl border bg-card shadow-xs"
-        >
-          {/* Day Header */}
-          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2.5">
-            <div className="flex items-center gap-2">
+        <div key={group.dateStr} className="space-y-3">
+          {/* Day Header with Sticky-friendly style */}
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2.5">
               <span
                 className={cn(
-                  "font-heading text-xs font-bold uppercase tracking-wider",
+                  "font-heading text-sm font-bold uppercase tracking-wider",
                   group.isToday ? "text-primary font-extrabold" : "text-foreground",
                 )}
               >
@@ -102,95 +107,132 @@ export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
               {group.isToday && (
                 <Badge
                   variant="default"
-                  className="h-4 px-1.5 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground"
+                  className="h-5 px-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-xs"
                 >
                   Today
                 </Badge>
               )}
             </div>
+
+            <span className="text-xs text-muted-foreground font-medium">
+              {group.events.length} {group.events.length === 1 ? "event" : "events"}
+            </span>
           </div>
 
-          {/* Day Events Feed */}
-          <div className="divide-y divide-border">
+          {/* Events List for this Day */}
+          <div className="space-y-3">
             {group.events.map((event) => {
               const config = getEventCategoryConfig(event.type);
               const Icon = config.icon;
               const timeStr = formatTimeRange(event.startTime, event.endTime);
-              const abbreviation =
-                event.courseAbbreviation?.trim() || "ABBV";
+              const durationStr = formatDuration(event.durationMinutes);
+              const abbreviation = event.courseAbbreviation?.trim();
+              const isOnline = event.location === "ONLINE";
 
               return (
                 <div
                   key={event.id}
                   onClick={() => openEventDetails(event.id)}
-                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
+                  className="group relative overflow-hidden rounded-2xl border bg-card p-4 sm:p-5 shadow-xs transition-all duration-200 hover:border-primary/60 hover:shadow-md cursor-pointer space-y-3 group-hover:-translate-y-0.5"
                 >
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    {/* Top Row: Category Badge + Course Abbreviation + Course Name */}
+                  {/* Top Row: Category Badge + Course Tag + Location Badge + Time Pill */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5">
                     <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Event Type Badge */}
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                          config.container,
+                          "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold uppercase tracking-wide",
+                          config.badge,
                         )}
                       >
-                        <Icon className="size-3 shrink-0" />
-                        {config.label}
+                        <Icon className="size-3.5 shrink-0" />
+                        <span>{config.label}</span>
                       </span>
 
-                      <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {abbreviation}
-                      </span>
+                      {/* Course Abbreviation */}
+                      {abbreviation && (
+                        <span className="font-mono text-xs font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-lg uppercase">
+                          {abbreviation}
+                        </span>
+                      )}
 
+                      {/* Study Year */}
                       {event.studyYear && (
-                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                        <Badge
+                          variant="outline"
+                          size="xs"
+                          className="font-medium text-muted-foreground"
+                        >
                           {event.studyYear}
-                        </span>
+                        </Badge>
                       )}
 
-                      {event.courseName && (
-                        <span className="text-[11px] font-medium text-muted-foreground truncate max-w-[200px]">
-                          {event.courseName}
-                        </span>
-                      )}
-
-                      {event.isSubscribed && !isEventCompleted(event) && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          <Bell className="size-2.5 fill-current" />
-                          Reminder
-                        </span>
+                      {/* Location Badge */}
+                      {event.location && (
+                        <Badge
+                          variant="secondary"
+                          size="xs"
+                          className="font-medium gap-1 text-muted-foreground"
+                        >
+                          {isOnline ? (
+                            <Globe className="size-3 text-blue-500" />
+                          ) : (
+                            <MapPin className="size-3 text-amber-500" />
+                          )}
+                          <span className="capitalize">
+                            {event.location.toLowerCase().replace("_", " ")}
+                          </span>
+                        </Badge>
                       )}
                     </div>
 
-                    {/* Event Title */}
-                    <h4 className="font-heading text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {event.title}
-                    </h4>
-
-                    {/* Community name subtitle */}
-                    {event.communityName && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">
-                        {event.communityName}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Right Side / Meta: Time and Location */}
-                  <div className="flex flex-wrap sm:flex-col sm:items-end items-center gap-2 sm:gap-1 text-xs text-muted-foreground shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
+                    {/* Time & Duration Display */}
                     {timeStr && (
-                      <div className="flex items-center gap-1 font-mono text-[11px] font-semibold text-foreground">
-                        <Clock className="size-3 text-muted-foreground" />
+                      <div className="flex items-center gap-2 font-mono text-xs font-semibold text-foreground bg-muted/60 px-2.5 py-1 rounded-xl border border-border/40 shrink-0">
+                        <Clock className="size-3.5 text-muted-foreground" />
                         <span>{timeStr}</span>
-                      </div>
-                    )}
-
-                    {event.location && (
-                      <div className="flex items-center gap-1 text-[11px] capitalize text-muted-foreground">
-                        <MapPin className="size-3 text-muted-foreground shrink-0" />
-                        <span>{event.location.toLowerCase().replace("_", " ")}</span>
+                        {durationStr && (
+                          <span className="text-[11px] text-muted-foreground font-normal">
+                            • {durationStr}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
+
+                  {/* Middle Content: Title and Course / Community Details */}
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <h4 className="font-heading text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        {event.title}
+                      </h4>
+
+                      <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                        {event.courseName && (
+                          <span className="font-medium text-foreground/85 truncate max-w-sm">
+                            {event.courseName}
+                          </span>
+                        )}
+                        {event.communityName && (
+                          <span className="truncate max-w-xs text-muted-foreground/70">
+                            • {event.communityName}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <ChevronRight className="size-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hidden sm:block" />
+                  </div>
+
+                  {/* Footer: Subscription / Reminder Badge */}
+                  {event.isSubscribed && (
+                    <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-primary font-semibold text-[11px]">
+                        <Bell className="size-3.5 fill-primary text-primary" />
+                        <span>Reminder notification enabled</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

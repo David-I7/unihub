@@ -1,9 +1,9 @@
 import {
   ExternalLink,
   Download,
-  AlertCircle,
+  AlertTriangle as AlertCircle,
   Eye,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

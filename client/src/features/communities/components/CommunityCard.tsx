@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { ShieldCheck, Users, User, Check } from "lucide-react";
+import { ShieldCheck, Users, User, Check } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { computeGradient } from "@/lib/gradientUtils";

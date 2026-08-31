@@ -1,65 +1,37 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   useInfiniteCommunities,
   CommunityHeader,
-  CommunitySearch,
   CommunityGrid,
   CommunityGridSkeleton,
   CommunityEmptyState,
 } from "@/features/communities";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
+import { SearchInput } from "@/components/app/SearchInput";
+import { FilterSelect } from "@/components/app/FilterSelect";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Check,
   ShieldCheck,
-  ArrowDownWideNarrow,
-  ArrowUpNarrowWide,
-} from "lucide-react";
-import { debounce } from "@/lib/performanceUtils";
+  ChevronDown,
+  ChevronUp,
+} from "@/components/ui/icons";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useObserver } from "@/hooks/useObserver";
 
 const SORT_FIELD_OPTIONS = [
   { value: "memberCount", label: "Member Count" },
   { value: "createdAt", label: "Creation Date" },
   { value: "name", label: "Name" },
-] as const;
-
-const SORT_FIELD_LABELS: Record<string, string> = {
-  memberCount: "Member Count",
-  createdAt: "Creation Date",
-  name: "Name",
-};
+];
 
 export default function CommunitiesPage() {
   const [searchInput, setSearchInput] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [sortField, setSortField] = useState<string>("memberCount");
   const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
-
-  const debouncedUpdate = useMemo(
-    () =>
-      debounce((value: string) => {
-        setDebouncedSearch(value.trim());
-      }, 350),
-    [],
-  );
-
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      setSearchInput(value);
-      debouncedUpdate(value);
-    },
-    [debouncedUpdate],
-  );
 
   const sortBy = useMemo(() => {
     return `${sortField},${sortDirection}`;
@@ -102,20 +74,24 @@ export default function CommunitiesPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
-      {/* Self-contained, memoized Community Header with dialogs */}
+      {/* Self-contained Community Header with dialogs */}
       <CommunityHeader />
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-        <div className="flex-1 max-w-xl">
-          <CommunitySearch
-            value={searchInput}
-            onChange={handleSearchChange}
-            totalCount={totalElements}
-          />
+      {/* 2-tier Toolbar: Search Bar on Top, Filter Row below */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="flex-1 max-w-xl">
+            <SearchInput
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder="Search communities by name..."
+              totalCount={totalElements}
+            />
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
+        {/* Filter Strip */}
+        <div className="flex flex-wrap items-center gap-2.5 pt-1">
           {/* Verified Toggle Filter */}
           <Button
             type="button"
@@ -129,32 +105,21 @@ export default function CommunitiesPage() {
                 verifiedOnly ? "text-emerald-500" : "text-muted-foreground"
               }`}
             />
-            <span className="font-normal">Verified</span>
-            {verifiedOnly && <Check className="size-3 text-emerald-500 ml-0.5" />}
+            <span>Verified Only</span>
+            {verifiedOnly && (
+              <Check className="size-3 text-emerald-500 ml-0.5" />
+            )}
           </Button>
 
-          {/* Sort By Field Dropdown */}
-          <Select
+          {/* Sort By Filter */}
+          <FilterSelect
+            label="Sort by"
             value={sortField}
-            onValueChange={(val) => {
-              if (val) setSortField(val);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[150px] text-xs font-normal rounded-xl">
-              <SelectValue placeholder="Sort by">
-                {SORT_FIELD_LABELS[sortField] ?? "Sort by"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_FIELD_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={setSortField}
+            options={SORT_FIELD_OPTIONS}
+          />
 
-          {/* Sort Direction Toggle Button */}
+          {/* Sort Direction Toggle */}
           <Button
             type="button"
             variant="outline"
@@ -167,8 +132,8 @@ export default function CommunitiesPage() {
           >
             {sortDirection === "desc" ? (
               <>
-                <ArrowDownWideNarrow className="size-3.5 text-muted-foreground" />
-                <span className="text-xs font-normal">
+                <ChevronDown className="size-3.5 text-muted-foreground" />
+                <span className="text-xs">
                   {sortField === "name"
                     ? "Z → A"
                     : sortField === "createdAt"
@@ -178,8 +143,8 @@ export default function CommunitiesPage() {
               </>
             ) : (
               <>
-                <ArrowUpNarrowWide className="size-3.5 text-muted-foreground" />
-                <span className="text-xs font-normal">
+                <ChevronUp className="size-3.5 text-muted-foreground" />
+                <span className="text-xs">
                   {sortField === "name"
                     ? "A → Z"
                     : sortField === "createdAt"
@@ -203,7 +168,7 @@ export default function CommunitiesPage() {
       ) : allCommunities.length === 0 ? (
         <CommunityEmptyState
           searchQuery={searchInput}
-          onClear={() => handleSearchChange("")}
+          onClear={() => setSearchInput("")}
         />
       ) : (
         <div className="space-y-6">

@@ -1,5 +1,5 @@
-import { useParams, useSearchParams } from "react-router";
-import { Info, FolderOpen, MessageSquare } from "lucide-react";
+import { useParams } from "react-router";
+import { Info, FolderOpen, MessageSquare } from "@/components/ui/icons";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import {
@@ -10,6 +10,7 @@ import {
   CourseSkeleton,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useUrlTab } from "@/hooks/useUrlTab";
 
 const VALID_TABS = ["about", "materials", "posts"] as const;
 type CourseTab = (typeof VALID_TABS)[number];
@@ -25,7 +26,6 @@ export default function CourseDetailPage() {
     studyYearSlug: string;
     courseSlug: string;
   }>();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     data: courseHome,
@@ -34,26 +34,9 @@ export default function CourseDetailPage() {
     refetch,
   } = useCourseHome(communitySlug, studyYearSlug, courseSlug);
 
-  const rawTab = searchParams.get("tab");
-  const currentTab: CourseTab =
-    rawTab && VALID_TABS.includes(rawTab as CourseTab)
-      ? (rawTab as CourseTab)
-      : DEFAULT_TAB;
-
-  const handleTabChange = (nextTab: string) => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (nextTab === DEFAULT_TAB) {
-          next.delete("tab");
-        } else {
-          next.set("tab", nextTab);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  };
+  const [currentTab, setTab] = useUrlTab<CourseTab>(DEFAULT_TAB, {
+    validTabs: VALID_TABS,
+  });
 
   if (isLoading) {
     return <CourseSkeleton />;
@@ -87,7 +70,7 @@ export default function CourseDetailPage() {
       {/* Course Tabs (Top Navigation) */}
       <Tabs
         value={currentTab}
-        onValueChange={handleTabChange}
+        onValueChange={(val) => setTab(val as CourseTab)}
         className="w-full space-y-6 min-w-0"
       >
         <div className="w-full overflow-x-auto no-scrollbar">

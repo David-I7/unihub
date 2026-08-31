@@ -1,8 +1,7 @@
-import { FileText, Pen, Search, Video, X } from "lucide-react";
+import { FileText, Pen, Video } from "@/components/ui/icons";
 import { useUserCommunities } from "@/features/users";
 import { useCalendarStore } from "../store/useCalendarStore";
 import type { EventType } from "../api/types";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchInput } from "@/components/app/SearchInput";
 import { useCommunityStudyYears } from "@/features/communities";
 import {
   StudyYearNameMap,
@@ -74,7 +74,7 @@ export function CalendarFilters({
               setCommunitySlug(val);
             }}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
               <SelectValue placeholder="Select Community" />
             </SelectTrigger>
             <SelectContent>
@@ -109,7 +109,7 @@ export function CalendarFilters({
             }}
             disabled={!communitySlug}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
@@ -148,7 +148,7 @@ export function CalendarFilters({
             }}
             disabled={!studyYear}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
               <SelectValue placeholder="Select Course" />
             </SelectTrigger>
             <SelectContent>
@@ -178,7 +178,7 @@ export function CalendarFilters({
               if (val) setSelectedType(val as EventType | "All");
             }}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
@@ -204,25 +204,15 @@ export function CalendarFilters({
         </div>
       </div>
 
-      {/* Row 2: Search Input (Dedicated Full-Width Line) */}
-      <div className="relative w-full">
-        <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-        <Input
-          type="text"
-          placeholder="Search events, courses, rooms..."
+      {/* Row 2: Standard Search Input */}
+      <div className="w-full pt-1">
+        <SearchInput
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 pr-8 h-9 text-xs w-full bg-background"
+          onChange={setSearchQuery}
+          placeholder="Search events by title, course, or room..."
+          totalCount={totalCount}
+          resultLabel="events"
         />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
       </div>
     </div>
   );

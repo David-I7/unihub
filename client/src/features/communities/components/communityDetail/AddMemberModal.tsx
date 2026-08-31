@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { UserPlus, Shield, User } from "lucide-react";
+import { Shield, User } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -29,9 +30,16 @@ import { useForm } from "@/hooks/useForm";
 import { useAddCommunityMember } from "../../api/addCommunityMember";
 import type { CommunityMemberRole } from "../../api/types";
 
+type MemberRoleUi = "Member" | "Admin";
+
+const ROLE_UI_TO_SERVER: Record<MemberRoleUi, CommunityMemberRole> = {
+  Member: "COMMUNITY_MEMBER",
+  Admin: "COMMUNITY_ADMIN",
+};
+
 type AddMemberFormValues = {
   username: string;
-  role: CommunityMemberRole;
+  role: MemberRoleUi;
 };
 
 const addMemberSchema: z.ZodType<AddMemberFormValues> = z.object({
@@ -45,7 +53,7 @@ const addMemberSchema: z.ZodType<AddMemberFormValues> = z.object({
       /^[a-zA-Z0-9_.-]+$/,
       "Username can only contain letters, numbers, underscores, dots, and hyphens",
     ),
-  role: z.enum(["COMMUNITY_MEMBER", "COMMUNITY_ADMIN", "COMMUNITY_OWNER"]),
+  role: z.enum(["Member", "Admin"]),
 });
 
 interface AddMemberModalProps {
@@ -55,36 +63,36 @@ interface AddMemberModalProps {
   canAssignAdmin?: boolean;
 }
 
-function AddMemberForm({
+export function AddMemberModal({
   communitySlug,
-  onClose,
+  open,
+  onOpenChange,
   canAssignAdmin = false,
-}: {
-  communitySlug: string;
-  onClose: () => void;
-  canAssignAdmin?: boolean;
-}) {
+}: AddMemberModalProps) {
   const addMutation = useAddCommunityMember();
 
   const form = useForm<AddMemberFormValues>({
     initialValues: {
       username: "",
-      role: "COMMUNITY_MEMBER",
+      role: "Member",
     },
     schema: addMemberSchema,
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
+        const serverRole: CommunityMemberRole =
+          ROLE_UI_TO_SERVER[values.role] ?? "COMMUNITY_MEMBER";
+
         await addMutation.mutateAsync({
           communitySlug,
           payload: {
             username: values.username.trim(),
-            role: values.role,
+            role: serverRole,
           },
         });
 
         toast.success(`Member @${values.username.trim()} added successfully!`);
-        onClose();
+        onOpenChange(false);
       } catch (err: unknown) {
         const message = getErrorMessage(err, "Failed to add member.");
         toast.error(message);
@@ -93,90 +101,15 @@ function AddMemberForm({
     },
   });
 
-  return (
-    <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
-      {form.serverError && (
-        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-          {form.serverError}
-        </div>
-      )}
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        username: "",
+        role: "Member",
+      });
+    }
+  }, [open]);
 
-      <Field>
-        <FieldLabel htmlFor="username">Username *</FieldLabel>
-        <Input
-          id="username"
-          name="username"
-          placeholder="e.g. johndoe"
-          value={form.values.username}
-          onChange={form.handleChange}
-          onBlur={form.handleBlur}
-          aria-invalid={form.isInvalid("username")}
-          autoComplete="off"
-        />
-        <FieldDescription>
-          Enter the exact username of the user you want to add.
-        </FieldDescription>
-        <FieldError errors={[{ message: form.errors.username }]} />
-      </Field>
-
-      {canAssignAdmin && (
-        <Field>
-          <FieldLabel htmlFor="role">Role</FieldLabel>
-          <Select
-            value={form.values.role}
-            onValueChange={(val: string | null) => {
-              if (val) form.setValue("role", val as CommunityMemberRole);
-            }}
-          >
-            <SelectTrigger className="h-10 text-xs rounded-xl">
-              <SelectValue placeholder="Select role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="COMMUNITY_MEMBER">
-                <div className="flex items-center gap-2 text-xs">
-                  <User className="size-3.5 text-muted-foreground" />
-                  <span>Member</span>
-                </div>
-              </SelectItem>
-              <SelectItem value="COMMUNITY_ADMIN">
-                <div className="flex items-center gap-2 text-xs">
-                  <Shield className="size-3.5 text-primary" />
-                  <span>Admin</span>
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <FieldDescription>
-            Community Admins can manage courses, study years, and members.
-          </FieldDescription>
-        </Field>
-      )}
-
-      <DialogFooter className="pt-3 border-t border-border/60">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={form.isSubmitting || addMutation.isPending}
-          className="gap-1.5 font-bold cursor-pointer"
-        >
-          <UserPlus className="size-4" />
-          {form.isSubmitting || addMutation.isPending
-            ? "Adding..."
-            : "Add Member"}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-export function AddMemberModal({
-  communitySlug,
-  open,
-  onOpenChange,
-  canAssignAdmin = false,
-}: AddMemberModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -187,13 +120,85 @@ export function AddMemberModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <AddMemberForm
-            communitySlug={communitySlug}
-            onClose={() => onOpenChange(false)}
-            canAssignAdmin={canAssignAdmin}
-          />
-        )}
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
+          {form.serverError && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+              {form.serverError}
+            </div>
+          )}
+
+          <Field>
+            <FieldLabel htmlFor="username">Username *</FieldLabel>
+            <Input
+              id="username"
+              name="username"
+              placeholder="e.g. johndoe"
+              value={form.values.username}
+              onChange={form.handleChange}
+              onBlur={form.handleBlur}
+              aria-invalid={form.isInvalid("username")}
+              autoComplete="off"
+            />
+            <FieldDescription>
+              Enter the exact username of the user you want to add.
+            </FieldDescription>
+            <FieldError errors={[{ message: form.errors.username }]} />
+          </Field>
+
+          {canAssignAdmin && (
+            <Field>
+              <FieldLabel htmlFor="role">Role</FieldLabel>
+              <Select
+                value={form.values.role}
+                onValueChange={(val: string | null) => {
+                  if (val === "Member" || val === "Admin") {
+                    form.setValue("role", val);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-10 text-xs rounded-xl">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Member">
+                    <div className="flex items-center gap-2 text-xs">
+                      <User className="size-3.5 text-muted-foreground" />
+                      <span>Member</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="Admin">
+                    <div className="flex items-center gap-2 text-xs">
+                      <Shield className="size-3.5 text-primary" />
+                      <span>Admin</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <FieldDescription>
+                Community Admins can manage courses, study years, and members.
+              </FieldDescription>
+            </Field>
+          )}
+
+          <DialogFooter className="pt-3 border-t border-border/60">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={form.isSubmitting || addMutation.isPending}
+              className="gap-1.5 font-bold cursor-pointer"
+            >
+              {form.isSubmitting || addMutation.isPending
+                ? "Adding..."
+                : "Add Member"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

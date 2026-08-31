@@ -32,7 +32,9 @@ export function DeleteTeacherAlertDialog({
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(teacher.id);
-      toast.success(`Prof. ${teacher.firstName} ${teacher.lastName} was deleted.`);
+      toast.success(
+        `Prof. ${teacher.firstName} ${teacher.lastName} was deleted.`,
+      );
       onOpenChange(false);
       onSuccess?.();
     } catch (err: unknown) {
@@ -50,11 +52,12 @@ export function DeleteTeacherAlertDialog({
             <strong className="text-foreground">
               Prof. {teacher.firstName} {teacher.lastName}
             </strong>
-            ? This action will unassign the teacher from associated courses without deleting the courses.
+            ? This action will delete all associated reviews and cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           <Button
             type="button"
             variant="outline"

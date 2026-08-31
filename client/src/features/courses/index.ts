@@ -5,4 +5,4 @@ export * from "./components/CourseAboutTab";
 export * from "./components/CourseMaterialsTab";
 export * from "./components/CoursePostsTab";
 export * from "./components/CourseSkeleton";
-
+export * from "./components/CourseCard";

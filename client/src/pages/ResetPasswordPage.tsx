@@ -2,7 +2,7 @@ import * as React from "react";
 import { useSearchParams, useNavigate, Link } from "react-router";
 import { isAxiosError } from "axios";
 import { z } from "zod";
-import { CheckCircle2, AlertTriangle, KeyRound, ArrowLeft } from "lucide-react";
+import { CheckCircle2, AlertTriangle, KeyRound, ArrowLeft } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   Field,

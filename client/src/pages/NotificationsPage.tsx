@@ -1,5 +1,11 @@
 import { useSearchParams } from "react-router";
-import { Bell, Calendar, CheckCheck, Info, MessageSquare } from "lucide-react";
+import {
+  Bell,
+  Calendar,
+  CheckCheck,
+  Info,
+  MessageSquare,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -11,19 +17,23 @@ import {
   type NotificationCategory,
   NotificationList,
 } from "@/features/notifications";
+import { useUrlTab } from "@/hooks/useUrlTab";
+
+const VALID_CATEGORIES = ["all", "event", "post", "system"] as const;
+type CategoryTab = (typeof VALID_CATEGORIES)[number];
 
 export default function NotificationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const [currentTab, setTab] = useUrlTab<CategoryTab>("all", {
+    paramKey: "category",
+    validTabs: VALID_CATEGORIES,
+  });
 
-  const rawCategory = searchParams.get("category")?.toUpperCase();
   const category: NotificationCategory | undefined =
-    rawCategory === "EVENT" ||
-    rawCategory === "POST" ||
-    rawCategory === "SYSTEM"
-      ? rawCategory
+    currentTab === "event" || currentTab === "post" || currentTab === "system"
+      ? (currentTab.toUpperCase() as NotificationCategory)
       : undefined;
 
-  const currentTab = category ? category.toLowerCase() : "all";
   const isUnreadOnly = searchParams.get("unread") === "true";
 
   const { data: totalUnread = 0 } = useUnreadNotificationCount();
@@ -44,21 +54,6 @@ export default function NotificationsPage() {
 
   const notifications = data?.pages.flatMap((page) => page.content) ?? [];
 
-  const handleTabChange = (nextTab: string) => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (nextTab === "all") {
-          next.delete("category");
-        } else {
-          next.set("category", nextTab);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  };
-
   const handleUnreadToggle = (checked: boolean) => {
     setSearchParams(
       (prev) => {
@@ -76,7 +71,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-full space-y-6 pb-12">
-      {/* Simple Header */}
+      {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
           Notifications
@@ -91,7 +86,7 @@ export default function NotificationsPage() {
             className="text-xs font-semibold cursor-pointer"
           >
             <CheckCheck className="size-4 mr-1.5" />
-            Mark all as read
+            <span>Mark all as read</span>
           </Button>
         )}
       </div>
@@ -99,7 +94,7 @@ export default function NotificationsPage() {
       {/* Tabs and Content */}
       <Tabs
         value={currentTab}
-        onValueChange={handleTabChange}
+        onValueChange={(val) => setTab(val as CategoryTab)}
         className="w-full space-y-6 min-w-0"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">

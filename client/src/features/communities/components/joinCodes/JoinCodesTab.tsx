@@ -10,13 +10,21 @@ import {
   Clock,
   Users,
   ExternalLink,
-} from "lucide-react";
+  MoreVertical,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { getErrorMessage } from "@/api/types";
 import { useJoinCodes, useDeleteJoinCode } from "../../api/joinCodes";
 import type { CommunityJoinCode } from "../../api/types";
+import { formatDateTime24h } from "@/lib/dateUtils";
 import { CreateJoinCodeModal } from "./CreateJoinCodeModal";
 import { EditJoinCodeModal } from "./EditJoinCodeModal";
 
@@ -53,100 +61,92 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
 
   const handleCopyLink = async (code: string) => {
     try {
-      const origin = window.location.origin;
-      const inviteUrl = `${origin}/communities/${communitySlug}/join?code=${code}`;
-      await navigator.clipboard.writeText(inviteUrl);
-      toast.success("Copied community invite link to clipboard!");
+      const url = `${window.location.origin}/join/${code}`;
+      await navigator.clipboard.writeText(url);
+      toast.success("Copied invite link to clipboard!");
     } catch {
-      toast.error("Failed to copy to clipboard.");
+      toast.error("Failed to copy link.");
     }
   };
 
-  const handleDelete = async (code: CommunityJoinCode) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to revoke and delete join code ${code.code}? Anyone with this code will no longer be able to use it.`,
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await deleteMutation.mutateAsync({
-        communitySlug,
-        codeId: code.id,
-      });
-      toast.success(`Join code ${code.code} revoked.`);
-    } catch (err: unknown) {
-      toast.error(getErrorMessage(err, "Failed to revoke join code."));
-    }
+  const handleDelete = (code: CommunityJoinCode) => {
+    deleteMutation.mutate(
+      { communitySlug, codeId: code.id },
+      {
+        onSuccess: () => {
+          toast.success(`Revoked join code "${code.code}".`);
+        },
+        onError: (err) => {
+          toast.error(
+            getErrorMessage(err, "Failed to revoke community join code."),
+          );
+        },
+      },
+    );
   };
 
   return (
-    <div className="space-y-4 py-1">
-      {/* Header with quick summary & Create button */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-border/60">
-        <div>
-          <h3 className="font-heading text-sm font-bold text-foreground">
-            Active Invitation Codes
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            Generate and manage access codes for joining this community.
-          </p>
-        </div>
-
+    <div className="space-y-6">
+      {/* Header with New Code Action */}
+      <div className="flex items-center justify-end gap-4">
         <Button
           size="sm"
           onClick={() => setCreateModalOpen(true)}
-          className="gap-1.5 font-bold cursor-pointer"
+          className="gap-1.5 font-bold cursor-pointer shrink-0"
         >
           <Plus className="size-4" />
-          Generate New Code
+          <span>New Join Code</span>
         </Button>
       </div>
 
+      {/* Main Content Area */}
       {isLoading ? (
-        <div className="flex items-center justify-center p-8">
-          <Spinner className="size-6 text-primary" />
+        <div className="flex flex-col items-center justify-center p-8 gap-2">
+          <Spinner className="size-6" />
+          <span className="text-xs text-muted-foreground">
+            Loading invitation codes...
+          </span>
         </div>
       ) : isError ? (
-        <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-6 text-center space-y-2">
-          <p className="text-xs font-semibold text-destructive">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-destructive/20 bg-destructive/5 p-8 text-center space-y-3">
+          <p className="text-sm font-semibold text-destructive">
             Failed to load invitation codes.
           </p>
-          <Button variant="outline" size="xs" onClick={() => refetch()}>
-            Retry
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            Try Again
           </Button>
         </div>
       ) : joinCodes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-8 text-center space-y-3">
-          <div className="mx-auto flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-10 text-center space-y-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-muted text-muted-foreground">
             <KeyRound className="size-5" />
           </div>
           <div className="space-y-1">
-            <h4 className="font-heading text-xs font-bold text-foreground">
-              No Active Invitation Codes
+            <h4 className="font-heading text-sm font-semibold text-foreground">
+              No Active Join Codes
             </h4>
-            <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-              Generate a code to invite students, professors, or administrators
-              to this community.
+            <p className="text-xs text-muted-foreground max-w-sm">
+              Generate a join code so students and peers can enter this
+              community.
             </p>
           </div>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="divide-y divide-border/60 rounded-2xl border bg-card overflow-hidden">
           {joinCodes.map((code) => {
             const isExpired =
               code.expiresAt &&
               new Date(code.expiresAt).getTime() < currentTime;
             const isMaxedOut =
-              code.maxUses !== null && code.usesCount >= code.maxUses;
+              code.maxUses !== null &&
+              code.maxUses !== undefined &&
+              code.usesCount >= code.maxUses;
             const isInactive = isExpired || isMaxedOut;
 
             return (
               <div
                 key={code.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-card p-3.5 shadow-2xs hover:border-primary/40 transition-colors"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-muted/10 transition-colors"
               >
                 {/* Code & Badges */}
                 <div className="space-y-1.5 min-w-[180px]">
@@ -157,15 +157,17 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
 
                     {isInactive ? (
                       <Badge
-                        variant="secondary"
-                        className="bg-destructive/10 text-destructive border-destructive/20 text-[10px] py-0 px-1.5"
+                        variant="destructive"
+                        size="xs"
+                        className="font-medium"
                       >
                         {isExpired ? "Expired" : "Maxed Out"}
                       </Badge>
                     ) : (
                       <Badge
-                        variant="secondary"
-                        className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 text-[10px] py-0 px-1.5"
+                        variant="success"
+                        size="xs"
+                        className="font-medium"
                       >
                         Active
                       </Badge>
@@ -184,14 +186,14 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                     <span className="flex items-center gap-1">
                       <Clock className="size-3 text-muted-foreground/80" />
                       {code.expiresAt
-                        ? `Expires ${new Date(code.expiresAt).toLocaleDateString()}`
+                        ? `Expires ${formatDateTime24h(code.expiresAt)}`
                         : "Never expires"}
                     </span>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1.5">
+                {/* Actions: Copy Quick Button + 3-dots Dropdown Menu */}
+                <div className="flex items-center gap-1.5 self-end sm:self-auto">
                   <Button
                     variant="ghost"
                     size="xs"
@@ -204,39 +206,47 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                     ) : (
                       <Copy className="size-3.5" />
                     )}
-                    <span>Copy</span>
+                    <span>Copy Code</span>
                   </Button>
 
-                  <Button
-                    variant="ghost"
-                    size="xs"
-                    onClick={() => handleCopyLink(code.code)}
-                    title="Copy invite link"
-                    className="h-8 px-2 text-xs font-semibold gap-1 text-muted-foreground hover:text-foreground"
-                  >
-                    <ExternalLink className="size-3.5" />
-                    <span>Link</span>
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setEditingCode(code)}
-                    title="Edit join code limits"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  >
-                    <Edit2 className="size-3.5" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => handleDelete(code)}
-                    title="Revoke and delete code"
-                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon-xs"
+                          className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                          aria-label="More actions"
+                        >
+                          <MoreVertical className="size-4" />
+                        </Button>
+                      }
+                    />
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem
+                        onClick={() => handleCopyLink(code.code)}
+                        className="gap-2 cursor-pointer text-xs"
+                      >
+                        <ExternalLink className="size-3.5" />
+                        <span>Copy Link</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setEditingCode(code)}
+                        className="gap-2 cursor-pointer text-xs"
+                      >
+                        <Edit2 className="size-3.5" />
+                        <span>Edit Limits</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => handleDelete(code)}
+                        className="gap-2 cursor-pointer text-xs"
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             );
@@ -250,12 +260,16 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
         onOpenChange={setCreateModalOpen}
       />
 
-      <EditJoinCodeModal
-        communitySlug={communitySlug}
-        joinCode={editingCode}
-        open={Boolean(editingCode)}
-        onOpenChange={(open) => !open && setEditingCode(null)}
-      />
+      {editingCode && (
+        <EditJoinCodeModal
+          communitySlug={communitySlug}
+          joinCode={editingCode}
+          open={Boolean(editingCode)}
+          onOpenChange={(open) => {
+            if (!open) setEditingCode(null);
+          }}
+        />
+      )}
     </div>
   );
 }

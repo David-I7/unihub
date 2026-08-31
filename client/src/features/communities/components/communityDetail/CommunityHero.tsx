@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   ShieldCheck,
+  ShieldAlert,
   MoreVertical,
   Settings,
   KeyRound,
@@ -9,10 +10,12 @@ import {
   GraduationCap,
   BookOpen,
   Award,
-} from "lucide-react";
+  Crown,
+} from "@/components/ui/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { RoleBadge } from "@/components/app/RoleBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +29,8 @@ import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { usePermissions } from "@/hooks/usePermissions";
 import { CommunitySettingsModal } from "../CommunitySettingsModal";
 import { CommunityJoinCodesModal } from "../joinCodes/CommunityJoinCodesModal";
+import { TransferCommunityOwnershipModal } from "./TransferCommunityOwnershipModal";
+import { VerifyCommunityModal } from "./VerifyCommunityModal";
 import { DeleteCommunityDialog } from "../DeleteCommunityDialog";
 import { JoinCommunityModal } from "../JoinCommunityModal";
 import type { CallerMembership, Community } from "../../api/types";
@@ -44,57 +49,62 @@ export function CommunityHero({
 }: CommunityHeroProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [joinCodesOpen, setJoinCodesOpen] = useState(false);
+  const [transferOwnershipOpen, setTransferOwnershipOpen] = useState(false);
+  const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
 
+  const theme = useThemeStore((state) => state.theme);
   const {
     isMember,
+    isOwner,
     communityRole,
     canEditCommunity,
-    canManageJoinCodes,
     canDeleteCommunity,
+    canVerifyCommunity,
+    canManageJoinCodes,
   } = usePermissions(callerMembership);
 
-  const roleLabel =
-    communityRole === "COMMUNITY_OWNER"
-      ? "Owner"
-      : communityRole === "COMMUNITY_ADMIN"
-        ? "Admin"
-        : "Member";
+  const totalCourses = studyYears.reduce(
+    (acc, year) => acc + (year.coursesCount ?? 0),
+    0,
+  );
+  const totalCredits = studyYears.reduce(
+    (acc, year) => acc + (year.creditsCount ?? 0),
+    0,
+  );
 
-  const resolvedTheme = useThemeStore((state) => state.resolvedTheme);
-  const isDark = resolvedTheme === "dark";
+  const isDark =
+    theme === "dark" ||
+    (theme === "system" &&
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
 
-  const gradientBg = computeThemeGradient(
+  const headerGradientStyle = computeThemeGradient(
     community.backgroundColor,
     isDark,
-    180,
   );
 
-  const canManageCommunity =
-    canEditCommunity || canManageJoinCodes || canDeleteCommunity;
-
-  const totalCourses = studyYears.reduce(
-    (acc: number, year: StudyYearMetrics) =>
-      acc + (year.coursesCount || 0) + (year.archivedCoursesCount || 0),
-    0,
-  );
-
-  const totalCredits = studyYears.reduce(
-    (acc: number, year: StudyYearMetrics) => acc + (year.creditsCount || 0),
-    0,
-  );
+  const hasAdminMenu =
+    canEditCommunity ||
+    canDeleteCommunity ||
+    canManageJoinCodes ||
+    canVerifyCommunity ||
+    isOwner;
 
   return (
-    <div className="space-y-3 sm:space-y-4">
-      {/* Top Ambient Gradient Banner */}
+    <section className="relative w-full pb-2">
+      {/* Dynamic Background Banner */}
       <div
-        className="relative h-24 sm:h-32 -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 px-4 sm:px-8 pt-3 sm:pt-6 rounded-b-2xl sm:rounded-b-3xl overflow-hidden transition-all duration-300 shadow-xs"
-        style={{ background: gradientBg }}
+        style={{ background: headerGradientStyle }}
+        className="h-44 @[560px]:h-56 @[768px]:h-64 w-full rounded-2xl relative overflow-hidden flex flex-col justify-between p-4 @[560px]:p-6 transition-all duration-300 shadow-inner"
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <AppBreadcrumb className="text-white/90 [&_a]:text-white/90 [&_a:hover]:text-white [&_[data-slot=breadcrumb-page]]:text-white [&_[data-slot=breadcrumb-separator]]:text-white/60 text-xs font-medium drop-shadow-xs truncate max-w-full" />
+        <div className="flex items-center justify-between gap-2 z-10">
+          <AppBreadcrumb />
         </div>
+
+        {/* Decorative Overlay Pattern */}
+        <div className="absolute inset-0 bg-radial from-transparent via-transparent to-black/25 pointer-events-none" />
       </div>
 
       {/* Main Elevated Profile Card */}
@@ -109,21 +119,17 @@ export function CommunityHero({
 
               {community.verified && (
                 <Badge
-                  variant="secondary"
-                  className="bg-black/40 text-white border border-white/20 backdrop-blur-xs font-semibold gap-1 text-[11px]"
+                  variant="verified"
+                  size="xs"
+                  className="font-semibold gap-1"
                 >
-                  <ShieldCheck className="size-3 text-emerald-400" />
+                  <ShieldCheck className="size-3 text-emerald-500" />
                   Verified
                 </Badge>
               )}
 
               {isMember ? (
-                <Badge
-                  variant="secondary"
-                  className="bg-black/40 text-white border border-white/20 backdrop-blur-xs font-semibold gap-1 text-[11px]"
-                >
-                  {roleLabel}
-                </Badge>
+                <RoleBadge role={communityRole} size="xs" />
               ) : (
                 <Button
                   size="xs"
@@ -131,18 +137,13 @@ export function CommunityHero({
                   className="gap-1 font-bold shadow-xs cursor-pointer text-xs shrink-0"
                 >
                   <KeyRound className="size-3" />
-                  Join Community
+                  <span>Join Community</span>
                 </Button>
               )}
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <UserAvatar
-                username={community.owner?.username}
-                className="size-5 rounded-md text-[10px]"
-                fallbackClassName="rounded-md"
-                size="sm"
-              />
+              <UserAvatar username={community.owner?.username} size="xs" />
               <span className="truncate">
                 Created by{" "}
                 <strong className="text-foreground font-semibold">
@@ -152,133 +153,205 @@ export function CommunityHero({
             </div>
           </div>
 
-          {/* Right Action: 3-dots Gear Operations Menu */}
-          {canManageCommunity && (
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="outline"
-                    size="icon-sm"
-                    className="size-8 @[560px]:size-8.5 rounded-xl cursor-pointer text-muted-foreground hover:text-foreground shrink-0"
-                    aria-label="Community settings & operations"
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="end" className="w-52">
-                {canEditCommunity && (
-                  <DropdownMenuItem
-                    onClick={() => setSettingsOpen(true)}
-                    className="gap-2 text-xs cursor-pointer"
-                  >
-                    <Settings className="size-4" />
-                    <span>Community Settings</span>
-                  </DropdownMenuItem>
-                )}
-
-                {canManageJoinCodes && (
-                  <DropdownMenuItem
-                    onClick={() => setJoinCodesOpen(true)}
-                    className="gap-2 text-xs cursor-pointer"
-                  >
-                    <KeyRound className="size-4" />
-                    <span>Invitation Codes</span>
-                  </DropdownMenuItem>
-                )}
-
-                {canDeleteCommunity && (
-                  <>
-                    <DropdownMenuSeparator />
+          {/* Right Action Menu */}
+          {hasAdminMenu && (
+            <div className="shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-9 rounded-xl hover:bg-muted cursor-pointer"
+                      title="Community settings"
+                    />
+                  }
+                >
+                  <MoreVertical className="size-4 text-foreground" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  {canEditCommunity && (
                     <DropdownMenuItem
-                      variant="destructive"
-                      onClick={() => setDeleteOpen(true)}
-                      className="gap-2 text-xs cursor-pointer"
+                      onClick={() => setSettingsOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
                     >
-                      <Trash2 className="size-4" />
-                      <span>Delete Community</span>
+                      <Settings className="size-3.5" />
+                      <span>Community Settings</span>
                     </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  )}
+
+                  {canManageJoinCodes && (
+                    <DropdownMenuItem
+                      onClick={() => setJoinCodesOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <KeyRound className="size-3.5" />
+                      <span>Invitation Codes</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {canVerifyCommunity && (
+                    <DropdownMenuItem
+                      onClick={() => setVerifyModalOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      {community.verified ? (
+                        <>
+                          <ShieldAlert className="size-3.5 text-amber-500" />
+                          <span>Revoke Verification</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="size-3.5 text-emerald-500" />
+                          <span>Verify Community</span>
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                  )}
+
+                  {isOwner && (
+                    <DropdownMenuItem
+                      onClick={() => setTransferOwnershipOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Crown className="size-3.5 text-amber-500" />
+                      <span>Transfer Ownership</span>
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDeleteCommunity && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => setDeleteOpen(true)}
+                        className="gap-2 cursor-pointer text-xs"
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span>Delete Community</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
 
-        {/* Description */}
+        {/* Bio / Description */}
         {community.description && (
-          <p className="text-xs @[560px]:text-sm text-muted-foreground leading-relaxed max-w-4xl break-words">
+          <p className="text-xs @[560px]:text-sm text-muted-foreground leading-relaxed max-w-4xl">
             {community.description}
           </p>
         )}
 
-        {/* Key Community Metrics: 2 columns below 560px, 4 columns at >= 560px */}
-        <div className="grid grid-cols-2 @[560px]:grid-cols-4 gap-2 @[560px]:gap-2.5 pt-2.5 @[560px]:pt-3.5 border-t border-border/60">
-          <div className="rounded-lg @[560px]:rounded-xl border border-border/70 bg-muted/20 py-2 px-2.5 @[560px]:p-3.5 flex flex-col items-center justify-center text-center space-y-0.5 @[560px]:space-y-1 shadow-2xs">
-            <span className="flex items-center justify-center gap-1 @[560px]:gap-1.5 text-[10px] @[560px]:text-xs font-semibold text-muted-foreground">
-              <Users className="size-3 @[560px]:size-3.5 text-primary shrink-0" />
-              Enrolled Members
-            </span>
-            <p className="font-heading text-sm @[560px]:text-xl font-bold text-foreground">
-              {community.memberCount ?? 0}
-            </p>
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 @[560px]:grid-cols-4 gap-2.5 @[560px]:gap-3.5 pt-2 border-t border-border/60">
+          <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Users className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase font-semibold text-muted-foreground">
+                Members
+              </span>
+              <span className="font-heading text-sm @[560px]:text-base font-bold text-foreground truncate block">
+                {community.memberCount ?? 1}
+              </span>
+            </div>
           </div>
 
-          <div className="rounded-lg @[560px]:rounded-xl border border-border/70 bg-muted/20 py-2 px-2.5 @[560px]:p-3.5 flex flex-col items-center justify-center text-center space-y-0.5 @[560px]:space-y-1 shadow-2xs">
-            <span className="flex items-center justify-center gap-1 @[560px]:gap-1.5 text-[10px] @[560px]:text-xs font-semibold text-muted-foreground">
-              <GraduationCap className="size-3 @[560px]:size-3.5 text-primary shrink-0" />
-              Study Years
-            </span>
-            <p className="font-heading text-sm @[560px]:text-xl font-bold text-foreground">
-              {studyYears.length}
-            </p>
+          <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <GraduationCap className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase font-semibold text-muted-foreground">
+                Study Years
+              </span>
+              <span className="font-heading text-sm @[560px]:text-base font-bold text-foreground truncate block">
+                {studyYears.length}
+              </span>
+            </div>
           </div>
 
-          <div className="rounded-lg @[560px]:rounded-xl border border-border/70 bg-muted/20 py-2 px-2.5 @[560px]:p-3.5 flex flex-col items-center justify-center text-center space-y-0.5 @[560px]:space-y-1 shadow-2xs">
-            <span className="flex items-center justify-center gap-1 @[560px]:gap-1.5 text-[10px] @[560px]:text-xs font-semibold text-muted-foreground">
-              <BookOpen className="size-3 @[560px]:size-3.5 text-primary shrink-0" />
-              Total Courses
-            </span>
-            <p className="font-heading text-sm @[560px]:text-xl font-bold text-foreground">
-              {totalCourses}
-            </p>
+          <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <BookOpen className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase font-semibold text-muted-foreground">
+                Courses
+              </span>
+              <span className="font-heading text-sm @[560px]:text-base font-bold text-foreground truncate block">
+                {totalCourses}
+              </span>
+            </div>
           </div>
 
-          <div className="rounded-lg @[560px]:rounded-xl border border-border/70 bg-muted/20 py-2 px-2.5 @[560px]:p-3.5 flex flex-col items-center justify-center text-center space-y-0.5 @[560px]:space-y-1 shadow-2xs">
-            <span className="flex items-center justify-center gap-1 @[560px]:gap-1.5 text-[10px] @[560px]:text-xs font-semibold text-muted-foreground">
-              <Award className="size-3 @[560px]:size-3.5 text-primary shrink-0" />
-              ECTS Credits
-            </span>
-            <p className="font-heading text-sm @[560px]:text-xl font-bold text-foreground">
-              {totalCredits}
-            </p>
+          <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <Award className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase font-semibold text-muted-foreground">
+                Total Credits
+              </span>
+              <span className="font-heading text-sm @[560px]:text-base font-bold text-foreground truncate block">
+                {totalCredits} ECTS
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      <CommunitySettingsModal
-        community={community}
-        open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-      />
+      {/* Admin Mutation Dialogs */}
+      {canEditCommunity && (
+        <CommunitySettingsModal
+          community={community}
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+        />
+      )}
 
-      <CommunityJoinCodesModal
-        community={community}
-        open={joinCodesOpen}
-        onOpenChange={setJoinCodesOpen}
-      />
+      {canManageJoinCodes && (
+        <CommunityJoinCodesModal
+          community={community}
+          open={joinCodesOpen}
+          onOpenChange={setJoinCodesOpen}
+        />
+      )}
 
-      <DeleteCommunityDialog
-        community={community}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {canVerifyCommunity && (
+        <VerifyCommunityModal
+          community={community}
+          open={verifyModalOpen}
+          onOpenChange={setVerifyModalOpen}
+        />
+      )}
 
-      <JoinCommunityModal
-        open={joinModalOpen}
-        onOpenChange={setJoinModalOpen}
-      />
-    </div>
+      {isOwner && (
+        <TransferCommunityOwnershipModal
+          community={community}
+          open={transferOwnershipOpen}
+          onOpenChange={setTransferOwnershipOpen}
+        />
+      )}
+
+      {canDeleteCommunity && (
+        <DeleteCommunityDialog
+          community={community}
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+        />
+      )}
+
+      {!isMember && (
+        <JoinCommunityModal
+          open={joinModalOpen}
+          onOpenChange={setJoinModalOpen}
+        />
+      )}
+    </section>
   );
 }

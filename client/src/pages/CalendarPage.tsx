@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from "react";
 import { Link, useSearchParams } from "react-router";
-import { Calendar as CalendarIcon, Compass, Users } from "lucide-react";
+import { Calendar as CalendarIcon, Compass, Users } from "@/components/ui/icons";
 import {
   CalendarAgendaList,
   CalendarMonthGrid,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Shield, User, Check } from "lucide-react";
+import { Shield, User, Check } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,13 @@ import { getErrorMessage } from "@/api/types";
 import { useUpdateCommunityMemberRole } from "../../api/updateCommunityMemberRole";
 import type { CommunityMember, CommunityMemberRole } from "../../api/types";
 
+type MemberRoleUi = "Member" | "Admin";
+
+const ROLE_UI_TO_SERVER: Record<MemberRoleUi, CommunityMemberRole> = {
+  Member: "COMMUNITY_MEMBER",
+  Admin: "COMMUNITY_ADMIN",
+};
+
 interface ChangeMemberRoleModalProps {
   member: CommunityMember | null;
   communitySlug: string;
@@ -35,25 +42,27 @@ export function ChangeMemberRoleModal({
   open,
   onOpenChange,
 }: ChangeMemberRoleModalProps) {
-  const [selectedRole, setSelectedRole] =
-    useState<CommunityMemberRole>("COMMUNITY_MEMBER");
+  const [selectedRole, setSelectedRole] = useState<MemberRoleUi>("Member");
   const updateMutation = useUpdateCommunityMemberRole();
 
   useEffect(() => {
     if (member) {
       setSelectedRole(
-        member.role === "COMMUNITY_ADMIN"
-          ? "COMMUNITY_ADMIN"
-          : "COMMUNITY_MEMBER",
+        member.role === "COMMUNITY_ADMIN" ? "Admin" : "Member",
       );
     }
-  }, [member]);
+  }, [member, open]);
 
   if (!member) return null;
 
+  const currentRoleUi: MemberRoleUi =
+    member.role === "COMMUNITY_ADMIN" ? "Admin" : "Member";
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedRole === member.role) {
+    const serverRole = ROLE_UI_TO_SERVER[selectedRole];
+
+    if (serverRole === member.role) {
       onOpenChange(false);
       return;
     }
@@ -62,13 +71,11 @@ export function ChangeMemberRoleModal({
       await updateMutation.mutateAsync({
         communitySlug,
         username: member.username,
-        payload: { role: selectedRole },
+        payload: { role: serverRole },
       });
 
-      const roleLabel =
-        selectedRole === "COMMUNITY_ADMIN" ? "Admin" : "Member";
       toast.success(
-        `Role for @${member.username} updated to ${roleLabel}.`,
+        `Role for @${member.username} updated to ${selectedRole}.`,
       );
       onOpenChange(false);
     } catch (err: unknown) {
@@ -83,30 +90,35 @@ export function ChangeMemberRoleModal({
           <DialogTitle>Change Member Role</DialogTitle>
           <DialogDescription>
             Update permissions and access level for{" "}
-            <strong className="text-foreground">@{member.username}</strong>.
+            <strong className="text-foreground font-semibold">
+              @{member.username}
+            </strong>
+            .
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <Field>
             <FieldLabel htmlFor="changeRole">Assigned Role</FieldLabel>
             <Select
               value={selectedRole}
               onValueChange={(val: string | null) => {
-                if (val) setSelectedRole(val as CommunityMemberRole);
+                if (val === "Member" || val === "Admin") {
+                  setSelectedRole(val);
+                }
               }}
             >
               <SelectTrigger className="h-10 text-xs rounded-xl">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="COMMUNITY_MEMBER">
+                <SelectItem value="Member">
                   <div className="flex items-center gap-2 text-xs">
                     <User className="size-3.5 text-muted-foreground" />
                     <span>Member (Standard access)</span>
                   </div>
                 </SelectItem>
-                <SelectItem value="COMMUNITY_ADMIN">
+                <SelectItem value="Admin">
                   <div className="flex items-center gap-2 text-xs">
                     <Shield className="size-3.5 text-primary" />
                     <span>Admin (Manage members & courses)</span>
@@ -115,7 +127,8 @@ export function ChangeMemberRoleModal({
               </SelectContent>
             </Select>
             <FieldDescription>
-              Community Admins can add members, manage courses, and update settings.
+              Community Admins can add members, manage courses, and update
+              settings.
             </FieldDescription>
           </Field>
 
@@ -131,7 +144,7 @@ export function ChangeMemberRoleModal({
             <Button
               type="submit"
               disabled={
-                updateMutation.isPending || selectedRole === member.role
+                updateMutation.isPending || selectedRole === currentRoleUi
               }
               className="gap-1.5 font-bold cursor-pointer"
             >

@@ -1,5 +1,11 @@
-import { useParams, useSearchParams } from "react-router";
-import { GraduationCap, MessageSquare, FileText, Users, Contact } from "lucide-react";
+import { useParams } from "react-router";
+import {
+  GraduationCap,
+  MessageSquare,
+  FileText,
+  Users,
+  Contact,
+} from "@/components/ui/icons";
 import {
   useCommunityHome,
   CommunityHero,
@@ -13,6 +19,7 @@ import { CommunityTeachersTab } from "@/features/teachers";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useUrlTab } from "@/hooks/useUrlTab";
 
 const VALID_TABS = ["study-years", "teachers", "members", "readme", "posts"] as const;
 type CommunityTab = (typeof VALID_TABS)[number];
@@ -20,7 +27,6 @@ const DEFAULT_TAB: CommunityTab = "study-years";
 
 export default function CommunityDetailPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     data,
@@ -29,26 +35,9 @@ export default function CommunityDetailPage() {
     refetch: refetchCommunity,
   } = useCommunityHome(communitySlug);
 
-  const rawTab = searchParams.get("tab");
-  const currentTab: CommunityTab =
-    rawTab && VALID_TABS.includes(rawTab as CommunityTab)
-      ? (rawTab as CommunityTab)
-      : DEFAULT_TAB;
-
-  const handleTabChange = (nextTab: string) => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (nextTab === DEFAULT_TAB) {
-          next.delete("tab");
-        } else {
-          next.set("tab", nextTab);
-        }
-        return next;
-      },
-      { replace: true },
-    );
-  };
+  const [currentTab, setTab] = useUrlTab<CommunityTab>(DEFAULT_TAB, {
+    validTabs: VALID_TABS,
+  });
 
   const community = data?.community;
   const studyYears = data?.studyYears ?? [];
@@ -83,11 +72,11 @@ export default function CommunityDetailPage() {
       />
 
       {/* Main Container for Tabs and Content */}
-      <div className="max-w-7xl mx-auto space-y-6 pt-2">
-        {/* Main Community Tabs: Study Years (default), Teachers, Members, About/Readme & Posts */}
+      <div className="w-full space-y-6 pt-2">
+        {/* Main Community Tabs */}
         <Tabs
           value={currentTab}
-          onValueChange={handleTabChange}
+          onValueChange={(val) => setTab(val as CommunityTab)}
           className="w-full space-y-6 min-w-0"
         >
           <div className="w-full overflow-x-auto no-scrollbar">

@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { Link2, Folder } from "lucide-react";
+import { Link2, Folder } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

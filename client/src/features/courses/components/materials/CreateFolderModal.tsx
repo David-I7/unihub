@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { FolderPlus, Folder } from "lucide-react";
+import { FolderPlus, Folder } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
