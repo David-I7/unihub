@@ -9,35 +9,6 @@ INSERT INTO rating_metrics (name,description) VALUES
 ('Knowledge', 'Evaluates the teacher''s depth of knowledge in the subject area'),
 ('Fairness', 'Evaluates the teacher''s ability to treat all students fairly and without bias');
 
--- Insert Teachers
-INSERT INTO teachers (first_name,last_name) VALUES
-('Daniel','Dragulici'),
-('Radu','Munteanu'),
-('Liviu','Dinu'),
-('Alexandru','Gica'),
-('Irina','Ciocan'),
-('Iulia-Banu','Demergian'),
-('Andrei','Halanay'),
-('Monica','Tataram'),
-('Claudia','Muresean'),
-('Mihail','Cherciu'),
-('Vasile','Preda'),
-('Denis','Enachescu'),
-('Ioana','Leustean'),
-('Andrei','Sipos'),
-('Sorin','Stupariu'),
-('Cristian','Kevorhian'),
-('Horia','Georgescu'),
-('Radu','Boriga'),
-('Laurentiu', 'Vasile'),
-('Horatiu', 'Cheval'),
-('Stefan', 'Popescu'),
-('Sorina','Predut'),
-('Florentina','Suter'),
-('Adela','Georgescu'),
-('Iuliana','Munteanu'),
-('Diana','Ionita');
-
 -- Insert Community
 INSERT INTO communities (id, name, description, members_count,owner_id, created_at, verified, slug)
 SELECT gen_random_uuid(), 'FMI - Informatica ID', 'Comunitatea studentilor FMI Informatica ID', 1, id, now(), true, 'fmi-info-id'
@@ -47,6 +18,40 @@ WHERE username = 'iosub_david';
 INSERT INTO community_members (community_id, user_id, role_id)
 SELECT c.id, u.id, r.id FROM communities c, users u, roles r
 WHERE c.name = 'FMI - Informatica ID' AND u.username = 'iosub_david' AND r.name = 'COMMUNITY_OWNER';
+
+-- Insert Teachers
+INSERT INTO teachers (first_name, last_name, community_id, estimated_birth_date)
+SELECT t.first_name, t.last_name, c.id, t.estimated_birth_date
+FROM communities c,
+(VALUES
+    ('Daniel', 'Dragulici', '1982-04-15'::date),
+    ('Radu', 'Munteanu', '1978-09-22'::date),
+    ('Liviu', 'Dinu', '1974-03-10'::date),
+    ('Alexandru', 'Gica', '1970-11-05'::date),
+    ('Irina', 'Ciocan', '1985-07-19'::date),
+    ('Iulia-Banu', 'Demergian', '1983-02-14'::date),
+    ('Andrei', 'Halanay', '1965-06-30'::date),
+    ('Monica', 'Tataram', '1968-12-12'::date),
+    ('Claudia', 'Muresean', '1980-08-25'::date),
+    ('Mihail', 'Cherciu', '1960-01-20'::date),
+    ('Vasile', 'Preda', '1955-05-18'::date),
+    ('Denis', 'Enachescu', '1972-10-14'::date),
+    ('Ioana', 'Leustean', '1977-04-02'::date),
+    ('Andrei', 'Sipos', '1989-11-28'::date),
+    ('Sorin', 'Stupariu', '1976-03-17'::date),
+    ('Cristian', 'Kevorhian', '1969-09-09'::date),
+    ('Horia', 'Georgescu', '1958-08-01'::date),
+    ('Radu', 'Boriga', '1981-12-04'::date),
+    ('Laurentiu', 'Vasile', '1986-06-11'::date),
+    ('Horatiu', 'Cheval', '1991-01-25'::date),
+    ('Stefan', 'Popescu', '1984-05-30'::date),
+    ('Sorina', 'Predut', '1987-10-16'::date),
+    ('Florentina', 'Suter', '1979-02-23'::date),
+    ('Adela', 'Georgescu', '1988-07-07'::date),
+    ('Iuliana', 'Munteanu', '1982-03-31'::date),
+    ('Diana', 'Ionita', '1990-09-15'::date)
+) AS t(first_name, last_name, estimated_birth_date)
+WHERE c.name = 'FMI - Informatica ID';
 
 -- Insert Study Years
 INSERT INTO study_years (study_year_name, community_id, created_at)
@@ -417,13 +422,6 @@ FROM courses c
          JOIN communities comm ON sy.community_id = comm.id
          JOIN teachers t ON (t.last_name = 'Georgescu' AND t.first_name = 'Horia')
 WHERE comm.name = 'FMI - Informatica ID' AND c.name = 'Retele de calculatoare';
-
--- Insert Teacher Communities
-INSERT INTO teacher_communities (teacher_id, community_id)
-SELECT DISTINCT ct.teacher_id, sy.community_id
-FROM course_teachers ct
-JOIN courses c ON ct.course_id = c.id
-JOIN study_years sy ON c.study_year_id = sy.id;
 
 -- Insert Folders for Courses
 INSERT INTO folders (id, name, course_id, created_at, owner_id)

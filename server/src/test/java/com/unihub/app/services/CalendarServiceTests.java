@@ -23,6 +23,7 @@ import com.unihub.app.repositories.community.content.EventRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
+import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.CalendarService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -63,6 +64,12 @@ public class CalendarServiceTests {
 
     @Mock
     private CourseRepository courseRepository;
+
+    @Mock
+    private AuthorizationService authorizationService;
+
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Mock
     private UserRepository userRepository;
@@ -239,6 +246,7 @@ public class CalendarServiceTests {
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
+        when(authorizationService.hasCommunityPermission(slug, userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
         when(userMapper.toEntity(userDto)).thenReturn(owner);
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -282,6 +290,7 @@ public class CalendarServiceTests {
 
         when(communityRepository.findBySlug("comm-1")).thenReturn(Optional.of(community1));
         when(communityMemberRepository.isMemberOfCommunity("comm-1", userId)).thenReturn(true);
+        when(authorizationService.hasCommunityPermission("comm-1", userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(courseFromComm2));
 
         ResponseStatusException ex = assertThrows(
@@ -337,5 +346,83 @@ public class CalendarServiceTests {
         when(eventRepository.findEventById(eventId)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> calendarService.getEventById(userId, eventId));
+    }
+
+    // =========================================================================
+    // createReminder
+    // =========================================================================
+
+    @Test
+    @DisplayName("createReminder throws 409 Conflict when user already has a reminder for event")
+    public void testCreateReminder_Conflict() {
+        UUID userId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
+
+        Community community = createTestCommunity(UUID.randomUUID(), "fmi");
+        Event event = Event.builder().id(eventId).community(community).build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
+        when(reminderRepository.existsByUserIdAndEventId(userId, eventId)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(
+                ResponseStatusException.class,
+                () -> calendarService.createReminder(eventId, userDto, new com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto(15))
+        );
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        assertEquals("A reminder is already set for this event", ex.getReason());
+    }
+
+    @Test
+    @DisplayName("createReminder succeeds when no existing reminder")
+    public void testCreateReminder_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
+        User user = User.builder().id(userId).username("david").build();
+
+        Community community = createTestCommunity(UUID.randomUUID(), "fmi");
+        Event event = Event.builder()
+                .id(eventId)
+                .title("Exam")
+                .startTime(OffsetDateTime.now().plusDays(1))
+                .community(community)
+                .build();
+
+        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
+        when(reminderRepository.existsByUserIdAndEventId(userId, eventId)).thenReturn(false);
+        when(userMapper.toEntity(userDto)).thenReturn(user);
+        when(reminderRepository.save(any(EventReminder.class))).thenAnswer(invocation -> {
+            EventReminder r = invocation.getArgument(0);
+            r.setId(UUID.randomUUID());
+            return r;
+        });
+
+        com.unihub.app.dto.community.content.response.EventReminderResponseDto result =
+                calendarService.createReminder(eventId, userDto, new com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto(15));
+
+        assertNotNull(result);
+        assertEquals(15, result.offsetMinutes());
+        assertEquals(eventId, result.eventId());
+    }
+
+    // =========================================================================
+    // deleteReminder
+    // =========================================================================
+
+    @Test
+    @DisplayName("deleteReminder calls repository deleteByUserIdAndEventId")
+    public void testDeleteReminder_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID eventId = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
+
+        when(eventRepository.existsById(eventId)).thenReturn(true);
+
+        calendarService.deleteReminder(eventId, userDto);
+
+        verify(reminderRepository).deleteByUserIdAndEventId(userId, eventId);
     }
 }

@@ -9,6 +9,7 @@ import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Comment;
 import com.unihub.app.entities.community.content.Post;
+import com.unihub.app.events.notification.CommentCreatedNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
@@ -16,6 +17,7 @@ import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -36,6 +38,7 @@ public class CommentService {
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public String getCommunitySlugForComment(UUID commentId) {
         Comment comment = commentRepository.findById(commentId)
@@ -68,6 +71,9 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         postRepository.incrementCommentsCount(postId);
+
+        eventPublisher.publishEvent(new CommentCreatedNotificationEvent(savedComment, post, owner));
+
         return contentMapper.toCommentResponseDto(savedComment);
     }
 

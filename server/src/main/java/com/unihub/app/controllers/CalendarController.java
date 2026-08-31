@@ -1,8 +1,11 @@
 package com.unihub.app.controllers;
 
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
+import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.content.CalendarService;
@@ -59,5 +62,44 @@ public class CalendarController {
     ) {
         EventResponseDto event = calendarService.getEventById(user.id(), eventId);
         return ResponseEntity.ok(event);
+    }
+
+    @PatchMapping("/events/{eventId}")
+    public ResponseEntity<CalendarEventResponseDto> updateEvent(
+            @AuthenticationPrincipal UserDto user,
+            @PathVariable UUID eventId,
+            @RequestBody @Valid UpdateEventRequestDto requestDto
+    ) {
+        CalendarEventResponseDto event = calendarService.updateEvent(eventId, user, requestDto);
+        return ResponseEntity.ok(event);
+    }
+
+    @DeleteMapping("/events/{eventId}")
+    public ResponseEntity<Void> deleteEvent(
+            @AuthenticationPrincipal UserDto user,
+            @PathVariable UUID eventId
+    ) {
+        calendarService.deleteEvent(eventId, user);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/events/{eventId}/reminders")
+    public ResponseEntity<EventReminderResponseDto> createReminder(
+            @AuthenticationPrincipal UserDto user,
+            @PathVariable UUID eventId,
+            @RequestBody(required = false) @Valid CreateEventReminderRequestDto requestDto
+    ) {
+        CreateEventReminderRequestDto dto = requestDto != null ? requestDto : new CreateEventReminderRequestDto(null);
+        EventReminderResponseDto reminder = calendarService.createReminder(eventId, user, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(reminder);
+    }
+
+    @DeleteMapping("/events/{eventId}/reminders")
+    public ResponseEntity<Void> deleteReminder(
+            @AuthenticationPrincipal UserDto user,
+            @PathVariable UUID eventId
+    ) {
+        calendarService.deleteReminder(eventId, user);
+        return ResponseEntity.noContent().build();
     }
 }

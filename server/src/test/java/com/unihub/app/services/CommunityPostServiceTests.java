@@ -74,6 +74,9 @@ public class CommunityPostServiceTests {
     @Spy
     private UserMapper userMapper = new UserMapper(null);
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private CommunityPostService communityPostService;
 

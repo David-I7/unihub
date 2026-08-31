@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { GraduationCap, MessageSquare, FileText } from "lucide-react";
+import { GraduationCap, MessageSquare, FileText, Users } from "lucide-react";
 import {
   useCommunityHome,
   CommunityHero,
@@ -8,6 +8,7 @@ import {
   CommunityPostsTab,
   CommunityDetailSkeleton,
 } from "@/features/communities";
+import { CommunityTeachersTab } from "@/features/teachers";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -56,13 +57,18 @@ export default function CommunityDetailPage() {
 
       {/* Main Container for Tabs and Content */}
       <div className="max-w-7xl mx-auto space-y-6 pt-2">
-        {/* Main Community Tabs: Study Years (default), About/Readme & Posts */}
+        {/* Main Community Tabs: Study Years (default), Teachers, About/Readme & Posts */}
         <Tabs defaultValue="study-years" className="w-full space-y-6 min-w-0">
           <div className="w-full overflow-x-auto no-scrollbar">
             <TabsList className="h-10 p-1 bg-muted/60 rounded-xl gap-1 flex-nowrap shrink-0">
               <TabsTrigger value="study-years">
                 <GraduationCap className="size-4" />
                 <span>Study Years</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="teachers">
+                <Users className="size-4" />
+                <span>Teachers</span>
               </TabsTrigger>
 
               <TabsTrigger value="readme">
@@ -84,6 +90,16 @@ export default function CommunityDetailPage() {
             <CommunityStudyYearsTab
               communitySlug={community.slug}
               studyYears={studyYears}
+              callerMembership={callerMembership}
+            />
+          </TabsContent>
+
+          <TabsContent
+            value="teachers"
+            className="focus-visible:outline-none"
+          >
+            <CommunityTeachersTab
+              communitySlug={community.slug}
               callerMembership={callerMembership}
             />
           </TabsContent>

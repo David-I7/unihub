@@ -7,8 +7,7 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.entities.globalResources.Teacher;
-import com.unihub.app.mappers.GlobalResourceMapper;
+import com.unihub.app.entities.community.resources.Teacher;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
@@ -49,10 +48,7 @@ public class CourseServiceTests {
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
     @Spy
-    private GlobalResourceMapper globalResourceMapper = new GlobalResourceMapper();
-
-    @Spy
-    private CommunityResourceMapper resourceMapper = new CommunityResourceMapper(new GlobalResourceMapper());
+    private CommunityResourceMapper resourceMapper = new CommunityResourceMapper();
 
     @InjectMocks
     private CourseService courseService;

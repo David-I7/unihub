@@ -3,6 +3,7 @@ package com.unihub.app.controllers;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.response.NotificationResponseDto;
+import com.unihub.app.entities.community.content.NotificationCategory;
 import com.unihub.app.services.community.content.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -25,15 +26,27 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<PageDto<NotificationResponseDto>> getNotifications(
             @AuthenticationPrincipal UserDto userDto,
+            @RequestParam(required = false) NotificationCategory category,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Boolean isRead,
             @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        PageDto<NotificationResponseDto> notifications = notificationService.getUserNotifications(userDto.id(), pageable);
+        PageDto<NotificationResponseDto> notifications = notificationService.getUserNotifications(
+                userDto.id(),
+                category,
+                type,
+                isRead,
+                pageable
+        );
         return ResponseEntity.ok(notifications);
     }
 
     @GetMapping("/unread-count")
-    public ResponseEntity<Map<String, Long>> getUnreadCount(@AuthenticationPrincipal UserDto userDto) {
-        long count = notificationService.getUnreadCount(userDto.id());
+    public ResponseEntity<Map<String, Long>> getUnreadCount(
+            @AuthenticationPrincipal UserDto userDto,
+            @RequestParam(required = false) NotificationCategory category
+    ) {
+        long count = notificationService.getUnreadCount(userDto.id(), category);
         return ResponseEntity.ok(Map.of("unreadCount", count));
     }
 

@@ -11,6 +11,7 @@ import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.CommunityPost;
 import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.community.resources.Community;
+import com.unihub.app.events.notification.CommunityPostCreatedNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
@@ -19,6 +20,7 @@ import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +43,7 @@ public class CommunityPostService {
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public PostResponseDto createCommunityPost(String slug, UserDto caller, CreatePostRequestDto dto) {
@@ -60,6 +63,8 @@ public class CommunityPostService {
                 .community(community)
                 .build();
         communityPostRepository.save(communityPost);
+
+        eventPublisher.publishEvent(new CommunityPostCreatedNotificationEvent(savedPost, community, owner));
 
         return contentMapper.toPostResponseDto(savedPost, false);
     }

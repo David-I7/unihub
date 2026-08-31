@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useAuthStore } from "@/features/auth";
 import { useUserProfile } from "@/features/users/api/getUserProfile";
 import { PERMISSIONS, checkPermission } from "@/lib/permissions";
@@ -7,6 +7,8 @@ import type {
   CommunityMemberRole,
 } from "@/features/communities/api/types";
 
+import { useCommunityHome } from "@/features/communities/api/getCommunityHome";
+
 export function usePermissions(
   target?: string | CallerMembership | null,
   targetMembership?: CallerMembership | null,
@@ -14,15 +16,21 @@ export function usePermissions(
   const user = useAuthStore((state) => state.user);
   const { data: profile } = useUserProfile({ enabled: Boolean(user) });
 
+  const communitySlug = typeof target === "string" ? target : "";
+  const { data: communityHome } = useCommunityHome(communitySlug);
+
   let callerMembership: CallerMembership | null | undefined;
 
   if (typeof target === "string") {
-    callerMembership = targetMembership;
+    callerMembership = targetMembership ?? communityHome?.callerMembership ?? null;
   } else {
     callerMembership = target;
   }
 
-  const globalPermissions = profile?.permissions ?? [];
+  const globalPermissions = useMemo(
+    () => profile?.permissions ?? [],
+    [profile?.permissions],
+  );
 
   const hasPermission = useCallback(
     (permission: string): boolean => {
@@ -100,6 +108,49 @@ export function usePermissions(
     [user, hasPermission],
   );
 
+  const canCreateFolder = hasPermission(PERMISSIONS.CREATE_FOLDER);
+  const canCreateMaterial = hasPermission(PERMISSIONS.CREATE_MATERIAL);
+
+  const canEditFolder = useCallback(
+    (folderOwnerId?: string | number | null) => {
+      if (user && folderOwnerId && String(user.id) === String(folderOwnerId)) {
+        return true;
+      }
+      return false;
+    },
+    [user],
+  );
+
+  const canDeleteFolder = useCallback(
+    (folderOwnerId?: string | number | null) => {
+      if (user && folderOwnerId && String(user.id) === String(folderOwnerId)) {
+        return true;
+      }
+      return hasPermission(PERMISSIONS.MODERATE_FOLDER);
+    },
+    [user, hasPermission],
+  );
+
+  const canEditMaterial = useCallback(
+    (materialOwnerId?: string | number | null) => {
+      if (user && materialOwnerId && String(user.id) === String(materialOwnerId)) {
+        return true;
+      }
+      return false;
+    },
+    [user],
+  );
+
+  const canDeleteMaterial = useCallback(
+    (materialOwnerId?: string | number | null) => {
+      if (user && materialOwnerId && String(user.id) === String(materialOwnerId)) {
+        return true;
+      }
+      return hasPermission(PERMISSIONS.MODERATE_MATERIAL);
+    },
+    [user, hasPermission],
+  );
+
   return {
     user,
     isMember,
@@ -121,5 +172,12 @@ export function usePermissions(
     canDeletePost,
     canEditComment,
     canDeleteComment,
+    canCreateFolder,
+    canCreateMaterial,
+    canEditFolder,
+    canDeleteFolder,
+    canEditMaterial,
+    canDeleteMaterial,
   };
 }
+

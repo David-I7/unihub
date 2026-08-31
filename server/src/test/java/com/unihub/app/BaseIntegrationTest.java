@@ -7,10 +7,6 @@ import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.repositories.community.content.*;
 import com.unihub.app.repositories.community.resources.*;
-import com.unihub.app.repositories.globalResources.RatingMetricRepository;
-import com.unihub.app.repositories.globalResources.TeacherRatingRepository;
-import com.unihub.app.repositories.globalResources.TeacherRatingValueRepository;
-import com.unihub.app.repositories.globalResources.TeacherRepository;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 

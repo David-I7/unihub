@@ -1,39 +1,6 @@
 --liquibase formatted sql
 --changeset David:002
 
-CREATE TABLE TEACHERS(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    first_name text not null,
-    last_name text not null,
-    average_rating real not null default 0.0 check (average_rating between 0 and 5),
-    ratings_count int not null default 0,
-    created_at timestamptz not null default now(),
-    UNIQUE (last_name,first_name)
-);
-
-CREATE TABLE TEACHER_RATINGS(
-    id bigserial PRIMARY KEY,
-    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
-    teacher_id UUID not null REFERENCES TEACHERS(id) ON DELETE CASCADE,
-    created_at timestamptz not null default now(),
-    title text not null,
-    description text,
-    UNIQUE (teacher_id, user_id)
-);
-
-CREATE TABLE RATING_METRICS(
-  id serial PRIMARY KEY,
-  name text not null UNIQUE,
-  description text
-);
-
-CREATE TABLE TEACHER_RATING_VALUES(
-  teacher_rating_id bigint not null REFERENCES TEACHER_RATINGS(id) ON DELETE CASCADE,
-  rating_metric_id int not null REFERENCES RATING_METRICS(id) ON DELETE CASCADE,
-  value int not null check (value in (1,2,3,4,5)),
-  PRIMARY KEY (teacher_rating_id, rating_metric_id)
-);
-
 CREATE TABLE COMMUNITIES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name text not null UNIQUE,
@@ -53,6 +20,42 @@ CREATE TABLE COMMUNITY_MEMBERS(
    role_id UUID not null REFERENCES ROLES(id),
    joined_at timestamptz not null default now(),
    PRIMARY KEY (community_id, user_id)
+);
+
+CREATE TABLE TEACHERS(
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    community_id UUID not null REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
+    first_name text not null,
+    last_name text not null,
+    estimated_birth_date date,
+    average_rating real not null default 0.0 check (average_rating between 0 and 5),
+    ratings_count int not null default 0,
+    created_at timestamptz not null default now(),
+    UNIQUE (community_id, last_name, first_name)
+);
+
+CREATE TABLE TEACHER_RATINGS(
+    id bigserial PRIMARY KEY,
+    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
+    teacher_id UUID not null REFERENCES TEACHERS(id) ON DELETE CASCADE,
+    created_at timestamptz not null default now(),
+    title text not null,
+    description text,
+    is_anonymous boolean not null default false,
+    UNIQUE (teacher_id, user_id)
+);
+
+CREATE TABLE RATING_METRICS(
+  id serial PRIMARY KEY,
+  name text not null UNIQUE,
+  description text
+);
+
+CREATE TABLE TEACHER_RATING_VALUES(
+  teacher_rating_id bigint not null REFERENCES TEACHER_RATINGS(id) ON DELETE CASCADE,
+  rating_metric_id int not null REFERENCES RATING_METRICS(id) ON DELETE CASCADE,
+  value int not null check (value in (1,2,3,4,5)),
+  PRIMARY KEY (teacher_rating_id, rating_metric_id)
 );
 
 CREATE TYPE STUDY_YEAR_NAME AS ENUM(
@@ -87,13 +90,6 @@ CREATE TABLE COURSE_TEACHERS(
     course_id bigint REFERENCES COURSES(id) ON DELETE CASCADE,
     teacher_id UUID REFERENCES TEACHERS(id) ON DELETE CASCADE,
     PRIMARY KEY (course_id, teacher_id)
-);
-
-CREATE TABLE TEACHER_COMMUNITIES(
-    teacher_id UUID NOT NULL REFERENCES TEACHERS(id) ON DELETE CASCADE,
-    community_id UUID NOT NULL REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
-    created_at timestamptz NOT NULL DEFAULT now(),
-    PRIMARY KEY (teacher_id, community_id)
 );
 
 CREATE TABLE FOLDERS(
@@ -249,7 +245,7 @@ CREATE TABLE COMMUNITY_JOIN_CODES(
 
 -- Indexes
 CREATE INDEX idx_courses_study_year_archived ON courses(study_year_id, archived);
-CREATE INDEX idx_teacher_communities_community ON teacher_communities(community_id, teacher_id);
+CREATE INDEX idx_teachers_community_id ON teachers(community_id);
 CREATE INDEX idx_community_posts_community_id ON community_posts(community_id);
 CREATE INDEX idx_course_posts_course_id ON course_posts(course_id);
 CREATE INDEX idx_posts_pinned_created_at ON posts(pinned DESC, created_at DESC);

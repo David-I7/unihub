@@ -56,6 +56,60 @@ export interface CourseHome {
 
 export type CourseTeachers = CourseHome;
 
+export type MaterialLinkType = "VIDEO" | "DRIVE" | "GITHUB" | "DOCS" | "DOCX" | "OTHER";
+
+export interface CreateFolderPayload {
+  name: string;
+  parentFolderId?: string | null;
+}
+
+export interface UpdateFolderPayload {
+  name?: string;
+  parentFolderId?: string | null;
+  moveToRoot?: boolean;
+}
+
+export interface PresignedUploadUrlRequest {
+  fileName: string;
+  contentType: string;
+  size: number;
+}
+
+export interface PresignedUploadUrlResponse {
+  uploadUrl: string;
+  storageKey: string;
+}
+
+export interface CreateMaterialFilePayload {
+  title: string;
+  description?: string;
+  folderId?: string | null;
+  storageKey: string;
+  mediaType: string;
+  size: number;
+}
+
+export interface CreateMaterialLinkPayload {
+  title: string;
+  description?: string;
+  folderId?: string | null;
+  url: string;
+  linkType: MaterialLinkType;
+}
+
+export interface UpdateMaterialPayload {
+  title?: string;
+  description?: string;
+  folderId?: string | null;
+  moveToRoot?: boolean;
+  url?: string;
+  linkType?: MaterialLinkType;
+}
+
+export interface DownloadUrlResponse {
+  downloadUrl: string;
+}
+
 export interface CourseIndentifiers {
   id: number;
   name: string;

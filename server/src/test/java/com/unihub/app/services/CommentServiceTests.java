@@ -62,6 +62,9 @@ public class CommentServiceTests {
     @Spy
     private UserMapper userMapper = new UserMapper(null);
 
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private CommentService commentService;
 

@@ -30,4 +30,7 @@ public interface CoursePostRepository extends JpaRepository<CoursePost, UUID> {
 
     @Query("SELECT cp.course.studyYear.community.slug FROM CoursePost cp WHERE cp.post.id = :postId")
     Optional<String> findCommunitySlugByPostId(@Param("postId") UUID postId);
+
+    @Query("SELECT cp FROM CoursePost cp JOIN FETCH cp.course c JOIN FETCH c.studyYear sy JOIN FETCH sy.community comm WHERE cp.post.id = :postId")
+    Optional<CoursePost> findByPostIdWithCourseDetails(@Param("postId") UUID postId);
 }

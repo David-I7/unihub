@@ -277,4 +277,114 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Event not found"));
     }
+
+    // =========================================================================
+    // PATCH /api/v1/calendar/events/{eventId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid update event payload
+            When: PATCH /api/v1/calendar/events/{eventId} is called
+            Then: 200 OK is returned with updated event
+            """)
+    public void testUpdateEvent_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        com.unihub.app.dto.community.content.request.UpdateEventRequestDto requestDto =
+                com.unihub.app.dto.community.content.request.UpdateEventRequestDto.builder()
+                        .title("Updated Title")
+                        .build();
+
+        CalendarEventResponseDto responseDto = CalendarEventResponseDto.builder()
+                .id(eventId)
+                .title("Updated Title")
+                .type(EventType.EXAM)
+                .startTime(OffsetDateTime.now().plusDays(2))
+                .location(EventLocation.ONLINE)
+                .courseSlug("sd")
+                .communitySlug("fmi-info-id")
+                .isSubscribed(false)
+                .build();
+
+        when(calendarService.updateEvent(eq(eventId), eq(userDto), any(com.unihub.app.dto.community.content.request.UpdateEventRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(BASE_URL + "/events/" + eventId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(eventId.toString()))
+                .andExpect(jsonPath("$.title").value("Updated Title"));
+    }
+
+    // =========================================================================
+    // DELETE /api/v1/calendar/events/{eventId}
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: event exists
+            When: DELETE /api/v1/calendar/events/{eventId} is called
+            Then: 204 No Content is returned
+            """)
+    public void testDeleteEvent_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(BASE_URL + "/events/" + eventId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    // =========================================================================
+    // POST /api/v1/calendar/events/{eventId}/reminders
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid reminder request
+            When: POST /api/v1/calendar/events/{eventId}/reminders is called
+            Then: 201 Created is returned with reminder details
+            """)
+    public void testCreateReminder_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        UUID reminderId = UUID.randomUUID();
+        OffsetDateTime remindAt = OffsetDateTime.now().plusHours(1);
+
+        com.unihub.app.dto.community.content.response.EventReminderResponseDto reminderDto =
+                com.unihub.app.dto.community.content.response.EventReminderResponseDto.builder()
+                        .id(reminderId)
+                        .eventId(eventId)
+                        .offsetMinutes(15)
+                        .remindAt(remindAt)
+                        .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
+                        .build();
+
+        when(calendarService.createReminder(eq(eventId), eq(userDto), any()))
+                .thenReturn(reminderDto);
+
+        mockMvc.perform(post(BASE_URL + "/events/" + eventId + "/reminders")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(reminderId.toString()))
+                .andExpect(jsonPath("$.eventId").value(eventId.toString()))
+                .andExpect(jsonPath("$.offsetMinutes").value(15));
+    }
+
+    // =========================================================================
+    // DELETE /api/v1/calendar/events/{eventId}/reminders
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: reminder exists
+            When: DELETE /api/v1/calendar/events/{eventId}/reminders is called
+            Then: 204 No Content is returned
+            """)
+    public void testDeleteReminder_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(BASE_URL + "/events/" + eventId + "/reminders")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
 }

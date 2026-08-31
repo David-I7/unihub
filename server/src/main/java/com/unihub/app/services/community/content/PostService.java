@@ -10,6 +10,7 @@ import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Post;
 import com.unihub.app.entities.community.content.PostLike;
 import com.unihub.app.entities.community.content.PostLikeId;
+import com.unihub.app.events.notification.PostLikedNotificationEvent;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.CommunityPostRepository;
@@ -18,6 +19,7 @@ import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,6 +38,7 @@ public class PostService {
     private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     public String getCommunitySlugForPost(UUID postId) {
         return communityPostRepository.findCommunitySlugByPostId(postId)
@@ -142,6 +145,8 @@ public class PostService {
 
         postLikeRepository.save(postLike);
         postRepository.incrementLikesCount(postId);
+
+        eventPublisher.publishEvent(new PostLikedNotificationEvent(post, callerUser));
     }
 
     @Transactional

@@ -12,7 +12,6 @@ import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.mappers.GlobalResourceMapper;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -65,7 +64,6 @@ public class CommunityMemberServiceTests {
     private RoleService roleService;
 
     private PageMapper pageMapper;
-    private GlobalResourceMapper globalResourceMapper;
     private CommunityResourceMapper communityMapper;
     private UserMapper userMapper;
     private CommunityMemberService communityMemberService;
@@ -73,8 +71,7 @@ public class CommunityMemberServiceTests {
     @org.junit.jupiter.api.BeforeEach
     public void setUp() {
         pageMapper = new PageMapper();
-        globalResourceMapper = new GlobalResourceMapper();
-        communityMapper = new CommunityResourceMapper(globalResourceMapper);
+        communityMapper = new CommunityResourceMapper();
         userMapper = new UserMapper(roleService);
         communityMemberService = new CommunityMemberService(
                 communityMemberRepository,

@@ -1,5 +1,6 @@
 package com.unihub.app.repositories.community.resources;
 
+import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.CommunityMember;
 import com.unihub.app.entities.community.resources.CommunityMembersId;
 import org.springframework.data.domain.Page;
@@ -58,4 +59,7 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
 
     @Query("SELECT COUNT(cm) > 0 FROM CommunityMember cm WHERE cm.community.id = :communityId AND cm.user.id = :userId")
     boolean existsByCommunityIdAndUserId(@Param("communityId") UUID communityId, @Param("userId") UUID userId);
+
+    @Query("SELECT cm.user FROM CommunityMember cm WHERE cm.community.id = :communityId AND cm.user.id != :excludedUserId")
+    List<User> findMembersByCommunityIdExcludingUser(@Param("communityId") UUID communityId, @Param("excludedUserId") UUID excludedUserId);
 }
