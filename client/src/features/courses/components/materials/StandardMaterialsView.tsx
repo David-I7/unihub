@@ -375,10 +375,7 @@ export function StandardMaterialsView({
               setBreadcrumbs((prev) => {
                 const next = [...prev];
                 const lastIdx = next.length - 1;
-                const updatedName =
-                  updated.type === "folder"
-                    ? updated.data.name
-                    : updated.data.title;
+                const updatedName = updated.data.title;
                 next[lastIdx] = {
                   ...next[lastIdx],
                   name: updatedName,

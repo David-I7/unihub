@@ -20,7 +20,7 @@ export function formatBytes(bytes: number, decimals = 1): string {
 
 export function getFileCategory(mediaType: string): string {
   const mt = mediaType.toLowerCase();
-  if (mt.includes("pdf")) return "PDF Document";
+  if (mt.includes("pdf")) return "PDF";
   if (mt.includes("image")) return "Image";
   if (mt.includes("video")) return "Video";
   if (mt.includes("audio")) return "Audio";
@@ -104,17 +104,17 @@ export function getLinkIcon(linkType: string, className = "size-4 shrink-0") {
 export function getLinkTypeLabel(linkType: string): string {
   switch (linkType.toUpperCase()) {
     case "VIDEO":
-      return "external video";
+      return "External video";
     case "GITHUB":
-      return "repo";
+      return "Github repository";
     case "DOCS":
-      return "google docs";
+      return "Google docs";
     case "DOCX":
       return "Word";
     case "DRIVE":
-      return "google drive or microsoft onedrive";
+      return "Google Drive or Microsoft OneDrive";
     case "OTHER":
     default:
-      return "https";
+      return "Other";
   }
 }

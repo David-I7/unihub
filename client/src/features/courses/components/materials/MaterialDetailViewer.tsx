@@ -3,58 +3,54 @@ import { toast } from "sonner";
 import {
   ExternalLink,
   Download,
-  FolderOpen,
   Copy,
   Check,
   Calendar,
-  User,
   HardDrive,
   Info,
   Edit2,
   Trash2,
   Loader2,
   Eye,
+  MoreVertical,
+  FileText,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { usePermissions } from "@/hooks/usePermissions";
-import { PERMISSIONS } from "@/lib/permissions";
 import { getErrorMessage } from "@/api/types";
 import { getMaterialDownloadUrl } from "../../api/getMaterialDownloadUrl";
 import { EditMaterialModal } from "./EditMaterialModal";
-import { EditFolderModal } from "./EditFolderModal";
 import { DeleteMaterialDialog } from "./DeleteMaterialDialog";
-import { DeleteFolderDialog } from "./DeleteFolderDialog";
 import { MaterialFilePreviewDialog } from "./MaterialFilePreviewDialog";
 import {
   formatBytes,
   getFileCategory,
   getFileIcon,
   getLinkIcon,
+  getLinkTypeLabel,
 } from "./materialsUtils";
-import type {
-  CourseMaterialFile,
-  CourseMaterialFolder,
-  CourseMaterialLink,
-} from "../../api/types";
+import type { CourseMaterialFile, CourseMaterialLink } from "../../api/types";
 
 export type SelectedMaterial =
   | { type: "file"; data: CourseMaterialFile }
   | { type: "link"; data: CourseMaterialLink }
-  | {
-      type: "folder";
-      data: CourseMaterialFolder;
-      childrenCount?: { folders: number; files: number; links: number };
-    }
   | null;
 
 interface MaterialDetailViewerProps {
   material: SelectedMaterial;
   filePath?: string;
   communitySlug?: string;
-  onOpenFolder?: (folder: CourseMaterialFolder) => void;
   onDeleted?: () => void;
   onUpdated?: (updated: SelectedMaterial) => void;
   className?: string;
@@ -64,7 +60,6 @@ export function MaterialDetailViewer({
   material,
   filePath,
   communitySlug = "",
-  onOpenFolder,
   onDeleted,
   onUpdated,
   className = "",
@@ -75,22 +70,13 @@ export function MaterialDetailViewer({
 
   const [editMaterialOpen, setEditMaterialOpen] = useState(false);
   const [deleteMaterialOpen, setDeleteMaterialOpen] = useState(false);
-  const [editFolderOpen, setEditFolderOpen] = useState(false);
-  const [deleteFolderOpen, setDeleteFolderOpen] = useState(false);
 
-  const {
-    canEditMaterial,
-    canDeleteMaterial,
-    canEditFolder,
-    canDeleteFolder,
-    hasPermission,
-  } = usePermissions(communitySlug);
+  const { canEditMaterial, canDeleteMaterial } = usePermissions(communitySlug);
 
-  const isFolderModerator = hasPermission(PERMISSIONS.MODERATE_FOLDER);
-
-  const handleCopy = (text: string) => {
+  const handleCopy = (text: string, label = "Copied to clipboard") => {
     navigator.clipboard.writeText(text);
     setCopied(true);
+    toast.success(label);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -118,7 +104,7 @@ export function MaterialDetailViewer({
           No Item Selected
         </h3>
         <p className="text-xs text-muted-foreground max-w-xs mt-1">
-          Select a file, external link, or folder to view its details and
+          Select a file or external link from the list to view its details and
           actions.
         </p>
       </div>
@@ -126,517 +112,432 @@ export function MaterialDetailViewer({
   }
 
   const ownerId = material.data.owner?.id;
-  const userCanEdit =
-    material.type === "folder"
-      ? canEditFolder(ownerId)
-      : canEditMaterial(ownerId);
-  const userCanDelete =
-    material.type === "folder"
-      ? canDeleteFolder(ownerId)
-      : canDeleteMaterial(ownerId);
+  const userCanEdit = canEditMaterial(ownerId);
+  const userCanDelete = canDeleteMaterial(ownerId);
+  const locationPath = filePath || "Root";
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`${className}`}>
+      {/* ========================================================================= */}
+      {/* 1. FILE DETAIL VIEW */}
+      {/* ========================================================================= */}
       {material.type === "file" && (
-        <div className="space-y-6">
-          {/* File Header */}
-          <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  {getFileIcon(material.data.mediaType)}
-                </div>
-
-                <div className="space-y-1 flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] font-mono"
-                    >
-                      {getFileCategory(material.data.mediaType)}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {formatBytes(material.data.size)}
-                    </span>
-                  </div>
-                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                    {material.data.title}
-                  </h2>
-                </div>
+        <Card className="rounded-2xl border bg-card overflow-hidden shadow-xs">
+          {/* Header & Primary Actions */}
+          <div className="bg-muted/30 border-b px-5 pb-5 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Category Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-semibold px-2.5 py-0.5"
+                >
+                  {getFileCategory(material.data.mediaType)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs font-mono px-2 py-0.5"
+                >
+                  {formatBytes(material.data.size)}
+                </Badge>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 text-xs font-semibold cursor-pointer"
-                onClick={() => setPreviewOpen(true)}
-              >
-                <Eye className="size-4 text-primary" />
-                <span>Preview File</span>
-              </Button>
-
-              <Button
-                size="sm"
-                className="gap-2 font-bold cursor-pointer"
-                disabled={isDownloading}
-                onClick={() => handleDownloadFile(material.data.id)}
-              >
-                {isDownloading ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    <span>Preparing Download...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download className="size-4" />
-                    <span>Download File</span>
-                  </>
-                )}
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 text-xs cursor-pointer"
-                onClick={() => handleCopy(material.data.title)}
-              >
-                {copied ? (
-                  <>
-                    <Check className="size-3.5 text-emerald-500" />
-                    <span>Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3.5" />
-                    <span>Copy Title</span>
-                  </>
-                )}
-              </Button>
-
-              {userCanEdit && (
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setEditMaterialOpen(true)}
+                  className="gap-1.5 text-xs font-semibold cursor-pointer shadow-2xs"
+                  onClick={() => setPreviewOpen(true)}
                 >
-                  <Edit2 className="size-3.5" />
-                  <span>Edit</span>
+                  <Eye className="size-3.5 text-primary" />
+                  <span>Preview</span>
                 </Button>
-              )}
 
-              {userCanDelete && (
                 <Button
                   size="sm"
-                  variant="destructive"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setDeleteMaterialOpen(true)}
+                  className="gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
+                  disabled={isDownloading}
+                  onClick={() => handleDownloadFile(material.data.id)}
                 >
-                  <Trash2 className="size-3.5" />
-                  <span>Delete</span>
+                  {isDownloading ? (
+                    <>
+                      <Loader2 className="size-3.5 animate-spin" />
+                      <span>Downloading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="size-3.5" />
+                      <span>Download</span>
+                    </>
+                  )}
                 </Button>
-              )}
+
+                {/* Dropdown Menu for Secondary Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="size-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground"
+                      />
+                    }
+                  >
+                    <MoreVertical className="size-4" />
+                    <span className="sr-only">More options</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleCopy(material.data.title, "File name copied")
+                      }
+                      className="gap-2 text-xs cursor-pointer"
+                    >
+                      {copied ? (
+                        <Check className="size-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="size-3.5 text-muted-foreground" />
+                      )}
+                      <span>Copy Name</span>
+                    </DropdownMenuItem>
+
+                    {userCanEdit && (
+                      <DropdownMenuItem
+                        onClick={() => setEditMaterialOpen(true)}
+                        className="gap-2 text-xs cursor-pointer"
+                      >
+                        <Edit2 className="size-3.5 text-muted-foreground" />
+                        <span>Edit Details</span>
+                      </DropdownMenuItem>
+                    )}
+
+                    {userCanDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeleteMaterialOpen(true)}
+                          className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Delete File</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-          </Card>
+
+            {/* Title & Creator Hero */}
+            <div className="flex items-start gap-4 pt-1">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-background border shadow-2xs">
+                {getFileIcon(material.data.mediaType, "size-6")}
+              </div>
+
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-foreground break-words leading-snug">
+                  {material.data.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <UserAvatar
+                      username={material.data.owner.username}
+                      className="size-4 rounded text-[9px]"
+                      fallbackClassName="rounded"
+                    />
+                    <span className="font-medium text-foreground">
+                      {material.data.owner.username}
+                    </span>
+                  </div>
+                  <span>•</span>
+                  <span>
+                    Uploaded on{" "}
+                    {new Date(material.data.createdAt).toLocaleDateString(
+                      undefined,
+                      {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      },
+                    )}
+                  </span>
+                  <span>•</span>
+                  <span className="truncate max-w-[200px]" title={locationPath}>
+                    in {locationPath}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Description / Notes */}
-          {material.data.description && (
-            <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-2">
+          {material.data.description ? (
+            <div className="px-5 pt-2 pb-5 border-b space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Info className="size-3.5 text-primary" />
-                <span>Description & Notes</span>
+                <span>Description</span>
               </h3>
-              <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-line">
+              <div className="text-xs sm:text-sm text-foreground/90 ">
                 {material.data.description}
-              </p>
-            </Card>
-          )}
+              </div>
+            </div>
+          ) : null}
 
-          {/* Metadata Specifications Grid */}
-          <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b pb-2.5">
+          {/* File Specifications Table */}
+          <div className="px-5 pt-2 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               File Specifications
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <HardDrive className="size-3" /> Media Type / MIME
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 rounded-xl bg-muted/30 border space-y-1">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                  <HardDrive className="size-3.5 text-muted-foreground" /> MIME
+                  Type
                 </span>
                 <p className="font-mono text-xs font-semibold text-foreground truncate">
                   {material.data.mediaType}
                 </p>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <Calendar className="size-3" /> Upload Date
+              <div className="p-3 rounded-xl bg-muted/30 border space-y-1">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                  <Layers className="size-3.5 text-muted-foreground" /> Exact
+                  File Size
                 </span>
                 <p className="font-medium text-foreground">
-                  {new Date(material.data.createdAt).toLocaleDateString(
-                    undefined,
-                    {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    },
-                  )}
+                  {material.data.size.toLocaleString()} bytes (
+                  {formatBytes(material.data.size)})
                 </p>
               </div>
+            </div>
+          </div>
+        </Card>
+      )}
 
-              <div className="space-y-1 sm:col-span-2 pt-1 border-t">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <User className="size-3" /> Uploaded By
-                </span>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <UserAvatar
-                    username={material.data.owner.username}
-                    className="size-5 rounded-md text-[10px]"
-                    fallbackClassName="rounded-md"
-                  />
-                  <span className="font-semibold text-foreground">
-                    {material.data.owner.username}
+      {/* ========================================================================= */}
+      {/* 2. LINK DETAIL VIEW */}
+      {/* ========================================================================= */}
+      {material.type === "link" && (
+        <Card className="rounded-2xl border bg-card overflow-hidden shadow-xs">
+          {/* Header & Primary Actions */}
+          <div className="bg-muted/30 border-b px-5 pb-5 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Category Badges */}
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="text-xs font-semibold px-2.5 py-0.5"
+                >
+                  {getLinkTypeLabel(material.data.linkType)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs font-mono px-2 py-0.5"
+                >
+                  {material.data.linkType}
+                </Badge>
+              </div>
+
+              {/* Action Buttons Group */}
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  className="gap-1.5 text-xs font-bold cursor-pointer shadow-2xs"
+                  onClick={() => window.open(material.data.url, "_blank")}
+                >
+                  <span>Open Resource</span>
+                  <ExternalLink className="size-3.5" />
+                </Button>
+
+                {/* Dropdown Menu for Secondary Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="size-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground"
+                      />
+                    }
+                  >
+                    <MoreVertical className="size-4" />
+                    <span className="sr-only">More options</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleCopy(material.data.url, "Destination URL copied")
+                      }
+                      className="gap-2 text-xs cursor-pointer"
+                    >
+                      <Copy className="size-3.5 text-muted-foreground" />
+                      <span>Copy URL</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                      onClick={() =>
+                        handleCopy(material.data.title, "Title copied")
+                      }
+                      className="gap-2 text-xs cursor-pointer"
+                    >
+                      <FileText className="size-3.5 text-muted-foreground" />
+                      <span>Copy Title</span>
+                    </DropdownMenuItem>
+
+                    {userCanEdit && (
+                      <DropdownMenuItem
+                        onClick={() => setEditMaterialOpen(true)}
+                        className="gap-2 text-xs cursor-pointer"
+                      >
+                        <Edit2 className="size-3.5 text-muted-foreground" />
+                        <span>Edit Details</span>
+                      </DropdownMenuItem>
+                    )}
+
+                    {userCanDelete && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeleteMaterialOpen(true)}
+                          className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Delete Link</span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* Title & Creator Hero */}
+            <div className="flex items-start gap-4 pt-1">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-background border shadow-2xs">
+                {getLinkIcon(material.data.linkType, "size-6")}
+              </div>
+
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <h2 className="font-heading text-lg sm:text-xl font-bold text-foreground break-words leading-snug">
+                  {material.data.title}
+                </h2>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <UserAvatar
+                      username={material.data.owner.username}
+                      className="size-4 rounded text-[9px]"
+                      fallbackClassName="rounded"
+                    />
+                    <span className="font-medium text-foreground">
+                      {material.data.owner.username}
+                    </span>
+                  </div>
+                  <span>•</span>
+                  <span>
+                    Added on{" "}
+                    {new Date(material.data.createdAt).toLocaleDateString(
+                      undefined,
+                      {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      },
+                    )}
+                  </span>
+                  <span>•</span>
+                  <span className="truncate max-w-[200px]" title={locationPath}>
+                    in {locationPath}
                   </span>
                 </div>
               </div>
             </div>
-          </Card>
-        </div>
-      )}
+          </div>
 
-      {material.type === "link" && (
-        <div className="space-y-6">
-          {/* Link Header */}
-          <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  {getLinkIcon(material.data.linkType)}
-                </div>
-
-                <div className="space-y-1 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="text-[10px] font-mono"
-                    >
-                      {material.data.linkType}
-                    </Badge>
-                  </div>
-                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                    {material.data.title}
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-              <Button
-                size="sm"
-                className="gap-2 font-bold cursor-pointer"
-                onClick={() => window.open(material.data.url, "_blank")}
-              >
-                <span>Open Link</span>
-                <ExternalLink className="size-4" />
-              </Button>
-
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-2 text-xs cursor-pointer"
-                onClick={() => handleCopy(material.data.url)}
-              >
-                {copied ? (
-                  <>
-                    <Check className="size-3.5 text-emerald-500" />
-                    <span>URL Copied</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="size-3.5" />
-                    <span>Copy URL</span>
-                  </>
-                )}
-              </Button>
-
-              {userCanEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setEditMaterialOpen(true)}
-                >
-                  <Edit2 className="size-3.5" />
-                  <span>Edit</span>
-                </Button>
-              )}
-
-              {userCanDelete && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setDeleteMaterialOpen(true)}
-                >
-                  <Trash2 className="size-3.5" />
-                  <span>Delete</span>
-                </Button>
-              )}
-            </div>
-          </Card>
-
-          {/* Description / Notes */}
-          {material.data.description && (
-            <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-2">
+          {/* Description */}
+          {material.data.description ? (
+            <div className="px-5 pb-5 border-b space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Info className="size-3.5 text-primary" />
                 <span>Description</span>
               </h3>
-              <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-line">
+              <div className="text-xs sm:text-sm text-foreground/90">
                 {material.data.description}
-              </p>
-            </Card>
-          )}
+              </div>
+            </div>
+          ) : null}
 
-          {/* Creator Metadata */}
-          <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b pb-2.5">
+          {/* Resource Information Table */}
+          <div className="px-5  space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Resource Information
             </h3>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <Calendar className="size-3" /> Added On
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-3 rounded-xl bg-muted/30 border space-y-1">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                  <Layers className="size-3.5 text-muted-foreground" /> Resource
+                  Type
+                </span>
+                <p className="font-semibold text-foreground capitalize">
+                  {getLinkTypeLabel(material.data.linkType)}
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/30 border space-y-1">
+                <span className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                  <Calendar className="size-3.5 text-muted-foreground" /> Added
+                  On
                 </span>
                 <p className="font-medium text-foreground">
                   {new Date(material.data.createdAt).toLocaleDateString(
                     undefined,
                     {
                       year: "numeric",
-                      month: "short",
+                      month: "long",
                       day: "numeric",
                     },
                   )}
                 </p>
               </div>
-
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <User className="size-3" /> Shared By
-                </span>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <UserAvatar
-                    username={material.data.owner.username}
-                    className="size-5 rounded-md text-[10px]"
-                    fallbackClassName="rounded-md"
-                  />
-                  <span className="font-semibold text-foreground">
-                    {material.data.owner.username}
-                  </span>
-                </div>
-              </div>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       )}
 
-      {material.type === "folder" && (
-        <div className="space-y-6">
-          <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1 min-w-0">
-                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <FolderOpen className="size-6" />
-                </div>
-
-                <div className="space-y-1 flex-1 min-w-0">
-                  <Badge variant="outline" className="text-[10px] font-mono">
-                    Folder Directory
-                  </Badge>
-                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                    {material.data.name}
-                  </h2>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-              {onOpenFolder && (
-                <Button
-                  size="sm"
-                  className="gap-2 font-bold cursor-pointer"
-                  onClick={() => onOpenFolder(material.data)}
-                >
-                  <FolderOpen className="size-4" />
-                  <span>Open Folder Directory</span>
-                </Button>
-              )}
-
-              {userCanEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setEditFolderOpen(true)}
-                >
-                  <Edit2 className="size-3.5" />
-                  <span>Rename</span>
-                </Button>
-              )}
-
-              {userCanDelete && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="gap-1.5 text-xs cursor-pointer"
-                  onClick={() => setDeleteFolderOpen(true)}
-                >
-                  <Trash2 className="size-3.5" />
-                  <span>Delete</span>
-                </Button>
-              )}
-            </div>
-          </Card>
-
-          {material.childrenCount && (
-            <div className="grid grid-cols-3 gap-3">
-              <Card className="rounded-2xl border bg-card p-4 text-center">
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  Subfolders
-                </span>
-                <p className="font-heading text-lg font-bold text-foreground mt-1">
-                  {material.childrenCount.folders}
-                </p>
-              </Card>
-              <Card className="rounded-2xl border bg-card p-4 text-center">
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  Files
-                </span>
-                <p className="font-heading text-lg font-bold text-foreground mt-1">
-                  {material.childrenCount.files}
-                </p>
-              </Card>
-              <Card className="rounded-2xl border bg-card p-4 text-center">
-                <span className="text-[11px] font-semibold text-muted-foreground">
-                  Links
-                </span>
-                <p className="font-heading text-lg font-bold text-foreground mt-1">
-                  {material.childrenCount.links}
-                </p>
-              </Card>
-            </div>
-          )}
-
-          <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground border-b pb-2.5">
-              Directory Details
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <Calendar className="size-3" /> Created
-                </span>
-                <p className="font-medium text-foreground">
-                  {new Date(material.data.createdAt).toLocaleDateString(
-                    undefined,
-                    {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    },
-                  )}
-                </p>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-muted-foreground flex items-center gap-1 text-[11px]">
-                  <User className="size-3" /> Created By
-                </span>
-                <div className="flex items-center gap-2 pt-0.5">
-                  <UserAvatar
-                    username={material.data.owner.username}
-                    className="size-5 rounded-md text-[10px]"
-                    fallbackClassName="rounded-md"
-                  />
-                  <span className="font-semibold text-foreground">
-                    {material.data.owner.username}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Edit & Delete Dialogs for Materials */}
-      {material.type !== "folder" && (
-        <>
-          <EditMaterialModal
-            material={material}
-            open={editMaterialOpen}
-            onOpenChange={setEditMaterialOpen}
-            onSuccess={(updated) => {
-              if (material.type === "file") {
-                onUpdated?.({
-                  type: "file",
-                  data: updated as CourseMaterialFile,
-                });
-              } else {
-                onUpdated?.({
-                  type: "link",
-                  data: updated as CourseMaterialLink,
-                });
-              }
-            }}
-          />
-          <DeleteMaterialDialog
-            material={material}
-            open={deleteMaterialOpen}
-            onOpenChange={setDeleteMaterialOpen}
-            onSuccess={() => {
-              onDeleted?.();
-            }}
-          />
-          <MaterialFilePreviewDialog
-            file={material.type === "file" ? material.data : null}
-            open={previewOpen}
-            onOpenChange={setPreviewOpen}
-          />
-        </>
-      )}
-
-      {/* Edit & Delete Dialogs for Folders */}
-      {material.type === "folder" && (
-        <>
-          <EditFolderModal
-            folder={material.data}
-            open={editFolderOpen}
-            onOpenChange={setEditFolderOpen}
-            onSuccess={(updatedFolder) => {
-              onUpdated?.({
-                type: "folder",
-                data: updatedFolder,
-                childrenCount: material.childrenCount,
-              });
-            }}
-          />
-          <DeleteFolderDialog
-            folder={material.data}
-            isModerator={isFolderModerator}
-            open={deleteFolderOpen}
-            onOpenChange={setDeleteFolderOpen}
-            onSuccess={() => {
-              onDeleted?.();
-            }}
-          />
-        </>
-      )}
+      {/* ========================================================================= */}
+      {/* 3. MODALS & DIALOGS */}
+      {/* ========================================================================= */}
+      <EditMaterialModal
+        material={material}
+        open={editMaterialOpen}
+        onOpenChange={setEditMaterialOpen}
+        onSuccess={(updated) => {
+          if (material.type === "file") {
+            onUpdated?.({
+              type: "file",
+              data: updated as CourseMaterialFile,
+            });
+          } else {
+            onUpdated?.({
+              type: "link",
+              data: updated as CourseMaterialLink,
+            });
+          }
+        }}
+      />
+      <DeleteMaterialDialog
+        material={material}
+        open={deleteMaterialOpen}
+        onOpenChange={setDeleteMaterialOpen}
+        onSuccess={() => {
+          onDeleted?.();
+        }}
+      />
+      <MaterialFilePreviewDialog
+        file={material.type === "file" ? material.data : null}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }
