@@ -107,7 +107,7 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(communityMemberService.getMembers(eq("fmi-info"), any(Pageable.class))).thenReturn(pageDto);
+        when(communityMemberService.getMembers(eq("fmi-info"), any(), any(), any(Pageable.class))).thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL + "/members")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -116,6 +116,42 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content[0].username").value("student_1"))
                 .andExpect(jsonPath("$.content[0].role").value("COMMUNITY_MEMBER"))
                 .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("GET /members with search and role filters passes parameters to service")
+    public void testGetMembers_WithFilters() throws Exception {
+        UUID memberUserId = UUID.randomUUID();
+        OffsetDateTime joinedAt = OffsetDateTime.now();
+
+        CommunityMemberResponseDto memberDto = CommunityMemberResponseDto.builder()
+                .userId(memberUserId)
+                .username("student_1")
+                .role("COMMUNITY_ADMIN")
+                .joinedAt(joinedAt)
+                .build();
+
+        PageDto<CommunityMemberResponseDto> pageDto = PageDto.<CommunityMemberResponseDto>builder()
+                .content(List.of(memberDto))
+                .number(0)
+                .size(20)
+                .totalElements(1)
+                .totalPages(1)
+                .first(true)
+                .last(true)
+                .build();
+
+        when(communityMemberService.getMembers(eq("fmi-info"), eq("student"), eq(RoleType.COMMUNITY_ADMIN), any(Pageable.class)))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/members")
+                        .param("search", "student")
+                        .param("role", "COMMUNITY_ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].username").value("student_1"))
+                .andExpect(jsonPath("$.content[0].role").value("COMMUNITY_ADMIN"));
     }
 
     // =========================================================================

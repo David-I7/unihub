@@ -61,6 +61,23 @@ export type CommunityMemberRole =
   | "COMMUNITY_ADMIN"
   | "COMMUNITY_MEMBER";
 
+export type CommunityMember = {
+  userId: string;
+  username: string;
+  email?: string;
+  role: CommunityMemberRole;
+  joinedAt: string;
+};
+
+export type AddCommunityMemberDto = {
+  username: string;
+  role?: CommunityMemberRole;
+};
+
+export type UpdateMemberRoleDto = {
+  role: CommunityMemberRole;
+};
+
 export type CommunityJoinCode = {
   id: string;
   code: string;

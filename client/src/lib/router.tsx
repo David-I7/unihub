@@ -8,6 +8,7 @@ import CommunityJoinPage from "../pages/CommunityJoinPage";
 import StudyYearDetailPage from "../pages/StudyYearDetailPage";
 import CourseDetailPage from "../pages/CourseDetailPage";
 import CalendarPage from "../pages/CalendarPage";
+import NotificationsPage from "../pages/NotificationsPage";
 
 import {
   LoginForm,
@@ -31,6 +32,14 @@ export const router = createBrowserRouter([
         element: (
           <AuthenticatedRoute>
             <CalendarPage />
+          </AuthenticatedRoute>
+        ),
+      },
+      {
+        path: "/notifications",
+        element: (
+          <AuthenticatedRoute>
+            <NotificationsPage />
           </AuthenticatedRoute>
         ),
       },

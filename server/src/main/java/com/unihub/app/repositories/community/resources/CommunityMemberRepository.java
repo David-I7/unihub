@@ -48,11 +48,20 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
         SELECT cm FROM CommunityMember cm
         JOIN FETCH cm.user u
         WHERE cm.community.slug = :communitySlug
+        AND (:roleId IS NULL OR cm.roleId = :roleId)
+        AND (COALESCE(:search, '') = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')))
     """, countQuery = """
         SELECT COUNT(cm) FROM CommunityMember cm
         WHERE cm.community.slug = :communitySlug
+        AND (:roleId IS NULL OR cm.roleId = :roleId)
+        AND (COALESCE(:search, '') = '' OR LOWER(cm.user.username) LIKE LOWER(CONCAT('%', :search, '%')))
     """)
-    Page<CommunityMember> findMembersByCommunitySlug(@Param("communitySlug") String communitySlug, Pageable pageable);
+    Page<CommunityMember> findMembersByCommunitySlugWithFilters(
+            @Param("communitySlug") String communitySlug,
+            @Param("search") String search,
+            @Param("roleId") UUID roleId,
+            Pageable pageable
+    );
 
     @Query("SELECT cm FROM CommunityMember cm WHERE cm.community.id = :communityId AND cm.user.id = :userId")
     Optional<CommunityMember> findByCommunityIdAndUserId(@Param("communityId") UUID communityId, @Param("userId") UUID userId);

@@ -13,7 +13,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useCalendarEvent, useDeleteEvent } from "../api/events";
 import { useCreateReminder, useDeleteReminder } from "../api/reminders";
 import { useCalendarStore } from "../store/useCalendarStore";
@@ -106,6 +106,22 @@ export function EventDetailModal() {
   const [reminderError, setReminderError] = useState<string | null>(null);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [currentTime] = useState(() => Date.now());
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleClose = () => {
+    closeEventDetails();
+    if (searchParams.has("eventId")) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("eventId");
+          return next;
+        },
+        { replace: true },
+      );
+    }
+  };
 
   const { mutate: deleteEventMutate, isPending: isDeleting } = useDeleteEvent();
   const { mutate: createReminderMutate, isPending: isCreatingReminder } =
@@ -200,12 +216,9 @@ export function EventDetailModal() {
     );
   };
 
-  const handleRemoveReminder = (reminderId?: string) => {
+  const handleRemoveReminder = () => {
     if (!event) return;
-    deleteReminderMutate({
-      eventId: event.id,
-      reminderId,
-    });
+    deleteReminderMutate(event.id);
   };
 
   const handleDelete = () => {
@@ -213,7 +226,7 @@ export function EventDetailModal() {
     deleteEventMutate(event.id, {
       onSuccess: () => {
         setIsConfirmingDelete(false);
-        closeEventDetails();
+        handleClose();
       },
     });
   };
@@ -221,7 +234,7 @@ export function EventDetailModal() {
   return (
     <Dialog
       open={Boolean(selectedEventId)}
-      onOpenChange={(open) => !open && closeEventDetails()}
+      onOpenChange={(open) => !open && handleClose()}
     >
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         {isLoading ? (
@@ -242,7 +255,7 @@ export function EventDetailModal() {
             <Button
               variant="outline"
               size="sm"
-              onClick={closeEventDetails}
+              onClick={handleClose}
               className="mt-3 text-xs"
             >
               Close
@@ -514,7 +527,7 @@ export function EventDetailModal() {
                         {!isConcluded && reminder.status === "PENDING" && (
                           <button
                             type="button"
-                            onClick={() => handleRemoveReminder(reminder.id)}
+                            onClick={() => handleRemoveReminder()}
                             disabled={isDeletingReminder}
                             title="Remove reminder"
                             className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-muted transition-colors cursor-pointer"
@@ -526,14 +539,7 @@ export function EventDetailModal() {
                     </div>
                   ))}
                 </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  No reminders scheduled for this event.
-                </p>
-              )}
-
-              {/* Add Reminder Controls */}
-              {isConcluded ? (
+              ) : isConcluded ? (
                 <p className="text-[11px] text-muted-foreground italic">
                   Event has concluded. No new reminders can be scheduled.
                 </p>

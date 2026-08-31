@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth";
+import { NotificationBell } from "@/features/notifications";
 import { GraduationCap, LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -26,8 +27,9 @@ export function AppHeader() {
         <span className="text-base font-bold">UniHub</span>
       </Link>
 
-      {/* Right Controls: User Dropdown or Login */}
+      {/* Right Controls: Notification Bell, User Dropdown or Login */}
       <div className="flex items-center gap-2">
+        <NotificationBell />
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger

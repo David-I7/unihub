@@ -14,15 +14,8 @@ export async function createReminder(
   return response.data;
 }
 
-export async function deleteReminder(
-  eventId: string,
-  reminderId?: string,
-): Promise<void> {
-  if (reminderId) {
-    await client.delete(`/calendar/events/${eventId}/reminders/${reminderId}`);
-  } else {
-    await client.delete(`/calendar/events/${eventId}/reminders`);
-  }
+export async function deleteReminder(eventId: string): Promise<void> {
+  await client.delete(`/calendar/events/${eventId}/reminders`);
 }
 
 export function useCreateReminder() {
@@ -45,13 +38,7 @@ export function useCreateReminder() {
 export function useDeleteReminder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      eventId,
-      reminderId,
-    }: {
-      eventId: string;
-      reminderId?: string;
-    }) => deleteReminder(eventId, reminderId),
+    mutationFn: (eventId: string) => deleteReminder(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.all });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

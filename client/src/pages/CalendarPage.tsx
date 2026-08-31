@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { Link } from "react-router";
+import { useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router";
 import { Calendar as CalendarIcon, Compass, Users } from "lucide-react";
 import {
   CalendarAgendaList,
@@ -17,6 +17,9 @@ import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 
 export default function CalendarPage() {
+  const [searchParams] = useSearchParams();
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+
   const currentDate = useCalendarStore((s) => s.currentDate);
   const communitySlug = useCalendarStore((s) => s.communitySlug);
   const studyYear = useCalendarStore((s) => s.studyYear);
@@ -24,6 +27,14 @@ export default function CalendarPage() {
   const selectedType = useCalendarStore((s) => s.selectedType);
   const searchQuery = useCalendarStore((s) => s.searchQuery);
   const viewMode = useCalendarStore((s) => s.viewMode);
+
+  const eventIdParam = searchParams.get("eventId");
+
+  useEffect(() => {
+    if (eventIdParam) {
+      openEventDetails(eventIdParam);
+    }
+  }, [eventIdParam, openEventDetails]);
 
   // Fetch enrolled communities for empty-state evaluation and Add Event button permission
   const { data: userCommunitiesData, isLoading: isLoadingCommunities } =

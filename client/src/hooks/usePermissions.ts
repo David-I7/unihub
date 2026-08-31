@@ -55,6 +55,10 @@ export function usePermissions(
     hasPermission(PERMISSIONS.CREATE_JOIN_CODE) ||
     hasPermission(PERMISSIONS.UPDATE_JOIN_CODE);
 
+  const canAddMember = hasPermission(PERMISSIONS.CREATE_MEMBER);
+  const canRemoveMember = hasPermission(PERMISSIONS.DELETE_MEMBER);
+  const canUpdateMemberRole = hasPermission(PERMISSIONS.UPDATE_MEMBER_ROLE);
+
   const canCreateStudyYear = hasPermission(PERMISSIONS.CREATE_STUDY_YEAR);
   const canDeleteStudyYear = hasPermission(PERMISSIONS.DELETE_STUDY_YEAR);
 
@@ -163,6 +167,9 @@ export function usePermissions(
     canDeleteCommunity,
     canVerifyCommunity,
     canManageJoinCodes,
+    canAddMember,
+    canRemoveMember,
+    canUpdateMemberRole,
     canCreateStudyYear,
     canDeleteStudyYear,
     canCreatePost,

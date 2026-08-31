@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { Info, FolderOpen, MessageSquare } from "lucide-react";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
@@ -11,6 +11,10 @@ import {
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
+const VALID_TABS = ["about", "materials", "posts"] as const;
+type CourseTab = (typeof VALID_TABS)[number];
+const DEFAULT_TAB: CourseTab = "about";
+
 export default function CourseDetailPage() {
   const {
     communitySlug = "",
@@ -21,6 +25,7 @@ export default function CourseDetailPage() {
     studyYearSlug: string;
     courseSlug: string;
   }>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const {
     data: courseHome,
@@ -28,6 +33,27 @@ export default function CourseDetailPage() {
     isError,
     refetch,
   } = useCourseHome(communitySlug, studyYearSlug, courseSlug);
+
+  const rawTab = searchParams.get("tab");
+  const currentTab: CourseTab =
+    rawTab && VALID_TABS.includes(rawTab as CourseTab)
+      ? (rawTab as CourseTab)
+      : DEFAULT_TAB;
+
+  const handleTabChange = (nextTab: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextTab === DEFAULT_TAB) {
+          next.delete("tab");
+        } else {
+          next.set("tab", nextTab);
+        }
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   if (isLoading) {
     return <CourseSkeleton />;
@@ -59,7 +85,11 @@ export default function CourseDetailPage() {
       <AppBreadcrumb />
 
       {/* Course Tabs (Top Navigation) */}
-      <Tabs defaultValue="about" className="w-full space-y-6 min-w-0">
+      <Tabs
+        value={currentTab}
+        onValueChange={handleTabChange}
+        className="w-full space-y-6 min-w-0"
+      >
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="h-10 p-1 bg-muted/60 rounded-xl gap-1 flex-nowrap shrink-0">
             <TabsTrigger value="about">
@@ -72,7 +102,7 @@ export default function CourseDetailPage() {
               <span>Materials</span>
             </TabsTrigger>
 
-            <TabsTrigger value="discussions">
+            <TabsTrigger value="posts">
               <MessageSquare className="size-4" />
               <span>Posts & Discussions</span>
             </TabsTrigger>
@@ -94,7 +124,7 @@ export default function CourseDetailPage() {
           />
         </TabsContent>
 
-        <TabsContent value="discussions" className="focus-visible:outline-none">
+        <TabsContent value="posts" className="focus-visible:outline-none">
           <CoursePostsTab
             communitySlug={communitySlug}
             studyYearSlug={studyYearSlug}

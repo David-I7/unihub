@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { MaterialLinkType } from "../api/types";
 
 export const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -34,7 +35,7 @@ export const VIDEO_DOMAINS = [
 
 export function detectLinkType(
   rawUrl: string,
-): "GITHUB" | "DRIVE" | "VIDEO" | "OTHER" {
+): MaterialLinkType {
   try {
     const url = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
       ? new URL(rawUrl)
@@ -163,7 +164,7 @@ export const createLinkSchema = z
       .refine((val) => val.startsWith("https://"), {
         message: "Only HTTPS URLs are allowed",
       }),
-    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "OTHER"]),
+    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "DOCS", "DOCX", "OTHER"]),
   })
   .refine((data) => validateLinkDomain(data.url, data.linkType), {
     message: "URL domain does not match the selected link type",
@@ -193,7 +194,9 @@ export const updateMaterialSchema = z
       })
       .optional()
       .or(z.literal("")),
-    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "OTHER"]).optional(),
+    linkType: z
+      .enum(["VIDEO", "DRIVE", "GITHUB", "DOCS", "DOCX", "OTHER"])
+      .optional(),
   })
   .refine(
     (data) => {

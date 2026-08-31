@@ -11,18 +11,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavUser } from "./NavUser";
 import { NavLoginPrompt } from "./NavLoginPrompt";
 import { useAuthStore } from "@/features/auth";
+import { useUnreadNotificationCount } from "@/features/notifications";
 import { Link, useLocation } from "react-router";
 import { navItems, isRouteActive } from "./nav";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
+  const { data: totalUnread = 0 } = useUnreadNotificationCount();
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
-
 
   return (
     <Sidebar
@@ -80,6 +82,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1">
               {navItems.map((item) => {
                 const active = isRouteActive(location.pathname, item.url);
+                const isNotifications = item.url === "/notifications";
+
                 return (
                   <SidebarMenuItem
                     key={item.title}
@@ -87,11 +91,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   >
                     <SidebarMenuButton
                       isActive={active}
-                      tooltip={item.title}
+                      tooltip={
+                        isNotifications && totalUnread > 0
+                          ? `${item.title} (${totalUnread})`
+                          : item.title
+                      }
                       render={<Link to={item.url} />}
                     >
-                      <item.icon className="size-4.5 sm:size-5" />
-                      <span>{item.title}</span>
+                      <div className="relative flex items-center justify-center">
+                        <item.icon className="size-4.5 sm:size-5" />
+                        {isNotifications && totalUnread > 0 && (
+                          <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-sidebar group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
+                        )}
+                      </div>
+                      <span className="truncate">{item.title}</span>
+                      {isNotifications && totalUnread > 0 && (
+                        <Badge
+                          variant="secondary"
+                          className="ml-auto bg-primary/15 text-primary border-primary/20 text-[10px] font-bold px-1.5 py-0 h-4.5 min-w-4.5 flex items-center justify-center rounded-full group-data-[collapsible=icon]:hidden"
+                        >
+                          {totalUnread > 99 ? "99+" : totalUnread}
+                        </Badge>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

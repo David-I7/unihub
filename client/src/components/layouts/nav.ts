@@ -2,6 +2,7 @@ import {
   Home,
   Users,
   Calendar,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,11 @@ export const navItems: NavItem[] = [
     title: "Calendar",
     url: "/calendar",
     icon: Calendar,
+  },
+  {
+    title: "Notifications",
+    url: "/notifications",
+    icon: Bell,
   },
 ];
 
