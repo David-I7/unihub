@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   DELETE_STUDY_YEAR: "delete:studyYear",
   CREATE_COURSE: "create:course",
   UPDATE_COURSE: "update:course",
+  DELETE_COURSE: "delete:course",
   ARCHIVE_COURSE: "archive:course",
 
   // Discussions (Posts & Comments)

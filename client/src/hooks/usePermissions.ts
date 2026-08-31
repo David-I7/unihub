@@ -62,6 +62,11 @@ export function usePermissions(
   const canCreateStudyYear = hasPermission(PERMISSIONS.CREATE_STUDY_YEAR);
   const canDeleteStudyYear = hasPermission(PERMISSIONS.DELETE_STUDY_YEAR);
 
+  const canCreateCourse = hasPermission(PERMISSIONS.CREATE_COURSE);
+  const canEditCourse = hasPermission(PERMISSIONS.UPDATE_COURSE);
+  const canDeleteCourse = hasPermission(PERMISSIONS.DELETE_COURSE);
+  const canArchiveCourse = hasPermission(PERMISSIONS.ARCHIVE_COURSE);
+
   const canCreatePost = hasPermission(PERMISSIONS.CREATE_POST);
   const canPinPost = hasPermission(PERMISSIONS.PIN_POST);
   const canCreateComment = hasPermission(PERMISSIONS.CREATE_COMMENT);
@@ -169,6 +174,10 @@ export function usePermissions(
     canUpdateMemberRole,
     canCreateStudyYear,
     canDeleteStudyYear,
+    canCreateCourse,
+    canEditCourse,
+    canDeleteCourse,
+    canArchiveCourse,
     canCreatePost,
     canPinPost,
     canCreateComment,

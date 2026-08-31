@@ -118,7 +118,8 @@ export function MaterialDetailViewer({
           No Item Selected
         </h3>
         <p className="text-xs text-muted-foreground max-w-xs mt-1">
-          Select a file, external link, or folder to view its details and actions.
+          Select a file, external link, or folder to view its details and
+          actions.
         </p>
       </div>
     );
@@ -136,14 +137,6 @@ export function MaterialDetailViewer({
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* File / Folder Path Breadcrumb */}
-      {filePath && (
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted/40 border border-border/60 text-xs font-mono text-muted-foreground">
-          <FolderOpen className="size-3.5 text-primary shrink-0" />
-          <span className="truncate">{filePath}</span>
-        </div>
-      )}
-
       {material.type === "file" && (
         <div className="space-y-6">
           {/* File Header */}
@@ -156,7 +149,10 @@ export function MaterialDetailViewer({
 
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px] font-mono">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] font-mono"
+                    >
                       {getFileCategory(material.data.mediaType)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
@@ -280,11 +276,14 @@ export function MaterialDetailViewer({
                   <Calendar className="size-3" /> Upload Date
                 </span>
                 <p className="font-medium text-foreground">
-                  {new Date(material.data.createdAt).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {new Date(material.data.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    },
+                  )}
                 </p>
               </div>
 
@@ -320,7 +319,10 @@ export function MaterialDetailViewer({
 
                 <div className="space-y-1 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="text-[10px] font-mono">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] font-mono"
+                    >
                       {material.data.linkType}
                     </Badge>
                   </div>
@@ -412,11 +414,14 @@ export function MaterialDetailViewer({
                   <Calendar className="size-3" /> Added On
                 </span>
                 <p className="font-medium text-foreground">
-                  {new Date(material.data.createdAt).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {new Date(material.data.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    },
+                  )}
                 </p>
               </div>
 
@@ -538,11 +543,14 @@ export function MaterialDetailViewer({
                   <Calendar className="size-3" /> Created
                 </span>
                 <p className="font-medium text-foreground">
-                  {new Date(material.data.createdAt).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
+                  {new Date(material.data.createdAt).toLocaleDateString(
+                    undefined,
+                    {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    },
+                  )}
                 </p>
               </div>
 

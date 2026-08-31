@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { ShieldCheck, ShieldAlert, Check } from "@/components/ui/icons";
+import { ShieldCheck, ShieldAlert } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 public record CreateCommunityRequestDto(
         @NotBlank(message = "Community name is required")
         @Size(min = 3, max = 100, message = "Community name must be between 3 and 100 characters")
-        @Pattern(regexp = "^[a-zA-Z0-9 ]+$", message = "Community name must contain only alphanumeric characters and spaces")
+        @Pattern(regexp = "^[a-zA-Z0-9 \\-]+$", message = "Community name must contain only alphanumeric characters, dashes and spaces")
         String name,
 
         @NotBlank(message = "Community slug is required")

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { BookOpen } from "@/components/ui/icons";
+import { BookOpen, Plus } from "@/components/ui/icons";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { SearchInput } from "@/components/app/SearchInput";
@@ -7,7 +8,8 @@ import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useObserver } from "@/hooks/useObserver";
-import { CourseCard } from "@/features/courses";
+import { usePermissions } from "@/hooks/usePermissions";
+import { CourseCard, CreateCourseModal } from "@/features/courses";
 import { useInfiniteStudyYearHome } from "../api/getStudyYearHome";
 
 export type FilterOption = "all" | "sem-1" | "sem-2" | "archived";
@@ -31,6 +33,9 @@ export function StudyYearCoursesList({
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput.trim(), 350);
   const [filterOption, setFilterOption] = useState<FilterOption>("all");
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+
+  const { canCreateCourse } = usePermissions(communitySlug);
 
   const semesterParam = useMemo(() => {
     if (filterOption === "sem-1") return 1;
@@ -91,13 +96,24 @@ export function StudyYearCoursesList({
         </div>
 
         {/* Filter Strip */}
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
           <FilterSelect
             label="Filter"
             value={filterOption}
             onChange={(val) => setFilterOption(val as FilterOption)}
             options={FILTER_OPTIONS}
           />
+
+          {canCreateCourse && (
+            <Button
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              className="gap-1.5 font-bold cursor-pointer"
+            >
+              <Plus className="size-4" />
+              <span>Add Course</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -157,6 +173,16 @@ export function StudyYearCoursesList({
               Clear search query
             </button>
           )}
+          {canCreateCourse && !debouncedSearch && (
+            <Button
+              size="sm"
+              onClick={() => setCreateModalOpen(true)}
+              className="gap-1.5 font-bold cursor-pointer mt-2"
+            >
+              <Plus className="size-4" />
+              <span>Add First Course</span>
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-6">
@@ -187,6 +213,13 @@ export function StudyYearCoursesList({
           )}
         </div>
       )}
+
+      <CreateCourseModal
+        communitySlug={communitySlug}
+        studyYearSlug={studyYearSlug}
+        open={createModalOpen}
+        onOpenChange={setCreateModalOpen}
+      />
     </div>
   );
 }

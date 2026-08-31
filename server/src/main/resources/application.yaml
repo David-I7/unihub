@@ -84,6 +84,6 @@ app:
      secret-key: ${AWS_SECRET_KEY}
   storage:
     type: ${STORAGE_TYPE:filesystem}
-    local-dir: ${STORAGE_LOCAL_DIR:classpath:/uploads}
+    local-dir: ${STORAGE_LOCAL_DIR:./uploads}
     upload-expiration-sec: ${STORAGE_UPLOAD_EXPIRATION_SEC:300}
     download-expiration-sec: ${STORAGE_DOWNLOAD_EXPIRATION_SEC:3600}

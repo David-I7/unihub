@@ -23,7 +23,7 @@ public record CreateCourseRequestDto(
         String slug,
 
         @NotBlank(message = "Course abbreviation is required")
-        @Size(min = 1, max = 20, message = "Abbreviation must be between 1 and 20 characters")
+        @Size(min = 2, max = 4, message = "Abbreviation must be between 2 and 4 characters")
         String abbreviation,
 
         @NotNull(message = "Semester is required")
@@ -32,7 +32,7 @@ public record CreateCourseRequestDto(
         Integer semester,
 
         @Min(value = 1, message = "Credit points must be at least 1")
-        @Max(value = 30, message = "Credit points cannot exceed 30")
+        @Max(value = 6, message = "Credit points cannot exceed 6")
         Integer creditPoints,
 
         @Size(max = 1000, message = "Description must not exceed 1000 characters")

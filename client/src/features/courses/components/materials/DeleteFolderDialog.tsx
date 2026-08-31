@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -52,20 +51,22 @@ export function DeleteFolderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive mb-2">
-            <AlertTriangle className="size-5" />
-          </div>
           <DialogTitle>Delete Folder "{folder.name}"</DialogTitle>
           <DialogDescription className="space-y-2 pt-1 text-xs">
-            {isModerator ? (
-              <span className="block font-medium text-destructive">
-                Warning: As a moderator, deleting this folder will permanently remove all nested subfolders, files, and links inside it.
-              </span>
-            ) : (
-              <span className="block text-foreground/80">
-                You can only delete this folder if it is empty. If it contains files or subfolders, you will need to delete or move them first.
-              </span>
-            )}
+            <div className="flex items-center p-2 bg-destructive/10 border border-destructive/20 rounded-lg gap-2 text-destructive font-medium">
+              {isModerator ? (
+                <span className="block font-medium text-destructive">
+                  Warning: As a moderator, deleting this folder will permanently
+                  remove all nested subfolders, files, and links inside it.
+                </span>
+              ) : (
+                <span className="block text-foreground/80">
+                  You can only delete this folder if it is empty. If it contains
+                  files or subfolders, you will need to delete or move them
+                  first.
+                </span>
+              )}
+            </div>
             <span className="block text-muted-foreground">
               This action cannot be undone.
             </span>
@@ -93,7 +94,6 @@ export function DeleteFolderDialog({
             onClick={handleDelete}
             className="gap-1.5 font-bold cursor-pointer"
           >
-            <Trash2 className="size-4" />
             {deleteMutation.isPending ? "Deleting..." : "Delete Folder"}
           </Button>
         </DialogFooter>

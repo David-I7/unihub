@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Archive,
+  ArchiveRestore,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
@@ -103,6 +104,7 @@ export type { LucideIcon };
 export {
   AlertTriangle,
   Archive,
+  ArchiveRestore,
   ArrowLeft,
   ArrowRight,
   ArrowUp,

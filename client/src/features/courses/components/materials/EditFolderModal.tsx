@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -27,22 +26,24 @@ interface EditFolderModalProps {
   onSuccess?: (updatedFolder: CourseMaterialFolder) => void;
 }
 
-export function EditFolderModal({
+function EditFolderForm({
   folder,
-  open,
-  onOpenChange,
+  onClose,
   onSuccess,
-}: EditFolderModalProps) {
+}: {
+  folder: CourseMaterialFolder;
+  onClose: () => void;
+  onSuccess?: (updatedFolder: CourseMaterialFolder) => void;
+}) {
   const updateMutation = useUpdateFolder();
 
   const form = useForm<UpdateFolderFormData>({
     initialValues: {
-      name: folder?.name ?? "",
+      name: folder.name ?? "",
     },
     schema: updateFolderSchema,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      if (!folder) return;
       try {
         const updated = await updateMutation.mutateAsync({
           folderId: folder.id,
@@ -53,7 +54,7 @@ export function EditFolderModal({
 
         toast.success("Folder renamed successfully!");
         onSuccess?.(updated);
-        onOpenChange(false);
+        onClose();
       } catch (err: unknown) {
         const message = getErrorMessage(err, "Failed to update folder.");
         toast.error(message);
@@ -62,6 +63,55 @@ export function EditFolderModal({
     },
   });
 
+  return (
+    <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
+      {form.serverError && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+          {form.serverError}
+        </div>
+      )}
+
+      <Field>
+        <FieldLabel htmlFor="editFolderName">Folder Name</FieldLabel>
+        <Input
+          id="editFolderName"
+          name="name"
+          value={form.values.name}
+          onChange={form.handleChange}
+          onBlur={form.handleBlur}
+          aria-invalid={form.isInvalid("name")}
+          maxLength={100}
+          autoFocus
+        />
+        <FieldError errors={[{ message: form.errors.name }]} />
+      </Field>
+
+      <DialogFooter className="pt-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          disabled={form.isSubmitting || updateMutation.isPending}
+          className="gap-1.5 font-bold cursor-pointer"
+        >
+          {updateMutation.isPending ? "Saving..." : "Save Changes"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function EditFolderModal({
+  folder,
+  open,
+  onOpenChange,
+  onSuccess,
+}: EditFolderModalProps) {
   if (!folder) return null;
 
   return (
@@ -69,51 +119,17 @@ export function EditFolderModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Rename Folder</DialogTitle>
-          <DialogDescription>
-            Change the folder display name.
-          </DialogDescription>
+          <DialogDescription>Change the folder display name.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
-          {form.serverError && (
-            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-              {form.serverError}
-            </div>
-          )}
-
-          <Field>
-            <FieldLabel htmlFor="editFolderName">Folder Name</FieldLabel>
-            <Input
-              id="editFolderName"
-              name="name"
-              value={form.values.name}
-              onChange={form.handleChange}
-              onBlur={form.handleBlur}
-              aria-invalid={form.isInvalid("name")}
-              maxLength={100}
-              autoFocus
-            />
-            <FieldError errors={[{ message: form.errors.name }]} />
-          </Field>
-
-          <DialogFooter className="pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={form.isSubmitting || updateMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
-            >
-              <Check className="size-4" />
-              {updateMutation.isPending ? "Saving..." : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </form>
+        {open && (
+          <EditFolderForm
+            key={folder.id}
+            folder={folder}
+            onClose={() => onOpenChange(false)}
+            onSuccess={onSuccess}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

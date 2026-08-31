@@ -7,12 +7,14 @@ interface CoursePostsTabProps {
   communitySlug: string;
   studyYearSlug: string;
   courseSlug: string;
+  isArchived?: boolean;
 }
 
 export function CoursePostsTab({
   communitySlug,
   studyYearSlug,
   courseSlug,
+  isArchived = false,
 }: CoursePostsTabProps) {
   const [composerOpen, setComposerOpen] = useState(false);
   const { canCreatePost } = usePermissions(communitySlug);
@@ -43,22 +45,28 @@ export function CoursePostsTab({
         isFetchingNextPage={isFetchingNextPage}
         onFetchNextPage={fetchNextPage}
         onRetry={() => refetch()}
-        canCreatePost={canCreatePost}
+        canCreatePost={!isArchived && canCreatePost}
         onOpenComposer={() => setComposerOpen(true)}
         emptyTitle="No Discussions in this Course Yet"
-        emptyDescription="Be the first to start an academic discussion or ask a question about this course."
+        emptyDescription={
+          isArchived
+            ? "No discussions were recorded before this course was archived."
+            : "Be the first to start an academic discussion or ask a question about this course."
+        }
       />
 
-      <PostComposerModal
-        target={{
-          type: "course",
-          communitySlug,
-          studyYearSlug,
-          courseSlug,
-        }}
-        open={composerOpen}
-        onOpenChange={setComposerOpen}
-      />
+      {!isArchived && (
+        <PostComposerModal
+          target={{
+            type: "course",
+            communitySlug,
+            studyYearSlug,
+            courseSlug,
+          }}
+          open={composerOpen}
+          onOpenChange={setComposerOpen}
+        />
+      )}
     </>
   );
 }

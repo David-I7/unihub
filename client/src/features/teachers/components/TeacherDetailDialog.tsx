@@ -286,7 +286,6 @@ export function TeacherDetailDialog({
                   {/* Courses Taught Section */}
                   <div className="space-y-3">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <BookOpen className="size-4 text-primary" />
                       <span>
                         Courses Taught ({teacher.coursesTaught?.length ?? 0})
                       </span>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Crown, AlertTriangle } from "@/components/ui/icons";
+import { AlertTriangle } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

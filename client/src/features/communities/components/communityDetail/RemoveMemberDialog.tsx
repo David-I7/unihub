@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { UserMinus } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

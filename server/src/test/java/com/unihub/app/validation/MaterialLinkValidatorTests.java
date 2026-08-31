@@ -19,7 +19,7 @@ public class MaterialLinkValidatorTests {
     }
 
     @Test
-    @DisplayName("Valid GitHub link passes validation")
+    @DisplayName("Valid code repository links pass validation")
     public void testValidGitHubLink() {
         assertDoesNotThrow(() ->
                 validator.validate("https://github.com/user/project", MaterialLinkType.GITHUB)
@@ -27,18 +27,24 @@ public class MaterialLinkValidatorTests {
         assertDoesNotThrow(() ->
                 validator.validate("https://gist.github.com/user/12345", MaterialLinkType.GITHUB)
         );
-    }
-
-    @Test
-    @DisplayName("Invalid domain for GitHub throws Bad Request")
-    public void testInvalidGitHubDomain() {
-        assertThrows(ResponseStatusException.class, () ->
+        assertDoesNotThrow(() ->
                 validator.validate("https://gitlab.com/user/project", MaterialLinkType.GITHUB)
+        );
+        assertDoesNotThrow(() ->
+                validator.validate("https://bitbucket.org/user/project", MaterialLinkType.GITHUB)
         );
     }
 
     @Test
-    @DisplayName("Valid Google Drive link passes validation")
+    @DisplayName("Invalid domain for repository throws Bad Request")
+    public void testInvalidGitHubDomain() {
+        assertThrows(ResponseStatusException.class, () ->
+                validator.validate("https://randomdomain.com/user/project", MaterialLinkType.GITHUB)
+        );
+    }
+
+    @Test
+    @DisplayName("Valid Google Drive and OneDrive links pass validation")
     public void testValidDriveLink() {
         assertDoesNotThrow(() ->
                 validator.validate("https://drive.google.com/file/d/123/view", MaterialLinkType.DRIVE)
@@ -46,13 +52,19 @@ public class MaterialLinkValidatorTests {
         assertDoesNotThrow(() ->
                 validator.validate("https://docs.google.com/document/d/123/edit", MaterialLinkType.DRIVE)
         );
+        assertDoesNotThrow(() ->
+                validator.validate("https://onedrive.live.com/view/123", MaterialLinkType.DRIVE)
+        );
+        assertDoesNotThrow(() ->
+                validator.validate("https://1drv.ms/u/s!123", MaterialLinkType.DRIVE)
+        );
     }
 
     @Test
     @DisplayName("Invalid domain for Drive throws Bad Request")
     public void testInvalidDriveDomain() {
         assertThrows(ResponseStatusException.class, () ->
-                validator.validate("https://dropbox.com/s/123", MaterialLinkType.DRIVE)
+                validator.validate("https://randomdomain.com/s/123", MaterialLinkType.DRIVE)
         );
     }
 

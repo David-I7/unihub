@@ -18,7 +18,7 @@ public record UpdateCourseRequestDto(
         @Size(min = 2, max = 100, message = "Slug must be between 2 and 100 characters")
         String slug,
 
-        @Size(min = 1, max = 20, message = "Abbreviation must be between 1 and 20 characters")
+        @Size(min = 2, max = 4, message = "Abbreviation must be between 2 and 4 characters")
         String abbreviation,
 
         @Min(value = 1, message = "Semester must be either 1 or 2")
@@ -26,7 +26,7 @@ public record UpdateCourseRequestDto(
         Integer semester,
 
         @Min(value = 1, message = "Credit points must be at least 1")
-        @Max(value = 30, message = "Credit points cannot exceed 30")
+        @Max(value = 6, message = "Credit points cannot exceed 6")
         Integer creditPoints,
 
         @Size(max = 1000, message = "Description must not exceed 1000 characters")

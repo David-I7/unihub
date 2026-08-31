@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Edit3, Eye, Check } from "lucide-react";
+import { Edit3, Eye } from "lucide-react";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
   Dialog,

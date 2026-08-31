@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { Check } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +13,6 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import {
   ColorPicker,

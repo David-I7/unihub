@@ -16,12 +16,19 @@ public class MaterialLinkValidator {
     private static final Set<String> GITHUB_DOMAINS = Set.of(
             "github.com",
             "gist.github.com",
-            "raw.githubusercontent.com"
+            "raw.githubusercontent.com",
+            "gitlab.com",
+            "bitbucket.org",
+            "codeberg.org"
     );
 
     private static final Set<String> DRIVE_DOMAINS = Set.of(
             "drive.google.com",
-            "docs.google.com"
+            "docs.google.com",
+            "onedrive.live.com",
+            "1drv.ms",
+            "onedrive.com",
+            "sharepoint.com"
     );
 
     private static final Set<String> VIDEO_DOMAINS = Set.of(
@@ -68,7 +75,11 @@ public class MaterialLinkValidator {
             case GITHUB -> {
                 boolean matches = GITHUB_DOMAINS.contains(normalizedHost)
                         || normalizedHost.endsWith(".github.com")
-                        || normalizedHost.endsWith(".github.io");
+                        || normalizedHost.endsWith(".github.io")
+                        || normalizedHost.endsWith(".gitlab.com")
+                        || normalizedHost.endsWith(".gitlab.io")
+                        || normalizedHost.endsWith(".bitbucket.org")
+                        || normalizedHost.endsWith(".codeberg.org");
                 if (!matches) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
@@ -79,7 +90,10 @@ public class MaterialLinkValidator {
             case DRIVE -> {
                 boolean matches = DRIVE_DOMAINS.contains(normalizedHost)
                         || normalizedHost.endsWith(".drive.google.com")
-                        || normalizedHost.endsWith(".docs.google.com");
+                        || normalizedHost.endsWith(".docs.google.com")
+                        || normalizedHost.endsWith(".onedrive.live.com")
+                        || normalizedHost.endsWith(".onedrive.com")
+                        || normalizedHost.endsWith(".sharepoint.com");
                 if (!matches) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
@@ -91,7 +105,9 @@ public class MaterialLinkValidator {
                 boolean matches = VIDEO_DOMAINS.contains(normalizedHost)
                         || normalizedHost.endsWith(".youtube.com")
                         || normalizedHost.endsWith(".vimeo.com")
-                        || normalizedHost.endsWith(".loom.com");
+                        || normalizedHost.endsWith(".loom.com")
+                        || normalizedHost.endsWith(".dailymotion.com")
+                        || normalizedHost.endsWith(".twitch.tv");
                 if (!matches) {
                     throw new ResponseStatusException(
                             HttpStatus.BAD_REQUEST,
