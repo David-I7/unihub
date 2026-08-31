@@ -51,6 +51,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers(HttpMethod.GET,"/api/v1/communities/**").permitAll()
                     .requestMatchers(HttpMethod.GET,"/api/v1/teachers/**").permitAll()
+                    .requestMatchers(HttpMethod.GET,"/api/v1/materials/**").permitAll()
+                    .requestMatchers("/api/v1/storage/local/**").permitAll()
                     .anyRequest().authenticated())
             .oauth2Login(login-> {
                         login

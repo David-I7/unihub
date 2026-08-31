@@ -2,12 +2,23 @@ package com.unihub.app.controllers.community.resources;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.CreateFolderRequestDto;
+import com.unihub.app.dto.community.content.request.CreateMaterialFileRequestDto;
+import com.unihub.app.dto.community.content.request.CreateMaterialLinkRequestDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
+import com.unihub.app.dto.community.content.request.PresignedUploadUrlRequestDto;
 import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
+import com.unihub.app.dto.community.content.response.FolderSummaryDto;
+import com.unihub.app.dto.community.content.response.MaterialFileDto;
+import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
+import com.unihub.app.dto.community.content.response.PresignedUploadUrlResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.content.CoursePostService;
+import com.unihub.app.services.community.content.FolderService;
+import com.unihub.app.services.community.content.MaterialFileService;
+import com.unihub.app.services.community.content.MaterialLinkService;
 import com.unihub.app.services.community.resources.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +28,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
@@ -28,13 +45,16 @@ public class CourseController {
 
     private final CourseService courseService;
     private final CoursePostService coursePostService;
+    private final FolderService folderService;
+    private final MaterialFileService materialFileService;
+    private final MaterialLinkService materialLinkService;
 
     @GetMapping("/home")
     public ResponseEntity<CourseHomeResponseDto> getCourseHome(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
             @PathVariable String courseSlug
-    ){
+    ) {
         CourseHomeResponseDto courseResponse = courseService.getCourseHome(communitySlug, studyYearName, courseSlug);
         return ResponseEntity.ok(courseResponse);
     }
@@ -48,6 +68,64 @@ public class CourseController {
     ) {
         CourseMaterialsResponseDto materials = courseService.getMaterials(communitySlug, studyYearName, courseSlug, folderId);
         return ResponseEntity.ok(materials);
+    }
+
+    @PostMapping("/folders")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:folder')")
+    public ResponseEntity<FolderSummaryDto> createFolder(
+            @PathVariable String communitySlug,
+            @PathVariable StudyYearName studyYearName,
+            @PathVariable String courseSlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody CreateFolderRequestDto requestDto
+    ) {
+        FolderSummaryDto created = folderService.createFolder(communitySlug, studyYearName, courseSlug, user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/materials/upload-url")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    public ResponseEntity<PresignedUploadUrlResponseDto> requestPresignedUploadUrl(
+            @PathVariable String communitySlug,
+            @PathVariable StudyYearName studyYearName,
+            @PathVariable String courseSlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody PresignedUploadUrlRequestDto requestDto
+    ) {
+        PresignedUploadUrlResponseDto response = materialFileService.requestPresignedUploadUrl(
+                communitySlug,
+                studyYearName,
+                courseSlug,
+                user,
+                requestDto
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/materials/files")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    public ResponseEntity<MaterialFileDto> createMaterialFile(
+            @PathVariable String communitySlug,
+            @PathVariable StudyYearName studyYearName,
+            @PathVariable String courseSlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody CreateMaterialFileRequestDto requestDto
+    ) {
+        MaterialFileDto created = materialFileService.createMaterialFile(communitySlug, studyYearName, courseSlug, user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    }
+
+    @PostMapping("/materials/links")
+    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    public ResponseEntity<MaterialLinkDto> createMaterialLink(
+            @PathVariable String communitySlug,
+            @PathVariable StudyYearName studyYearName,
+            @PathVariable String courseSlug,
+            @AuthenticationPrincipal UserDto user,
+            @Valid @RequestBody CreateMaterialLinkRequestDto requestDto
+    ) {
+        MaterialLinkDto created = materialLinkService.createMaterialLink(communitySlug, studyYearName, courseSlug, user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/posts")

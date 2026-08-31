@@ -5,12 +5,17 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.CreateFolderRequestDto;
+import com.unihub.app.dto.community.content.request.CreateMaterialFileRequestDto;
+import com.unihub.app.dto.community.content.request.CreateMaterialLinkRequestDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
+import com.unihub.app.dto.community.content.request.PresignedUploadUrlRequestDto;
 import com.unihub.app.dto.community.content.response.CourseMaterialsResponseDto;
 import com.unihub.app.dto.community.content.response.FolderSummaryDto;
 import com.unihub.app.dto.community.content.response.MaterialFileDto;
 import com.unihub.app.dto.community.content.response.MaterialLinkDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
+import com.unihub.app.dto.community.content.response.PresignedUploadUrlResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CourseResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
@@ -20,6 +25,9 @@ import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.community.content.CoursePostService;
+import com.unihub.app.services.community.content.FolderService;
+import com.unihub.app.services.community.content.MaterialFileService;
+import com.unihub.app.services.community.content.MaterialLinkService;
 import com.unihub.app.services.community.resources.CourseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,6 +68,15 @@ public class CourseControllerTests extends BaseIntegrationTest {
 
     @MockitoBean
     private CoursePostService coursePostService;
+
+    @MockitoBean
+    private FolderService folderService;
+
+    @MockitoBean
+    private MaterialFileService materialFileService;
+
+    @MockitoBean
+    private MaterialLinkService materialLinkService;
 
     @MockitoBean
     private AuthorizationService authorizationService;
@@ -154,7 +171,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .name("Materiale")
                 .parentFolderId(null)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david",true))
+                .owner(new OwnerDto(ownerId, "david", true))
                 .build();
 
         MaterialFileDto fileDto = MaterialFileDto.builder()
@@ -165,7 +182,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .mediaType("application/pdf")
                 .size(1024)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david",true))
+                .owner(new OwnerDto(ownerId, "david", true))
                 .build();
 
         MaterialLinkDto linkDto = MaterialLinkDto.builder()
@@ -175,7 +192,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .url("https://github.com/test/repo")
                 .linkType(MaterialLinkType.GITHUB)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david",true))
+                .owner(new OwnerDto(ownerId, "david", true))
                 .build();
 
         CourseMaterialsResponseDto responseDto = CourseMaterialsResponseDto.builder()
@@ -220,7 +237,7 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .name("Sub-item")
                 .parentFolderId(subFolderId)
                 .createdAt(now)
-                .owner(new OwnerDto(ownerId, "david",true))
+                .owner(new OwnerDto(ownerId, "david", true))
                 .build();
 
         CourseMaterialsResponseDto responseDto = CourseMaterialsResponseDto.builder()
@@ -239,6 +256,116 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.folders").isArray())
                 .andExpect(jsonPath("$.folders[0].id").value(childFolderId.toString()))
                 .andExpect(jsonPath("$.folders[0].name").value("Sub-item"));
+    }
+
+    // =========================================================================
+    // POST /folders
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /folders creates a folder in course")
+    public void testCreateFolder_Success() throws Exception {
+        UUID folderId = UUID.randomUUID();
+        CreateFolderRequestDto requestDto = new CreateFolderRequestDto("New Folder", null);
+        FolderSummaryDto responseDto = FolderSummaryDto.builder()
+                .id(folderId)
+                .name("New Folder")
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(folderService.createFolder(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateFolderRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/folders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(folderId.toString()))
+                .andExpect(jsonPath("$.name").value("New Folder"));
+    }
+
+    // =========================================================================
+    // POST /materials/upload-url
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /materials/upload-url generates presigned upload url")
+    public void testRequestUploadUrl_Success() throws Exception {
+        PresignedUploadUrlRequestDto requestDto = new PresignedUploadUrlRequestDto("slides.pdf", "application/pdf", 1024L);
+        PresignedUploadUrlResponseDto responseDto = PresignedUploadUrlResponseDto.builder()
+                .uploadUrl("http://localhost:8080/upload")
+                .storageKey("key/slides.pdf")
+                .build();
+
+        when(materialFileService.requestPresignedUploadUrl(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(PresignedUploadUrlRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/materials/upload-url")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uploadUrl").value("http://localhost:8080/upload"))
+                .andExpect(jsonPath("$.storageKey").value("key/slides.pdf"));
+    }
+
+    // =========================================================================
+    // POST /materials/files
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /materials/files creates a material file")
+    public void testCreateMaterialFile_Success() throws Exception {
+        UUID materialId = UUID.randomUUID();
+        CreateMaterialFileRequestDto requestDto = new CreateMaterialFileRequestDto(
+                "Slides", "Intro", null, "key/slides.pdf", "application/pdf", 1024L
+        );
+        MaterialFileDto responseDto = MaterialFileDto.builder()
+                .id(materialId)
+                .title("Slides")
+                .mediaType("application/pdf")
+                .size(1024L)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(materialFileService.createMaterialFile(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateMaterialFileRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/materials/files")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(materialId.toString()))
+                .andExpect(jsonPath("$.title").value("Slides"));
+    }
+
+    // =========================================================================
+    // POST /materials/links
+    // =========================================================================
+
+    @Test
+    @DisplayName("POST /materials/links creates a material link")
+    public void testCreateMaterialLink_Success() throws Exception {
+        UUID materialId = UUID.randomUUID();
+        CreateMaterialLinkRequestDto requestDto = new CreateMaterialLinkRequestDto(
+                "GitHub", "Repo", null, "https://github.com/test/repo", MaterialLinkType.GITHUB
+        );
+        MaterialLinkDto responseDto = MaterialLinkDto.builder()
+                .id(materialId)
+                .title("GitHub")
+                .url("https://github.com/test/repo")
+                .linkType(MaterialLinkType.GITHUB)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(materialLinkService.createMaterialLink(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(), any(CreateMaterialLinkRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/materials/links")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(materialId.toString()))
+                .andExpect(jsonPath("$.title").value("GitHub"));
     }
 
     // =========================================================================

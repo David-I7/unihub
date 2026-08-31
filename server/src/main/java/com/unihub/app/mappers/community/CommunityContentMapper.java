@@ -139,6 +139,23 @@ public class CommunityContentMapper {
                 .build();
     }
 
+    public MaterialResponseDto toMaterialResponseDto(Resource resource) {
+        if (resource instanceof MaterialFile file) {
+            return MaterialResponseDto.builder()
+                    .type(ResourceType.MATERIAL_FILE)
+                    .file(toMaterialFileDto(file))
+                    .build();
+        } else if (resource instanceof MaterialLink link) {
+            return MaterialResponseDto.builder()
+                    .type(ResourceType.MATERIAL_LINK)
+                    .link(toMaterialLinkDto(link))
+                    .build();
+        }
+        return MaterialResponseDto.builder()
+                .type(resource.getType())
+                .build();
+    }
+
     public Event toEventEntity(CreateEventRequestDto requestDto, Course course, Community community, User owner) {
         return Event.builder()
                 .title(requestDto.title())
