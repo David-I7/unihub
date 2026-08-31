@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   ExternalLink,
   Download,
@@ -9,11 +10,24 @@ import {
   User,
   HardDrive,
   Info,
+  Edit2,
+  Trash2,
+  Loader2,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { UserAvatar } from "@/components/app/UserAvatar";
+import { usePermissions } from "@/hooks/usePermissions";
+import { PERMISSIONS } from "@/lib/permissions";
+import { getErrorMessage } from "@/api/types";
+import { getMaterialDownloadUrl } from "../../api/getMaterialDownloadUrl";
+import { EditMaterialModal } from "./EditMaterialModal";
+import { EditFolderModal } from "./EditFolderModal";
+import { DeleteMaterialDialog } from "./DeleteMaterialDialog";
+import { DeleteFolderDialog } from "./DeleteFolderDialog";
+import { MaterialFilePreviewDialog } from "./MaterialFilePreviewDialog";
 import {
   formatBytes,
   getFileCategory,
@@ -39,22 +53,57 @@ export type SelectedMaterial =
 interface MaterialDetailViewerProps {
   material: SelectedMaterial;
   filePath?: string;
+  communitySlug?: string;
   onOpenFolder?: (folder: CourseMaterialFolder) => void;
+  onDeleted?: () => void;
+  onUpdated?: (updated: SelectedMaterial) => void;
   className?: string;
 }
 
 export function MaterialDetailViewer({
   material,
   filePath,
+  communitySlug = "",
   onOpenFolder,
+  onDeleted,
+  onUpdated,
   className = "",
 }: MaterialDetailViewerProps) {
   const [copied, setCopied] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  const [editMaterialOpen, setEditMaterialOpen] = useState(false);
+  const [deleteMaterialOpen, setDeleteMaterialOpen] = useState(false);
+  const [editFolderOpen, setEditFolderOpen] = useState(false);
+  const [deleteFolderOpen, setDeleteFolderOpen] = useState(false);
+
+  const {
+    canEditMaterial,
+    canDeleteMaterial,
+    canEditFolder,
+    canDeleteFolder,
+    hasPermission,
+  } = usePermissions(communitySlug);
+
+  const isFolderModerator = hasPermission(PERMISSIONS.MODERATE_FOLDER);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadFile = async (materialId: string) => {
+    try {
+      setIsDownloading(true);
+      const { downloadUrl } = await getMaterialDownloadUrl(materialId);
+      window.open(downloadUrl, "_blank");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, "Failed to retrieve download URL."));
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!material) {
@@ -75,6 +124,16 @@ export function MaterialDetailViewer({
     );
   }
 
+  const ownerId = material.data.owner?.id;
+  const userCanEdit =
+    material.type === "folder"
+      ? canEditFolder(ownerId)
+      : canEditMaterial(ownerId);
+  const userCanDelete =
+    material.type === "folder"
+      ? canDeleteFolder(ownerId)
+      : canDeleteMaterial(ownerId);
+
   return (
     <div className={`space-y-4 ${className}`}>
       {/* File / Folder Path Breadcrumb */}
@@ -89,23 +148,25 @@ export function MaterialDetailViewer({
         <div className="space-y-6">
           {/* File Header */}
           <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                {getFileIcon(material.data.mediaType)}
-              </div>
-
-              <div className="space-y-1 flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-mono">
-                    {getFileCategory(material.data.mediaType)}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    {formatBytes(material.data.size)}
-                  </span>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  {getFileIcon(material.data.mediaType)}
                 </div>
-                <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                  {material.data.title}
-                </h2>
+
+                <div className="space-y-1 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px] font-mono">
+                      {getFileCategory(material.data.mediaType)}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {formatBytes(material.data.size)}
+                    </span>
+                  </div>
+                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
+                    {material.data.title}
+                  </h2>
+                </div>
               </div>
             </div>
 
@@ -113,13 +174,31 @@ export function MaterialDetailViewer({
             <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
               <Button
                 size="sm"
-                className="gap-2 font-bold cursor-pointer"
-                onClick={() => {
-                  window.open(material.data.storageKey, "_blank");
-                }}
+                variant="outline"
+                className="gap-2 text-xs font-semibold cursor-pointer"
+                onClick={() => setPreviewOpen(true)}
               >
-                <Download className="size-4" />
-                <span>Download File</span>
+                <Eye className="size-4 text-primary" />
+                <span>Preview File</span>
+              </Button>
+
+              <Button
+                size="sm"
+                className="gap-2 font-bold cursor-pointer"
+                disabled={isDownloading}
+                onClick={() => handleDownloadFile(material.data.id)}
+              >
+                {isDownloading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Preparing Download...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="size-4" />
+                    <span>Download File</span>
+                  </>
+                )}
               </Button>
 
               <Button
@@ -140,6 +219,30 @@ export function MaterialDetailViewer({
                   </>
                 )}
               </Button>
+
+              {userCanEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setEditMaterialOpen(true)}
+                >
+                  <Edit2 className="size-3.5" />
+                  <span>Edit</span>
+                </Button>
+              )}
+
+              {userCanDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setDeleteMaterialOpen(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Delete</span>
+                </Button>
+              )}
             </div>
           </Card>
 
@@ -209,20 +312,22 @@ export function MaterialDetailViewer({
         <div className="space-y-6">
           {/* Link Header */}
           <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                {getLinkIcon(material.data.linkType)}
-              </div>
-
-              <div className="space-y-1 flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="text-[10px] font-mono">
-                    {material.data.linkType}
-                  </Badge>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  {getLinkIcon(material.data.linkType)}
                 </div>
-                <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                  {material.data.title}
-                </h2>
+
+                <div className="space-y-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-[10px] font-mono">
+                      {material.data.linkType}
+                    </Badge>
+                  </div>
+                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
+                    {material.data.title}
+                  </h2>
+                </div>
               </div>
             </div>
 
@@ -255,6 +360,30 @@ export function MaterialDetailViewer({
                   </>
                 )}
               </Button>
+
+              {userCanEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setEditMaterialOpen(true)}
+                >
+                  <Edit2 className="size-3.5" />
+                  <span>Edit</span>
+                </Button>
+              )}
+
+              {userCanDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setDeleteMaterialOpen(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Delete</span>
+                </Button>
+              )}
             </div>
           </Card>
 
@@ -314,23 +443,25 @@ export function MaterialDetailViewer({
       {material.type === "folder" && (
         <div className="space-y-6">
           <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <FolderOpen className="size-6" />
-              </div>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1 min-w-0">
+                <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <FolderOpen className="size-6" />
+                </div>
 
-              <div className="space-y-1 flex-1 min-w-0">
-                <Badge variant="outline" className="text-[10px] font-mono">
-                  Folder Directory
-                </Badge>
-                <h2 className="font-heading text-lg font-bold text-foreground break-words">
-                  {material.data.name}
-                </h2>
+                <div className="space-y-1 flex-1 min-w-0">
+                  <Badge variant="outline" className="text-[10px] font-mono">
+                    Folder Directory
+                  </Badge>
+                  <h2 className="font-heading text-lg font-bold text-foreground break-words">
+                    {material.data.name}
+                  </h2>
+                </div>
               </div>
             </div>
 
-            {onOpenFolder && (
-              <div className="pt-2 border-t">
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
+              {onOpenFolder && (
                 <Button
                   size="sm"
                   className="gap-2 font-bold cursor-pointer"
@@ -339,8 +470,32 @@ export function MaterialDetailViewer({
                   <FolderOpen className="size-4" />
                   <span>Open Folder Directory</span>
                 </Button>
-              </div>
-            )}
+              )}
+
+              {userCanEdit && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setEditFolderOpen(true)}
+                >
+                  <Edit2 className="size-3.5" />
+                  <span>Rename</span>
+                </Button>
+              )}
+
+              {userCanDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="gap-1.5 text-xs cursor-pointer"
+                  onClick={() => setDeleteFolderOpen(true)}
+                >
+                  <Trash2 className="size-3.5" />
+                  <span>Delete</span>
+                </Button>
+              )}
+            </div>
           </Card>
 
           {material.childrenCount && (
@@ -409,6 +564,70 @@ export function MaterialDetailViewer({
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Edit & Delete Dialogs for Materials */}
+      {material.type !== "folder" && (
+        <>
+          <EditMaterialModal
+            material={material}
+            open={editMaterialOpen}
+            onOpenChange={setEditMaterialOpen}
+            onSuccess={(updated) => {
+              if (material.type === "file") {
+                onUpdated?.({
+                  type: "file",
+                  data: updated as CourseMaterialFile,
+                });
+              } else {
+                onUpdated?.({
+                  type: "link",
+                  data: updated as CourseMaterialLink,
+                });
+              }
+            }}
+          />
+          <DeleteMaterialDialog
+            material={material}
+            open={deleteMaterialOpen}
+            onOpenChange={setDeleteMaterialOpen}
+            onSuccess={() => {
+              onDeleted?.();
+            }}
+          />
+          <MaterialFilePreviewDialog
+            file={material.type === "file" ? material.data : null}
+            open={previewOpen}
+            onOpenChange={setPreviewOpen}
+          />
+        </>
+      )}
+
+      {/* Edit & Delete Dialogs for Folders */}
+      {material.type === "folder" && (
+        <>
+          <EditFolderModal
+            folder={material.data}
+            open={editFolderOpen}
+            onOpenChange={setEditFolderOpen}
+            onSuccess={(updatedFolder) => {
+              onUpdated?.({
+                type: "folder",
+                data: updatedFolder,
+                childrenCount: material.childrenCount,
+              });
+            }}
+          />
+          <DeleteFolderDialog
+            folder={material.data}
+            isModerator={isFolderModerator}
+            open={deleteFolderOpen}
+            onOpenChange={setDeleteFolderOpen}
+            onSuccess={() => {
+              onDeleted?.();
+            }}
+          />
+        </>
       )}
     </div>
   );

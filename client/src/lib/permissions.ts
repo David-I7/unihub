@@ -35,6 +35,16 @@ export const PERMISSIONS = {
   UPDATE_COMMENT: "update:comment",
   DELETE_COMMENT: "delete:comment",
   MODERATE_COMMENT: "moderate:comment",
+
+  // Course Folders & Materials
+  CREATE_FOLDER: "create:folder",
+  UPDATE_FOLDER: "update:folder",
+  DELETE_FOLDER: "delete:folder",
+  MODERATE_FOLDER: "moderate:folder",
+  CREATE_MATERIAL: "create:material",
+  UPDATE_MATERIAL: "update:material",
+  DELETE_MATERIAL: "delete:material",
+  MODERATE_MATERIAL: "moderate:material",
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
