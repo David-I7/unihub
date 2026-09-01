@@ -1,5 +1,5 @@
 import { FileText, Globe, Layers, MapPin, Pen, Video, type LucideIcon } from "lucide-react";
-import type { CalendarEvent, EventLocation, EventType } from "../api/types";
+import type { EventLocation, EventType } from "../api/types";
 
 export interface EventCategoryConfig {
   container: string;
@@ -76,20 +76,6 @@ export function getEventLocationIcon(
   }
 }
 
-export function formatEventType(type?: EventType | string | null): string {
-  if (!type) return "";
-  switch (type) {
-    case "EXAM":
-      return "Exam";
-    case "ASSIGNMENT":
-      return "Assignment";
-    case "LECTURE":
-      return "Lecture";
-    default:
-      return type;
-  }
-}
-
 export function getEventCategoryConfig(type: EventType): EventCategoryConfig {
   switch (type) {
     case "EXAM":
@@ -129,10 +115,4 @@ export function getEventCategoryConfig(type: EventType): EventCategoryConfig {
         dotColor: "bg-blue-500",
       };
   }
-}
-
-export function isEventCompleted(event: CalendarEvent): boolean {
-  if (!event.startTime) return false;
-  const d = new Date(event.startTime);
-  return !isNaN(d.getTime()) && d.getTime() < Date.now();
 }

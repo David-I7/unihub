@@ -34,23 +34,8 @@ export const calendarKeys = {
 export async function getEvents(
   params: CalendarQueryParams = {},
 ): Promise<CalendarEvent[]> {
-  try {
-    const response = await client.get<CalendarEvent[]>("/calendar", { params });
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    const dataObj = response.data as Record<string, unknown> | null | undefined;
-    if (dataObj && Array.isArray(dataObj.content)) {
-      return dataObj.content as CalendarEvent[];
-    }
-    if (dataObj && Array.isArray(dataObj.data)) {
-      return dataObj.data as CalendarEvent[];
-    }
-    return [];
-  } catch (error) {
-    console.error("Failed to fetch calendar events:", error);
-    return [];
-  }
+  const response = await client.get<CalendarEvent[]>("/calendar", { params });
+  return response.data;
 }
 
 export async function getEventById(eventId: string): Promise<Event> {
