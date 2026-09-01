@@ -5,10 +5,7 @@ import {
   getEventCategoryConfig,
   getEventLocationIcon,
 } from "../utils/eventUtils";
-import {
-  formatDurationHours,
-  formatTime,
-} from "@/lib/dateUtils";
+import { formatDurationHours, formatTime } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
 interface CalendarEventCardProps {
@@ -73,11 +70,19 @@ export function CalendarEventCard({
               <span>{config.label}</span>
             </span>
 
+            {abbreviation && (
+              <span className="font-mono text-[10px] font-bold text-foreground bg-muted px-1.5 py-0.2 rounded">
+                {abbreviation}
+              </span>
+            )}
+
             {event.location && (
               <span className="inline-flex items-center gap-1 text-muted-foreground text-[11px] font-medium truncate">
                 <span className="text-muted-foreground/40">•</span>
                 <LocationIcon className="size-3 text-muted-foreground shrink-0" />
-                <span className="truncate">{formatEventLocation(event.location)}</span>
+                <span className="truncate">
+                  {formatEventLocation(event.location)}
+                </span>
               </span>
             )}
           </div>
@@ -99,20 +104,24 @@ export function CalendarEventCard({
         </h4>
 
         {/* Bottom Metadata: End Time & Course Abbreviation */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground pt-0.5">
-          {endTimeStr && (
-            <span className="text-muted-foreground text-[11px] flex items-center gap-1">
-              <span>Ends {endTimeStr}</span>
-              {abbreviation && <span className="text-muted-foreground/40">•</span>}
-            </span>
-          )}
+        {(endTimeStr || abbreviation) && (
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground pt-0.5">
+            {endTimeStr && (
+              <span className="text-muted-foreground text-[11px] flex items-center gap-1">
+                <span>Ends {endTimeStr}</span>
+                {abbreviation && (
+                  <span className="text-muted-foreground/40">•</span>
+                )}
+              </span>
+            )}
 
-          {abbreviation && (
-            <span className="font-mono text-[10px] font-bold text-foreground bg-muted px-1.5 py-0.2 rounded">
-              [{abbreviation}]
-            </span>
-          )}
-        </div>
+            {abbreviation && (
+              <span className="font-mono text-[10px] font-bold text-foreground bg-muted px-1.5 py-0.2 rounded">
+                [{abbreviation}]
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -96,7 +96,11 @@ public class CalendarService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Community slug is required");
         }
 
-        return eventRepository.findEventsByCommunityIds(communityIds, courseSlug, studyYear, from, to, userId);
+        if (studyYear != null) {
+            return eventRepository.findEventsByCommunityIdsAndStudyYear(communityIds, courseSlug, studyYear, from, to, userId);
+        }
+
+        return eventRepository.findEventsByCommunityIds(communityIds, courseSlug, from, to, userId);
     }
 
     @Transactional(readOnly = true)

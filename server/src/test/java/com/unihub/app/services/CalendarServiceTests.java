@@ -137,7 +137,7 @@ public class CalendarServiceTests {
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
-        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), any(), eq(userId)))
+        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), eq(userId)))
                 .thenReturn(List.of(eventDto));
 
         List<CalendarEventResponseDto> result = calendarService.getEvents(userId, 2026, 4, slug, null, null);
@@ -147,6 +147,38 @@ public class CalendarServiceTests {
         assertEquals("Midterm Exam", result.get(0).title());
         assertEquals("PA", result.get(0).courseAbbreviation());
         assertFalse(result.get(0).isSubscribed());
+    }
+
+    @Test
+    @DisplayName("getEvents with studyYear calls findEventsByCommunityIdsAndStudyYear")
+    public void testGetEvents_WithStudyYear_Success() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-community";
+        UUID commId = UUID.randomUUID();
+        Community community = createTestCommunity(commId, slug);
+
+        CalendarEventResponseDto eventDto = new CalendarEventResponseDto(
+                UUID.randomUUID(),
+                "Year 1 Exam",
+                EventType.EXAM,
+                OffsetDateTime.now().plusDays(1),
+                2.0,
+                EventLocation.IN_PERSON,
+                "PA",
+                false
+        );
+
+        when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
+        when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
+        when(eventRepository.findEventsByCommunityIdsAndStudyYear(eq(List.of(commId)), any(), eq(StudyYearName.YEAR_1), any(), any(), eq(userId)))
+                .thenReturn(List.of(eventDto));
+
+        List<CalendarEventResponseDto> result = calendarService.getEvents(userId, 2026, 4, slug, StudyYearName.YEAR_1, null);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Year 1 Exam", result.get(0).title());
+        verify(eventRepository).findEventsByCommunityIdsAndStudyYear(eq(List.of(commId)), any(), eq(StudyYearName.YEAR_1), any(), any(), eq(userId));
     }
 
     @Test
@@ -200,7 +232,7 @@ public class CalendarServiceTests {
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
         when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
-        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), any(), eq(userId)))
+        when(eventRepository.findEventsByCommunityIds(eq(List.of(commId)), any(), any(), any(), eq(userId)))
                 .thenReturn(List.of(eventDto));
 
         List<CalendarEventResponseDto> result = calendarService.getEvents(userId, 2026, 4, slug, null, null);
