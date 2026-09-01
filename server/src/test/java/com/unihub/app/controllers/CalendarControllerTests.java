@@ -91,12 +91,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .startTime(startTime)
                 .durationHours(2.0)
                 .location(EventLocation.IN_PERSON)
-                .courseSlug("pa")
-                .courseName("Programarea Algoritmilor")
                 .courseAbbreviation("PA")
-                .communitySlug("fmi-info-id")
-                .communityName("FMI - Informatica ID")
-                .studyYear(StudyYearName.YEAR_1)
                 .isSubscribed(true)
                 .build();
 
@@ -122,8 +117,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("Final Exam"))
                 .andExpect(jsonPath("$[0].type").value("EXAM"))
                 .andExpect(jsonPath("$[0].location").value("IN_PERSON"))
-                .andExpect(jsonPath("$[0].courseSlug").value("pa"))
-                .andExpect(jsonPath("$[0].communitySlug").value("fmi-info-id"))
+                .andExpect(jsonPath("$[0].courseAbbreviation").value("PA"))
                 .andExpect(jsonPath("$[0].isSubscribed").value(true));
     }
 
@@ -194,12 +188,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .type(EventType.EXAM)
                 .startTime(startTime)
                 .location(EventLocation.IN_PERSON)
-                .courseSlug("sd")
-                .courseName("Data Structures")
                 .courseAbbreviation("SD")
-                .communitySlug("fmi-info-id")
-                .communityName("FMI - Informatica ID")
-                .studyYear(StudyYearName.YEAR_1)
                 .isSubscribed(false)
                 .build();
 
@@ -211,8 +200,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(eventId.toString()))
                 .andExpect(jsonPath("$.title").value("Midterm Exam"))
-                .andExpect(jsonPath("$.type").value("EXAM"))
-                .andExpect(jsonPath("$.communitySlug").value("fmi-info-id"));
+                .andExpect(jsonPath("$.type").value("EXAM"));
     }
 
     // =========================================================================
@@ -300,8 +288,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .type(EventType.EXAM)
                 .startTime(OffsetDateTime.now().plusDays(2))
                 .location(EventLocation.ONLINE)
-                .courseSlug("sd")
-                .communitySlug("fmi-info-id")
+                .courseAbbreviation("SD")
                 .isSubscribed(false)
                 .build();
 
@@ -400,7 +387,8 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .title("Upcoming Exam")
                 .type(EventType.EXAM)
                 .startTime(OffsetDateTime.now().plusDays(2))
-                .communitySlug("fmi-info-id")
+                .courseAbbreviation("PA")
+                .isSubscribed(false)
                 .build();
 
         com.unihub.app.dto.PageDto<CalendarEventResponseDto> pageDto = com.unihub.app.dto.PageDto.<CalendarEventResponseDto>builder()

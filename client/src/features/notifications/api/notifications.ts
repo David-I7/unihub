@@ -6,7 +6,6 @@ import {
   useMutation,
   useQueryClient,
   useInfiniteQuery,
-  keepPreviousData,
   type InfiniteData,
 } from "@tanstack/react-query";
 import type {
@@ -18,13 +17,12 @@ import type {
 
 export const notificationKeys = {
   all: ["notifications"] as const,
-  lists: () => [...notificationKeys.all, "list"] as const,
-  list: (params: NotificationQueryParams = {}) =>
-    [...notificationKeys.lists(), params] as const,
+  infinites: () => [...notificationKeys.all, "infinite"] as const,
   infinite: (params: Omit<NotificationQueryParams, "page"> = {}) =>
-    [...notificationKeys.lists(), "infinite", params] as const,
+    [...notificationKeys.infinites(), params] as const,
+  unreadCounts: () => [...notificationKeys.all, "unread-count"] as const,
   unreadCount: (category?: NotificationCategory) =>
-    [...notificationKeys.all, "unread-count", category ?? "ALL"] as const,
+    [...notificationKeys.unreadCounts(), category ?? "ALL"] as const,
 };
 
 export async function getNotifications(
@@ -55,21 +53,6 @@ export async function markAllAsRead(): Promise<void> {
   await client.patch("/notifications/read-all");
 }
 
-export function useNotifications(
-  params: NotificationQueryParams = {},
-  options: { enabled?: boolean } = {},
-) {
-  const user = useAuthStore((state) => state.user);
-  const { enabled = Boolean(user) } = options;
-
-  return useQuery({
-    queryKey: notificationKeys.list(params),
-    queryFn: () => getNotifications(params),
-    placeholderData: keepPreviousData,
-    enabled: enabled && Boolean(user),
-  });
-}
-
 export function useInfiniteNotifications(
   params: Omit<NotificationQueryParams, "page"> = {},
   options: { enabled?: boolean } = {},
@@ -95,7 +78,7 @@ export function useUnreadNotificationCount(category?: NotificationCategory) {
     queryKey: notificationKeys.unreadCount(category),
     queryFn: () => getUnreadCount(category),
     enabled: Boolean(user),
-    refetchInterval: 30000,
+    refetchInterval: 60000,
   });
 }
 
@@ -108,46 +91,31 @@ export function useMarkNotificationAsRead() {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
 
       // Optimistically update infinite queries
-      queryClient.setQueriesData<InfiniteData<PaginatedResponse<AppNotification>>>(
-        { queryKey: notificationKeys.lists() },
-        (oldData) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              content: page.content.map((item) =>
-                item.id === notificationId ? { ...item, isRead: true } : item,
-              ),
-            })),
-          };
-        },
-      );
-
-      // Optimistically update standard list queries
-      queryClient.setQueriesData<PaginatedResponse<AppNotification>>(
-        { queryKey: notificationKeys.lists() },
-        (oldData) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            content: oldData.content.map((item) =>
+      queryClient.setQueriesData<
+        InfiniteData<PaginatedResponse<AppNotification>>
+      >({ queryKey: notificationKeys.infinites() }, (oldData) => {
+        if (!oldData?.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            content: page.content.map((item) =>
               item.id === notificationId ? { ...item, isRead: true } : item,
             ),
-          };
-        },
-      );
+          })),
+        };
+      });
 
       // Optimistically decrement unread count
       queryClient.setQueriesData<number>(
-        { queryKey: [...notificationKeys.all, "unread-count"] },
+        { queryKey: notificationKeys.unreadCounts() },
         (oldCount) => {
           if (typeof oldCount !== "number") return oldCount;
           return Math.max(0, oldCount - 1);
         },
       );
     },
-    onSettled: () => {
+    onError: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
@@ -162,39 +130,26 @@ export function useMarkAllNotificationsAsRead() {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
 
       // Optimistically mark all as read in infinite queries
-      queryClient.setQueriesData<InfiniteData<PaginatedResponse<AppNotification>>>(
-        { queryKey: notificationKeys.lists() },
-        (oldData) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            pages: oldData.pages.map((page) => ({
-              ...page,
-              content: page.content.map((item) => ({ ...item, isRead: true })),
-            })),
-          };
-        },
-      );
-
-      // Optimistically mark all as read in standard lists
-      queryClient.setQueriesData<PaginatedResponse<AppNotification>>(
-        { queryKey: notificationKeys.lists() },
-        (oldData) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            content: oldData.content.map((item) => ({ ...item, isRead: true })),
-          };
-        },
-      );
+      queryClient.setQueriesData<
+        InfiniteData<PaginatedResponse<AppNotification>>
+      >({ queryKey: notificationKeys.infinites() }, (oldData) => {
+        if (!oldData?.pages) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            content: page.content.map((item) => ({ ...item, isRead: true })),
+          })),
+        };
+      });
 
       // Optimistically reset unread counts to 0
       queryClient.setQueriesData<number>(
-        { queryKey: [...notificationKeys.all, "unread-count"] },
+        { queryKey: notificationKeys.unreadCounts() },
         () => 0,
       );
     },
-    onSettled: () => {
+    onError: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });

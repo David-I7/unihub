@@ -29,12 +29,12 @@ import type { ReminderStatus } from "../api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,7 +94,7 @@ function renderStatusBadge(status: ReminderStatus) {
   }
 }
 
-export function EventDetailModal() {
+export function EventDetailSheet() {
   const selectedEventId = useCalendarStore((s) => s.selectedEventId);
   const closeEventDetails = useCalendarStore((s) => s.closeEventDetails);
   const openEditModal = useCalendarStore((s) => s.openEditModal);
@@ -141,8 +141,6 @@ export function EventDetailModal() {
     useDeleteReminder();
 
   const { canEditEvent, canDeleteEvent } = usePermissions(event?.communitySlug);
-
-  if (!selectedEventId) return null;
 
   const isUrl = (val?: string) =>
     Boolean(val && (val.startsWith("http://") || val.startsWith("https://")));
@@ -264,20 +262,23 @@ export function EventDetailModal() {
   const hasActions = isAuthorizedToEdit || isAuthorizedToDelete;
 
   return (
-    <Dialog
+    <Sheet
       open={Boolean(selectedEventId)}
       onOpenChange={(open) => !open && handleClose()}
     >
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6"
+      >
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Spinner className="size-6 text-primary" />
             <p className="text-xs text-muted-foreground font-medium">
               Loading event details...
             </p>
           </div>
         ) : isError || !event || !config || !Icon || !LocationIcon ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-2 text-center">
+          <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
             <p className="text-sm font-semibold text-destructive">
               Failed to load event details
             </p>
@@ -288,15 +289,15 @@ export function EventDetailModal() {
               variant="outline"
               size="sm"
               onClick={handleClose}
-              className="mt-2 text-xs"
+              className="mt-3 text-xs cursor-pointer"
             >
               Close
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 text-xs">
+          <div className="space-y-5 text-xs">
             {/* Header: Category Badge + Countdown Badge on left; 3-Dots on right */}
-            <DialogHeader className="space-y-1.5 pr-6">
+            <SheetHeader className="space-y-2 p-0 pr-8">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span
@@ -375,18 +376,18 @@ export function EventDetailModal() {
               </div>
 
               {/* Title */}
-              <DialogTitle className="text-lg font-bold font-heading text-foreground leading-snug">
+              <SheetTitle className="text-lg font-bold font-heading text-foreground leading-snug text-left">
                 {event.title}
-              </DialogTitle>
+              </SheetTitle>
 
               {/* Creator & Community Subtitle */}
-              <DialogDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1">
+              <SheetDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
                 {event.owner?.username && (
                   <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                     <UserAvatar
                       username={event.owner.username}
                       size="xs"
-                      className="size-4  border-0"
+                      className="size-4 border-0"
                     />
                     <span>@{event.owner.username}</span>
                   </span>
@@ -397,8 +398,8 @@ export function EventDetailModal() {
                     {event.communityName}
                   </span>
                 )}
-              </DialogDescription>
-            </DialogHeader>
+              </SheetDescription>
+            </SheetHeader>
 
             {/* Delete Confirmation Alert */}
             {isConfirmingDelete && (
@@ -436,7 +437,7 @@ export function EventDetailModal() {
             {/* SCHEDULE */}
             <div className="space-y-1">
               <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                SCHEDULE
+                Schedule
               </div>
               <div className="font-semibold text-foreground">
                 {formatFullDate(event.startTime)}
@@ -454,7 +455,7 @@ export function EventDetailModal() {
             {/* LOCATION */}
             <div className="space-y-1.5">
               <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                LOCATION
+                Location
               </div>
               <div>
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-semibold text-foreground">
@@ -485,7 +486,7 @@ export function EventDetailModal() {
             {event.courseName && (
               <div className="space-y-1.5">
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  COURSE
+                  Course
                 </div>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
@@ -532,7 +533,7 @@ export function EventDetailModal() {
             {/* REMINDERS */}
             <div className="space-y-2">
               <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                REMINDERS
+                Reminders
               </div>
 
               {activeReminder ? (
@@ -682,7 +683,7 @@ export function EventDetailModal() {
                     </div>
                   )}
 
-                  {/* Always-visible Set Reminder Button */}
+                  {/* Set Reminder Button */}
                   <div className="flex justify-end pt-1">
                     <Button
                       type="button"
@@ -699,7 +700,7 @@ export function EventDetailModal() {
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

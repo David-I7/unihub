@@ -11,7 +11,7 @@ import {
   CalendarMonthGrid,
   CalendarToolbar,
   DayOverflowModal,
-  EventDetailModal,
+  EventDetailSheet,
   EventFormModal,
   useCalendarEvents,
   useCalendarStore,
@@ -87,17 +87,8 @@ export default function CalendarPage() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchTitle = ev.title.toLowerCase().includes(q);
-        const matchCourseName = ev.courseName.toLowerCase().includes(q);
-        const matchCourseSlug = ev.courseSlug.toLowerCase().includes(q);
         const matchAbbr = ev.courseAbbreviation?.toLowerCase().includes(q);
-        const matchComm = ev.communityName?.toLowerCase().includes(q);
-        if (
-          !matchTitle &&
-          !matchCourseName &&
-          !matchCourseSlug &&
-          !matchAbbr &&
-          !matchComm
-        ) {
+        if (!matchTitle && !matchAbbr) {
           return false;
         }
       }
@@ -239,8 +230,8 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Modals subscribing directly to useCalendarStore */}
-      <EventDetailModal />
+      {/* Modals & sheets subscribing directly to useCalendarStore */}
+      <EventDetailSheet />
       <EventFormModal />
       <DayOverflowModal
         events={filteredEvents}

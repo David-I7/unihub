@@ -4,12 +4,9 @@ import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
-import com.unihub.app.dto.community.content.response.EventNotificationResponseDto;
 import com.unihub.app.dto.community.content.response.NotificationResponseDto;
-import com.unihub.app.dto.community.content.response.PostNotificationResponseDto;
-import com.unihub.app.entities.community.content.EventNotificationType;
 import com.unihub.app.entities.community.content.NotificationCategory;
-import com.unihub.app.entities.community.content.PostNotificationType;
+import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.community.content.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +62,7 @@ public class NotificationControllerTests extends BaseIntegrationTest {
     @DisplayName("""
             Given: user has event and post notifications
             When: GET /api/v1/notifications is called
-            Then: 200 OK is returned with polymorphic serialized notifications
+            Then: 200 OK is returned with serialized notifications
             """)
     public void testGetNotifications_Success() throws Exception {
         UUID eventNotificationId = UUID.randomUUID();
@@ -74,28 +71,30 @@ public class NotificationControllerTests extends BaseIntegrationTest {
         UUID postId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        EventNotificationResponseDto eventDto = EventNotificationResponseDto.builder()
+        NotificationResponseDto eventDto = NotificationResponseDto.builder()
                 .id(eventNotificationId)
                 .title("Reminder: Exam")
                 .message("Exam starts soon")
                 .category(NotificationCategory.EVENT)
-                .type(EventNotificationType.REMINDER)
+                .type(NotificationType.EVENT_REMINDER)
                 .eventId(eventId)
                 .communitySlug("fmi-hub")
+                .communityName("FMI Hub")
                 .isRead(false)
                 .createdAt(createdAt)
                 .build();
 
-        PostNotificationResponseDto postDto = PostNotificationResponseDto.builder()
+        NotificationResponseDto postDto = NotificationResponseDto.builder()
                 .id(postNotificationId)
                 .title("New post in Algorithms")
                 .message("Alice posted: 'Homework 1 discussion'")
                 .category(NotificationCategory.POST)
-                .type(PostNotificationType.COURSE_POST)
-                .postId(postId)
+                .type(NotificationType.COURSE_POST)
                 .actor(new OwnerDto(UUID.randomUUID(), "alice", true))
                 .communitySlug("fmi-hub")
-                .studyYear("YEAR_2")
+                .communityName("FMI Hub")
+                .studyYearName("YEAR_2")
+                .courseName("Algorithms")
                 .courseSlug("algorithms")
                 .isRead(false)
                 .createdAt(createdAt)
@@ -119,12 +118,11 @@ public class NotificationControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content[0].category").value("EVENT"))
-                .andExpect(jsonPath("$.content[0].type").value("REMINDER"))
+                .andExpect(jsonPath("$.content[0].type").value("EVENT_REMINDER"))
                 .andExpect(jsonPath("$.content[0].eventId").value(eventId.toString()))
                 .andExpect(jsonPath("$.content[0].communitySlug").value("fmi-hub"))
                 .andExpect(jsonPath("$.content[1].category").value("POST"))
                 .andExpect(jsonPath("$.content[1].type").value("COURSE_POST"))
-                .andExpect(jsonPath("$.content[1].postId").value(postId.toString()))
                 .andExpect(jsonPath("$.content[1].courseSlug").value("algorithms"))
                 .andExpect(jsonPath("$.totalElements").value(2));
     }
@@ -132,7 +130,7 @@ public class NotificationControllerTests extends BaseIntegrationTest {
     @Test
     @DisplayName("""
             Given: category and type filters
-            When: GET /api/v1/notifications?category=EVENT&type=REMINDER is called
+            When: GET /api/v1/notifications?category=EVENT&type=EVENT_REMINDER is called
             Then: filters are passed to service
             """)
     public void testGetNotifications_WithFilters() throws Exception {
@@ -146,12 +144,12 @@ public class NotificationControllerTests extends BaseIntegrationTest {
                 .last(true)
                 .build();
 
-        when(notificationService.getUserNotifications(eq(userId), eq(NotificationCategory.EVENT), eq("REMINDER"), eq(true), any(Pageable.class)))
+        when(notificationService.getUserNotifications(eq(userId), eq(NotificationCategory.EVENT), eq(NotificationType.EVENT_REMINDER), eq(true), any(Pageable.class)))
                 .thenReturn(pageDto);
 
         mockMvc.perform(get(BASE_URL)
                         .param("category", "EVENT")
-                        .param("type", "REMINDER")
+                        .param("type", "EVENT_REMINDER")
                         .param("isRead", "true")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())

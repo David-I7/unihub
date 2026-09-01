@@ -26,15 +26,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.startTime,
                 e.durationHours,
                 e.location,
-                c.slug,
-                c.name,
                 c.abbreviation,
-                comm.slug,
-                comm.name,
-                sy.studyYearName,
                 CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
-                AND er.user.id = :userId) > 0 THEN true ELSE false END,
-                e.owner.id
+                AND er.user.id = :userId) > 0 THEN true ELSE false END
         ) From Event e 
           JOIN e.community comm 
           JOIN e.course c 
@@ -64,15 +58,9 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.startTime,
                 e.durationHours,
                 e.location,
-                c.slug,
-                c.name,
                 c.abbreviation,
-                comm.slug,
-                comm.name,
-                sy.studyYearName,
                 CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
-                AND er.user.id = :userId) > 0 THEN true ELSE false END,
-                e.owner.id
+                AND er.user.id = :userId) > 0 THEN true ELSE false END
         ) FROM Event e 
           JOIN e.community comm 
           JOIN e.course c 

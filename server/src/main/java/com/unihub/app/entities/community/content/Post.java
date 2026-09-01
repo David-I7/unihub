@@ -53,6 +53,12 @@ public class Post {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @OneToOne(mappedBy = "post", fetch = FetchType.LAZY)
+    private CommunityPost communityPost;
+
+    @OneToOne(mappedBy = "post", fetch = FetchType.LAZY)
+    private CoursePost coursePost;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments;
 

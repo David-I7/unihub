@@ -1,18 +1,15 @@
 package com.unihub.app.services;
 
 import com.unihub.app.dto.PageDto;
-import com.unihub.app.dto.community.content.response.EventNotificationResponseDto;
 import com.unihub.app.dto.community.content.response.NotificationResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.*;
-import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.community.content.CommunityPostRepository;
-import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
+import com.unihub.app.repositories.community.content.NotificationProjection;
 import com.unihub.app.repositories.community.content.NotificationRepository;
 import com.unihub.app.services.community.content.NotificationService;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -46,12 +42,6 @@ public class NotificationServiceTests {
     @Mock
     private EventReminderRepository reminderRepository;
 
-    @Mock
-    private CommunityPostRepository communityPostRepository;
-
-    @Mock
-    private CoursePostRepository coursePostRepository;
-
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
@@ -64,38 +54,44 @@ public class NotificationServiceTests {
     @InjectMocks
     private NotificationService notificationService;
 
+    private static class TestNotificationProjection implements NotificationProjection {
+        private final UUID id = UUID.randomUUID();
+        private final UUID eventId = UUID.randomUUID();
+        private final UUID actorId = UUID.randomUUID();
+        private final OffsetDateTime createdAt = OffsetDateTime.now();
+
+        @Override public UUID getId() { return id; }
+        @Override public String getTitle() { return "Reminder: Algorithms Exam"; }
+        @Override public String getMessage() { return "Exam starts soon"; }
+        @Override public NotificationCategory getCategory() { return NotificationCategory.EVENT; }
+        @Override public NotificationType getType() { return NotificationType.EVENT_REMINDER; }
+        @Override public boolean getIsRead() { return false; }
+        @Override public OffsetDateTime getCreatedAt() { return createdAt; }
+        @Override public UUID getEventId() { return eventId; }
+        @Override public UUID getActorId() { return actorId; }
+        @Override public String getActorUsername() { return "prof_smith"; }
+        @Override public Boolean getActorActive() { return true; }
+        @Override public String getCommunitySlug() { return "fmi-info"; }
+        @Override public String getCommunityName() { return "FMI Info"; }
+        @Override public String getStudyYearName() { return "YEAR_1"; }
+        @Override public String getCourseName() { return "Algorithms"; }
+        @Override public String getCourseSlug() { return "algorithms"; }
+    }
+
     @Test
     @DisplayName("getUserNotifications returns mapped page of notification DTOs")
     public void testGetUserNotifications_Success() {
         UUID userId = UUID.randomUUID();
-        User user = User.builder().id(userId).username("david").build();
-
-        Event event = Event.builder()
-                .id(UUID.randomUUID())
-                .title("Algorithms Exam")
-                .community(Community.builder().slug("fmi-info").build())
-                .build();
-
-        EventNotification eventNotification = EventNotification.builder()
-                .id(UUID.randomUUID())
-                .user(user)
-                .title("Reminder: Algorithms Exam")
-                .message("Exam starts soon")
-                .category(NotificationCategory.EVENT)
-                .type(EventNotificationType.REMINDER)
-                .event(event)
-                .isRead(false)
-                .createdAt(OffsetDateTime.now())
-                .build();
+        TestNotificationProjection projection = new TestNotificationProjection();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(notificationRepository.findAll(any(Specification.class), eq(pageRequest)))
-                .thenReturn(new PageImpl<>(List.of(eventNotification), pageRequest, 1));
+        when(notificationRepository.findUserNotifications(eq(userId), eq(NotificationCategory.EVENT), eq(NotificationType.EVENT_REMINDER), eq(false), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(List.of(projection), pageRequest, 1));
 
         PageDto<NotificationResponseDto> result = notificationService.getUserNotifications(
                 userId,
                 NotificationCategory.EVENT,
-                "REMINDER",
+                NotificationType.EVENT_REMINDER,
                 false,
                 pageRequest
         );
@@ -103,10 +99,13 @@ public class NotificationServiceTests {
         assertNotNull(result);
         assertEquals(1, result.totalElements());
         NotificationResponseDto dto = result.content().get(0);
-        assertInstanceOf(EventNotificationResponseDto.class, dto);
-        EventNotificationResponseDto eventDto = (EventNotificationResponseDto) dto;
-        assertEquals("Reminder: Algorithms Exam", eventDto.title());
-        assertEquals("fmi-info", eventDto.communitySlug());
+        assertEquals("Reminder: Algorithms Exam", dto.title());
+        assertEquals("fmi-info", dto.communitySlug());
+        assertEquals("FMI Info", dto.communityName());
+        assertEquals(NotificationType.EVENT_REMINDER, dto.type());
+        assertNotNull(dto.actor());
+        assertEquals("prof_smith", dto.actor().username());
+        assertTrue(dto.actor().active());
     }
 
     @Test
@@ -135,7 +134,7 @@ public class NotificationServiceTests {
     }
 
     @Test
-    @DisplayName("processDueReminders creates EventNotification and publishes email event")
+    @DisplayName("processDueReminders creates Notification and publishes email event")
     public void testProcessDueReminders() {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("david@example.com").username("david").build();
@@ -165,7 +164,7 @@ public class NotificationServiceTests {
 
         notificationService.processDueReminders();
 
-        verify(notificationRepository).save(any(EventNotification.class));
+        verify(notificationRepository).save(any(Notification.class));
         verify(reminderRepository).save(reminder);
         assertEquals(ReminderStatus.SENT, reminder.getStatus());
         verify(eventPublisher).publishEvent(any(EventReminderNotificationEvent.class));

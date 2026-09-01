@@ -7,6 +7,7 @@ import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinPreviewResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
@@ -86,6 +87,15 @@ public class CommunityController {
     ) {
         List<StudyYearIdentifiersResponseDto> communityStudyYears = communityService.getCommunityStudyYears(communitySlug);
         return ResponseEntity.ok(communityStudyYears);
+    }
+
+    @GetMapping("/{communitySlug}/membership")
+    public ResponseEntity<CallerMembershipDto> getCallerMembership(
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto user
+    ) {
+        CallerMembershipDto callerMembership = communityService.getCallerMembership(communitySlug, user);
+        return ResponseEntity.ok(callerMembership);
     }
 
     @GetMapping("/{communitySlug}/home")

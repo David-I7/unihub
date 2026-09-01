@@ -131,14 +131,8 @@ public class CalendarServiceTests {
                 OffsetDateTime.now().plusDays(1),
                 2.0,
                 EventLocation.IN_PERSON,
-                "pa",
-                "Programarea Algoritmilor",
                 "PA",
-                slug,
-                "FMI - Info",
-                StudyYearName.YEAR_1,
-                false,
-                userId
+                false
         );
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
@@ -151,7 +145,7 @@ public class CalendarServiceTests {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Midterm Exam", result.get(0).title());
-        assertEquals(slug, result.get(0).communitySlug());
+        assertEquals("PA", result.get(0).courseAbbreviation());
         assertFalse(result.get(0).isSubscribed());
     }
 
@@ -200,14 +194,8 @@ public class CalendarServiceTests {
                 OffsetDateTime.now().plusDays(1),
                 2.0,
                 EventLocation.IN_PERSON,
-                "pa",
-                "Programarea Algoritmilor",
                 "PA",
-                slug,
-                "FMI - Info",
-                StudyYearName.YEAR_1,
-                true,
-                userId
+                true
         );
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
@@ -265,7 +253,6 @@ public class CalendarServiceTests {
         assertNotNull(result);
         assertEquals("New Exam", result.title());
         assertEquals(EventType.EXAM, result.type());
-        assertEquals(slug, result.communitySlug());
         assertFalse(result.isSubscribed());
         verify(eventRepository).save(any(Event.class));
     }
@@ -445,7 +432,8 @@ public class CalendarServiceTests {
                 .title("Examen ASC")
                 .type(EventType.EXAM)
                 .startTime(now.plusDays(2))
-                .communitySlug("fmi-info-id")
+                .courseAbbreviation("ASC")
+                .isSubscribed(false)
                 .build();
 
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);

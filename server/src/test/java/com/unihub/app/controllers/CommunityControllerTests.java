@@ -10,6 +10,7 @@ import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
@@ -529,5 +530,55 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(postId.toString()))
                 .andExpect(jsonPath("$.title").value("Welcome Post"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/communities/{communitySlug}/membership
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: authenticated user and existing community membership
+            When: GET /api/v1/communities/{communitySlug}/membership is called
+            Then: 200 OK is returned with CallerMembershipDto
+            """)
+    public void testGetCallerMembership_Success() throws Exception {
+        CallerMembershipDto membershipDto = CallerMembershipDto.builder()
+                .isMember(true)
+                .role("COMMUNITY_ADMIN")
+                .permissions(List.of("create:event", "update:event"))
+                .build();
+
+        when(communityService.getCallerMembership(eq("fmi-info-id"), any())).thenReturn(membershipDto);
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/membership")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isMember").value(true))
+                .andExpect(jsonPath("$.role").value("COMMUNITY_ADMIN"))
+                .andExpect(jsonPath("$.permissions[0]").value("create:event"));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: non-member caller
+            When: GET /api/v1/communities/{communitySlug}/membership is called
+            Then: 200 OK is returned with isMember=false and empty permissions
+            """)
+    public void testGetCallerMembership_NonMember() throws Exception {
+        CallerMembershipDto membershipDto = CallerMembershipDto.builder()
+                .isMember(false)
+                .role(null)
+                .permissions(List.of())
+                .build();
+
+        when(communityService.getCallerMembership(eq("fmi-info-id"), any())).thenReturn(membershipDto);
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/membership")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isMember").value(false))
+                .andExpect(jsonPath("$.role").doesNotExist())
+                .andExpect(jsonPath("$.permissions").isEmpty());
     }
 }

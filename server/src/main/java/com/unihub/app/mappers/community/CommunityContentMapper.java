@@ -179,39 +179,8 @@ public class CommunityContentMapper {
                 .startTime(event.getStartTime())
                 .durationHours(event.getDurationHours())
                 .location(event.getLocation())
-                .courseSlug(event.getCourse() != null ? event.getCourse().getSlug() : null)
-                .courseName(event.getCourse() != null ? event.getCourse().getName() : null)
                 .courseAbbreviation(event.getCourse() != null ? event.getCourse().getAbbreviation() : null)
-                .communitySlug(event.getCommunity() != null ? event.getCommunity().getSlug() : null)
-                .communityName(event.getCommunity() != null ? event.getCommunity().getName() : null)
-                .studyYear(event.getCourse() != null && event.getCourse().getStudyYear() != null ? event.getCourse().getStudyYear().getStudyYearName() : null)
                 .isSubscribed(isSubscribed)
-                .ownerId(event.getOwner() != null ? event.getOwner().getId() : null)
-                .build();
-    }
-
-    public EventResponseDto toEventResponseDto(Event event, List<EventReminderResponseDto> reminders) {
-        OwnerDto owner = event.getOwner() == null
-                ? null
-                : new OwnerDto(event.getOwner().getId(), event.getOwner().getUsername(), event.getOwner().isActive());
-
-        return EventResponseDto.builder()
-                .id(event.getId())
-                .title(event.getTitle())
-                .type(event.getType())
-                .description(event.getDescription())
-                .locationDetails(event.getLocationDetails())
-                .startTime(event.getStartTime())
-                .durationHours(event.getDurationHours())
-                .location(event.getLocation())
-                .courseSlug(event.getCourse() != null ? event.getCourse().getSlug() : null)
-                .courseName(event.getCourse() != null ? event.getCourse().getName() : null)
-                .courseAbbreviation(event.getCourse() != null ? event.getCourse().getAbbreviation() : null)
-                .communitySlug(event.getCommunity() != null ? event.getCommunity().getSlug() : null)
-                .communityName(event.getCommunity() != null ? event.getCommunity().getName() : null)
-                .studyYear(event.getCourse() != null && event.getCourse().getStudyYear() != null ? event.getCourse().getStudyYear().getStudyYearName() : null)
-                .owner(owner)
-                .reminders(reminders)
                 .build();
     }
 
@@ -250,116 +219,35 @@ public class CommunityContentMapper {
                 .build();
     }
 
-    public EventNotification toEventNotificationEntity(User user, String title, String message, EventNotificationType type, Event event, User actor) {
-        return EventNotification.builder()
+    public Notification toNotificationEntity(
+            User user,
+            String title,
+            String message,
+            NotificationCategory category,
+            NotificationType type,
+            Event event,
+            Post post,
+            User actor
+    ) {
+        return Notification.builder()
                 .user(user)
                 .title(title)
                 .message(message)
-                .category(NotificationCategory.EVENT)
+                .category(category)
                 .type(type)
                 .event(event)
-                .actor(actor)
-                .isRead(false)
-                .build();
-    }
-
-    public PostNotification toPostNotificationEntity(User user, String title, String message, PostNotificationType type, Post post, User actor) {
-        return PostNotification.builder()
-                .user(user)
-                .title(title)
-                .message(message)
-                .category(NotificationCategory.POST)
-                .type(type)
                 .post(post)
                 .actor(actor)
                 .isRead(false)
                 .build();
     }
 
-    public SystemNotification toSystemNotificationEntity(User user, String title, String message, SystemNotificationType type) {
-        return SystemNotification.builder()
-                .user(user)
-                .title(title)
-                .message(message)
-                .category(NotificationCategory.SYSTEM)
-                .type(type != null ? type : SystemNotificationType.GENERAL)
-                .isRead(false)
-                .build();
+    public Notification toEventNotificationEntity(User user, String title, String message, NotificationType type, Event event, User actor) {
+        return toNotificationEntity(user, title, message, NotificationCategory.EVENT, type, event, null, actor);
     }
 
-    public EventNotificationResponseDto toEventNotificationResponseDto(EventNotification notification) {
-        String communitySlug = notification.getEvent() != null && notification.getEvent().getCommunity() != null
-                ? notification.getEvent().getCommunity().getSlug()
-                : null;
-        OwnerDto actor = notification.getActor() != null
-                ? new OwnerDto(notification.getActor().getId(), notification.getActor().getUsername(), notification.getActor().isActive())
-                : null;
-
-        return EventNotificationResponseDto.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .category(NotificationCategory.EVENT)
-                .type(notification.getType())
-                .isRead(notification.isRead())
-                .createdAt(notification.getCreatedAt())
-                .eventId(notification.getEvent() != null ? notification.getEvent().getId() : null)
-                .actor(actor)
-                .communitySlug(communitySlug)
-                .build();
+    public Notification toPostNotificationEntity(User user, String title, String message, NotificationType type, Post post, User actor) {
+        return toNotificationEntity(user, title, message, NotificationCategory.POST, type, null, post, actor);
     }
 
-    public PostNotificationResponseDto toPostNotificationResponseDto(
-            PostNotification notification,
-            String communitySlug,
-            String studyYear,
-            String courseSlug
-    ) {
-        OwnerDto actor = notification.getActor() != null
-                ? new OwnerDto(notification.getActor().getId(), notification.getActor().getUsername(), notification.getActor().isActive())
-                : null;
-
-        return PostNotificationResponseDto.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .category(NotificationCategory.POST)
-                .type(notification.getType())
-                .isRead(notification.isRead())
-                .createdAt(notification.getCreatedAt())
-                .postId(notification.getPost() != null ? notification.getPost().getId() : null)
-                .actor(actor)
-                .communitySlug(communitySlug)
-                .studyYear(studyYear)
-                .courseSlug(courseSlug)
-                .build();
-    }
-
-    public SystemNotificationResponseDto toSystemNotificationResponseDto(SystemNotification notification) {
-        return SystemNotificationResponseDto.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .category(NotificationCategory.SYSTEM)
-                .type(notification.getType())
-                .isRead(notification.isRead())
-                .createdAt(notification.getCreatedAt())
-                .build();
-    }
-
-    public NotificationResponseDto toNotificationResponseDto(
-            Notification notification,
-            String communitySlug,
-            String studyYear,
-            String courseSlug
-    ) {
-        if (notification instanceof EventNotification en) {
-            return toEventNotificationResponseDto(en);
-        } else if (notification instanceof PostNotification pn) {
-            return toPostNotificationResponseDto(pn, communitySlug, studyYear, courseSlug);
-        } else if (notification instanceof SystemNotification sn) {
-            return toSystemNotificationResponseDto(sn);
-        }
-        throw new IllegalArgumentException("Unknown notification entity type: " + notification.getClass().getName());
-    }
 }

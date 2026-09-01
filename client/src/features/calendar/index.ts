@@ -9,7 +9,7 @@ export * from "./components/CalendarMonthGrid";
 export * from "./components/CalendarAgendaList";
 export * from "./components/CalendarFilters";
 export * from "./components/CalendarToolbar";
-export * from "./components/EventDetailModal";
+export * from "./components/EventDetailSheet";
 export * from "./components/EventFormModal";
 export * from "./components/DayOverflowModal";
 export * from "./components/CalendarEventCard";

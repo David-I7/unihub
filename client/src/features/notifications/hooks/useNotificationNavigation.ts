@@ -21,19 +21,17 @@ export function useNotificationNavigation() {
     }
 
     if (notification.category === "POST") {
-      const { communitySlug, studyYear, courseSlug, postId } = notification;
+      const { communitySlug, studyYearName, courseSlug } = notification;
 
-      if (courseSlug && studyYear && communitySlug) {
-        const postParam = postId ? `&postId=${postId}` : "";
+      if (courseSlug && studyYearName && communitySlug) {
         navigate(
-          `/communities/${communitySlug}/study-years/${studyYear.toLowerCase()}/courses/${courseSlug}?tab=posts${postParam}`,
+          `/communities/${communitySlug}/study-years/${studyYearName.toLowerCase()}/courses/${courseSlug}?tab=posts`,
         );
         return;
       }
 
       if (communitySlug) {
-        const postParam = postId ? `&postId=${postId}` : "";
-        navigate(`/communities/${communitySlug}?tab=posts${postParam}`);
+        navigate(`/communities/${communitySlug}?tab=posts`);
         return;
       }
     }

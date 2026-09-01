@@ -42,16 +42,8 @@ export interface CalendarEvent {
   startTime: string;
   durationHours?: number;
   location: EventLocation;
-  courseSlug: string;
-  courseName: string;
-  courseAbbreviation: string;
-  communitySlug: string;
-  communityName: string;
-  studyYear: StudyYearName;
+  courseAbbreviation?: string;
   isSubscribed: boolean;
-  ownerId?: string;
-  description?: string;
-  locationDetails?: string;
 }
 
 export interface Event {

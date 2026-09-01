@@ -4,12 +4,16 @@ import {
   UpcomingEventsWidget,
   MyCommunitiesWidget,
 } from "@/features/home";
+import {
+  EventDetailSheet,
+  EventFormModal,
+} from "@/features/calendar";
 
 export default function HomePage() {
   const user = useAuthStore((state) => state.user);
 
   return (
-    <div className="min-h-full max-w-5xl mx-auto space-y-8 pb-16">
+    <div className="min-h-full max-w-6xl mx-auto space-y-6 pb-16">
       {/* Welcome Header */}
       <div className="space-y-1">
         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
@@ -21,20 +25,25 @@ export default function HomePage() {
         </p>
       </div>
 
-      {/* 1. My Reminders Section (First) */}
-      <section className="w-full">
-        <MyRemindersWidget />
-      </section>
+      {/* Top 2-Column Grid: Upcoming Events (Left) & My Reminders (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
+        <section className="w-full h-full">
+          <UpcomingEventsWidget />
+        </section>
 
-      {/* 2. Upcoming Events Section (Second) */}
-      <section className="w-full">
-        <UpcomingEventsWidget />
-      </section>
+        <section className="w-full h-full">
+          <MyRemindersWidget />
+        </section>
+      </div>
 
-      {/* 3. My Communities Section (Third) */}
+      {/* Bottom Full-Width Section: My Communities */}
       <section className="w-full">
         <MyCommunitiesWidget />
       </section>
+
+      {/* Shared Event Detail Sheet & Edit Modal */}
+      <EventDetailSheet />
+      <EventFormModal />
     </div>
   );
 }

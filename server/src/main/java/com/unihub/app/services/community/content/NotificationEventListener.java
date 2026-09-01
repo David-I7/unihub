@@ -1,7 +1,8 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.content.Notification;
+import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.events.notification.*;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -51,7 +52,7 @@ public class NotificationEventListener {
                     member,
                     title,
                     message,
-                    PostNotificationType.COMMUNITY_POST,
+                    NotificationType.COMMUNITY_POST,
                     event.post(),
                     event.author()
             ));
@@ -84,7 +85,7 @@ public class NotificationEventListener {
                     member,
                     title,
                     message,
-                    PostNotificationType.COURSE_POST,
+                    NotificationType.COURSE_POST,
                     event.post(),
                     event.author()
             ));
@@ -110,11 +111,11 @@ public class NotificationEventListener {
                 : event.comment().getContent();
         String message = event.commentAuthor().getUsername() + " commented: '" + commentSnippet + "'";
 
-        PostNotification notification = contentMapper.toPostNotificationEntity(
+        Notification notification = contentMapper.toPostNotificationEntity(
                 postOwner,
                 title,
                 message,
-                PostNotificationType.COMMENT,
+                NotificationType.POST_COMMENT,
                 event.post(),
                 event.commentAuthor()
         );
@@ -136,11 +137,11 @@ public class NotificationEventListener {
         String title = "New like on your post";
         String message = event.liker().getUsername() + " liked your post: '" + event.post().getTitle() + "'";
 
-        PostNotification notification = contentMapper.toPostNotificationEntity(
+        Notification notification = contentMapper.toPostNotificationEntity(
                 postOwner,
                 title,
                 message,
-                PostNotificationType.LIKE,
+                NotificationType.POST_LIKE,
                 event.post(),
                 event.liker()
         );
@@ -170,7 +171,7 @@ public class NotificationEventListener {
                     recipient,
                     title,
                     message,
-                    EventNotificationType.UPDATED,
+                    NotificationType.EVENT_UPDATED,
                     event.event(),
                     event.updater()
             ));
@@ -203,7 +204,7 @@ public class NotificationEventListener {
                     recipient,
                     title,
                     message,
-                    EventNotificationType.CANCELLED,
+                    NotificationType.EVENT_CANCELLED,
                     null,
                     event.canceller()
             ));

@@ -7,7 +7,7 @@ import type {
   CommunityMemberRole,
 } from "@/features/communities/api/types";
 
-import { useCommunityHome } from "@/features/communities/api/getCommunityHome";
+import { useCommunityMembership } from "@/features/communities/api/getCommunityMembership";
 
 export function usePermissions(
   target?: string | CallerMembership | null,
@@ -17,12 +17,20 @@ export function usePermissions(
   const { data: profile } = useUserProfile({ enabled: Boolean(user) });
 
   const communitySlug = typeof target === "string" ? target : "";
-  const { data: communityHome } = useCommunityHome(communitySlug);
+  const shouldFetchMembership =
+    typeof target === "string" &&
+    !targetMembership &&
+    Boolean(user) &&
+    communitySlug.length > 0;
+
+  const { data: membershipData } = useCommunityMembership(communitySlug, {
+    enabled: shouldFetchMembership,
+  });
 
   let callerMembership: CallerMembership | null | undefined;
 
   if (typeof target === "string") {
-    callerMembership = targetMembership ?? communityHome?.callerMembership ?? null;
+    callerMembership = targetMembership ?? membershipData ?? null;
   } else {
     callerMembership = target;
   }
