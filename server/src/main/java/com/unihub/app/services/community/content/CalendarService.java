@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.domain.PermissionType;
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
@@ -8,6 +9,7 @@ import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
+import com.unihub.app.dto.community.content.response.UserReminderResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.content.EventReminder;
@@ -17,6 +19,7 @@ import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.events.notification.EventCancelledDomainNotificationEvent;
 import com.unihub.app.events.notification.EventUpdatedDomainNotificationEvent;
+import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
@@ -27,6 +30,8 @@ import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.services.authorization.AuthorizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +40,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -50,6 +56,7 @@ public class CalendarService {
     private final AuthorizationService authorizationService;
     private final UserMapper userMapper;
     private final CommunityContentMapper contentMapper;
+    private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -113,10 +120,6 @@ public class CalendarService {
 
     @Transactional
     public CalendarEventResponseDto createEvent(UserDto user, CreateEventRequestDto requestDto) {
-        if (requestDto.endTime() != null && !requestDto.endTime().isAfter(requestDto.startTime())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endTime must be after startTime");
-        }
-
         Community community = communityRepository.findBySlug(requestDto.communitySlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
@@ -161,13 +164,6 @@ public class CalendarService {
             }
         }
 
-        OffsetDateTime newStartTime = dto.startTime() != null ? dto.startTime() : event.getStartTime();
-        OffsetDateTime newEndTime = dto.endTime() != null ? dto.endTime() : event.getEndTime();
-
-        if (newEndTime != null && !newEndTime.isAfter(newStartTime)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "endTime must be after startTime");
-        }
-
         if (dto.title() != null) {
             event.setTitle(dto.title());
         }
@@ -180,11 +176,8 @@ public class CalendarService {
         if (dto.startTime() != null) {
             event.setStartTime(dto.startTime());
         }
-        if (dto.endTime() != null) {
-            event.setEndTime(dto.endTime());
-        }
-        if (dto.durationMinutes() != null) {
-            event.setDurationMinutes(dto.durationMinutes());
+        if (dto.durationHours() != null) {
+            event.setDurationHours(dto.durationHours());
         }
         if (dto.location() != null) {
             event.setLocation(dto.location());
@@ -270,5 +263,38 @@ public class CalendarService {
         }
 
         reminderRepository.deleteByUserIdAndEventId(user.id(), eventId);
+    }
+
+    @Transactional(readOnly = true)
+    public PageDto<CalendarEventResponseDto> getUpcomingEvents(UUID userId, Integer days, Pageable pageable) {
+        List<UUID> enrolledCommunityIds = communityMemberRepository.findCommunityIdsByUserId(userId);
+        if (enrolledCommunityIds == null || enrolledCommunityIds.isEmpty()) {
+            return PageDto.<CalendarEventResponseDto>builder()
+                    .content(Collections.emptyList())
+                    .number(pageable.getPageNumber())
+                    .size(pageable.getPageSize())
+                    .totalElements(0)
+                    .totalPages(0)
+                    .first(true)
+                    .last(true)
+                    .build();
+        }
+
+        OffsetDateTime from = OffsetDateTime.now(ZoneOffset.UTC);
+        int windowDays = (days != null && days > 0) ? days : 7;
+        OffsetDateTime to = from.plusDays(windowDays);
+
+        Page<CalendarEventResponseDto> page = eventRepository.findUpcomingEventsByCommunityIds(
+                enrolledCommunityIds, from, to, userId, pageable
+        );
+        return pageMapper.toPageDto(page);
+    }
+
+    @Transactional(readOnly = true)
+    public PageDto<UserReminderResponseDto> getUserReminders(UUID userId, ReminderStatus status, Pageable pageable) {
+        Page<EventReminder> page = (status != null)
+                ? reminderRepository.findUserRemindersByStatus(userId, status, pageable)
+                : reminderRepository.findAllUserReminders(userId, pageable);
+        return pageMapper.toPageDto(page.map(contentMapper::toUserReminderResponseDto));
     }
 }

@@ -49,8 +49,8 @@ export type SelectedMaterial =
 
 interface MaterialDetailViewerProps {
   material: SelectedMaterial;
-  filePath?: string;
   communitySlug?: string;
+  isArchived?: boolean;
   onDeleted?: () => void;
   onUpdated?: (updated: SelectedMaterial) => void;
   className?: string;
@@ -58,8 +58,8 @@ interface MaterialDetailViewerProps {
 
 export function MaterialDetailViewer({
   material,
-  filePath,
   communitySlug = "",
+  isArchived = false,
   onDeleted,
   onUpdated,
   className = "",
@@ -112,9 +112,8 @@ export function MaterialDetailViewer({
   }
 
   const ownerId = material.data.owner?.id;
-  const userCanEdit = canEditMaterial(ownerId);
-  const userCanDelete = canDeleteMaterial(ownerId);
-  const locationPath = filePath || "Root";
+  const userCanEdit = !isArchived && canEditMaterial(ownerId);
+  const userCanDelete = !isArchived && canDeleteMaterial(ownerId);
 
   return (
     <div className={`${className}`}>
@@ -261,11 +260,7 @@ export function MaterialDetailViewer({
                         day: "numeric",
                       },
                     )}
-                  </span>
-                  <span>•</span>
-                  <span className="truncate max-w-[200px]" title={locationPath}>
-                    in {locationPath}
-                  </span>
+                  </span>{" "}
                 </div>
               </div>
             </div>
@@ -444,10 +439,6 @@ export function MaterialDetailViewer({
                         day: "numeric",
                       },
                     )}
-                  </span>
-                  <span>•</span>
-                  <span className="truncate max-w-[200px]" title={locationPath}>
-                    in {locationPath}
                   </span>
                 </div>
               </div>

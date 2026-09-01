@@ -1,5 +1,5 @@
-import { FileText, Pen, Video, type LucideIcon } from "lucide-react";
-import type { CalendarEvent, EventType } from "../api/types";
+import { FileText, Globe, Layers, MapPin, Pen, Video, type LucideIcon } from "lucide-react";
+import type { CalendarEvent, EventLocation, EventType } from "../api/types";
 
 export interface EventCategoryConfig {
   container: string;
@@ -10,19 +10,99 @@ export interface EventCategoryConfig {
   dotColor: string;
 }
 
+export const EVENT_TYPE_OPTIONS: {
+  value: EventType;
+  label: string;
+  icon: LucideIcon;
+  colorClass: string;
+}[] = [
+  {
+    value: "EXAM",
+    label: "Exam",
+    icon: Pen,
+    colorClass: "text-purple-600 dark:text-purple-400",
+  },
+  {
+    value: "ASSIGNMENT",
+    label: "Assignment",
+    icon: FileText,
+    colorClass: "text-amber-600 dark:text-amber-400",
+  },
+  {
+    value: "LECTURE",
+    label: "Lecture",
+    icon: Video,
+    colorClass: "text-blue-600 dark:text-blue-400",
+  },
+];
+
+export const EVENT_LOCATION_OPTIONS: {
+  value: EventLocation;
+  label: string;
+  icon: LucideIcon;
+}[] = [
+  { value: "IN_PERSON", label: "In-Person", icon: MapPin },
+  { value: "ONLINE", label: "Online", icon: Globe },
+  { value: "HYBRID", label: "Hybrid", icon: Layers },
+];
+
+export function formatEventLocation(
+  location?: EventLocation | string | null,
+): string {
+  if (!location) return "";
+  switch (location) {
+    case "IN_PERSON":
+      return "In-Person";
+    case "ONLINE":
+      return "Online";
+    case "HYBRID":
+      return "Hybrid";
+    default:
+      return location;
+  }
+}
+
+export function getEventLocationIcon(
+  location?: EventLocation | string | null,
+): LucideIcon {
+  switch (location) {
+    case "ONLINE":
+      return Globe;
+    case "HYBRID":
+      return Layers;
+    case "IN_PERSON":
+    default:
+      return MapPin;
+  }
+}
+
+export function formatEventType(type?: EventType | string | null): string {
+  if (!type) return "";
+  switch (type) {
+    case "EXAM":
+      return "Exam";
+    case "ASSIGNMENT":
+      return "Assignment";
+    case "LECTURE":
+      return "Lecture";
+    default:
+      return type;
+  }
+}
+
 export function getEventCategoryConfig(type: EventType): EventCategoryConfig {
   switch (type) {
     case "EXAM":
       return {
         container:
-          "bg-rose-500/10 text-rose-800 dark:text-rose-200 border-l-3 border-rose-500 hover:bg-rose-500/20",
+          "bg-purple-500/10 text-purple-800 dark:text-purple-200 border-l-3 border-purple-500 hover:bg-purple-500/20",
         pillContainer:
-          "bg-rose-500/15 text-rose-950 dark:text-rose-200 border-rose-500/30 hover:bg-rose-500/25 hover:border-rose-500/50",
+          "bg-purple-500/15 text-purple-950 dark:text-purple-200 border-purple-500/30 hover:bg-purple-500/25 hover:border-purple-500/50",
         badge:
-          "bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30",
+          "bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30",
         icon: Pen,
         label: "Exam",
-        dotColor: "bg-rose-500",
+        dotColor: "bg-purple-500",
       };
     case "ASSIGNMENT":
       return {

@@ -96,7 +96,23 @@ export function formatTime(isoStr?: string): string {
 }
 
 /**
+ * Formats a duration in hours into a readable string (e.g., "1.5h", "2h", "30m").
+ */
+export function formatDurationHours(durationHours?: number | null): string {
+  if (durationHours == null || durationHours <= 0) return "";
+  if (durationHours === 1) return "1h";
+  if (durationHours < 1) {
+    const minutes = Math.round(durationHours * 60);
+    return `${minutes}m`;
+  }
+  // Remove unnecessary trailing zeroes (e.g., 2.0 -> "2h", 1.5 -> "1.5h")
+  const formatted = Number(durationHours.toFixed(2));
+  return `${formatted}h`;
+}
+
+/**
  * Formats a start and optional end time range (e.g., "10:00 - 12:00").
+ * If end time is missing or equal to start time, returns only start time.
  */
 export function formatTimeRange(startTime?: string, endTime?: string): string {
   if (!startTime) return "";
@@ -105,7 +121,34 @@ export function formatTimeRange(startTime?: string, endTime?: string): string {
 
   if (!endTime) return startFormatted;
   const endFormatted = formatTime(endTime);
-  if (!endFormatted) return startFormatted;
+  if (!endFormatted || endFormatted === startFormatted) return startFormatted;
+
+  return `${startFormatted} - ${endFormatted}`;
+}
+
+/**
+ * Formats event time using start time and optional duration in hours.
+ * e.g., ("2026-09-01T10:00:00Z", 1.5) -> "10:00 - 11:30"
+ * e.g., ("2026-09-01T20:25:00Z", null) -> "20:25"
+ */
+export function formatEventTimeWithDuration(
+  startTime?: string,
+  durationHours?: number | null,
+): string {
+  if (!startTime) return "";
+  const startFormatted = formatTime(startTime);
+  if (!startFormatted) return "";
+
+  if (durationHours == null || durationHours <= 0) {
+    return startFormatted;
+  }
+
+  const startD = new Date(startTime);
+  if (isNaN(startD.getTime())) return startFormatted;
+
+  const endD = new Date(startD.getTime() + durationHours * 3600 * 1000);
+  const endFormatted = formatTime(endD.toISOString());
+  if (!endFormatted || endFormatted === startFormatted) return startFormatted;
 
   return `${startFormatted} - ${endFormatted}`;
 }
@@ -198,4 +241,69 @@ export function formatOffsetLabel(offsetMinutes: number): string {
     return `${hours} hour${hours === 1 ? "" : "s"} before`;
   }
   return `${offsetMinutes} minutes before`;
+}
+
+/**
+ * Formats a relative countdown or timeline status for an event start time.
+ * e.g., "Starts in 2 days", "Starts in 3h", "Starts in 45m", "Happening now", "Concluded"
+ */
+export function formatEventRelativeStatus(
+  startTime?: string,
+  durationHours?: number | null,
+): { label: string; isPast: boolean; isOngoing: boolean; isSoon: boolean } {
+  if (!startTime) {
+    return { label: "", isPast: false, isOngoing: false, isSoon: false };
+  }
+  const startMs = new Date(startTime).getTime();
+  if (isNaN(startMs)) {
+    return { label: "", isPast: false, isOngoing: false, isSoon: false };
+  }
+  const nowMs = Date.now();
+  const endMs =
+    durationHours && durationHours > 0
+      ? startMs + durationHours * 3600 * 1000
+      : startMs;
+
+  if (nowMs > endMs) {
+    return { label: "Concluded", isPast: true, isOngoing: false, isSoon: false };
+  }
+  if (nowMs >= startMs && nowMs <= endMs) {
+    return { label: "Happening now", isPast: false, isOngoing: true, isSoon: true };
+  }
+
+  const diffMs = startMs - nowMs;
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMinutes < 60) {
+    return {
+      label: `Starts in ${diffMinutes}m`,
+      isPast: false,
+      isOngoing: false,
+      isSoon: true,
+    };
+  }
+  if (diffHours < 24) {
+    return {
+      label: `Starts in ${diffHours}h`,
+      isPast: false,
+      isOngoing: false,
+      isSoon: true,
+    };
+  }
+  if (diffDays === 1) {
+    return {
+      label: "Starts tomorrow",
+      isPast: false,
+      isOngoing: false,
+      isSoon: false,
+    };
+  }
+  return {
+    label: `In ${diffDays} days`,
+    isPast: false,
+    isOngoing: false,
+    isSoon: false,
+  };
 }

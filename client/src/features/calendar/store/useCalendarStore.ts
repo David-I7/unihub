@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { Event, EventType } from "../api/types";
+import type { CalendarEvent, Event, EventType } from "../api/types";
 import type { StudyYearNameDto } from "@/features/studyYears";
 
 interface CalendarState {
@@ -13,7 +13,7 @@ interface CalendarState {
   selectedEventId: string | null;
   isFormModalOpen: boolean;
   formDefaultDate: string | undefined;
-  editingEvent: Event | null;
+  editingEvent: Event | CalendarEvent | null;
   overflowDate: string | null;
 }
 
@@ -29,7 +29,7 @@ interface CalendarActions {
   setSelectedType: (type: EventType | "All") => void;
   setSearchQuery: (query: string) => void;
   openCreateModal: (defaultDate?: string) => void;
-  openEditModal: (event: Event) => void;
+  openEditModal: (event: Event | CalendarEvent) => void;
   closeFormModal: () => void;
   openEventDetails: (eventId: string) => void;
   closeEventDetails: () => void;

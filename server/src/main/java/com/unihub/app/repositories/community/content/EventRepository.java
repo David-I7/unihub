@@ -5,6 +5,8 @@ import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.resources.StudyYearName;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,8 +24,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.title,
                 e.type,
                 e.startTime,
-                e.endTime,
-                e.durationMinutes,
+                e.durationHours,
                 e.location,
                 c.slug,
                 c.name,
@@ -32,7 +33,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 comm.name,
                 sy.studyYearName,
                 CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
-                AND er.user.id = :userId) > 0 THEN true ELSE false END
+                AND er.user.id = :userId) > 0 THEN true ELSE false END,
+                e.owner.id
         ) From Event e 
           JOIN e.community comm 
           JOIN e.course c 
@@ -54,6 +56,45 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
             @Param("userId") UUID userId
     );
 
+    @Query(value = """
+        SELECT new com.unihub.app.dto.community.content.response.CalendarEventResponseDto(
+                e.id,
+                e.title,
+                e.type,
+                e.startTime,
+                e.durationHours,
+                e.location,
+                c.slug,
+                c.name,
+                c.abbreviation,
+                comm.slug,
+                comm.name,
+                sy.studyYearName,
+                CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
+                AND er.user.id = :userId) > 0 THEN true ELSE false END,
+                e.owner.id
+        ) FROM Event e 
+          JOIN e.community comm 
+          JOIN e.course c 
+          JOIN c.studyYear sy
+        WHERE comm.id IN :communityIds
+          AND e.startTime >= :from
+          AND e.startTime <= :to
+        ORDER BY e.startTime ASC
+    """, countQuery = """
+        SELECT COUNT(e) FROM Event e
+        WHERE e.community.id IN :communityIds
+          AND e.startTime >= :from
+          AND e.startTime <= :to
+    """)
+    Page<CalendarEventResponseDto> findUpcomingEventsByCommunityIds(
+            @Param("communityIds") List<UUID> communityIds,
+            @Param("from") OffsetDateTime from,
+            @Param("to") OffsetDateTime to,
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
+
     @Query("""
         SELECT new com.unihub.app.dto.community.content.response.EventResponseDto(
             e.id,
@@ -62,8 +103,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
             e.description,
             e.locationDetails,
             e.startTime,
-            e.endTime,
-            e.durationMinutes,
+            e.durationHours,
             e.location,
             c.slug,
             c.name,

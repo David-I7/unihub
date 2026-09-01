@@ -45,11 +45,8 @@ public class Event {
     @Column(name = "start_time", nullable = false)
     private OffsetDateTime startTime;
 
-    @Column(name = "end_time")
-    private OffsetDateTime endTime;
-
-    @Column(name = "duration_minutes")
-    private Integer durationMinutes;
+    @Column(name = "duration_hours")
+    private Double durationHours;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)

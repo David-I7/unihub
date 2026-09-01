@@ -119,11 +119,11 @@ export function CommunityHero({
 
               {community.verified && (
                 <Badge
-                  variant="verified"
-                  size="xs"
-                  className="font-semibold gap-1"
+                  size={"sm"}
+                  variant="secondary"
+                  className="bg-black/40 text-[10px] text-white border border-white/20 backdrop-blur-xs font-semibold gap-1"
                 >
-                  <ShieldCheck className="size-3 text-emerald-500" />
+                  <ShieldCheck className="size-3 text-emerald-400" />
                   Verified
                 </Badge>
               )}
@@ -134,7 +134,7 @@ export function CommunityHero({
                 <Button
                   size="xs"
                   onClick={() => setJoinModalOpen(true)}
-                  className="gap-1 font-bold shadow-xs cursor-pointer text-xs shrink-0"
+                  className="gap-1 font-semibold shadow-xs cursor-pointer text-xs shrink-0"
                 >
                   <KeyRound className="size-3" />
                   <span>Join Community</span>

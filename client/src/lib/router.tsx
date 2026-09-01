@@ -25,12 +25,22 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: (
+          <AuthenticatedRoute
+            title="Welcome to Unihub"
+            description="Sign in to join communities, share resources, and schedule event reminders."
+          >
+            <HomePage />
+          </AuthenticatedRoute>
+        ),
       },
       {
         path: "/calendar",
         element: (
-          <AuthenticatedRoute>
+          <AuthenticatedRoute
+            title="Calendar"
+            description="Sign in to view your upcoming exams, assignment deadlines, and class schedules."
+          >
             <CalendarPage />
           </AuthenticatedRoute>
         ),
@@ -38,7 +48,10 @@ export const router = createBrowserRouter([
       {
         path: "/notifications",
         element: (
-          <AuthenticatedRoute>
+          <AuthenticatedRoute
+            title="Notifications"
+            description="Sign in to check your latest activity alerts, event updates, and reminders."
+          >
             <NotificationsPage />
           </AuthenticatedRoute>
         ),

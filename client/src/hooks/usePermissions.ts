@@ -157,6 +157,28 @@ export function usePermissions(
     [user, hasPermission],
   );
 
+  const canCreateEvent = hasPermission(PERMISSIONS.CREATE_EVENT);
+
+  const canEditEvent = useCallback(
+    (eventOwnerId?: string | number | null) => {
+      if (user && eventOwnerId && String(user.id) === String(eventOwnerId)) {
+        return hasPermission(PERMISSIONS.UPDATE_EVENT);
+      }
+      return hasPermission(PERMISSIONS.MODERATE_EVENT);
+    },
+    [user, hasPermission],
+  );
+
+  const canDeleteEvent = useCallback(
+    (eventOwnerId?: string | number | null) => {
+      if (user && eventOwnerId && String(user.id) === String(eventOwnerId)) {
+        return hasPermission(PERMISSIONS.DELETE_EVENT);
+      }
+      return hasPermission(PERMISSIONS.MODERATE_EVENT);
+    },
+    [user, hasPermission],
+  );
+
   return {
     user,
     isMember,
@@ -191,6 +213,9 @@ export function usePermissions(
     canDeleteFolder,
     canEditMaterial,
     canDeleteMaterial,
+    canCreateEvent,
+    canEditEvent,
+    canDeleteEvent,
   };
 }
 

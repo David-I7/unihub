@@ -80,6 +80,9 @@ public class CalendarServiceTests {
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
+    @Spy
+    private com.unihub.app.mappers.PageMapper pageMapper = new com.unihub.app.mappers.PageMapper();
+
     @InjectMocks
     private CalendarService calendarService;
 
@@ -126,8 +129,7 @@ public class CalendarServiceTests {
                 "Midterm Exam",
                 EventType.EXAM,
                 OffsetDateTime.now().plusDays(1),
-                OffsetDateTime.now().plusDays(1).plusHours(2),
-                120,
+                2.0,
                 EventLocation.IN_PERSON,
                 "pa",
                 "Programarea Algoritmilor",
@@ -135,7 +137,8 @@ public class CalendarServiceTests {
                 slug,
                 "FMI - Info",
                 StudyYearName.YEAR_1,
-                false
+                false,
+                userId
         );
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
@@ -195,8 +198,7 @@ public class CalendarServiceTests {
                 "Midterm Exam",
                 EventType.EXAM,
                 OffsetDateTime.now().plusDays(1),
-                OffsetDateTime.now().plusDays(1).plusHours(2),
-                120,
+                2.0,
                 EventLocation.IN_PERSON,
                 "pa",
                 "Programarea Algoritmilor",
@@ -204,7 +206,8 @@ public class CalendarServiceTests {
                 slug,
                 "FMI - Info",
                 StudyYearName.YEAR_1,
-                true
+                true,
+                userId
         );
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
@@ -238,7 +241,7 @@ public class CalendarServiceTests {
                 .description("Exam description")
                 .type(EventType.EXAM)
                 .startTime(OffsetDateTime.now().plusDays(2))
-                .endTime(OffsetDateTime.now().plusDays(2).plusHours(2))
+                .durationHours(2.0)
                 .location(EventLocation.IN_PERSON)
                 .courseId(1L)
                 .communitySlug(slug)
@@ -424,5 +427,97 @@ public class CalendarServiceTests {
         calendarService.deleteReminder(eventId, userDto);
 
         verify(reminderRepository).deleteByUserIdAndEventId(userId, eventId);
+    }
+
+    // =========================================================================
+    // getUpcomingEvents
+    // =========================================================================
+
+    @Test
+    @DisplayName("getUpcomingEvents returns page of upcoming events for user's enrolled communities")
+    public void testGetUpcomingEvents_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID communityId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+
+        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
+                .id(UUID.randomUUID())
+                .title("Examen ASC")
+                .type(EventType.EXAM)
+                .startTime(now.plusDays(2))
+                .communitySlug("fmi-info-id")
+                .build();
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);
+        org.springframework.data.domain.Page<CalendarEventResponseDto> page = new org.springframework.data.domain.PageImpl<>(
+                List.of(eventDto), pageable, 1
+        );
+
+        when(communityMemberRepository.findCommunityIdsByUserId(userId)).thenReturn(List.of(communityId));
+        when(eventRepository.findUpcomingEventsByCommunityIds(eq(List.of(communityId)), any(), any(), eq(userId), eq(pageable)))
+                .thenReturn(page);
+
+        var result = calendarService.getUpcomingEvents(userId, 7, pageable);
+
+        assertNotNull(result);
+        assertEquals(1, result.content().size());
+        assertEquals("Examen ASC", result.content().get(0).title());
+    }
+
+    @Test
+    @DisplayName("getUpcomingEvents returns empty page when user has no enrolled communities")
+    public void testGetUpcomingEvents_NoCommunities() {
+        UUID userId = UUID.randomUUID();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);
+
+        when(communityMemberRepository.findCommunityIdsByUserId(userId)).thenReturn(Collections.emptyList());
+
+        var result = calendarService.getUpcomingEvents(userId, 7, pageable);
+
+        assertNotNull(result);
+        assertTrue(result.content().isEmpty());
+        assertEquals(0, result.totalElements());
+    }
+
+    // =========================================================================
+    // getUserReminders
+    // =========================================================================
+
+    @Test
+    @DisplayName("getUserReminders returns page of active user reminders")
+    public void testGetUserReminders_Success() {
+        UUID userId = UUID.randomUUID();
+        UUID reminderId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+
+        Event event = Event.builder()
+                .id(UUID.randomUUID())
+                .title("Examen ASC")
+                .type(EventType.EXAM)
+                .startTime(now.plusDays(2))
+                .build();
+
+        EventReminder reminder = EventReminder.builder()
+                .id(reminderId)
+                .event(event)
+                .offsetMinutes(15)
+                .remindAt(now.plusDays(2).minusMinutes(15))
+                .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
+                .build();
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);
+        org.springframework.data.domain.Page<EventReminder> page = new org.springframework.data.domain.PageImpl<>(
+                List.of(reminder), pageable, 1
+        );
+
+        when(reminderRepository.findUserRemindersByStatus(userId, com.unihub.app.entities.community.content.ReminderStatus.PENDING, pageable))
+                .thenReturn(page);
+
+        var result = calendarService.getUserReminders(userId, com.unihub.app.entities.community.content.ReminderStatus.PENDING, pageable);
+
+        assertNotNull(result);
+        assertEquals(1, result.content().size());
+        assertEquals(reminderId, result.content().get(0).id());
+        assertEquals("Examen ASC", result.content().get(0).eventTitle());
     }
 }

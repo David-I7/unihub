@@ -2,6 +2,8 @@ package com.unihub.app.repositories.community.content;
 
 import com.unihub.app.entities.community.content.EventReminder;
 import com.unihub.app.entities.community.content.ReminderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,43 @@ import java.util.List;
 import java.util.UUID;
 
 public interface EventReminderRepository extends JpaRepository<EventReminder, UUID> {
+
+    @Query(value = """
+        SELECT er FROM EventReminder er
+        JOIN FETCH er.event e
+        JOIN FETCH e.community comm
+        JOIN FETCH e.course c
+        JOIN FETCH c.studyYear sy
+        WHERE er.user.id = :userId
+          AND er.status = :status
+        ORDER BY er.remindAt ASC
+    """, countQuery = """
+        SELECT COUNT(er) FROM EventReminder er
+        WHERE er.user.id = :userId
+          AND er.status = :status
+    """)
+    Page<EventReminder> findUserRemindersByStatus(
+            @Param("userId") UUID userId,
+            @Param("status") ReminderStatus status,
+            Pageable pageable
+    );
+
+    @Query(value = """
+        SELECT er FROM EventReminder er
+        JOIN FETCH er.event e
+        JOIN FETCH e.community comm
+        JOIN FETCH e.course c
+        JOIN FETCH c.studyYear sy
+        WHERE er.user.id = :userId
+        ORDER BY er.remindAt ASC
+    """, countQuery = """
+        SELECT COUNT(er) FROM EventReminder er
+        WHERE er.user.id = :userId
+    """)
+    Page<EventReminder> findAllUserReminders(
+            @Param("userId") UUID userId,
+            Pageable pageable
+    );
 
     @Query("""
         SELECT er FROM EventReminder er

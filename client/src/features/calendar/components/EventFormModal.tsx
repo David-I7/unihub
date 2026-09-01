@@ -1,11 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { isAxiosError } from "axios";
-import {
-  AlertCircle,
-  GraduationCap,
-  Info,
-  Users,
-} from "lucide-react";
+import { AlertCircle, Info } from "lucide-react";
 import { useUserCommunities } from "@/features/users";
 import { useCommunityStudyYears } from "@/features/communities";
 import {
@@ -16,10 +11,7 @@ import {
 import { useForm } from "@/hooks/useForm";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
 import { useCalendarStore } from "../store/useCalendarStore";
-import {
-  eventFormSchema,
-  type EventFormData,
-} from "../schemas/eventSchemas";
+import { eventFormSchema, type EventFormData } from "../schemas/eventSchemas";
 import type {
   CreateEventPayload,
   EventLocation,
@@ -47,18 +39,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { toDatetimeLocal } from "@/lib/dateUtils";
-
-const EVENT_TYPES: { label: string; value: EventType }[] = [
-  { label: "Exam", value: "EXAM" },
-  { label: "Assignment", value: "ASSIGNMENT" },
-  { label: "Lecture", value: "LECTURE" },
-];
-
-const LOCATION_TYPES: { label: string; value: EventLocation }[] = [
-  { label: "In-Person", value: "IN_PERSON" },
-  { label: "Online", value: "ONLINE" },
-  { label: "Hybrid", value: "HYBRID" },
-];
+import { cn } from "@/lib/utils";
+import {
+  EVENT_TYPE_OPTIONS,
+  EVENT_LOCATION_OPTIONS,
+} from "../utils/eventUtils";
 
 export function EventFormModal() {
   const isOpen = useCalendarStore((s) => s.isFormModalOpen);
@@ -90,8 +75,7 @@ export function EventFormModal() {
       description: "",
       type: "EXAM",
       startTime: toDatetimeLocal(undefined, defaultDate),
-      endTime: "",
-      durationMinutes: "",
+      durationHours: "",
       location: "IN_PERSON",
       locationDetails: "",
       communitySlug: defaultCommunitySlug ?? "",
@@ -104,14 +88,10 @@ export function EventFormModal() {
     validateOnBlur: true,
     onSubmit: async (values) => {
       const startIso = new Date(values.startTime).toISOString();
-      const endIso =
-        values.endTime && values.endTime.trim() !== ""
-          ? new Date(values.endTime).toISOString()
-          : undefined;
 
       const durationNum =
-        typeof values.durationMinutes === "number" && values.durationMinutes > 0
-          ? values.durationMinutes
+        typeof values.durationHours === "number" && values.durationHours > 0
+          ? values.durationHours
           : undefined;
 
       if (isEditing && editingEvent) {
@@ -120,8 +100,7 @@ export function EventFormModal() {
           description: values.description?.trim() || undefined,
           type: values.type,
           startTime: editingEvent.startTime,
-          endTime: endIso,
-          durationMinutes: durationNum,
+          durationHours: durationNum,
           location: values.location,
           locationDetails: values.locationDetails?.trim() || undefined,
         };
@@ -147,8 +126,7 @@ export function EventFormModal() {
           description: values.description?.trim() || undefined,
           type: values.type,
           startTime: startIso,
-          endTime: endIso,
-          durationMinutes: durationNum,
+          durationHours: durationNum,
           location: values.location,
           locationDetails: values.locationDetails?.trim() || undefined,
           communitySlug: values.communitySlug ?? "",
@@ -195,10 +173,7 @@ export function EventFormModal() {
         description: editingEvent.description ?? "",
         type: editingEvent.type,
         startTime: toDatetimeLocal(editingEvent.startTime),
-        endTime: editingEvent.endTime
-          ? toDatetimeLocal(editingEvent.endTime)
-          : "",
-        durationMinutes: editingEvent.durationMinutes ?? "",
+        durationHours: editingEvent.durationHours ?? "",
         location: editingEvent.location,
         locationDetails: editingEvent.locationDetails ?? "",
         communitySlug: editingEvent.communitySlug,
@@ -211,15 +186,14 @@ export function EventFormModal() {
         defaultCommunitySlug &&
         communities.some((c) => c.slug === defaultCommunitySlug)
           ? defaultCommunitySlug
-          : communities[0]?.slug ?? "";
+          : (communities[0]?.slug ?? "");
 
       form.reset({
         title: "",
         description: "",
         type: "EXAM",
         startTime: toDatetimeLocal(undefined, defaultDate),
-        endTime: "",
-        durationMinutes: "",
+        durationHours: "",
         location: "IN_PERSON",
         locationDetails: "",
         communitySlug: initialCommunity,
@@ -340,6 +314,228 @@ export function EventFormModal() {
         )}
 
         <form onSubmit={form.handleSubmit} className="space-y-4 text-xs">
+          {/* Cascading Community, Study Year, and Course Selectors */}
+          <div className="rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
+                Course & Community Selection {!isEditing && "*"}
+              </span>
+              {isEditing ? (
+                <span className="text-[11px] text-muted-foreground italic">
+                  Course context is locked
+                </span>
+              ) : selectedCommunitySlug ? (
+                <span className="text-[11px] text-muted-foreground">
+                  Required for scheduling
+                </span>
+              ) : null}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* 1. Community Dropdown */}
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  Enrolled Community *
+                </Label>
+                <Select
+                  value={selectedCommunitySlug || null}
+                  onValueChange={(val: string | null) => {
+                    if (!val || val === "NO_COMMUNITIES") return;
+                    form.setValue("communitySlug", val);
+                    form.setValue("studyYear", "");
+                    form.setValue("courseId", "");
+                  }}
+                  disabled={isEditing || !hasCommunities}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      "w-full h-8 text-xs bg-background",
+                      isEditing && "opacity-80 bg-muted/50 cursor-not-allowed",
+                    )}
+                  >
+                    <SelectValue
+                      placeholder={
+                        isLoadingCommunities
+                          ? "Loading..."
+                          : !hasCommunities
+                            ? "No communities"
+                            : "Select community"
+                      }
+                    >
+                      {isEditing
+                        ? editingEvent?.communityName ||
+                          editingEvent?.communitySlug ||
+                          selectedCommunity?.name
+                        : selectedCommunity?.name}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {!hasCommunities ? (
+                      <SelectItem value="NO_COMMUNITIES" disabled>
+                        No enrolled communities
+                      </SelectItem>
+                    ) : (
+                      communities.map((c) => (
+                        <SelectItem key={c.id} value={c.slug}>
+                          <span className="truncate">{c.name}</span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {!isEditing && form.errors.communitySlug && (
+                  <p className="text-[11px] text-destructive">
+                    {form.errors.communitySlug}
+                  </p>
+                )}
+              </div>
+
+              {/* 2. Study Year Dropdown */}
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  Study Year *
+                </Label>
+                <Select
+                  value={activeStudyYearName ?? null}
+                  onValueChange={(val: string | null) => {
+                    if (!val || val === "NO_YEARS") return;
+                    const next = StudyYearNameMap[val as StudyYearName];
+                    form.setValue("studyYear", next ?? "");
+                    form.setValue("courseId", "");
+                  }}
+                  disabled={
+                    isEditing || !selectedCommunitySlug || !hasStudyYears
+                  }
+                >
+                  <SelectTrigger
+                    className={cn(
+                      "w-full h-8 text-xs bg-background",
+                      isEditing && "opacity-80 bg-muted/50 cursor-not-allowed",
+                    )}
+                  >
+                    <SelectValue
+                      placeholder={
+                        isLoadingStudyYears
+                          ? "Loading years..."
+                          : !selectedCommunitySlug
+                            ? "Pick community first"
+                            : !hasStudyYears
+                              ? "No study years"
+                              : "Select year"
+                      }
+                    >
+                      {isEditing
+                        ? editingEvent?.studyYear || activeStudyYearName
+                        : activeStudyYearName}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {!hasStudyYears ? (
+                      <SelectItem value="NO_YEARS" disabled>
+                        No study years found
+                      </SelectItem>
+                    ) : (
+                      communityStudyYears?.map((y) => (
+                        <SelectItem key={y.id} value={y.studyYearName}>
+                          <span className="truncate">{y.studyYearName}</span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* 3. Course Dropdown */}
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  Course *
+                </Label>
+                <Select
+                  value={
+                    form.values.courseId ? String(form.values.courseId) : null
+                  }
+                  onValueChange={(val: string | null) => {
+                    if (!val || val === "NO_COURSES") return;
+                    form.setValue("courseId", Number(val));
+                  }}
+                  disabled={isEditing || !selectedStudyYear || !hasCourses}
+                >
+                  <SelectTrigger
+                    className={cn(
+                      "w-full h-8 text-xs bg-background",
+                      isEditing && "opacity-80 bg-muted/50 cursor-not-allowed",
+                    )}
+                  >
+                    <SelectValue
+                      placeholder={
+                        isLoadingCourses
+                          ? "Loading courses..."
+                          : !selectedStudyYear
+                            ? "Pick year first"
+                            : !hasCourses
+                              ? "No courses"
+                              : "Select course"
+                      }
+                    >
+                      {isEditing
+                        ? editingEvent?.courseName || selectedCourse?.name
+                        : selectedCourse?.name || undefined}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {!hasCourses ? (
+                      <SelectItem value="NO_COURSES" disabled>
+                        No courses available
+                      </SelectItem>
+                    ) : (
+                      studyYearCourses?.map((c) => (
+                        <SelectItem
+                          className="px-2 py-1"
+                          key={c.id}
+                          value={String(c.id)}
+                        >
+                          <span className="truncate">{c.name}</span>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+                {!isEditing && form.errors.courseId && (
+                  <p className="text-[11px] text-destructive">
+                    {form.errors.courseId}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Informative notices for missing study years / courses (Create Mode only) */}
+            {!isEditing &&
+              selectedCommunitySlug &&
+              !isLoadingStudyYears &&
+              !hasStudyYears && (
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                  <Info className="size-3.5 text-amber-500 shrink-0" />
+                  <span>
+                    The selected community has no study years configured yet.
+                  </span>
+                </div>
+              )}
+
+            {!isEditing &&
+              selectedCommunitySlug &&
+              selectedStudyYear &&
+              !isLoadingCourses &&
+              !hasCourses && (
+                <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
+                  <Info className="size-3.5 text-amber-500 shrink-0" />
+                  <span>
+                    No courses found in this study year. Events must be linked
+                    to a course.
+                  </span>
+                </div>
+              )}
+          </div>
+
           {/* Title */}
           <div className="space-y-1.5">
             <Label htmlFor="event-title" className="text-xs font-semibold">
@@ -356,387 +552,16 @@ export function EventFormModal() {
               aria-invalid={form.isInvalid("title")}
             />
             {form.errors.title && (
-              <p className="text-[11px] text-destructive">{form.errors.title}</p>
+              <p className="text-[11px] text-destructive">
+                {form.errors.title}
+              </p>
             )}
           </div>
-
-          {/* Event Type & Location Type */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Event Type *</Label>
-              <Select
-                value={form.values.type}
-                onValueChange={(val: string | null) => {
-                  if (val) form.setValue("type", val as EventType);
-                }}
-              >
-                <SelectTrigger className="w-full h-9 text-xs bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.errors.type && (
-                <p className="text-[11px] text-destructive">{form.errors.type}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Location Format *</Label>
-              <Select
-                value={form.values.location}
-                onValueChange={(val: string | null) => {
-                  if (val) form.setValue("location", val as EventLocation);
-                }}
-              >
-                <SelectTrigger className="w-full h-9 text-xs bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {LOCATION_TYPES.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {form.errors.location && (
-                <p className="text-[11px] text-destructive">
-                  {form.errors.location}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Start & End Date Time */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="event-start" className="text-xs font-semibold">
-                Start Date & Time *
-              </Label>
-              <DateTimePicker
-                id="event-start"
-                value={form.values.startTime}
-                onChange={(val) => form.setValue("startTime", val)}
-                placeholder="Select start date & time"
-                disabled={isEditing}
-              />
-              {isEditing ? (
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Start time cannot be changed. Delete and reschedule if the event date or time needs to change.
-                </p>
-              ) : form.errors.startTime ? (
-                <p className="text-[11px] text-destructive">
-                  {form.errors.startTime}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="event-end" className="text-xs font-semibold">
-                End Date & Time (Optional)
-              </Label>
-              <DateTimePicker
-                id="event-end"
-                value={form.values.endTime}
-                onChange={(val) => form.setValue("endTime", val)}
-                placeholder="Select end date & time"
-                clearable
-              />
-              {form.errors.endTime && (
-                <p className="text-[11px] text-destructive">
-                  {form.errors.endTime}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Location Details & Duration */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2 space-y-1.5">
-              <Label htmlFor="event-loc" className="text-xs font-semibold">
-                Location Details / Meeting Link
-              </Label>
-              <Input
-                id="event-loc"
-                name="locationDetails"
-                placeholder="e.g. Room 301, Amphitheater B, or Meeting URL"
-                value={form.values.locationDetails ?? ""}
-                onChange={form.handleChange}
-                onBlur={form.handleBlur}
-                className="text-xs h-9"
-              />
-              {form.errors.locationDetails && (
-                <p className="text-[11px] text-destructive">
-                  {form.errors.locationDetails}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="event-dur" className="text-xs font-semibold">
-                Duration (min)
-              </Label>
-              <Input
-                id="event-dur"
-                name="durationMinutes"
-                type="number"
-                min="0"
-                placeholder="e.g. 90"
-                value={form.values.durationMinutes ?? ""}
-                onChange={(e) =>
-                  form.setValue(
-                    "durationMinutes",
-                    e.target.value ? parseInt(e.target.value, 10) : "",
-                  )
-                }
-                onBlur={form.handleBlur}
-                className="text-xs h-9"
-              />
-              {form.errors.durationMinutes && (
-                <p className="text-[11px] text-destructive">
-                  {form.errors.durationMinutes}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Read-Only Context when Editing */}
-          {isEditing && editingEvent && (
-            <div className="rounded-xl border bg-muted/40 p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-              <div className="flex items-center gap-2">
-                <Users className="size-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">Community:</span>
-                <span className="font-semibold text-foreground">
-                  {editingEvent.communitySlug}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <GraduationCap className="size-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">Course:</span>
-                {editingEvent.courseAbbreviation && (
-                  <span className="font-mono text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded">
-                    [{editingEvent.courseAbbreviation}]
-                  </span>
-                )}
-                <span className="font-semibold text-foreground">
-                  {editingEvent.courseName}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Cascading Community, Study Year, and Course Selectors (Create Mode) */}
-          {!isEditing && (
-            <div className="rounded-xl border bg-muted/30 p-3.5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-xs text-foreground flex items-center gap-1.5">
-                  <GraduationCap className="size-3.5 text-primary" />
-                  Course & Community Selection *
-                </span>
-                {selectedCommunitySlug && (
-                  <span className="text-[11px] text-muted-foreground">
-                    Required for scheduling
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {/* 1. Community Dropdown */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Enrolled Community *
-                  </Label>
-                  <Select
-                    value={selectedCommunitySlug || null}
-                    onValueChange={(val: string | null) => {
-                      if (!val || val === "NO_COMMUNITIES") return;
-                      form.setValue("communitySlug", val);
-                      form.setValue("studyYear", "");
-                      form.setValue("courseId", "");
-                    }}
-                    disabled={!hasCommunities}
-                  >
-                    <SelectTrigger className="w-full h-8 text-xs bg-background">
-                      <SelectValue
-                        placeholder={
-                          isLoadingCommunities
-                            ? "Loading..."
-                            : !hasCommunities
-                              ? "No communities"
-                              : "Select community"
-                        }
-                      >
-                        {selectedCommunity?.name}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {!hasCommunities ? (
-                        <SelectItem value="NO_COMMUNITIES" disabled>
-                          No enrolled communities
-                        </SelectItem>
-                      ) : (
-                        communities.map((c) => (
-                          <SelectItem key={c.id} value={c.slug}>
-                            <span className="truncate">{c.name}</span>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {form.errors.communitySlug && (
-                    <p className="text-[11px] text-destructive">
-                      {form.errors.communitySlug}
-                    </p>
-                  )}
-                </div>
-
-                {/* 2. Study Year Dropdown */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Study Year *
-                  </Label>
-                  <Select
-                    value={activeStudyYearName ?? null}
-                    onValueChange={(val: string | null) => {
-                      if (!val || val === "NO_YEARS") return;
-                      const next = StudyYearNameMap[val as StudyYearName];
-                      form.setValue("studyYear", next ?? "");
-                      form.setValue("courseId", "");
-                    }}
-                    disabled={!selectedCommunitySlug || !hasStudyYears}
-                  >
-                    <SelectTrigger className="w-full h-8 text-xs bg-background">
-                      <SelectValue
-                        placeholder={
-                          isLoadingStudyYears
-                            ? "Loading years..."
-                            : !selectedCommunitySlug
-                              ? "Pick community first"
-                              : !hasStudyYears
-                                ? "No study years"
-                                : "Select year"
-                        }
-                      >
-                        {activeStudyYearName}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {!hasStudyYears ? (
-                        <SelectItem value="NO_YEARS" disabled>
-                          No study years found
-                        </SelectItem>
-                      ) : (
-                        communityStudyYears?.map((y) => (
-                          <SelectItem key={y.id} value={y.studyYearName}>
-                            <span className="truncate">{y.studyYearName}</span>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* 3. Course Dropdown */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Course *
-                  </Label>
-                  <Select
-                    value={
-                      form.values.courseId
-                        ? String(form.values.courseId)
-                        : null
-                    }
-                    onValueChange={(val: string | null) => {
-                      if (!val || val === "NO_COURSES") return;
-                      form.setValue("courseId", Number(val));
-                    }}
-                    disabled={!selectedStudyYear || !hasCourses}
-                  >
-                    <SelectTrigger className="w-full h-8 text-xs bg-background">
-                      <SelectValue
-                        placeholder={
-                          isLoadingCourses
-                            ? "Loading courses..."
-                            : !selectedStudyYear
-                              ? "Pick year first"
-                              : !hasCourses
-                                ? "No courses"
-                                : "Select course"
-                        }
-                      >
-                        {selectedCourse
-                          ? selectedCourse.abbreviation
-                            ? `[${selectedCourse.abbreviation}] ${selectedCourse.name}`
-                            : selectedCourse.name
-                          : undefined}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {!hasCourses ? (
-                        <SelectItem value="NO_COURSES" disabled>
-                          No courses available
-                        </SelectItem>
-                      ) : (
-                        studyYearCourses?.map((c) => (
-                          <SelectItem key={c.id} value={String(c.id)}>
-                            {c.abbreviation ? (
-                              <span className="shrink-0 font-mono text-[10px] font-bold">
-                                [{c.abbreviation}]
-                              </span>
-                            ) : null}
-                            <span className="truncate">{c.name}</span>
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                  {form.errors.courseId && (
-                    <p className="text-[11px] text-destructive">
-                      {form.errors.courseId}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Informative notices for missing study years / courses */}
-              {selectedCommunitySlug &&
-                !isLoadingStudyYears &&
-                !hasStudyYears && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-                    <Info className="size-3.5 text-amber-500 shrink-0" />
-                    <span>
-                      The selected community has no study years configured yet.
-                    </span>
-                  </div>
-                )}
-
-              {selectedCommunitySlug &&
-                selectedStudyYear &&
-                !isLoadingCourses &&
-                !hasCourses && (
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-                    <Info className="size-3.5 text-amber-500 shrink-0" />
-                    <span>
-                      No courses found in this study year. Events must be linked to
-                      a course.
-                    </span>
-                  </div>
-                )}
-            </div>
-          )}
 
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="event-desc" className="text-xs font-semibold">
-              Description / Notes (Optional)
+              Description (Optional)
             </Label>
             <Textarea
               id="event-desc"
@@ -751,6 +576,177 @@ export function EventFormModal() {
             {form.errors.description && (
               <p className="text-[11px] text-destructive">
                 {form.errors.description}
+              </p>
+            )}
+          </div>
+
+          {/* Event Type & Location Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Event Type *</Label>
+              <Select
+                value={form.values.type}
+                onValueChange={(val: string | null) => {
+                  if (val) form.setValue("type", val as EventType);
+                }}
+              >
+                <SelectTrigger className="w-full h-9 text-xs bg-background">
+                  <SelectValue placeholder="Select event type">
+                    {(() => {
+                      const opt = EVENT_TYPE_OPTIONS.find(
+                        (t) => t.value === form.values.type,
+                      );
+                      if (!opt) return null;
+                      const Icon = opt.icon;
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Icon className={cn("size-3.5", opt.colorClass)} />
+                          <span>{opt.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_TYPE_OPTIONS.map((t) => {
+                    const Icon = t.icon;
+                    return (
+                      <SelectItem key={t.value} value={t.value}>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Icon className={cn("size-3.5", t.colorClass)} />
+                          <span>{t.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {form.errors.type && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.type}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Location Format *</Label>
+              <Select
+                value={form.values.location}
+                onValueChange={(val: string | null) => {
+                  if (val) form.setValue("location", val as EventLocation);
+                }}
+              >
+                <SelectTrigger className="w-full h-9 text-xs bg-background">
+                  <SelectValue placeholder="Select location format">
+                    {(() => {
+                      const opt = EVENT_LOCATION_OPTIONS.find(
+                        (l) => l.value === form.values.location,
+                      );
+                      if (!opt) return null;
+                      const Icon = opt.icon;
+                      return (
+                        <div className="flex items-center gap-2">
+                          <Icon className="size-3.5 text-muted-foreground" />
+                          <span>{opt.label}</span>
+                        </div>
+                      );
+                    })()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_LOCATION_OPTIONS.map((l) => {
+                    const Icon = l.icon;
+                    return (
+                      <SelectItem key={l.value} value={l.value}>
+                        <div className="flex items-center gap-2 text-xs">
+                          <Icon className="size-3.5 text-muted-foreground" />
+                          <span>{l.label}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {form.errors.location && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.location}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Start Date Time & Duration */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="sm:col-span-2 space-y-1.5">
+              <Label htmlFor="event-start" className="text-xs font-semibold">
+                Start Date & Time *
+              </Label>
+              <DateTimePicker
+                id="event-start"
+                value={form.values.startTime}
+                onChange={(val) => form.setValue("startTime", val)}
+                placeholder="Select start date & time"
+                disabled={isEditing}
+              />
+              {isEditing ? (
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Start time cannot be changed. Delete and reschedule if the
+                  event date or time needs to change.
+                </p>
+              ) : form.errors.startTime ? (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.startTime}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="event-dur" className="text-xs font-semibold">
+                Duration (Hours)
+              </Label>
+              <Input
+                id="event-dur"
+                name="durationHours"
+                type="number"
+                min="0.25"
+                step="0.5"
+                max="168"
+                placeholder="e.g. 1.5 (optional)"
+                value={form.values.durationHours ?? ""}
+                onChange={(e) =>
+                  form.setValue(
+                    "durationHours",
+                    e.target.value ? parseFloat(e.target.value) : "",
+                  )
+                }
+                onBlur={form.handleBlur}
+                className="text-xs h-9"
+              />
+              {form.errors.durationHours && (
+                <p className="text-[11px] text-destructive">
+                  {form.errors.durationHours}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Location Details */}
+          <div className="space-y-1.5">
+            <Label htmlFor="event-loc" className="text-xs font-semibold">
+              Location Details / Meeting Link (Optional)
+            </Label>
+            <Input
+              id="event-loc"
+              name="locationDetails"
+              placeholder="e.g. Room 301, Amphitheater B, or Meeting URL"
+              value={form.values.locationDetails ?? ""}
+              onChange={form.handleChange}
+              onBlur={form.handleBlur}
+              className="text-xs h-9"
+            />
+            {form.errors.locationDetails && (
+              <p className="text-[11px] text-destructive">
+                {form.errors.locationDetails}
               </p>
             )}
           </div>

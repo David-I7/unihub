@@ -322,7 +322,7 @@ export function StandardMaterialsView({
                 type="button"
                 onClick={() => handleNavigateBreadcrumb(index)}
                 onDragOver={(e) => {
-                  if (!isLast && item.type === "folder") {
+                  if (!isArchived && !isLast && item.type === "folder") {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                     setDragOverBreadcrumbId(item.id ?? "root");
@@ -330,7 +330,7 @@ export function StandardMaterialsView({
                 }}
                 onDragLeave={() => setDragOverBreadcrumbId(null)}
                 onDrop={(e) => {
-                  if (!isLast && item.type === "folder") {
+                  if (!isArchived && !isLast && item.type === "folder") {
                     e.preventDefault();
                     setDragOverBreadcrumbId(null);
                     const raw = e.dataTransfer.getData("application/json");
@@ -364,8 +364,8 @@ export function StandardMaterialsView({
       {isMaterialDetail && currentBreadcrumb.material ? (
         <MaterialDetailViewer
           material={currentBreadcrumb.material}
-          filePath={breadcrumbs.map((b) => b.name).join(" / ")}
           communitySlug={communitySlug}
+          isArchived={isArchived}
           onDeleted={() => {
             // Navigate back to the parent folder
             setBreadcrumbs((prev) => prev.slice(0, -1));
@@ -466,26 +466,30 @@ export function StandardMaterialsView({
                             })
                           }
                           onDragOver={(e) => {
-                            e.preventDefault();
-                            e.dataTransfer.dropEffect = "move";
-                            setDragOverFolderId(folder.id);
+                            if (!isArchived) {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              setDragOverFolderId(folder.id);
+                            }
                           }}
                           onDragLeave={() => setDragOverFolderId(null)}
                           onDrop={(e) => {
-                            e.preventDefault();
-                            setDragOverFolderId(null);
-                            const raw =
-                              e.dataTransfer.getData("application/json");
-                            if (raw) {
-                              try {
-                                const parsed: DraggedItemData = JSON.parse(raw);
-                                handleMoveIntoFolder(
-                                  parsed,
-                                  folder.id,
-                                  folder.name,
-                                );
-                              } catch {
-                                // Ignore error
+                            if (!isArchived) {
+                              e.preventDefault();
+                              setDragOverFolderId(null);
+                              const raw =
+                                e.dataTransfer.getData("application/json");
+                              if (raw) {
+                                try {
+                                  const parsed: DraggedItemData = JSON.parse(raw);
+                                  handleMoveIntoFolder(
+                                    parsed,
+                                    folder.id,
+                                    folder.name,
+                                  );
+                                } catch {
+                                  // Ignore error
+                                }
                               }
                             }
                           }}
@@ -522,7 +526,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() => setActiveFolderToEdit(folder)}
                               onMoveUp={() =>
                                 handleMoveUpOneLevel({
@@ -592,7 +596,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "file",
@@ -678,7 +682,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "link",

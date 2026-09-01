@@ -1,5 +1,6 @@
 package com.unihub.app.controllers;
 
+import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
@@ -7,10 +8,14 @@ import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
+import com.unihub.app.dto.community.content.response.UserReminderResponseDto;
+import com.unihub.app.entities.community.content.ReminderStatus;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.services.community.content.CalendarService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +30,26 @@ import java.util.UUID;
 public class CalendarController {
 
     private final CalendarService calendarService;
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<PageDto<CalendarEventResponseDto>> getUpcomingEvents(
+            @AuthenticationPrincipal UserDto user,
+            @RequestParam(required = false, defaultValue = "7") Integer days,
+            @PageableDefault(page = 0, size = 5) Pageable pageable
+    ) {
+        PageDto<CalendarEventResponseDto> upcoming = calendarService.getUpcomingEvents(user.id(), days, pageable);
+        return ResponseEntity.ok(upcoming);
+    }
+
+    @GetMapping("/reminders")
+    public ResponseEntity<PageDto<UserReminderResponseDto>> getUserReminders(
+            @AuthenticationPrincipal UserDto user,
+            @RequestParam(required = false, defaultValue = "PENDING") ReminderStatus status,
+            @PageableDefault(page = 0, size = 5) Pageable pageable
+    ) {
+        PageDto<UserReminderResponseDto> reminders = calendarService.getUserReminders(user.id(), status, pageable);
+        return ResponseEntity.ok(reminders);
+    }
 
     @GetMapping
     public ResponseEntity<List<CalendarEventResponseDto>> getEvents(

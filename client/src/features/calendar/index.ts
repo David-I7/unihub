@@ -12,3 +12,5 @@ export * from "./components/CalendarToolbar";
 export * from "./components/EventDetailModal";
 export * from "./components/EventFormModal";
 export * from "./components/DayOverflowModal";
+export * from "./components/CalendarEventCard";
+

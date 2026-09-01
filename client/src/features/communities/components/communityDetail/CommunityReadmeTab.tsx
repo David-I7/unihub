@@ -12,11 +12,16 @@ interface CommunityReadmeTabProps {
   callerMembership?: CallerMembership | null;
 }
 
-export function CommunityReadmeTab({ community, callerMembership }: CommunityReadmeTabProps) {
+export function CommunityReadmeTab({
+  community,
+  callerMembership,
+}: CommunityReadmeTabProps) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { canEditCommunity } = usePermissions(callerMembership);
 
-  const hasReadme = Boolean(community.readme && community.readme.trim().length > 0);
+  const hasReadme = Boolean(
+    community.readme && community.readme.trim().length > 0,
+  );
 
   return (
     <div className="w-full space-y-4">
@@ -24,9 +29,8 @@ export function CommunityReadmeTab({ community, callerMembership }: CommunityRea
       {canEditCommunity && (
         <div className="flex justify-end">
           <Button
-            size="sm"
             onClick={() => setEditModalOpen(true)}
-            className="gap-1.5 font-bold cursor-pointer"
+            className="gap-1.5 font-semibold cursor-pointer"
           >
             {hasReadme ? (
               <>

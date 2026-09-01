@@ -123,7 +123,7 @@ export function CommunityTeachersTab({
     <div className="space-y-6">
       {/* 2-tier Header Toolbar */}
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="flex flex-row items-center justify-between gap-3">
           {/* Search Bar */}
           <div className="flex-1 max-w-md">
             <SearchInput
@@ -139,7 +139,7 @@ export function CommunityTeachersTab({
           {canAddTeacher && (
             <Button
               onClick={() => setCreateTeacherOpen(true)}
-              className="gap-2 font-bold text-xs h-10 px-4 rounded-xl cursor-pointer shrink-0"
+              className="gap-1.5 font-semibold cursor-pointer shrink-0"
             >
               <Plus className="size-4" />
               <span>Add Teacher</span>

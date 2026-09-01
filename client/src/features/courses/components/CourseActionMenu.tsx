@@ -151,7 +151,7 @@ export function CourseActionMenu({
             </DropdownMenuItem>
           )}
 
-          {canDeleteCourse && (
+          {canDeleteCourse && !course.archived && (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem

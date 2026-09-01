@@ -38,10 +38,16 @@ import type { Post } from "@/types/domain";
 export interface PostCardProps {
   post: Post;
   communitySlug?: string;
+  isArchived?: boolean;
   className?: string;
 }
 
-export function PostCard({ post, communitySlug, className }: PostCardProps) {
+export function PostCard({
+  post,
+  communitySlug,
+  isArchived = false,
+  className,
+}: PostCardProps) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [likes, setLikes] = useState(post.likesCount);
   const [isLiked, setIsLiked] = useState(Boolean(post.isLiked));
@@ -70,11 +76,14 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
   const isPostAuthor = Boolean(
     user && post.owner && String(user.id) === String(post.owner.id),
   );
-  const canEdit = canEditPost(post.owner?.id);
-  const canDelete = canDeletePost(post.owner?.id);
-  const hasActions = canPinPost || canEdit || canDelete;
+  const canPin = !isArchived && canPinPost;
+  const canEdit = !isArchived && canEditPost(post.owner?.id);
+  const canDelete = !isArchived && canDeletePost(post.owner?.id);
+  const hasActions = canPin || canEdit || canDelete;
 
   const handleLike = async () => {
+    if (isArchived) return;
+
     if (!user) {
       toast.error("Please sign in to like posts.");
       return;
@@ -174,7 +183,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end" className="w-40">
-                  {canPinPost && (
+                  {canPin && (
                     <DropdownMenuItem
                       onClick={handleTogglePin}
                       className="gap-2 cursor-pointer text-xs"
@@ -203,7 +212,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                     </DropdownMenuItem>
                   )}
 
-                  {(canPinPost || canEdit) && canDelete && (
+                  {(canPin || canEdit) && canDelete && (
                     <DropdownMenuSeparator />
                   )}
 
@@ -238,8 +247,10 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
               variant="ghost"
               size="xs"
               onClick={handleLike}
+              disabled={isArchived}
               className={cn(
-                "gap-1.5 font-semibold text-xs transition-colors cursor-pointer",
+                "gap-1.5 font-semibold text-xs transition-colors",
+                isArchived ? "opacity-70 cursor-default" : "cursor-pointer",
                 isLiked
                   ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100"
                   : "text-muted-foreground hover:text-foreground",
@@ -276,8 +287,12 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
               Comments ({totalComments})
             </h4>
 
-            {/* Inline Comment Composer */}
-            {user ? (
+            {/* Inline Comment Composer or Locked Notice */}
+            {isArchived ? (
+              <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
+                Discussions are locked because this course is archived.
+              </p>
+            ) : user ? (
               <CommentComposer postId={post.id} />
             ) : (
               <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
@@ -302,6 +317,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                     key={comment.id}
                     comment={comment}
                     communitySlug={communitySlug}
+                    isArchived={isArchived}
                   />
                 ))}
 

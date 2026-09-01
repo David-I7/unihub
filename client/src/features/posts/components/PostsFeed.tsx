@@ -18,6 +18,8 @@ export interface PostsFeedProps {
   onOpenComposer: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
+  communitySlug?: string;
+  isArchived?: boolean;
 }
 
 export function PostsFeed({
@@ -32,6 +34,8 @@ export function PostsFeed({
   onOpenComposer,
   emptyTitle = "No Discussions Yet",
   emptyDescription = "Be the first to start an academic discussion or share materials.",
+  communitySlug,
+  isArchived = false,
 }: PostsFeedProps) {
   const { ref: sentinelRef } = useObserver<HTMLDivElement>({
     onIntersect: () => {
@@ -105,7 +109,12 @@ export function PostsFeed({
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
+            <PostCard
+              key={post.id}
+              post={post}
+              communitySlug={communitySlug}
+              isArchived={isArchived}
+            />
           ))}
 
           {/* Infinite Scroll Sentinel */}

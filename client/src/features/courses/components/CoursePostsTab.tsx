@@ -39,6 +39,8 @@ export function CoursePostsTab({
     <>
       <PostsFeed
         posts={allPosts}
+        communitySlug={communitySlug}
+        isArchived={isArchived}
         isLoading={isLoading}
         isError={isError}
         hasNextPage={Boolean(hasNextPage)}

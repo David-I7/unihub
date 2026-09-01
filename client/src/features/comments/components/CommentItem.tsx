@@ -20,9 +20,14 @@ import type { Comment } from "@/types/domain";
 interface CommentItemProps {
   comment: Comment;
   communitySlug?: string;
+  isArchived?: boolean;
 }
 
-export function CommentItem({ comment, communitySlug }: CommentItemProps) {
+export function CommentItem({
+  comment,
+  communitySlug,
+  isArchived = false,
+}: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -34,8 +39,9 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
   const isAuthor = Boolean(
     user && comment.owner && String(user.id) === String(comment.owner.id),
   );
-  const isAuthorizedToEdit = canEditComment(comment.owner?.id);
-  const isAuthorizedToDelete = canDeleteComment(comment.owner?.id);
+  const isAuthorizedToEdit = !isArchived && canEditComment(comment.owner?.id);
+  const isAuthorizedToDelete =
+    !isArchived && canDeleteComment(comment.owner?.id);
 
   const handleSaveEdit = async () => {
     const cleanContent = editContent.trim();

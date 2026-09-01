@@ -24,7 +24,7 @@ export default function AppLayout() {
             <AppHeader />
           </div>
           <main className="flex-1 flex flex-col items-center overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
-            <div className="w-full max-w-[1200px] flex-1 flex flex-col mx-auto">
+            <div className="w-full max-w-[1000px] flex-1 flex flex-col mx-auto">
               {!initialized ? (
                 <div className="flex-1 w-full space-y-6 animate-pulse">
                   <div className="h-44 rounded-2xl bg-muted/60" />

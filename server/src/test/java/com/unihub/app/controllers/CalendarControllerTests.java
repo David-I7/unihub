@@ -89,8 +89,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .title("Final Exam")
                 .type(EventType.EXAM)
                 .startTime(startTime)
-                .endTime(endTime)
-                .durationMinutes(120)
+                .durationHours(2.0)
                 .location(EventLocation.IN_PERSON)
                 .courseSlug("pa")
                 .courseName("Programarea Algoritmilor")
@@ -386,5 +385,78 @@ public class CalendarControllerTests extends BaseIntegrationTest {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(BASE_URL + "/events/" + eventId + "/reminders")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+    }
+
+    // =========================================================================
+    // GET /api/v1/calendar/upcoming
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/v1/calendar/upcoming returns paginated upcoming events")
+    public void testGetUpcomingEvents_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
+                .id(eventId)
+                .title("Upcoming Exam")
+                .type(EventType.EXAM)
+                .startTime(OffsetDateTime.now().plusDays(2))
+                .communitySlug("fmi-info-id")
+                .build();
+
+        com.unihub.app.dto.PageDto<CalendarEventResponseDto> pageDto = com.unihub.app.dto.PageDto.<CalendarEventResponseDto>builder()
+                .content(List.of(eventDto))
+                .number(0)
+                .size(5)
+                .totalElements(1)
+                .totalPages(1)
+                .build();
+
+        when(calendarService.getUpcomingEvents(eq(userId), eq(7), any()))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/upcoming")
+                        .param("days", "7")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(eventId.toString()))
+                .andExpect(jsonPath("$.content[0].title").value("Upcoming Exam"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/calendar/reminders
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/v1/calendar/reminders returns paginated user reminders")
+    public void testGetUserReminders_Success() throws Exception {
+        UUID reminderId = UUID.randomUUID();
+        com.unihub.app.dto.community.content.response.UserReminderResponseDto reminderDto =
+                com.unihub.app.dto.community.content.response.UserReminderResponseDto.builder()
+                        .id(reminderId)
+                        .offsetMinutes(15)
+                        .remindAt(OffsetDateTime.now().plusHours(2))
+                        .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
+                        .eventTitle("Upcoming Exam")
+                        .communitySlug("fmi-info-id")
+                        .build();
+
+        com.unihub.app.dto.PageDto<com.unihub.app.dto.community.content.response.UserReminderResponseDto> pageDto =
+                com.unihub.app.dto.PageDto.<com.unihub.app.dto.community.content.response.UserReminderResponseDto>builder()
+                        .content(List.of(reminderDto))
+                        .number(0)
+                        .size(5)
+                        .totalElements(1)
+                        .totalPages(1)
+                        .build();
+
+        when(calendarService.getUserReminders(eq(userId), eq(com.unihub.app.entities.community.content.ReminderStatus.PENDING), any()))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/reminders")
+                        .param("status", "PENDING")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(reminderId.toString()))
+                .andExpect(jsonPath("$.content[0].eventTitle").value("Upcoming Exam"));
     }
 }
