@@ -32,6 +32,7 @@ export interface UserReminder {
   courseAbbreviation?: string;
   communitySlug?: string;
   communityName?: string;
+  studyYear?: string;
 }
 
 export interface CalendarEvent {

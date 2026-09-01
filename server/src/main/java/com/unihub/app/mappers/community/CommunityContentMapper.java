@@ -246,6 +246,7 @@ public class CommunityContentMapper {
                 .courseAbbreviation(course != null ? course.getAbbreviation() : null)
                 .communitySlug(community != null ? community.getSlug() : null)
                 .communityName(community != null ? community.getName() : null)
+                .studyYear(course != null && course.getStudyYear() != null ? course.getStudyYear().getStudyYearName() : null)
                 .build();
     }
 

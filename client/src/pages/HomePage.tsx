@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/features/auth";
 import {
-  UpcomingEventsWidget,
   MyRemindersWidget,
+  UpcomingEventsWidget,
   MyCommunitiesWidget,
 } from "@/features/home";
 
@@ -9,33 +9,32 @@ export default function HomePage() {
   const user = useAuthStore((state) => state.user);
 
   return (
-    <div className="min-h-full space-y-6 pb-12">
+    <div className="min-h-full max-w-5xl mx-auto space-y-8 pb-16">
       {/* Welcome Header */}
       <div className="space-y-1">
         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
           {user ? `Welcome back, ${user.username}` : "Welcome to Unihub"}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          Here is an overview of your upcoming academic events, active reminders,
+          Here is an overview of your active reminders, upcoming academic events,
           and enrolled communities.
         </p>
       </div>
 
-      {/* 2-Column Dashboard Grid: Events & Reminders */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div className="lg:col-span-7 space-y-6">
-          <UpcomingEventsWidget />
-        </div>
+      {/* 1. My Reminders Section (First) */}
+      <section className="w-full">
+        <MyRemindersWidget />
+      </section>
 
-        <div className="lg:col-span-5 space-y-6">
-          <MyRemindersWidget />
-        </div>
-      </div>
+      {/* 2. Upcoming Events Section (Second) */}
+      <section className="w-full">
+        <UpcomingEventsWidget />
+      </section>
 
-      {/* Enrolled Communities Section */}
-      <div className="w-full">
+      {/* 3. My Communities Section (Third) */}
+      <section className="w-full">
         <MyCommunitiesWidget />
-      </div>
+      </section>
     </div>
   );
 }

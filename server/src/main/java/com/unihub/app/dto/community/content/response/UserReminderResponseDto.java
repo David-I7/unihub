@@ -3,6 +3,7 @@ package com.unihub.app.dto.community.content.response;
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.content.ReminderStatus;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
@@ -24,6 +25,7 @@ public record UserReminderResponseDto(
         String courseName,
         String courseAbbreviation,
         String communitySlug,
-        String communityName
+        String communityName,
+        StudyYearName studyYear
 ) {
 }

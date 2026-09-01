@@ -1,5 +1,14 @@
 import { toast } from "sonner";
-import { Bell, Clock, Trash2, CheckCircle2 } from "@/components/ui/icons";
+import {
+  Bell,
+  Clock,
+  Trash2,
+  CheckCircle2,
+  ExternalLink,
+  GraduationCap,
+  BookOpen,
+  Users,
+} from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,10 +16,18 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
+  useCalendarStore,
   type UserReminder,
 } from "@/features/calendar";
-import { formatDateTime24h, formatOffsetLabel } from "@/lib/dateUtils";
+import { getEventCategoryConfig } from "@/features/calendar/utils/eventUtils";
+import {
+  formatDateTime24h,
+  formatEventTimeWithDuration,
+  formatOffsetLabel,
+  formatEventRelativeStatus,
+} from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
+import { cn } from "@/lib/utils";
 
 export function MyRemindersWidget() {
   const {
@@ -24,11 +41,17 @@ export function MyRemindersWidget() {
   } = useInfiniteUserReminders({ status: "PENDING", size: 5 });
 
   const deleteReminderMutation = useDeleteReminder();
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
 
   const reminders: UserReminder[] =
     data?.pages.flatMap((page) => page.content) ?? [];
 
-  const handleDelete = async (eventId: string, eventTitle: string) => {
+  const handleDelete = async (
+    e: React.MouseEvent,
+    eventId: string,
+    eventTitle: string,
+  ) => {
+    e.stopPropagation();
     try {
       await deleteReminderMutation.mutateAsync(eventId);
       toast.success(`Reminder removed for "${eventTitle}"`);
@@ -42,7 +65,7 @@ export function MyRemindersWidget() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-1 border-b border-border/60">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
             <Bell className="size-4" />
           </div>
           <div>
@@ -62,14 +85,15 @@ export function MyRemindersWidget() {
 
       {/* Body */}
       {isLoading ? (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div
               key={idx}
-              className="p-3 rounded-xl border border-border/50 bg-muted/20 animate-pulse space-y-2"
+              className="p-4 rounded-2xl border bg-card animate-pulse space-y-3"
             >
-              <div className="h-4 w-1/2 bg-muted rounded-md" />
-              <div className="h-3 w-3/4 bg-muted rounded-md" />
+              <div className="h-4 w-1/3 bg-muted rounded-md" />
+              <div className="h-4 w-3/4 bg-muted rounded-md" />
+              <div className="h-3 w-1/2 bg-muted rounded-md" />
             </div>
           ))}
         </div>
@@ -101,69 +125,134 @@ export function MyRemindersWidget() {
           </p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {reminders.map((reminder) => {
+            const config = getEventCategoryConfig(reminder.eventType);
+            const CategoryIcon = config.icon;
             const remindAtFormatted = formatDateTime24h(reminder.remindAt);
             const eventTimeFormatted = formatDateTime24h(
               reminder.eventStartTime,
             );
+            const timeDurationFormatted = formatEventTimeWithDuration(
+              reminder.eventStartTime,
+              reminder.durationHours,
+            );
             const offsetText = formatOffsetLabel(reminder.offsetMinutes);
+            const relative = formatEventRelativeStatus(
+              reminder.eventStartTime,
+              reminder.durationHours,
+            );
 
             return (
               <div
                 key={reminder.id}
-                className="group relative flex items-start justify-between gap-3 p-3.5 rounded-xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-xs transition-all duration-200"
+                onClick={() => openEventDetails(reminder.eventId)}
+                className="group relative overflow-hidden rounded-2xl border bg-card p-4 sm:p-4.5 shadow-xs transition-all duration-200 hover:border-primary/60 hover:shadow-md cursor-pointer space-y-3"
               >
-                <div className="space-y-1 min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-bold text-foreground line-clamp-1">
-                      {reminder.eventTitle}
+                {/* Top Trigger Banner: Reminder Trigger Time & Offset + Delete Button */}
+                <div className="flex items-center justify-between gap-2 text-xs pb-2 border-b border-border/50">
+                  <div className="flex items-center gap-1.5 min-w-0 text-amber-600 dark:text-amber-400 font-medium">
+                    <Bell className="size-3.5 shrink-0 fill-amber-500/20 text-amber-500" />
+                    <span className="font-semibold truncate">
+                      Alert: {remindAtFormatted}
                     </span>
-                    {reminder.courseAbbreviation && (
-                      <Badge
-                        variant="outline"
-                        size="xs"
-                        className="font-mono text-[10px] uppercase text-muted-foreground"
-                      >
-                        {reminder.courseAbbreviation}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {reminder.communityName && (
-                    <p className="text-[11px] text-muted-foreground line-clamp-1">
-                      {reminder.communityName}
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground pt-0.5">
-                    <span className="flex items-center gap-1 font-medium text-amber-500">
-                      <Clock className="size-3" />
-                      <span>{remindAtFormatted}</span>
-                    </span>
-                    <span className="text-muted-foreground/70">
+                    <span className="text-[11px] text-muted-foreground shrink-0">
                       ({offsetText})
                     </span>
                   </div>
 
-                  <p className="text-[10px] text-muted-foreground/80">
-                    Event starts: {eventTimeFormatted}
-                  </p>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    title="Cancel reminder"
+                    onClick={(e) =>
+                      handleDelete(e, reminder.eventId, reminder.eventTitle)
+                    }
+                    disabled={deleteReminderMutation.isPending}
+                    className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </div>
 
-                {/* Cancel Reminder Action */}
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  title="Remove reminder"
-                  onClick={() =>
-                    handleDelete(reminder.eventId, reminder.eventTitle)
-                  }
-                  disabled={deleteReminderMutation.isPending}
-                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                {/* Middle: Event Category Badge + Title + Start Time */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 font-bold text-[11px] tracking-wide px-2 py-0.5 rounded-md",
+                          config.badge,
+                        )}
+                      >
+                        <CategoryIcon className="size-3 shrink-0" />
+                        <span>{config.label}</span>
+                      </span>
+
+                      <h3 className="font-heading text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        {reminder.eventTitle}
+                      </h3>
+                    </div>
+
+                    <span className="text-[11px] font-semibold text-muted-foreground shrink-0">
+                      {relative.label}
+                    </span>
+                  </div>
+
+                  {/* Start Time info */}
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="size-3.5 text-muted-foreground/70 shrink-0" />
+                    <span className="font-medium text-foreground">
+                      Starts: {eventTimeFormatted}
+                    </span>
+                    {timeDurationFormatted && (
+                      <span className="text-muted-foreground/80">
+                        ({timeDurationFormatted})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Metadata: Community, Course, Year + View Event link */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/40 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 min-w-0">
+                    {reminder.communityName && (
+                      <span className="inline-flex items-center gap-1 font-semibold text-foreground/90 truncate">
+                        <Users className="size-3 text-muted-foreground shrink-0" />
+                        <span>{reminder.communityName}</span>
+                      </span>
+                    )}
+
+                    {reminder.courseAbbreviation && (
+                      <span className="inline-flex items-center gap-1 truncate">
+                        <span className="text-muted-foreground/40">•</span>
+                        <BookOpen className="size-3 text-muted-foreground shrink-0" />
+                        <span className="font-mono text-[11px] font-bold text-foreground bg-muted px-1.5 py-0.2 rounded">
+                          {reminder.courseAbbreviation}
+                        </span>
+                        {reminder.courseName && (
+                          <span className="truncate max-w-[140px]">
+                            {reminder.courseName}
+                          </span>
+                        )}
+                      </span>
+                    )}
+
+                    {reminder.studyYear && (
+                      <span className="inline-flex items-center gap-1 shrink-0">
+                        <span className="text-muted-foreground/40">•</span>
+                        <GraduationCap className="size-3 text-muted-foreground shrink-0" />
+                        <span>{reminder.studyYear}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Direct Link to View Event */}
+                  <div className="flex items-center gap-1 text-[11px] font-semibold text-primary group-hover:underline shrink-0">
+                    <span>View</span>
+                    <ExternalLink className="size-3" />
+                  </div>
+                </div>
               </div>
             );
           })}
