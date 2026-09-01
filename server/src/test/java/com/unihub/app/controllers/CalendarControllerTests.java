@@ -89,15 +89,9 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .title("Final Exam")
                 .type(EventType.EXAM)
                 .startTime(startTime)
-                .endTime(endTime)
-                .durationMinutes(120)
+                .durationHours(2.0)
                 .location(EventLocation.IN_PERSON)
-                .courseSlug("pa")
-                .courseName("Programarea Algoritmilor")
                 .courseAbbreviation("PA")
-                .communitySlug("fmi-info-id")
-                .communityName("FMI - Informatica ID")
-                .studyYear(StudyYearName.YEAR_1)
                 .isSubscribed(true)
                 .build();
 
@@ -123,8 +117,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$[0].title").value("Final Exam"))
                 .andExpect(jsonPath("$[0].type").value("EXAM"))
                 .andExpect(jsonPath("$[0].location").value("IN_PERSON"))
-                .andExpect(jsonPath("$[0].courseSlug").value("pa"))
-                .andExpect(jsonPath("$[0].communitySlug").value("fmi-info-id"))
+                .andExpect(jsonPath("$[0].courseAbbreviation").value("PA"))
                 .andExpect(jsonPath("$[0].isSubscribed").value(true));
     }
 
@@ -195,12 +188,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .type(EventType.EXAM)
                 .startTime(startTime)
                 .location(EventLocation.IN_PERSON)
-                .courseSlug("sd")
-                .courseName("Data Structures")
                 .courseAbbreviation("SD")
-                .communitySlug("fmi-info-id")
-                .communityName("FMI - Informatica ID")
-                .studyYear(StudyYearName.YEAR_1)
                 .isSubscribed(false)
                 .build();
 
@@ -212,8 +200,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(eventId.toString()))
                 .andExpect(jsonPath("$.title").value("Midterm Exam"))
-                .andExpect(jsonPath("$.type").value("EXAM"))
-                .andExpect(jsonPath("$.communitySlug").value("fmi-info-id"));
+                .andExpect(jsonPath("$.type").value("EXAM"));
     }
 
     // =========================================================================
@@ -301,8 +288,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .type(EventType.EXAM)
                 .startTime(OffsetDateTime.now().plusDays(2))
                 .location(EventLocation.ONLINE)
-                .courseSlug("sd")
-                .communitySlug("fmi-info-id")
+                .courseAbbreviation("SD")
                 .isSubscribed(false)
                 .build();
 
@@ -386,5 +372,79 @@ public class CalendarControllerTests extends BaseIntegrationTest {
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete(BASE_URL + "/events/" + eventId + "/reminders")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+    }
+
+    // =========================================================================
+    // GET /api/v1/calendar/upcoming
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/v1/calendar/upcoming returns paginated upcoming events")
+    public void testGetUpcomingEvents_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        CalendarEventResponseDto eventDto = CalendarEventResponseDto.builder()
+                .id(eventId)
+                .title("Upcoming Exam")
+                .type(EventType.EXAM)
+                .startTime(OffsetDateTime.now().plusDays(2))
+                .courseAbbreviation("PA")
+                .isSubscribed(false)
+                .build();
+
+        com.unihub.app.dto.PageDto<CalendarEventResponseDto> pageDto = com.unihub.app.dto.PageDto.<CalendarEventResponseDto>builder()
+                .content(List.of(eventDto))
+                .number(0)
+                .size(5)
+                .totalElements(1)
+                .totalPages(1)
+                .build();
+
+        when(calendarService.getUpcomingEvents(eq(userId), eq(7), any()))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/upcoming")
+                        .param("days", "7")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(eventId.toString()))
+                .andExpect(jsonPath("$.content[0].title").value("Upcoming Exam"));
+    }
+
+    // =========================================================================
+    // GET /api/v1/calendar/reminders
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/v1/calendar/reminders returns paginated user reminders")
+    public void testGetUserReminders_Success() throws Exception {
+        UUID reminderId = UUID.randomUUID();
+        com.unihub.app.dto.community.content.response.UserReminderResponseDto reminderDto =
+                com.unihub.app.dto.community.content.response.UserReminderResponseDto.builder()
+                        .id(reminderId)
+                        .offsetMinutes(15)
+                        .remindAt(OffsetDateTime.now().plusHours(2))
+                        .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
+                        .eventTitle("Upcoming Exam")
+                        .communitySlug("fmi-info-id")
+                        .build();
+
+        com.unihub.app.dto.PageDto<com.unihub.app.dto.community.content.response.UserReminderResponseDto> pageDto =
+                com.unihub.app.dto.PageDto.<com.unihub.app.dto.community.content.response.UserReminderResponseDto>builder()
+                        .content(List.of(reminderDto))
+                        .number(0)
+                        .size(5)
+                        .totalElements(1)
+                        .totalPages(1)
+                        .build();
+
+        when(calendarService.getUserReminders(eq(userId), eq(com.unihub.app.entities.community.content.ReminderStatus.PENDING), any()))
+                .thenReturn(pageDto);
+
+        mockMvc.perform(get(BASE_URL + "/reminders")
+                        .param("status", "PENDING")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].id").value(reminderId.toString()))
+                .andExpect(jsonPath("$.content[0].eventTitle").value("Upcoming Exam"));
     }
 }

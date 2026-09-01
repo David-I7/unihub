@@ -1,4 +1,4 @@
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   SidebarMenu,

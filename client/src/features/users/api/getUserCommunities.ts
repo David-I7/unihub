@@ -6,7 +6,7 @@ import type { PaginatedRequest, PaginatedResponse } from "@/api/types";
 import type { UserEnrolledCommunity } from "./types";
 
 export async function getUserCommunities(
-  params?: PaginatedRequest,
+  params: PaginatedRequest = { page: 0, size: 100 },
 ): Promise<PaginatedResponse<UserEnrolledCommunity>> {
   const response = await client.get<PaginatedResponse<UserEnrolledCommunity>>(
     "/users/me/communities",
@@ -16,7 +16,7 @@ export async function getUserCommunities(
 }
 
 export function useUserCommunities(
-  params?: PaginatedRequest,
+  params: PaginatedRequest = { page: 0, size: 100 },
   options: { enabled?: boolean } = { enabled: true },
 ) {
   const user = useAuthStore((state) => state.user);

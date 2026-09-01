@@ -1,10 +1,12 @@
 package com.unihub.app.services;
 
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.content.Notification;
+import com.unihub.app.entities.community.content.NotificationType;
+import com.unihub.app.entities.community.content.Post;
+import com.unihub.app.entities.community.content.Comment;
+import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.resources.Community;
-import com.unihub.app.entities.community.resources.Course;
-import com.unihub.app.entities.community.resources.StudyYear;
 import com.unihub.app.events.notification.*;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -67,8 +69,11 @@ public class NotificationEventListenerTests {
 
         List<Notification> savedList = captor.getValue();
         assertEquals(2, savedList.size());
-        assertEquals(PostNotificationType.COMMUNITY_POST, ((PostNotification) savedList.get(0)).getType());
+        assertEquals(NotificationType.COMMUNITY_POST, savedList.get(0).getType());
         assertEquals("New post in FMI Community", savedList.get(0).getTitle());
+        assertEquals("fmi", savedList.get(0).getMetadata().communitySlug());
+        assertEquals("FMI Community", savedList.get(0).getMetadata().communityName());
+        assertEquals("author", savedList.get(0).getMetadata().actorUsername());
     }
 
     @Test
@@ -82,12 +87,12 @@ public class NotificationEventListenerTests {
 
         listener.handleCommentCreated(new CommentCreatedNotificationEvent(comment, post, commenter));
 
-        ArgumentCaptor<PostNotification> captor = ArgumentCaptor.forClass(PostNotification.class);
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
 
-        PostNotification saved = captor.getValue();
+        Notification saved = captor.getValue();
         assertEquals(postOwner, saved.getUser());
-        assertEquals(PostNotificationType.COMMENT, saved.getType());
+        assertEquals(NotificationType.POST_COMMENT, saved.getType());
         assertEquals("New comment on your post", saved.getTitle());
     }
 
@@ -114,12 +119,12 @@ public class NotificationEventListenerTests {
 
         listener.handlePostLiked(new PostLikedNotificationEvent(post, liker));
 
-        ArgumentCaptor<PostNotification> captor = ArgumentCaptor.forClass(PostNotification.class);
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(notificationRepository).save(captor.capture());
 
-        PostNotification saved = captor.getValue();
+        Notification saved = captor.getValue();
         assertEquals(postOwner, saved.getUser());
-        assertEquals(PostNotificationType.LIKE, saved.getType());
+        assertEquals(NotificationType.POST_LIKE, saved.getType());
         assertEquals("New like on your post", saved.getTitle());
     }
 
@@ -141,7 +146,7 @@ public class NotificationEventListenerTests {
 
         List<Notification> saved = captor.getValue();
         assertEquals(1, saved.size());
-        assertEquals(EventNotificationType.UPDATED, ((EventNotification) saved.get(0)).getType());
+        assertEquals(NotificationType.EVENT_UPDATED, saved.get(0).getType());
         assertEquals("Event Updated: Calculus Exam", saved.get(0).getTitle());
     }
 
@@ -161,7 +166,7 @@ public class NotificationEventListenerTests {
 
         List<Notification> saved = captor.getValue();
         assertEquals(1, saved.size());
-        assertEquals(EventNotificationType.CANCELLED, ((EventNotification) saved.get(0)).getType());
+        assertEquals(NotificationType.EVENT_CANCELLED, saved.get(0).getType());
         assertEquals("Event Cancelled: Calculus Exam", saved.get(0).getTitle());
     }
 }

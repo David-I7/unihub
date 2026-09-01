@@ -4,12 +4,14 @@ interface CourseMaterialsTabProps {
   communitySlug: string;
   studyYearSlug: string;
   courseSlug: string;
+  isArchived?: boolean;
 }
 
 export function CourseMaterialsTab({
   communitySlug,
   studyYearSlug,
   courseSlug,
+  isArchived = false,
 }: CourseMaterialsTabProps) {
   return (
     <div className="space-y-6">
@@ -17,6 +19,7 @@ export function CourseMaterialsTab({
         communitySlug={communitySlug}
         studyYearSlug={studyYearSlug}
         courseSlug={courseSlug}
+        isArchived={isArchived}
       />
     </div>
   );

@@ -7,7 +7,7 @@ import type {
   CommunityMemberRole,
 } from "@/features/communities/api/types";
 
-import { useCommunityHome } from "@/features/communities/api/getCommunityHome";
+import { useCommunityMembership } from "@/features/communities/api/getCommunityMembership";
 
 export function usePermissions(
   target?: string | CallerMembership | null,
@@ -17,12 +17,20 @@ export function usePermissions(
   const { data: profile } = useUserProfile({ enabled: Boolean(user) });
 
   const communitySlug = typeof target === "string" ? target : "";
-  const { data: communityHome } = useCommunityHome(communitySlug);
+  const shouldFetchMembership =
+    typeof target === "string" &&
+    !targetMembership &&
+    Boolean(user) &&
+    communitySlug.length > 0;
+
+  const { data: membershipData } = useCommunityMembership(communitySlug, {
+    enabled: shouldFetchMembership,
+  });
 
   let callerMembership: CallerMembership | null | undefined;
 
   if (typeof target === "string") {
-    callerMembership = targetMembership ?? communityHome?.callerMembership ?? null;
+    callerMembership = targetMembership ?? membershipData ?? null;
   } else {
     callerMembership = target;
   }
@@ -55,8 +63,17 @@ export function usePermissions(
     hasPermission(PERMISSIONS.CREATE_JOIN_CODE) ||
     hasPermission(PERMISSIONS.UPDATE_JOIN_CODE);
 
+  const canAddMember = hasPermission(PERMISSIONS.CREATE_MEMBER);
+  const canRemoveMember = hasPermission(PERMISSIONS.DELETE_MEMBER);
+  const canUpdateMemberRole = hasPermission(PERMISSIONS.UPDATE_MEMBER_ROLE);
+
   const canCreateStudyYear = hasPermission(PERMISSIONS.CREATE_STUDY_YEAR);
   const canDeleteStudyYear = hasPermission(PERMISSIONS.DELETE_STUDY_YEAR);
+
+  const canCreateCourse = hasPermission(PERMISSIONS.CREATE_COURSE);
+  const canEditCourse = hasPermission(PERMISSIONS.UPDATE_COURSE);
+  const canDeleteCourse = hasPermission(PERMISSIONS.DELETE_COURSE);
+  const canArchiveCourse = hasPermission(PERMISSIONS.ARCHIVE_COURSE);
 
   const canCreatePost = hasPermission(PERMISSIONS.CREATE_POST);
   const canPinPost = hasPermission(PERMISSIONS.PIN_POST);
@@ -86,24 +103,21 @@ export function usePermissions(
   );
 
   const canEditComment = useCallback(
-    (commentOwnerId: string) => {
+    (commentOwnerId?: string | number | null) => {
       if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
         return true;
       }
-      return hasPermission(PERMISSIONS.UPDATE_COMMENT);
+      return false;
     },
-    [user, hasPermission],
+    [user],
   );
 
   const canDeleteComment = useCallback(
-    (commentOwnerId: string) => {
+    (commentOwnerId?: string | number | null) => {
       if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
         return true;
       }
-      return (
-        hasPermission(PERMISSIONS.DELETE_COMMENT) ||
-        hasPermission(PERMISSIONS.MODERATE_COMMENT)
-      );
+      return hasPermission(PERMISSIONS.MODERATE_COMMENT);
     },
     [user, hasPermission],
   );
@@ -151,6 +165,28 @@ export function usePermissions(
     [user, hasPermission],
   );
 
+  const canCreateEvent = hasPermission(PERMISSIONS.CREATE_EVENT);
+
+  const canEditEvent = useCallback(
+    (eventOwnerId?: string | number | null) => {
+      if (user && eventOwnerId && String(user.id) === String(eventOwnerId)) {
+        return hasPermission(PERMISSIONS.UPDATE_EVENT);
+      }
+      return hasPermission(PERMISSIONS.MODERATE_EVENT);
+    },
+    [user, hasPermission],
+  );
+
+  const canDeleteEvent = useCallback(
+    (eventOwnerId?: string | number | null) => {
+      if (user && eventOwnerId && String(user.id) === String(eventOwnerId)) {
+        return hasPermission(PERMISSIONS.DELETE_EVENT);
+      }
+      return hasPermission(PERMISSIONS.MODERATE_EVENT);
+    },
+    [user, hasPermission],
+  );
+
   return {
     user,
     isMember,
@@ -163,8 +199,15 @@ export function usePermissions(
     canDeleteCommunity,
     canVerifyCommunity,
     canManageJoinCodes,
+    canAddMember,
+    canRemoveMember,
+    canUpdateMemberRole,
     canCreateStudyYear,
     canDeleteStudyYear,
+    canCreateCourse,
+    canEditCourse,
+    canDeleteCourse,
+    canArchiveCourse,
     canCreatePost,
     canPinPost,
     canCreateComment,
@@ -178,6 +221,9 @@ export function usePermissions(
     canDeleteFolder,
     canEditMaterial,
     canDeleteMaterial,
+    canCreateEvent,
+    canEditEvent,
+    canDeleteEvent,
   };
 }
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useState, useCallback } from "react";
 import { useSearchParams } from "react-router";
-import { KeyRound, Plus, MoreVertical } from "lucide-react";
+import { KeyRound, Plus, MoreVertical } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -48,9 +48,9 @@ function CommunityHeaderComponent({
           <DropdownMenuTrigger
             render={
               <Button
-                variant="outline"
-                size="icon"
-                className="size-9 rounded-xl shadow-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                variant="ghost"
+                size="icon-xs"
+                className="size-9 rounded-xl  hover:bg-muted cursor-pointer"
                 aria-label="Community actions"
               >
                 <MoreVertical className="size-4" />

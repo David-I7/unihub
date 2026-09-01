@@ -1,8 +1,7 @@
-import { FileText, Pen, Search, Video, X } from "lucide-react";
+import { FileText, Pen, Video } from "@/components/ui/icons";
 import { useUserCommunities } from "@/features/users";
 import { useCalendarStore } from "../store/useCalendarStore";
 import type { EventType } from "../api/types";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -11,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SearchInput } from "@/components/app/SearchInput";
 import { useCommunityStudyYears } from "@/features/communities";
 import {
   StudyYearNameMap,
@@ -58,9 +58,45 @@ export function CalendarFilters({
     studyYear ?? "",
   );
 
+  const selectedCommunityName = userCommunitiesData?.content?.find(
+    (c) => c.slug === communitySlug,
+  )?.name;
+
+  const selectedStudyYearName = studyYear
+    ? (communityStudyYears?.find(
+        (y) => StudyYearNameMap[y.studyYearName] === studyYear,
+      )?.studyYearName ?? "All")
+    : "All";
+
+  const selectedCourseName = courseSlug
+    ? (studyYearCourses?.find((c) => c.slug === courseSlug)?.name ?? "All")
+    : "All";
+
+  const selectedTypeLabel =
+    selectedType === "All"
+      ? "All"
+      : selectedType === "EXAM"
+        ? "Exams"
+        : selectedType === "ASSIGNMENT"
+          ? "Assignments"
+          : selectedType === "LECTURE"
+            ? "Lectures"
+            : selectedType;
+
   return (
     <div className="space-y-3 pt-1">
-      {/* Row 1: Dropdown Filters Group */}
+      {/* Row 1: Standard Search Input */}
+      <div className="w-full pt-1">
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search events by title, course, or room..."
+          totalCount={totalCount}
+          resultLabel="events"
+        />
+      </div>
+
+      {/* Row 2: Dropdown Filters Group */}
       <div className="flex flex-wrap items-end gap-2.5">
         {/* Community Dropdown */}
         <div className="flex flex-col gap-1.5 w-full sm:w-44">
@@ -74,8 +110,10 @@ export function CalendarFilters({
               setCommunitySlug(val);
             }}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="Select Community" />
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
+              <SelectValue placeholder="Select Community">
+                {selectedCommunityName}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {userCommunitiesData?.content?.length === 0 && (
@@ -109,8 +147,10 @@ export function CalendarFilters({
             }}
             disabled={!communitySlug}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All" />
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
+              <SelectValue placeholder="All">
+                {selectedStudyYearName}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {communityStudyYears?.length === 0 ? (
@@ -148,8 +188,10 @@ export function CalendarFilters({
             }}
             disabled={!studyYear}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="Select Course" />
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
+              <SelectValue placeholder="Select Course">
+                {selectedCourseName}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {studyYearCourses?.length === 0 && (
@@ -168,7 +210,7 @@ export function CalendarFilters({
         </div>
 
         {/* Event Type Filter Dropdown */}
-        <div className="flex flex-col gap-1.5 w-full sm:w-40">
+        <div className="flex flex-col gap-1.5 w-full sm:w-44">
           <Label className="text-[11px] font-semibold text-muted-foreground">
             Event Type
           </Label>
@@ -178,51 +220,36 @@ export function CalendarFilters({
               if (val) setSelectedType(val as EventType | "All");
             }}
           >
-            <SelectTrigger className="w-full h-9 bg-background text-xs">
-              <SelectValue placeholder="All" />
+            <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
+              <SelectValue placeholder="All">{selectedTypeLabel}</SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="All">All ({totalCount})</SelectItem>
+              <SelectItem value="All">
+                <span className="truncate">All ({totalCount})</span>
+              </SelectItem>
               <SelectItem value="EXAM">
-                <span className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 font-medium">
-                  <Pen className="size-3.5" /> Exams ({examCount})
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <Pen className="size-3.5 shrink-0 text-purple-600 dark:text-purple-400" />
+                  <span className="truncate">Exams ({examCount})</span>
                 </span>
               </SelectItem>
               <SelectItem value="ASSIGNMENT">
-                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-medium">
-                  <FileText className="size-3.5" /> Assignments (
-                  {assignmentCount})
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <FileText className="size-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                  <span className="truncate">
+                    Assignments ({assignmentCount})
+                  </span>
                 </span>
               </SelectItem>
               <SelectItem value="LECTURE">
-                <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium">
-                  <Video className="size-3.5" /> Lectures ({lectureCount})
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <Video className="size-3.5 shrink-0 text-blue-600 dark:text-blue-400 " />
+                  <span className="truncate">Lectures ({lectureCount})</span>
                 </span>
               </SelectItem>
             </SelectContent>
           </Select>
         </div>
-      </div>
-
-      {/* Row 2: Search Input (Dedicated Full-Width Line) */}
-      <div className="relative w-full">
-        <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground pointer-events-none" />
-        <Input
-          type="text"
-          placeholder="Search events, courses, rooms..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-8 pr-8 h-9 text-xs w-full bg-background"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
       </div>
     </div>
   );

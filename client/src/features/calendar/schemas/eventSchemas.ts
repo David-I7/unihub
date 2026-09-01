@@ -17,9 +17,8 @@ export const eventFormSchema = z
       .or(z.literal("")),
     type: eventTypeSchema,
     startTime: z.string().min(1, "Start time is required"),
-    endTime: z.string().optional().or(z.literal("")),
-    durationMinutes: z.union([
-      z.number().positive("Duration must be greater than 0"),
+    durationHours: z.union([
+      z.number().positive("Duration must be greater than 0").max(168, "Duration cannot exceed 168 hours"),
       z.literal(""),
       z.undefined(),
     ]),
@@ -62,25 +61,6 @@ export const eventFormSchema = z
           code: "custom",
           path: ["startTime"],
           message: "Please enter a valid start date and time",
-        });
-      }
-    }
-
-    // 3. If endTime is provided, validate it's after startTime
-    if (data.endTime && data.endTime.trim() !== "" && data.startTime) {
-      const startD = new Date(data.startTime);
-      const endD = new Date(data.endTime);
-      if (isNaN(endD.getTime())) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["endTime"],
-          message: "Please enter a valid end date and time",
-        });
-      } else if (endD.getTime() <= startD.getTime()) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["endTime"],
-          message: "End time must be after start time",
         });
       }
     }

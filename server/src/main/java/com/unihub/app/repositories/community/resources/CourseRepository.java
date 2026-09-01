@@ -83,7 +83,30 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         SELECT c FROM Course c
         JOIN FETCH c.studyYear sy
         JOIN FETCH sy.community comm
+        LEFT JOIN FETCH c.teachers
+        WHERE c.slug = :courseSlug
+          AND comm.slug = :communitySlug
+          AND sy.studyYearName = :studyYearName
+    """)
+    Optional<Course> findBySlugAndCommunitySlugAndStudyYearNameWithTeachersAndCommunity(
+            @Param("courseSlug") String courseSlug,
+            @Param("communitySlug") String communitySlug,
+            @Param("studyYearName") StudyYearName studyYearName
+    );
+
+    @Query("""
+        SELECT c FROM Course c
+        JOIN FETCH c.studyYear sy
+        JOIN FETCH sy.community comm
         WHERE c.id = :courseId
     """)
     Optional<Course> findByIdWithStudyYearAndCommunity(@Param("courseId") Long courseId);
+
+    boolean existsByStudyYearIdAndNameIgnoreCase(int studyYearId, String name);
+
+    boolean existsByStudyYearIdAndSlugIgnoreCase(int studyYearId, String slug);
+
+    boolean existsByStudyYearIdAndNameIgnoreCaseAndIdNot(int studyYearId, String name, Long id);
+
+    boolean existsByStudyYearIdAndSlugIgnoreCaseAndIdNot(int studyYearId, String slug, Long id);
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { MaterialLinkType } from "../api/types";
 
 export const MAX_PDF_SIZE_BYTES = 20 * 1024 * 1024; // 20 MB
 export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -14,9 +15,19 @@ export const GITHUB_DOMAINS = [
   "github.com",
   "gist.github.com",
   "raw.githubusercontent.com",
+  "gitlab.com",
+  "bitbucket.org",
+  "codeberg.org",
 ];
 
-export const DRIVE_DOMAINS = ["drive.google.com", "docs.google.com"];
+export const DRIVE_DOMAINS = [
+  "drive.google.com",
+  "docs.google.com",
+  "onedrive.live.com",
+  "1drv.ms",
+  "onedrive.com",
+  "sharepoint.com",
+];
 
 export const VIDEO_DOMAINS = [
   "youtube.com",
@@ -34,18 +45,23 @@ export const VIDEO_DOMAINS = [
 
 export function detectLinkType(
   rawUrl: string,
-): "GITHUB" | "DRIVE" | "VIDEO" | "OTHER" {
+): MaterialLinkType {
   try {
     const url = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
       ? new URL(rawUrl)
       : new URL(`https://${rawUrl}`);
 
     const host = url.hostname.toLowerCase();
+    const pathname = url.pathname.toLowerCase();
 
     if (
       GITHUB_DOMAINS.includes(host) ||
       host.endsWith(".github.com") ||
-      host.endsWith(".github.io")
+      host.endsWith(".github.io") ||
+      host.endsWith(".gitlab.com") ||
+      host.endsWith(".gitlab.io") ||
+      host.endsWith(".bitbucket.org") ||
+      host.endsWith(".codeberg.org")
     ) {
       return "GITHUB";
     }
@@ -53,7 +69,11 @@ export function detectLinkType(
     if (
       DRIVE_DOMAINS.includes(host) ||
       host.endsWith(".drive.google.com") ||
-      host.endsWith(".docs.google.com")
+      host.endsWith(".docs.google.com") ||
+      host.endsWith(".onedrive.live.com") ||
+      host.endsWith(".onedrive.com") ||
+      host.endsWith(".sharepoint.com") ||
+      host === "1drv.ms"
     ) {
       return "DRIVE";
     }
@@ -62,9 +82,15 @@ export function detectLinkType(
       VIDEO_DOMAINS.includes(host) ||
       host.endsWith(".youtube.com") ||
       host.endsWith(".vimeo.com") ||
-      host.endsWith(".loom.com")
+      host.endsWith(".loom.com") ||
+      host.endsWith(".dailymotion.com") ||
+      host.endsWith(".twitch.tv")
     ) {
       return "VIDEO";
+    }
+
+    if (pathname.endsWith(".docx") || pathname.endsWith(".doc")) {
+      return "DOCX";
     }
 
     return "OTHER";
@@ -82,14 +108,22 @@ export function validateLinkDomain(urlStr: string, linkType: string): boolean {
       return (
         GITHUB_DOMAINS.includes(host) ||
         host.endsWith(".github.com") ||
-        host.endsWith(".github.io")
+        host.endsWith(".github.io") ||
+        host.endsWith(".gitlab.com") ||
+        host.endsWith(".gitlab.io") ||
+        host.endsWith(".bitbucket.org") ||
+        host.endsWith(".codeberg.org")
       );
     }
     if (linkType === "DRIVE") {
       return (
         DRIVE_DOMAINS.includes(host) ||
         host.endsWith(".drive.google.com") ||
-        host.endsWith(".docs.google.com")
+        host.endsWith(".docs.google.com") ||
+        host.endsWith(".onedrive.live.com") ||
+        host.endsWith(".onedrive.com") ||
+        host.endsWith(".sharepoint.com") ||
+        host === "1drv.ms"
       );
     }
     if (linkType === "VIDEO") {
@@ -97,7 +131,9 @@ export function validateLinkDomain(urlStr: string, linkType: string): boolean {
         VIDEO_DOMAINS.includes(host) ||
         host.endsWith(".youtube.com") ||
         host.endsWith(".vimeo.com") ||
-        host.endsWith(".loom.com")
+        host.endsWith(".loom.com") ||
+        host.endsWith(".dailymotion.com") ||
+        host.endsWith(".twitch.tv")
       );
     }
     return true;
@@ -163,7 +199,7 @@ export const createLinkSchema = z
       .refine((val) => val.startsWith("https://"), {
         message: "Only HTTPS URLs are allowed",
       }),
-    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "OTHER"]),
+    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "DOCS", "DOCX", "OTHER"]),
   })
   .refine((data) => validateLinkDomain(data.url, data.linkType), {
     message: "URL domain does not match the selected link type",
@@ -193,7 +229,9 @@ export const updateMaterialSchema = z
       })
       .optional()
       .or(z.literal("")),
-    linkType: z.enum(["VIDEO", "DRIVE", "GITHUB", "OTHER"]).optional(),
+    linkType: z
+      .enum(["VIDEO", "DRIVE", "GITHUB", "DOCS", "DOCX", "OTHER"])
+      .optional(),
   })
   .refine(
     (data) => {

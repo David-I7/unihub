@@ -1,5 +1,11 @@
 import { toast } from "sonner";
-import { Link2, Folder } from "lucide-react";
+import {
+  Folder,
+  Globe,
+  Video,
+  FileText,
+  GitBranch,
+} from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -8,10 +14,22 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
 import {
@@ -36,36 +54,50 @@ const LINK_TYPE_OPTIONS: Array<{
   value: MaterialLinkType;
   label: string;
   hint: string;
+  icon: typeof GitBranch;
+  iconColor: string;
 }> = [
   {
-    value: "GITHUB",
-    label: "GitHub",
-    hint: "github.com, gist.github.com, raw.githubusercontent.com",
-  },
-  {
-    value: "DRIVE",
-    label: "Google Drive / Docs",
-    hint: "drive.google.com, docs.google.com",
-  },
-  {
     value: "VIDEO",
-    label: "Video / Stream",
-    hint: "youtube.com, youtu.be, vimeo.com, loom.com, twitch.tv",
+    label: "External video",
+    hint: "YouTube, Vimeo, Loom, Twitch",
+    icon: Video,
+    iconColor: "text-rose-500",
+  },
+  {
+    value: "GITHUB",
+    label: "Github repository",
+    hint: "GitHub, GitLab, Bitbucket",
+    icon: GitBranch,
+    iconColor: "text-foreground",
   },
   {
     value: "DOCS",
-    label: "Documents / Notes",
-    hint: "docs.google.com, notion.so, office.com",
+    label: "Google docs",
+    hint: "docs.google.com",
+    icon: FileText,
+    iconColor: "text-blue-500",
   },
   {
     value: "DOCX",
-    label: "Word / DOCX",
-    hint: "Office documents, docx files, SharePoint",
+    label: "Word",
+    hint: "Microsoft Word, Office 365, docx",
+    icon: FileText,
+    iconColor: "text-sky-500",
+  },
+  {
+    value: "DRIVE",
+    label: "Google Drive or Microsoft OneDrive",
+    hint: "Google Drive, OneDrive, SharePoint",
+    icon: Folder,
+    iconColor: "text-amber-500",
   },
   {
     value: "OTHER",
-    label: "Other Resource",
+    label: "https",
     hint: "Any valid HTTPS URL",
+    icon: Globe,
+    iconColor: "text-emerald-500",
   },
 ];
 
@@ -139,11 +171,12 @@ export function AddLinkModal({
         <DialogHeader>
           <DialogTitle>Add External Resource Link</DialogTitle>
           <DialogDescription>
-            Attach external learning resources such as GitHub repositories, Google Docs, or video tutorials.
+            Attach external learning resources such as GitHub repositories,
+            Google Docs, or video tutorials.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
           {form.serverError && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
               {form.serverError}
@@ -178,31 +211,44 @@ export function AddLinkModal({
             <FieldError errors={[{ message: form.errors.url }]} />
           </Field>
 
-          {/* Link Type Selector */}
+          {/* Resource Type Dropdown */}
           <Field>
-            <FieldLabel>Resource Type</FieldLabel>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              {LINK_TYPE_OPTIONS.map((opt) => {
-                const isSelected = form.values.linkType === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => form.setValue("linkType", opt.value)}
-                    className={`flex flex-col items-start rounded-xl border p-3 text-left transition-all cursor-pointer ${
-                      isSelected
-                        ? "border-primary bg-primary/10 text-primary ring-1 ring-primary"
-                        : "border-border bg-card hover:border-primary/50 text-foreground"
-                    }`}
-                  >
-                    <span className="text-xs font-bold">{opt.label}</span>
-                    <span className="text-[10px] text-muted-foreground truncate w-full mt-0.5">
-                      {opt.hint}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <FieldLabel htmlFor="resourceType">Resource Type</FieldLabel>
+            <Select
+              value={form.values.linkType}
+              onValueChange={(val: string | null) => {
+                if (val) {
+                  form.setValue("linkType", val as MaterialLinkType);
+                }
+              }}
+            >
+              <SelectTrigger
+                id="resourceType"
+                className="w-full h-10 text-xs rounded-xl bg-card border-input"
+              >
+                <SelectValue placeholder="Select resource type" />
+              </SelectTrigger>
+              <SelectContent>
+                {LINK_TYPE_OPTIONS.map((opt) => {
+                  const IconComponent = opt.icon;
+                  return (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      <div className="flex items-center gap-2 text-xs py-0.5">
+                        <IconComponent
+                          className={`size-3.5 ${opt.iconColor} shrink-0`}
+                        />
+                        <span className="font-semibold text-foreground">
+                          {opt.label}
+                        </span>
+                        <span className="text-[11px] text-muted-foreground ml-1 truncate">
+                          — {opt.hint}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
             <FieldError errors={[{ message: form.errors.linkType }]} />
           </Field>
 
@@ -225,7 +271,10 @@ export function AddLinkModal({
           {/* Description Field */}
           <Field>
             <FieldLabel htmlFor="linkDescription">
-              Description <span className="text-muted-foreground font-normal">(Optional)</span>
+              Description{" "}
+              <span className="text-muted-foreground font-normal">
+                (Optional)
+              </span>
             </FieldLabel>
             <Textarea
               id="linkDescription"
@@ -256,7 +305,6 @@ export function AddLinkModal({
               disabled={form.isSubmitting || createMutation.isPending}
               className="gap-1.5 font-bold cursor-pointer"
             >
-              <Link2 className="size-4" />
               {createMutation.isPending ? "Adding..." : "Add Link"}
             </Button>
           </DialogFooter>

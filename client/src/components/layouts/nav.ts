@@ -2,8 +2,9 @@ import {
   Home,
   Users,
   Calendar,
+  Bell,
   type LucideIcon,
-} from "lucide-react";
+} from "@/components/ui/icons";
 
 export interface NavItem {
   title: string;
@@ -27,6 +28,11 @@ export const navItems: NavItem[] = [
     url: "/calendar",
     icon: Calendar,
   },
+  {
+    title: "Notifications",
+    url: "/notifications",
+    icon: Bell,
+  },
 ];
 
 export function isRouteActive(currentPath: string, targetUrl: string): boolean {
@@ -35,4 +41,3 @@ export function isRouteActive(currentPath: string, targetUrl: string): boolean {
   }
   return currentPath.startsWith(targetUrl);
 }
-

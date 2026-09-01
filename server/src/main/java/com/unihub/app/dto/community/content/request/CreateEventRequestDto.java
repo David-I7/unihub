@@ -24,9 +24,9 @@ public record CreateEventRequestDto(
         @NotNull(message = "Start time is required")
         OffsetDateTime startTime,
 
-        OffsetDateTime endTime,
-
-        Integer durationMinutes,
+        @jakarta.validation.constraints.Positive(message = "Duration must be positive")
+        @jakarta.validation.constraints.Max(value = 168, message = "Duration cannot exceed 168 hours")
+        Double durationHours,
 
         @NotNull(message = "Event location is required")
         EventLocation location,

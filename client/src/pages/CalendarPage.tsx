@@ -1,22 +1,32 @@
-import { useMemo } from "react";
-import { Link } from "react-router";
-import { Calendar as CalendarIcon, Compass, Users } from "lucide-react";
+import { useMemo, useEffect } from "react";
+import { Link, useSearchParams } from "react-router";
+import {
+  Calendar as CalendarIcon,
+  Compass,
+  Plus,
+  Users,
+} from "@/components/ui/icons";
 import {
   CalendarAgendaList,
   CalendarMonthGrid,
   CalendarToolbar,
   DayOverflowModal,
-  EventDetailModal,
+  EventDetailSheet,
   EventFormModal,
   useCalendarEvents,
   useCalendarStore,
 } from "@/features/calendar";
 import { useUserCommunities } from "@/features/users";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
 
 export default function CalendarPage() {
+  const [searchParams] = useSearchParams();
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+  const openCreateModal = useCalendarStore((s) => s.openCreateModal);
+
   const currentDate = useCalendarStore((s) => s.currentDate);
   const communitySlug = useCalendarStore((s) => s.communitySlug);
   const studyYear = useCalendarStore((s) => s.studyYear);
@@ -24,6 +34,16 @@ export default function CalendarPage() {
   const selectedType = useCalendarStore((s) => s.selectedType);
   const searchQuery = useCalendarStore((s) => s.searchQuery);
   const viewMode = useCalendarStore((s) => s.viewMode);
+
+  const { canCreateEvent } = usePermissions(communitySlug);
+
+  const eventIdParam = searchParams.get("eventId");
+
+  useEffect(() => {
+    if (eventIdParam) {
+      openEventDetails(eventIdParam);
+    }
+  }, [eventIdParam, openEventDetails]);
 
   // Fetch enrolled communities for empty-state evaluation and Add Event button permission
   const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
@@ -67,17 +87,8 @@ export default function CalendarPage() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchTitle = ev.title.toLowerCase().includes(q);
-        const matchCourseName = ev.courseName.toLowerCase().includes(q);
-        const matchCourseSlug = ev.courseSlug.toLowerCase().includes(q);
         const matchAbbr = ev.courseAbbreviation?.toLowerCase().includes(q);
-        const matchComm = ev.communityName?.toLowerCase().includes(q);
-        if (
-          !matchTitle &&
-          !matchCourseName &&
-          !matchCourseSlug &&
-          !matchAbbr &&
-          !matchComm
-        ) {
+        if (!matchTitle && !matchAbbr) {
           return false;
         }
       }
@@ -121,7 +132,6 @@ export default function CalendarPage() {
         assignmentCount={assignmentCount}
         lectureCount={lectureCount}
         totalCount={eventsList.length}
-        canCreateEvent={hasCommunities}
       />
 
       {/* Calendar View Container */}
@@ -175,14 +185,28 @@ export default function CalendarPage() {
         </div>
       ) : (
         /* Active Calendar Grid / Agenda View */
-        <div className="@container w-full">
+        <div className="@container w-full space-y-4">
+          {/* Add Event Button */}
+          {canCreateEvent && (
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                onClick={() => openCreateModal()}
+                className="gap-1.5 font-semibold cursor-pointer shrink-0"
+              >
+                <Plus className="size-4" />
+                <span>Add Event</span>
+              </Button>
+            </div>
+          )}
+
           {/* Automatic Container Query Mode */}
           {viewMode === "auto" && (
             <>
               <div className="hidden @[640px]:block">
                 <CalendarMonthGrid
                   events={filteredEvents}
-                  canCreateEvent={hasCommunities}
+                  canCreateEvent={canCreateEvent}
                 />
               </div>
               <div className="block @[640px]:hidden">
@@ -195,7 +219,7 @@ export default function CalendarPage() {
           {viewMode === "month" && (
             <CalendarMonthGrid
               events={filteredEvents}
-              canCreateEvent={hasCommunities}
+              canCreateEvent={canCreateEvent}
             />
           )}
 
@@ -206,12 +230,12 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Modals subscribing directly to useCalendarStore */}
-      <EventDetailModal />
+      {/* Modals & sheets subscribing directly to useCalendarStore */}
+      <EventDetailSheet />
       <EventFormModal />
       <DayOverflowModal
         events={filteredEvents}
-        canCreateEvent={hasCommunities}
+        canCreateEvent={canCreateEvent}
       />
     </div>
   );

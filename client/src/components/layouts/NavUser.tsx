@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown } from "@/components/ui/icons";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
@@ -25,7 +25,8 @@ export function NavUser({ user }: { user: User }) {
               >
                 <UserAvatar
                   username={user.username || user.email}
-                  className="size-8 rounded-lg"
+                  size="sm"
+                  className="rounded-lg"
                   fallbackClassName="rounded-lg"
                 />
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
@@ -51,4 +52,3 @@ export function NavUser({ user }: { user: User }) {
     </SidebarMenu>
   );
 }
-

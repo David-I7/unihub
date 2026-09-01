@@ -118,3 +118,32 @@ export interface CourseIndentifiers {
   semester: number;
 }
 
+export type CourseIdentifiers = CourseIndentifiers;
+
+export interface CreateCoursePayload {
+  name: string;
+  slug: string;
+  abbreviation: string;
+  semester: number;
+  creditPoints?: number;
+  description?: string;
+  readme?: string;
+  teacherIds?: string[];
+}
+
+export interface UpdateCoursePayload {
+  name?: string;
+  slug?: string;
+  abbreviation?: string;
+  semester?: number;
+  creditPoints?: number;
+  description?: string;
+  readme?: string;
+  archived?: boolean;
+  teacherIds?: string[];
+}
+
+export interface EditCourseReadmePayload {
+  readme: string;
+}
+

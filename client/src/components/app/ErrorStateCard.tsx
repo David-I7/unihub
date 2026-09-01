@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@/components/ui/icons";
 import { Link } from "react-router";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";

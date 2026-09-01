@@ -1,5 +1,4 @@
 import { toast } from "sonner";
-import { Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,12 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import {
   ColorPicker,
@@ -23,7 +20,6 @@ import {
 } from "@/components/ui/color-picker";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
-import { usePermissions } from "@/hooks/usePermissions";
 import {
   updateCommunitySchema,
   type UpdateCommunityFormData,
@@ -42,7 +38,6 @@ export function CommunitySettingsModal({
   open,
   onOpenChange,
 }: CommunitySettingsModalProps) {
-  const { canVerifyCommunity } = usePermissions();
   const updateMutation = useUpdateCommunity();
 
   const form = useForm<UpdateCommunityFormData>({
@@ -53,8 +48,6 @@ export function CommunitySettingsModal({
       readme: community.readme ?? "",
       backgroundColor:
         community.backgroundColor || DEFAULT_COMMUNITY_PRESETS[0]!,
-      verified: community.verified,
-      newOwnerUsername: "",
     },
     schema: updateCommunitySchema,
     validateOnBlur: true,
@@ -66,8 +59,6 @@ export function CommunitySettingsModal({
           description: values.description?.trim(),
           readme: values.readme?.trim() || undefined,
           backgroundColor: values.backgroundColor,
-          verified: canVerifyCommunity ? values.verified : undefined,
-          newOwnerUsername: values.newOwnerUsername?.trim() || undefined,
         };
 
         const updated = await updateMutation.mutateAsync({
@@ -91,7 +82,8 @@ export function CommunitySettingsModal({
         <DialogHeader>
           <DialogTitle>Community Settings</DialogTitle>
           <DialogDescription>
-            Update details, identifier, and theme configuration for {community.name}.
+            Update details, identifier, and theme configuration for{" "}
+            {community.name}.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +95,7 @@ export function CommunitySettingsModal({
           )}
 
           <Field>
-            <FieldLabel htmlFor="editName">Community Name</FieldLabel>
+            <FieldLabel htmlFor="editName">Name</FieldLabel>
             <Input
               id="editName"
               value={form.values.name ?? ""}
@@ -115,9 +107,7 @@ export function CommunitySettingsModal({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="editSlug">
-              Slug (URL identifier)
-            </FieldLabel>
+            <FieldLabel htmlFor="editSlug">Slug</FieldLabel>
             <Input
               id="editSlug"
               value={form.values.slug ?? ""}
@@ -126,9 +116,6 @@ export function CommunitySettingsModal({
               aria-invalid={form.isInvalid("slug")}
               className="font-mono text-xs"
             />
-            <FieldDescription>
-              Warning: Changing the slug updates all bookmark URLs.
-            </FieldDescription>
             <FieldError errors={[{ message: form.errors.slug }]} />
           </Field>
 
@@ -158,42 +145,6 @@ export function CommunitySettingsModal({
             />
           </Field>
 
-          {canVerifyCommunity && (
-            <div className="flex items-center justify-between rounded-xl border border-border/80 bg-muted/20 p-3.5">
-              <div className="space-y-0.5">
-                <span className="text-xs font-bold text-foreground">
-                  Verified Community Status
-                </span>
-                <p className="text-xs text-muted-foreground">
-                  Grant this community an official verified badge.
-                </p>
-              </div>
-              <Switch
-                checked={Boolean(form.values.verified)}
-                onCheckedChange={(checked) =>
-                  form.setValue("verified", checked)
-                }
-              />
-            </div>
-          )}
-
-          <Field>
-            <FieldLabel htmlFor="newOwnerUsername">
-              Transfer Ownership (Optional)
-            </FieldLabel>
-            <Input
-              id="newOwnerUsername"
-              placeholder="Enter target username"
-              value={form.values.newOwnerUsername ?? ""}
-              onChange={form.handleChange}
-              className="text-xs"
-            />
-            <FieldDescription>
-              Transferring ownership will grant full administrator rights
-              to the designated user.
-            </FieldDescription>
-          </Field>
-
           <div className="flex justify-end gap-2 pt-3 border-t border-border">
             <Button
               type="button"
@@ -207,10 +158,11 @@ export function CommunitySettingsModal({
               disabled={form.isSubmitting || updateMutation.isPending}
               className="gap-1.5 font-bold cursor-pointer"
             >
-              <Check className="size-4" />
-              {form.isSubmitting || updateMutation.isPending
-                ? "Saving Changes..."
-                : "Save Changes"}
+              <span>
+                {form.isSubmitting || updateMutation.isPending
+                  ? "Saving Changes..."
+                  : "Save Changes"}
+              </span>
             </Button>
           </div>
         </form>

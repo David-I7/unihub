@@ -102,38 +102,39 @@ public class CommunityService {
     }
 
     @Transactional(readOnly = true)
-    public CommunityHomeResponseDto getCommunityHome(String communitySlug, UserDto caller) {
-        CommunityResponseDto community = findBySlug(communitySlug, caller);
-        List<StudyYearMetricsResponseDto> studyYears = studyYearService.getCommunityStudyYearMetrics(communitySlug);
-
-        CallerMembershipDto callerMembership;
+    public CallerMembershipDto getCallerMembership(String communitySlug, UserDto caller) {
         if (caller == null) {
-            callerMembership = CallerMembershipDto.builder()
+            return CallerMembershipDto.builder()
                     .isMember(false)
                     .role(null)
                     .permissions(Collections.emptyList())
                     .build();
-        } else {
-            Optional<CommunityMember> memberOpt = communityMemberRepository.findMemberByCommunitySlug(communitySlug, caller.id());
-            if (memberOpt.isPresent()) {
-                CommunityMember member = memberOpt.get();
-                Role role = roleService.getRoleById(member.getRoleId());
-                RoleType roleType = RoleType.valueOf(role.getName());
-                List<String> permissions = roleService.getPermissionNamesByRoleType(roleType);
+        }
 
-                callerMembership = CallerMembershipDto.builder()
-                        .isMember(true)
-                        .role(role.getName())
-                        .permissions(permissions)
-                        .build();
-            } else {
-                callerMembership = CallerMembershipDto.builder()
+        return communityMemberRepository.findMemberByCommunitySlug(communitySlug, caller.id())
+                .map(member -> {
+                    Role role = roleService.getRoleById(member.getRoleId());
+                    RoleType roleType = RoleType.valueOf(role.getName());
+                    List<String> permissions = roleService.getPermissionNamesByRoleType(roleType);
+
+                    return CallerMembershipDto.builder()
+                            .isMember(true)
+                            .role(role.getName())
+                            .permissions(permissions)
+                            .build();
+                })
+                .orElseGet(() -> CallerMembershipDto.builder()
                         .isMember(false)
                         .role(null)
                         .permissions(Collections.emptyList())
-                        .build();
-            }
-        }
+                        .build());
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityHomeResponseDto getCommunityHome(String communitySlug, UserDto caller) {
+        CommunityResponseDto community = findBySlug(communitySlug, caller);
+        List<StudyYearMetricsResponseDto> studyYears = studyYearService.getCommunityStudyYearMetrics(communitySlug);
+        CallerMembershipDto callerMembership = getCallerMembership(communitySlug, caller);
 
         return communityMapper.toCommunityHomeResponseDto(community, studyYears, callerMembership);
     }

@@ -39,8 +39,9 @@ Pattern: <action>:<resource>
   delete:member              |  X   |   X   |        X        |        X        |                  |
   create:studyYear           |  X   |   X   |        X        |        X        |                  |
   delete:studyYear           |  X   |   X   |        X        |        X        |                  |
-  create:course              |  X   |   X   |        X        |        X        |                  |
+  create:course              |  X   |   X   |        X        |        X        |        X         |
   update:course              |  X   |   X   |        X        |        X        |                  |
+  delete:course              |  X   |   X   |        X        |        X        |                  |
   archive:course             |  X   |   X   |        X        |        X        |                  |
   create:folder              |  X   |   X   |        X        |        X        |        X         |
   update:folder              |  X   |   X   |        X        |        X        |        X         |
@@ -104,6 +105,7 @@ INSERT INTO PERMISSIONS (id, name, description) VALUES
 (gen_random_uuid(), 'delete:studyYear', 'Delete a study year from a community'),
 (gen_random_uuid(), 'create:course', 'Create a course within a study year'),
 (gen_random_uuid(), 'update:course', 'Update course details and assigned teachers'),
+(gen_random_uuid(), 'delete:course', 'Delete a course from a study year'),
 (gen_random_uuid(), 'archive:course', 'Archive or unarchive a course'),
 
 -- Course content (folders and materials)
@@ -194,6 +196,7 @@ WHERE r.name = 'COMMUNITY_OWNER'
     'delete:studyYear',
     'create:course',
     'update:course',
+    'delete:course',
     'archive:course',
     'create:folder',
     'update:folder',
@@ -244,6 +247,7 @@ WHERE r.name = 'COMMUNITY_ADMIN'
     'delete:studyYear',
     'create:course',
     'update:course',
+    'delete:course',
     'archive:course',
     'create:folder',
     'update:folder',
@@ -284,6 +288,7 @@ SELECT r.id, p.id
 FROM ROLES r, PERMISSIONS p
 WHERE r.name = 'COMMUNITY_MEMBER'
   AND p.name IN (
+    'create:course',
     'create:folder',
     'update:folder',
     'delete:folder',

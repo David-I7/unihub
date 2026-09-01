@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   DELETE_STUDY_YEAR: "delete:studyYear",
   CREATE_COURSE: "create:course",
   UPDATE_COURSE: "update:course",
+  DELETE_COURSE: "delete:course",
   ARCHIVE_COURSE: "archive:course",
 
   // Discussions (Posts & Comments)
@@ -45,6 +46,14 @@ export const PERMISSIONS = {
   UPDATE_MATERIAL: "update:material",
   DELETE_MATERIAL: "delete:material",
   MODERATE_MATERIAL: "moderate:material",
+
+  // Calendar & Reminders
+  CREATE_EVENT: "create:event",
+  UPDATE_EVENT: "update:event",
+  DELETE_EVENT: "delete:event",
+  MODERATE_EVENT: "moderate:event",
+  CREATE_REMINDER: "create:reminder",
+  DELETE_REMINDER: "delete:reminder",
 } as const;
 
 export type PermissionKey = keyof typeof PERMISSIONS;

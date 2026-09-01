@@ -8,6 +8,7 @@ import CommunityJoinPage from "../pages/CommunityJoinPage";
 import StudyYearDetailPage from "../pages/StudyYearDetailPage";
 import CourseDetailPage from "../pages/CourseDetailPage";
 import CalendarPage from "../pages/CalendarPage";
+import NotificationsPage from "../pages/NotificationsPage";
 
 import {
   LoginForm,
@@ -24,13 +25,34 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: (
+          <AuthenticatedRoute
+            title="Welcome to Unihub"
+            description="Sign in to join communities, share resources, and schedule event reminders."
+          >
+            <HomePage />
+          </AuthenticatedRoute>
+        ),
       },
       {
         path: "/calendar",
         element: (
-          <AuthenticatedRoute>
+          <AuthenticatedRoute
+            title="Calendar"
+            description="Sign in to view your upcoming exams, assignment deadlines, and class schedules."
+          >
             <CalendarPage />
+          </AuthenticatedRoute>
+        ),
+      },
+      {
+        path: "/notifications",
+        element: (
+          <AuthenticatedRoute
+            title="Notifications"
+            description="Sign in to check your latest activity alerts, event updates, and reminders."
+          >
+            <NotificationsPage />
           </AuthenticatedRoute>
         ),
       },

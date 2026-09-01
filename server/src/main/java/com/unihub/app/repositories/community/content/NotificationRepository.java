@@ -2,6 +2,7 @@ package com.unihub.app.repositories.community.content;
 
 import com.unihub.app.entities.community.content.Notification;
 import com.unihub.app.entities.community.content.NotificationCategory;
+import com.unihub.app.entities.community.content.NotificationType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,17 +15,26 @@ import java.util.UUID;
 
 public interface NotificationRepository extends JpaRepository<Notification, UUID>, JpaSpecificationExecutor<Notification> {
 
-    Page<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
-
     long countByUserIdAndIsReadFalse(UUID userId);
 
     long countByUserIdAndCategoryAndIsReadFalse(UUID userId, NotificationCategory category);
 
+
     @Modifying
-    @Query("UPDATE Notification n SET n.isRead = true WHERE n.user.id = :userId AND n.isRead = false")
+    @Query(value = """
+            UPDATE notifications
+            SET is_read = true
+            WHERE user_id = :userId
+              AND is_read = false
+            """, nativeQuery = true)
     int markAllAsReadByUserId(@Param("userId") UUID userId);
 
     @Modifying
-    @Query("UPDATE Notification n SET n.isRead = true WHERE n.id = :id AND n.user.id = :userId")
+    @Query(value = """
+            UPDATE notifications
+            SET is_read = true
+            WHERE id = :id
+              AND user_id = :userId
+            """, nativeQuery = true)
     int markAsReadByIdAndUserId(@Param("id") UUID id, @Param("userId") UUID userId);
 }

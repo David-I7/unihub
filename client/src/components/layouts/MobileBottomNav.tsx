@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router";
 import { cn } from "@/lib/utils";
+import { useUnreadNotificationCount } from "@/features/notifications";
 import { navItems, isRouteActive } from "./nav";
 
 export function MobileBottomNav() {
   const location = useLocation();
-
+  const { data: totalUnread = 0 } = useUnreadNotificationCount();
 
   return (
     <nav
@@ -13,6 +14,7 @@ export function MobileBottomNav() {
     >
       {navItems.map((item) => {
         const active = isRouteActive(location.pathname, item.url);
+        const isNotifications = item.url === "/notifications";
         const Icon = item.icon;
 
         return (
@@ -28,7 +30,7 @@ export function MobileBottomNav() {
           >
             <div
               className={cn(
-                "flex h-7 w-12 items-center justify-center rounded-full transition-all",
+                "relative flex h-7 w-12 items-center justify-center rounded-full transition-all",
                 active && "bg-primary/10",
               )}
             >
@@ -40,6 +42,9 @@ export function MobileBottomNav() {
                     : "text-muted-foreground",
                 )}
               />
+              {isNotifications && totalUnread > 0 && (
+                <span className="absolute top-1 right-3 size-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
             </div>
             <span>{item.title}</span>
           </Link>

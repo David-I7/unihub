@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Archive, Trash2, MoreVertical } from "lucide-react";
+import { Trash2, MoreVertical } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +40,7 @@ export function StudyYearCard({
     <>
       <Card
         onClick={onClick}
-        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 shadow-xs transition-all hover:border-primary/60 hover:shadow-md cursor-pointer space-y-4"
+        className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card p-5 shadow-xs transition-all hover:border-primary/60 hover:shadow-md cursor-pointer space-y-0"
       >
         {/* Header: Year number block, Title, and Actions */}
         <div className="flex items-start justify-between gap-3">
@@ -52,7 +52,6 @@ export function StudyYearCard({
               <h3 className="font-heading text-base font-bold text-foreground group-hover:text-primary transition-colors">
                 {displayName}
               </h3>
-              <p className="text-xs text-muted-foreground">Academic Curriculum</p>
             </div>
           </div>
 
@@ -85,33 +84,35 @@ export function StudyYearCard({
           )}
         </div>
 
-        {/* Metrics Row */}
-        <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-border">
-          <div className="rounded-xl bg-muted/40 px-3 py-2 text-center">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Active Courses
+        {/* Metrics Row: 3-column unified grid ensuring equal card heights */}
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+          <div className="rounded-xl bg-muted/40 px-2 py-2 text-center">
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              Active
             </span>
-            <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1.5 mt-0.5">
-              {studyYear.coursesCount}
+            <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1 mt-0.5">
+              {studyYear.activeCoursesCount ?? studyYear.coursesCount}
             </span>
           </div>
 
-          <div className="rounded-xl bg-muted/40 px-3 py-2 text-center">
-            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <div className="rounded-xl bg-muted/40 px-2 py-2 text-center">
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
+              Archived
+            </span>
+            <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1 mt-0.5">
+              {studyYear.archivedCoursesCount ?? 0}
+            </span>
+          </div>
+
+          <div className="rounded-xl bg-muted/40 px-2 py-2 text-center">
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground truncate">
               Credits
             </span>
-            <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1.5 mt-0.5">
-              {studyYear.creditsCount} ECTS
+            <span className="font-heading text-sm font-bold text-foreground flex items-center justify-center gap-1 mt-0.5">
+              {studyYear.creditsCount}
             </span>
           </div>
         </div>
-
-        {studyYear.archivedCoursesCount > 0 && (
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground pt-1">
-            <Archive className="size-3.5 text-amber-500" />
-            <span>{studyYear.archivedCoursesCount} archived courses</span>
-          </div>
-        )}
       </Card>
 
       {communitySlug && (
@@ -126,4 +127,3 @@ export function StudyYearCard({
     </>
   );
 }
-

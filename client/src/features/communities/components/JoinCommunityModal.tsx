@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useJoinCommunity } from "../api/joinCommunity";
 
@@ -93,18 +93,11 @@ function JoinCommunityForm({
             className="text-center font-mono text-lg tracking-widest uppercase font-bold"
             autoFocus
           />
-          <FieldDescription>
-            Tip: Paste the 8-character code to join immediately.
-          </FieldDescription>
         </Field>
       </div>
 
       <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-        >
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -131,8 +124,7 @@ export function JoinCommunityModal({
         <DialogHeader>
           <DialogTitle>Join a Community</DialogTitle>
           <DialogDescription>
-            Enter an 8-character invitation code to join a private or
-            member-only academic community.
+            Enter an 8-character invitation code to join a community.
           </DialogDescription>
         </DialogHeader>
 

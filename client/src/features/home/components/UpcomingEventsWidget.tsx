@@ -1,0 +1,198 @@
+import { useState, useMemo } from "react";
+import { Link } from "react-router";
+import { Calendar as CalendarIcon, ArrowRight, Sparkles } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  useInfiniteUpcomingEvents,
+  useCalendarStore,
+  CalendarEventCard,
+  type CalendarEvent,
+} from "@/features/calendar";
+import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
+import { cn } from "@/lib/utils";
+import { AllUpcomingEventsModal } from "./AllUpcomingEventsModal";
+
+export function UpcomingEventsWidget() {
+  const [isAllModalOpen, setIsAllModalOpen] = useState(false);
+
+  const { data, isLoading, isError, refetch } = useInfiniteUpcomingEvents({
+    days: 7,
+    size: 6,
+  });
+
+  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+
+  const events: CalendarEvent[] =
+    data?.pages.flatMap((page) => page.content) ?? [];
+  const totalCount = data?.pages[0]?.totalElements ?? events.length;
+  const displayedEvents = events.slice(0, 3);
+
+  const groupedEvents = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
+
+    for (const ev of displayedEvents) {
+      const d = new Date(ev.startTime);
+      if (isNaN(d.getTime())) continue;
+      const key = getLocalDateKey(d);
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(ev);
+    }
+
+    const sortedKeys = Array.from(map.keys()).sort();
+
+    return sortedKeys.map((key) => {
+      const dayEvents = map.get(key)!;
+      dayEvents.sort(
+        (a, b) =>
+          new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+      );
+      return {
+        dateStr: key,
+        events: dayEvents,
+        ...formatDayHeader(key),
+      };
+    });
+  }, [displayedEvents]);
+
+  return (
+    <>
+      <Card className="rounded-2xl border bg-card p-5 space-y-4 shadow-xs flex flex-col justify-between h-full min-h-[380px]">
+        <div className="space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
+            <div className="flex items-center gap-2">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <CalendarIcon className="size-4" />
+              </div>
+              <div>
+                <h2 className="font-heading text-sm sm:text-base font-bold text-foreground">
+                  Upcoming Events
+                </h2>
+                <p className="text-[11px] text-muted-foreground">Next 7 days</p>
+              </div>
+            </div>
+
+            <Link
+              to="/calendar"
+              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 shrink-0 group"
+            >
+              <span>Calendar</span>
+              <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+
+          {/* Body */}
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 2 }).map((_, dayIdx) => (
+                <div key={dayIdx} className="space-y-2">
+                  <div className="h-3.5 w-24 bg-muted rounded-md animate-pulse" />
+                  <div className="p-3 rounded-xl border bg-card animate-pulse space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="h-3 w-16 bg-muted rounded-md" />
+                      <div className="h-3 w-20 bg-muted rounded-md" />
+                    </div>
+                    <div className="h-4 w-3/4 bg-muted rounded-md" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : isError ? (
+            <div className="py-8 text-center space-y-2">
+              <p className="text-xs text-destructive font-medium">
+                Failed to load upcoming events.
+              </p>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => refetch()}
+                className="cursor-pointer text-xs"
+              >
+                Retry
+              </Button>
+            </div>
+          ) : displayedEvents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 space-y-2">
+              <div className="size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                <Sparkles className="size-4" />
+              </div>
+              <p className="text-xs font-medium text-foreground">
+                No events in the next 7 days
+              </p>
+              <p className="text-[11px] text-muted-foreground max-w-xs leading-relaxed">
+                You are all caught up across all your enrolled communities.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {groupedEvents.map((group) => (
+                <div key={group.dateStr} className="space-y-1.5">
+                  {/* Day Subheader */}
+                  <div className="flex items-center justify-between gap-2 px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={cn(
+                          "font-heading text-xs font-bold uppercase tracking-wider",
+                          group.isToday
+                            ? "text-primary font-extrabold"
+                            : "text-foreground",
+                        )}
+                      >
+                        {group.weekday}, {group.formattedDate}
+                      </span>
+                      {group.isToday && (
+                        <Badge
+                          variant="default"
+                          className="h-3.5 px-1 text-[8px] font-bold uppercase tracking-wider bg-primary text-primary-foreground"
+                        >
+                          Today
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Events */}
+                  <div className="space-y-1.5">
+                    {group.events.map((event) => (
+                      <CalendarEventCard
+                        key={event.id}
+                        event={event}
+                        onClick={() => openEventDetails(event.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer: View All Button */}
+        {totalCount > 0 && (
+          <div className="pt-2 border-t border-border/50">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAllModalOpen(true)}
+              className="w-full text-xs font-semibold cursor-pointer h-8"
+            >
+              View all upcoming events ({totalCount})
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {/* View All Modal */}
+      {isAllModalOpen && (
+        <AllUpcomingEventsModal
+          open={isAllModalOpen}
+          onOpenChange={setIsAllModalOpen}
+        />
+      )}
+    </>
+  );
+}

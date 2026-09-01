@@ -12,11 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Field,
-  FieldLabel,
-  FieldError,
-} from "@/components/ui/field";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
   ColorPicker,
   DEFAULT_COMMUNITY_PRESETS,
@@ -96,12 +92,14 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
     form.setValue("slug", slugify(e.target.value));
   };
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     form.setValue("description", e.target.value);
   };
 
   return (
-    <form onSubmit={form.handleSubmit} className="space-y-6 py-2">
+    <form onSubmit={form.handleSubmit} className="space-y-6 pt-2">
       {form.serverError && (
         <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
           {form.serverError}
@@ -113,7 +111,7 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
         <div className="lg:col-span-7 space-y-4">
           {/* Name Field */}
           <Field>
-            <FieldLabel htmlFor="name">Community Name *</FieldLabel>
+            <FieldLabel htmlFor="name">Name *</FieldLabel>
             <Input
               id="name"
               name="name"
@@ -128,11 +126,11 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
 
           {/* Slug Field */}
           <Field>
-            <FieldLabel htmlFor="slug">Community Slug (URL path) *</FieldLabel>
+            <FieldLabel htmlFor="slug">Slug *</FieldLabel>
             <Input
               id="slug"
               name="slug"
-              placeholder="fmi-faculty"
+              placeholder="e.g. faculty-of-informatics"
               value={form.values.slug}
               onChange={handleSlugChange}
               onBlur={form.handleBlur}
@@ -144,9 +142,7 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
 
           {/* Brief Description */}
           <Field>
-            <FieldLabel htmlFor="description">
-              Brief Summary / Description *
-            </FieldLabel>
+            <FieldLabel htmlFor="description">Description *</FieldLabel>
             <Textarea
               id="description"
               name="description"
@@ -158,10 +154,6 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
               aria-invalid={form.isInvalid("description")}
               maxLength={1000}
             />
-            <div className="flex justify-between text-[11px] text-muted-foreground">
-              <span>Shown in banners and cards.</span>
-              <span>{form.values.description.length} / 1000</span>
-            </div>
             <FieldError errors={[{ message: form.errors.description }]} />
           </Field>
 
@@ -183,7 +175,7 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
               Live Preview
             </span>
           </div>
-          <div className="rounded-2xl border border-border/80 bg-muted/20 p-2 sm:p-3 pointer-events-none">
+          <div className="rounded-2xl pointer-events-none">
             <CommunityCard
               community={{
                 id: "preview",
@@ -205,20 +197,11 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
               }}
             />
           </div>
-
-          <div className="text-[11px] font-mono text-muted-foreground bg-muted/40 rounded-xl px-3 py-2 border border-border/60 truncate">
-            <span className="text-muted-foreground">Will be accessible at: </span>
-            <span className="text-foreground font-semibold">/communities/{form.values.slug || "slug"}</span>
-          </div>
         </div>
       </div>
 
       <DialogFooter className="pt-2 border-t border-border">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-        >
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -245,8 +228,7 @@ export function CreateCommunityModal({
         <DialogHeader>
           <DialogTitle>Create a New Community</DialogTitle>
           <DialogDescription>
-            Set up an academic community hub for your university, faculty, or
-            specialization.
+            Set up an academic community hub for your university or faculty.
           </DialogDescription>
         </DialogHeader>
 

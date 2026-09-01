@@ -4,6 +4,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.response.NotificationResponseDto;
 import com.unihub.app.entities.community.content.NotificationCategory;
+import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.services.community.content.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +28,7 @@ public class NotificationController {
     public ResponseEntity<PageDto<NotificationResponseDto>> getNotifications(
             @AuthenticationPrincipal UserDto userDto,
             @RequestParam(required = false) NotificationCategory category,
-            @RequestParam(required = false) String type,
+            @RequestParam(required = false) NotificationType type,
             @RequestParam(required = false) Boolean isRead,
             @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {

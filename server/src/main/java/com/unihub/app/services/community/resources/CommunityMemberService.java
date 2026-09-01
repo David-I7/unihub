@@ -47,12 +47,20 @@ public class CommunityMemberService {
     private final CommunityResourceMapper communityMapper;
 
     @Transactional(readOnly = true)
-    public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, Pageable pageable) {
+    public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, String search, RoleType role, Pageable pageable) {
         if (!communityRepository.existsBySlug(communitySlug)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found");
         }
 
-        Page<CommunityMember> page = communityMemberRepository.findMembersByCommunitySlug(communitySlug, pageable);
+        UUID roleId = role != null ? roleService.getRoleByName(role).getId() : null;
+        String trimmedSearch = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
+
+        Page<CommunityMember> page = communityMemberRepository.findMembersByCommunitySlugWithFilters(
+                communitySlug,
+                trimmedSearch,
+                roleId,
+                pageable
+        );
         return pageMapper.toPageDto(page.map(member -> {
             String roleName = roleService.getRoleById(member.getRoleId()).getName();
             return communityMapper.toCommunityMemberResponseDto(member, roleName);

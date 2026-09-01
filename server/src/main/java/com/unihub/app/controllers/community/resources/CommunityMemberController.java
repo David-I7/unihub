@@ -1,5 +1,6 @@
 package com.unihub.app.controllers.community.resources;
 
+import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
@@ -35,9 +36,11 @@ public class CommunityMemberController {
     @GetMapping("/members")
     public ResponseEntity<PageDto<CommunityMemberResponseDto>> getMembers(
             @PathVariable String communitySlug,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) RoleType role,
             @PageableDefault(page = 0, size = 20, sort = "joinedAt", direction = Sort.Direction.ASC) Pageable pageable
     ) {
-        PageDto<CommunityMemberResponseDto> members = communityMemberService.getMembers(communitySlug, pageable);
+        PageDto<CommunityMemberResponseDto> members = communityMemberService.getMembers(communitySlug, search, role, pageable);
         return ResponseEntity.ok(members);
     }
 

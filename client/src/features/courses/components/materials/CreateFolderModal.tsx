@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { FolderPlus, Folder } from "lucide-react";
+import { Folder } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -82,11 +82,12 @@ export function CreateFolderModal({
         <DialogHeader>
           <DialogTitle>New Folder</DialogTitle>
           <DialogDescription>
-            Create a subfolder to organize study materials, notes, and resources.
+            Create a subfolder to organize study materials, notes, and
+            resources.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
           {form.serverError && (
             <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
               {form.serverError}
@@ -131,7 +132,6 @@ export function CreateFolderModal({
               disabled={form.isSubmitting || createMutation.isPending}
               className="gap-1.5 font-bold cursor-pointer"
             >
-              <FolderPlus className="size-4" />
               {createMutation.isPending ? "Creating..." : "Create Folder"}
             </Button>
           </DialogFooter>

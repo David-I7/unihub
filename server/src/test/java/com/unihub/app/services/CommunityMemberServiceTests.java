@@ -107,11 +107,11 @@ public class CommunityMemberServiceTests {
         Page<CommunityMember> page = new PageImpl<>(List.of(member), PageRequest.of(0, 20), 1);
 
         when(communityRepository.existsBySlug("fmi-info")).thenReturn(true);
-        when(communityMemberRepository.findMembersByCommunitySlug(eq("fmi-info"), any(Pageable.class)))
+        when(communityMemberRepository.findMembersByCommunitySlugWithFilters(eq("fmi-info"), isNull(), isNull(), any(Pageable.class)))
                 .thenReturn(page);
         when(roleService.getRoleById(roleId)).thenReturn(role);
 
-        PageDto<CommunityMemberResponseDto> result = communityMemberService.getMembers("fmi-info", PageRequest.of(0, 20));
+        PageDto<CommunityMemberResponseDto> result = communityMemberService.getMembers("fmi-info", null, null, PageRequest.of(0, 20));
 
         assertNotNull(result);
         assertEquals(1, result.content().size());
@@ -121,11 +121,43 @@ public class CommunityMemberServiceTests {
     }
 
     @Test
+    @DisplayName("getMembers with search and role filter passes roleId and trimmed search")
+    public void testGetMembers_WithFilters() {
+        UUID roleId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        OffsetDateTime now = OffsetDateTime.now();
+
+        User user = User.builder().id(userId).username("student_1").build();
+        Role role = Role.builder().id(roleId).name("COMMUNITY_ADMIN").build();
+        CommunityMember member = CommunityMember.builder()
+                .user(user)
+                .roleId(roleId)
+                .joinedAt(now)
+                .build();
+
+        Page<CommunityMember> page = new PageImpl<>(List.of(member), PageRequest.of(0, 20), 1);
+
+        when(communityRepository.existsBySlug("fmi-info")).thenReturn(true);
+        when(roleService.getRoleByName(RoleType.COMMUNITY_ADMIN)).thenReturn(role);
+        when(communityMemberRepository.findMembersByCommunitySlugWithFilters(eq("fmi-info"), eq("student"), eq(roleId), any(Pageable.class)))
+                .thenReturn(page);
+        when(roleService.getRoleById(roleId)).thenReturn(role);
+
+        PageDto<CommunityMemberResponseDto> result = communityMemberService.getMembers("fmi-info", "  student  ", RoleType.COMMUNITY_ADMIN, PageRequest.of(0, 20));
+
+        assertNotNull(result);
+        assertEquals(1, result.content().size());
+        CommunityMemberResponseDto memberDto = result.content().get(0);
+        assertEquals("student_1", memberDto.username());
+        assertEquals("COMMUNITY_ADMIN", memberDto.role());
+    }
+
+    @Test
     @DisplayName("getMembers throws 404 when community does not exist")
     public void testGetMembers_CommunityNotFound() {
         when(communityRepository.existsBySlug("unknown")).thenReturn(false);
 
-        assertThrows(ResponseStatusException.class, () -> communityMemberService.getMembers("unknown", PageRequest.of(0, 20)));
+        assertThrows(ResponseStatusException.class, () -> communityMemberService.getMembers("unknown", null, null, PageRequest.of(0, 20)));
     }
 
     // =========================================================================

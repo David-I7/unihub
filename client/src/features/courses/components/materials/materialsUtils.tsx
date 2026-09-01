@@ -5,7 +5,9 @@ import {
   FileArchive,
   Image,
   GitBranch,
-} from "lucide-react";
+  Video,
+  Folder,
+} from "@/components/ui/icons";
 
 export function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return "0 B";
@@ -18,7 +20,7 @@ export function formatBytes(bytes: number, decimals = 1): string {
 
 export function getFileCategory(mediaType: string): string {
   const mt = mediaType.toLowerCase();
-  if (mt.includes("pdf")) return "PDF Document";
+  if (mt.includes("pdf")) return "PDF";
   if (mt.includes("image")) return "Image";
   if (mt.includes("video")) return "Video";
   if (mt.includes("audio")) return "Audio";
@@ -82,7 +84,37 @@ export function getFileIcon(mediaType: string, className = "size-4 shrink-0") {
 }
 
 export function getLinkIcon(linkType: string, className = "size-4 shrink-0") {
-  if (linkType.toUpperCase() === "GITHUB")
-    return <GitBranch className={`${className} text-foreground`} />;
-  return <Globe className={`${className} text-primary`} />;
+  switch (linkType.toUpperCase()) {
+    case "VIDEO":
+      return <Video className={`${className} text-rose-500`} />;
+    case "GITHUB":
+      return <GitBranch className={`${className} text-foreground`} />;
+    case "DOCS":
+      return <FileText className={`${className} text-blue-500`} />;
+    case "DOCX":
+      return <FileText className={`${className} text-sky-500`} />;
+    case "DRIVE":
+      return <Folder className={`${className} text-amber-500`} />;
+    case "OTHER":
+    default:
+      return <Globe className={`${className} text-emerald-500`} />;
+  }
+}
+
+export function getLinkTypeLabel(linkType: string): string {
+  switch (linkType.toUpperCase()) {
+    case "VIDEO":
+      return "External video";
+    case "GITHUB":
+      return "Github repository";
+    case "DOCS":
+      return "Google docs";
+    case "DOCX":
+      return "Word";
+    case "DRIVE":
+      return "Google Drive or Microsoft OneDrive";
+    case "OTHER":
+    default:
+      return "Other";
+  }
 }

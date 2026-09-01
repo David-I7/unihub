@@ -3,6 +3,7 @@ package com.unihub.app.mappers.community;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.request.CreateCourseRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
@@ -213,6 +214,22 @@ public class CommunityResourceMapper {
                 .abbreviation(course.getAbbreviation())
                 .name(course.getName())
                 .semester(course.getSemester())
+                .build();
+    }
+
+    public Course toCourseEntity(CreateCourseRequestDto dto, StudyYear studyYear, List<Teacher> teachers) {
+        return Course.builder()
+                .name(dto.name())
+                .slug(dto.slug())
+                .abbreviation(dto.abbreviation())
+                .studyYear(studyYear)
+                .semester(dto.semester())
+                .creditPoints(dto.creditPoints() != null ? dto.creditPoints() : 5)
+                .archived(false)
+                .description(dto.description())
+                .readme(dto.readme())
+                .teachers(teachers != null ? teachers : Collections.emptyList())
+                .createdAt(OffsetDateTime.now())
                 .build();
     }
 

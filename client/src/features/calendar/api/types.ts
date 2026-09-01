@@ -16,20 +16,33 @@ export interface EventReminder {
   status: ReminderStatus;
 }
 
+export interface UserReminder {
+  id: string;
+  offsetMinutes: number;
+  remindAt: string;
+  status: ReminderStatus;
+  eventId: string;
+  eventTitle: string;
+  eventType: EventType;
+  eventStartTime: string;
+  durationHours?: number;
+  eventLocation?: EventLocation;
+  courseSlug?: string;
+  courseName?: string;
+  courseAbbreviation?: string;
+  communitySlug?: string;
+  communityName?: string;
+  studyYear?: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
   type: EventType;
   startTime: string;
-  endTime: string;
-  durationMinutes: number;
+  durationHours?: number;
   location: EventLocation;
-  courseSlug: string;
-  courseName: string;
-  courseAbbreviation: string;
-  communitySlug: string;
-  communityName: string;
-  studyYear: StudyYearName;
+  courseAbbreviation?: string;
   isSubscribed: boolean;
 }
 
@@ -38,8 +51,7 @@ export interface Event {
   title: string;
   type: EventType;
   startTime: string;
-  endTime: string;
-  durationMinutes: number;
+  durationHours?: number;
   location: EventLocation;
   locationDetails?: string;
   description?: string;
@@ -66,8 +78,7 @@ export interface CreateEventPayload {
   description?: string;
   type: EventType;
   startTime: string; // ISO 8601
-  endTime?: string; // ISO 8601
-  durationMinutes?: number;
+  durationHours?: number;
   location: EventLocation;
   locationDetails?: string;
   courseId: number;
@@ -79,8 +90,7 @@ export interface UpdateEventPayload {
   description?: string;
   type?: EventType;
   startTime?: string;
-  endTime?: string;
-  durationMinutes?: number;
+  durationHours?: number;
   location?: EventLocation;
   locationDetails?: string;
 }

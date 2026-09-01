@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useCreateJoinCode } from "../../api/joinCodes";
 
@@ -87,7 +86,8 @@ export function CreateJoinCodeModal({
         <DialogHeader>
           <DialogTitle>Generate Invitation Code</DialogTitle>
           <DialogDescription>
-            Create an invite code with expiration limits or usage caps.
+            The code is automatically deleted when it expired or reaches its
+            usage limit. You can also revoke it manually at any time.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,9 +186,6 @@ export function CreateJoinCodeModal({
                 />
               )}
             </div>
-            <FieldDescription>
-              Leaves open until max uses is reached or code is revoked.
-            </FieldDescription>
           </Field>
 
           <DialogFooter className="pt-3">
@@ -204,7 +201,6 @@ export function CreateJoinCodeModal({
               disabled={createMutation.isPending}
               className="gap-2 font-bold cursor-pointer"
             >
-              <Sparkles className="size-4" />
               {createMutation.isPending ? "Generating..." : "Generate Code"}
             </Button>
           </DialogFooter>

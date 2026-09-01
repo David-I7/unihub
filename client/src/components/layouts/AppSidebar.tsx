@@ -1,4 +1,4 @@
-import { GraduationCap, PanelLeft } from "lucide-react";
+import { GraduationCap, PanelLeft } from "@/components/ui/icons";
 import {
   Sidebar,
   SidebarContent,
@@ -11,18 +11,21 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NavUser } from "./NavUser";
 import { NavLoginPrompt } from "./NavLoginPrompt";
 import { useAuthStore } from "@/features/auth";
+import { useUnreadNotificationCount } from "@/features/notifications";
 import { Link, useLocation } from "react-router";
 import { navItems, isRouteActive } from "./nav";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const user = useAuthStore((state) => state.user);
+  const { data: totalUnread = 0 } = useUnreadNotificationCount();
   const location = useLocation();
   const { state, toggleSidebar } = useSidebar();
-
 
   return (
     <Sidebar
@@ -80,6 +83,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-1">
               {navItems.map((item) => {
                 const active = isRouteActive(location.pathname, item.url);
+                const isNotifications = item.url === "/notifications";
+                const Icon = item.icon;
+
                 return (
                   <SidebarMenuItem
                     key={item.title}
@@ -87,11 +93,43 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   >
                     <SidebarMenuButton
                       isActive={active}
-                      tooltip={item.title}
+                      tooltip={
+                        isNotifications && totalUnread > 0
+                          ? `${item.title} (${totalUnread})`
+                          : item.title
+                      }
                       render={<Link to={item.url} />}
+                      className={cn(
+                        "transition-colors",
+                        active &&
+                          "bg-primary/10 text-primary font-semibold data-active:bg-primary/10 data-active:text-primary hover:bg-primary/15 hover:text-primary",
+                      )}
                     >
-                      <item.icon className="size-4.5 sm:size-5" />
-                      <span>{item.title}</span>
+                      <div className="relative flex items-center justify-center">
+                        <Icon
+                          className={cn(
+                            "size-4.5 sm:size-5 transition-all",
+                            active
+                              ? "text-primary stroke-[2.25]"
+                              : "text-sidebar-foreground/80",
+                          )}
+                        />
+                        {isNotifications && totalUnread > 0 && (
+                          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary ring-2 ring-sidebar group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
+                        )}
+                      </div>
+                      <span className="truncate group-data-[collapsible=icon]:hidden">
+                        {item.title}
+                      </span>
+                      {isNotifications && totalUnread > 0 && (
+                        <Badge
+                          variant="verified"
+                          size="xs"
+                          className="ml-auto font-bold rounded-full group-data-[collapsible=icon]:hidden"
+                        >
+                          {totalUnread > 99 ? "99+" : totalUnread}
+                        </Badge>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

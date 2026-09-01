@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Edit2, Trash2, Check, X } from "lucide-react";
+import { Edit2, Trash2, Check, X, MoreVertical } from "@/components/ui/icons";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { formatPostDate } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -14,9 +20,14 @@ import type { Comment } from "@/types/domain";
 interface CommentItemProps {
   comment: Comment;
   communitySlug?: string;
+  isArchived?: boolean;
 }
 
-export function CommentItem({ comment, communitySlug }: CommentItemProps) {
+export function CommentItem({
+  comment,
+  communitySlug,
+  isArchived = false,
+}: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -28,8 +39,9 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
   const isAuthor = Boolean(
     user && comment.owner && String(user.id) === String(comment.owner.id),
   );
-  const isAuthorizedToEdit = canEditComment(comment.owner?.id);
-  const isAuthorizedToDelete = canDeleteComment(comment.owner?.id);
+  const isAuthorizedToEdit = !isArchived && canEditComment(comment.owner?.id);
+  const isAuthorizedToDelete =
+    !isArchived && canDeleteComment(comment.owner?.id);
 
   const handleSaveEdit = async () => {
     const cleanContent = editContent.trim();
@@ -60,14 +72,15 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
           <div className="flex items-center gap-2">
             <UserAvatar
               username={comment.owner?.username}
-              className="size-5 rounded-md text-[10px]"
-              fallbackClassName="rounded-md"
+              size="xs"
+              className="size-6 rounded-lg text-[10px]"
+              fallbackClassName="rounded-lg"
             />
             <span className="font-semibold text-foreground">
               {comment.owner?.username ?? "Anonymous"}
             </span>
             {isAuthor && (
-              <span className="rounded-md bg-primary/10 px-1.5 py-0.2 text-[9px] font-bold text-primary">
+              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
                 Author
               </span>
             )}
@@ -78,33 +91,43 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
               {formatPostDate(comment.createdAt)}
             </span>
 
-            {/* Author / Moderator Actions */}
+            {/* 3-Dots Dropdown Menu for Author (Edit/Delete) and Moderators (Delete Only) */}
             {!isEditing && (isAuthorizedToEdit || isAuthorizedToDelete) && (
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {isAuthorizedToEdit && (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setIsEditing(true)}
-                    title="Edit comment"
-                    className="size-6 text-muted-foreground hover:text-foreground"
-                  >
-                    <Edit2 className="size-3" />
-                  </Button>
-                )}
-
-                {isAuthorizedToDelete && (
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    onClick={() => setDeleteDialogOpen(true)}
-                    title="Delete comment"
-                    className="size-6 text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
-                )}
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-6 text-muted-foreground hover:text-foreground cursor-pointer opacity-70 group-hover:opacity-100 transition-opacity"
+                      title="Comment actions"
+                    />
+                  }
+                >
+                  <MoreVertical className="size-3.5" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-32">
+                  {isAuthorizedToEdit && (
+                    <DropdownMenuItem
+                      onClick={() => setIsEditing(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Edit2 className="size-3.5" />
+                      <span>Edit</span>
+                    </DropdownMenuItem>
+                  )}
+                  {isAuthorizedToDelete && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
@@ -143,7 +166,7 @@ export function CommentItem({ comment, communitySlug }: CommentItemProps) {
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground pl-7 leading-relaxed whitespace-pre-line text-xs">
+          <p className="text-muted-foreground pl-8 leading-relaxed whitespace-pre-line text-xs">
             {comment.content}
           </p>
         )}

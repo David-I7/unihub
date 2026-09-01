@@ -8,4 +8,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/004-insert-initial-resource-data.sql
   - include:
-      file: db/changelog/005-notification-subentities-and-material-updates.sql
+      file: db/changelog/005-insert-mock-data.sql

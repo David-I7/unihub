@@ -27,6 +27,7 @@ public enum PermissionType {
     DELETE_STUDY_YEAR(Permissions.DELETE_STUDY_YEAR),
     CREATE_COURSE(Permissions.CREATE_COURSE),
     UPDATE_COURSE(Permissions.UPDATE_COURSE),
+    DELETE_COURSE(Permissions.DELETE_COURSE),
     ARCHIVE_COURSE(Permissions.ARCHIVE_COURSE),
 
     // Course Content (Folders & Materials)

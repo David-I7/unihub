@@ -1,4 +1,4 @@
-import { MoreVertical, Edit2, ArrowUp, Trash2 } from "lucide-react";
+import { MoreVertical, Edit2, ArrowUp, Trash2 } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,7 +35,6 @@ export function MaterialItemActions({
     <div
       className={className}
       onClick={(e) => {
-        // Prevent clicking the card/row when clicking actions trigger
         e.stopPropagation();
       }}
     >

@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
-  Pin,
   Heart,
   MessageSquare,
   ChevronDown,
@@ -10,8 +9,8 @@ import {
   MoreVertical,
   Edit2,
   Trash2,
-  PinOff,
-} from "lucide-react";
+} from "@/components/ui/icons";
+import { Pin, PinOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,10 +38,16 @@ import type { Post } from "@/types/domain";
 export interface PostCardProps {
   post: Post;
   communitySlug?: string;
+  isArchived?: boolean;
   className?: string;
 }
 
-export function PostCard({ post, communitySlug, className }: PostCardProps) {
+export function PostCard({
+  post,
+  communitySlug,
+  isArchived = false,
+  className,
+}: PostCardProps) {
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [likes, setLikes] = useState(post.likesCount);
   const [isLiked, setIsLiked] = useState(Boolean(post.isLiked));
@@ -71,11 +76,14 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
   const isPostAuthor = Boolean(
     user && post.owner && String(user.id) === String(post.owner.id),
   );
-  const canEdit = canEditPost(post.owner?.id);
-  const canDelete = canDeletePost(post.owner?.id);
-  const hasActions = canPinPost || canEdit || canDelete;
+  const canPin = !isArchived && canPinPost;
+  const canEdit = !isArchived && canEditPost(post.owner?.id);
+  const canDelete = !isArchived && canDeletePost(post.owner?.id);
+  const hasActions = canPin || canEdit || canDelete;
 
   const handleLike = async () => {
+    if (isArchived) return;
+
     if (!user) {
       toast.error("Please sign in to like posts.");
       return;
@@ -121,18 +129,15 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
     <>
       <Card
         className={cn(
-          "group rounded-2xl border bg-card p-5 shadow-xs transition-all space-y-4",
+          "group rounded-2xl border bg-card p-5 shadow-xs transition-all space-y-0",
           post.pinned && "border-primary/40 bg-primary/[0.02]",
           className,
         )}
       >
         {/* Header: Author info, badges, and actions */}
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <UserAvatar
-              username={post.owner?.username}
-              size="default"
-            />
+            <UserAvatar username={post.owner?.username} size="default" />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm text-foreground">
@@ -153,8 +158,9 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
           <div className="flex items-center gap-1.5">
             {post.pinned && (
               <Badge
-                variant="secondary"
-                className="bg-primary/15 text-primary border-primary/20 font-semibold text-[11px] gap-1 py-0.5 px-2"
+                variant="verified"
+                size="xs"
+                className="font-semibold gap-1"
               >
                 <Pin className="size-3 fill-primary/30" />
                 Pinned
@@ -177,7 +183,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end" className="w-40">
-                  {canPinPost && (
+                  {canPin && (
                     <DropdownMenuItem
                       onClick={handleTogglePin}
                       className="gap-2 cursor-pointer text-xs"
@@ -206,7 +212,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                     </DropdownMenuItem>
                   )}
 
-                  {(canPinPost || canEdit) && canDelete && (
+                  {(canPin || canEdit) && canDelete && (
                     <DropdownMenuSeparator />
                   )}
 
@@ -227,7 +233,7 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
         </div>
 
         {/* Post Content */}
-        <div className="space-y-2">
+        <div>
           <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
             {post.title}
           </h3>
@@ -241,8 +247,10 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
               variant="ghost"
               size="xs"
               onClick={handleLike}
+              disabled={isArchived}
               className={cn(
-                "gap-1.5 font-semibold text-xs transition-colors cursor-pointer",
+                "gap-1.5 font-semibold text-xs transition-colors",
+                isArchived ? "opacity-70 cursor-default" : "cursor-pointer",
                 isLiked
                   ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100"
                   : "text-muted-foreground hover:text-foreground",
@@ -279,8 +287,12 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
               Comments ({totalComments})
             </h4>
 
-            {/* Inline Comment Composer */}
-            {user ? (
+            {/* Inline Comment Composer or Locked Notice */}
+            {isArchived ? (
+              <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
+                Discussions are locked because this course is archived.
+              </p>
+            ) : user ? (
               <CommentComposer postId={post.id} />
             ) : (
               <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
@@ -299,12 +311,13 @@ export function PostCard({ post, communitySlug, className }: PostCardProps) {
                 thoughts!
               </p>
             ) : (
-              <div className="space-y-2.5 pl-2 border-l-2 border-primary/20">
+              <div className="space-y-2.5">
                 {fetchedComments.map((comment) => (
                   <CommentItem
                     key={comment.id}
                     comment={comment}
                     communitySlug={communitySlug}
+                    isArchived={isArchived}
                   />
                 ))}
 

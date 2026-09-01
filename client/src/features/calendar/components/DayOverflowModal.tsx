@@ -1,17 +1,8 @@
 import { useMemo } from "react";
-import { Bell, Calendar as CalendarIcon, Clock, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
-import {
-  getEventCategoryConfig,
-  isEventCompleted,
-} from "../utils/eventUtils";
-import {
-  formatHeadingDate,
-  formatTime,
-  getLocalDateKey,
-} from "@/lib/dateUtils";
-import { Badge } from "@/components/ui/badge";
+import { formatHeadingDate, getLocalDateKey } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -20,12 +11,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CalendarEventCard } from "./CalendarEventCard";
 
 interface DayOverflowModalProps {
   events: CalendarEvent[];
   canCreateEvent?: boolean;
 }
-
 
 export function DayOverflowModal({
   events,
@@ -48,7 +39,10 @@ export function DayOverflowModal({
   if (!overflowDate) return null;
 
   return (
-    <Dialog open={Boolean(overflowDate)} onOpenChange={(open) => !open && closeOverflowModal()}>
+    <Dialog
+      open={Boolean(overflowDate)}
+      onOpenChange={(open) => !open && closeOverflowModal()}
+    >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="gap-1">
           <div className="flex items-center gap-2">
@@ -58,8 +52,8 @@ export function DayOverflowModal({
             </DialogTitle>
           </div>
           <DialogDescription className="text-xs">
-            Showing all {dayEvents.length} event{dayEvents.length === 1 ? "" : "s"}{" "}
-            scheduled on this day.
+            Showing all {dayEvents.length} event
+            {dayEvents.length === 1 ? "" : "s"} scheduled on this day.
           </DialogDescription>
         </DialogHeader>
 
@@ -70,103 +64,46 @@ export function DayOverflowModal({
               No events scheduled for this day.
             </p>
           ) : (
-            dayEvents.map((ev) => {
-              const config = getEventCategoryConfig(ev.type);
-              const Icon = config.icon;
-              const timeStr = formatTime(ev.startTime);
-              const tag = ev.courseAbbreviation?.trim() || ev.courseSlug;
-
-              return (
-                <div
-                  key={ev.id}
-                  onClick={() => {
-                    closeOverflowModal();
-                    openEventDetails(ev.id);
-                  }}
-                  className={`rounded-xl border p-3 transition-all cursor-pointer select-none ${config.container}`}
-                >
-                  <div className="flex items-center justify-between gap-2 text-xs font-bold">
-                    <span className="flex items-center gap-1.5 min-w-0">
-                      <Icon className="size-3.5 shrink-0" />
-                      {tag && (
-                        <span className="font-mono text-[10px] uppercase font-bold shrink-0 opacity-80">
-                          [{tag}]
-                        </span>
-                      )}
-                      <span className="truncate">{ev.title}</span>
-                    </span>
-
-                    {timeStr && (
-                      <span className="font-mono text-[10px] shrink-0 flex items-center gap-1 opacity-80">
-                        <Clock className="size-3" />
-                        {timeStr}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                    {ev.studyYear && (
-                      <span className="text-[10px] font-medium opacity-80 bg-background/50 px-1.5 py-0.5 rounded">
-                        {ev.studyYear}
-                      </span>
-                    )}
-                    {ev.courseName && (
-                      <span className="font-medium opacity-85 truncate">
-                        {ev.courseName}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="mt-2 flex items-center justify-between text-[10px] opacity-80 pt-1.5 border-t border-current/20">
-                    <span>{ev.communityName || ev.communitySlug}</span>
-                    <div className="flex items-center gap-2">
-                      {ev.location && (
-                        <span className="capitalize">
-                          {ev.location.toLowerCase().replace("_", " ")}
-                        </span>
-                      )}
-                      {ev.isSubscribed && !isEventCompleted(ev) && (
-                        <Badge
-                          variant="secondary"
-                          className="h-4 px-1.5 text-[9px] gap-1 bg-primary/20 text-primary border-none font-semibold"
-                        >
-                          <Bell className="size-2.5 fill-current" /> Reminder
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
+            dayEvents.map((ev) => (
+              <CalendarEventCard
+                key={ev.id}
+                event={ev}
+                onClick={(event) => {
+                  closeOverflowModal();
+                  openEventDetails(event.id);
+                }}
+              />
+            ))
           )}
         </div>
 
-        {/* Add Event on this day Button */}
-        <div className="pt-2 border-t flex justify-between items-center">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              const currentD = overflowDate;
-              closeOverflowModal();
-              openCreateModal(currentD);
-            }}
-            disabled={!canCreateEvent}
-            className="text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1.5 h-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Plus className="size-3.5" /> Add event on this day
-          </Button>
-
+        {/* Add Event on this day Button & Close */}
+        <div className="pt-2 border-t gap-2 flex justify-end items-center">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={closeOverflowModal}
-            className="h-8 text-xs cursor-pointer"
+            className="text-xs cursor-pointer"
           >
             Close
           </Button>
+          {canCreateEvent ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                const currentD = overflowDate;
+                closeOverflowModal();
+                openCreateModal(currentD);
+              }}
+              className="gap-1.5 font-semibold cursor-pointer shrink-0"
+            >
+              <Plus className="size-4" />
+              <span>Add Event</span>
+            </Button>
+          ) : (
+            <div />
+          )}
         </div>
       </DialogContent>
     </Dialog>

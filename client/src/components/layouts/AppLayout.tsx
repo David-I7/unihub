@@ -23,20 +23,22 @@ export default function AppLayout() {
           <div className="sm:hidden">
             <AppHeader />
           </div>
-          <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
-            {!initialized ? (
-              <div className="flex-1 w-full max-w-7xl mx-auto space-y-6 animate-pulse">
-                <div className="h-44 rounded-2xl bg-muted/60" />
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="h-32 rounded-2xl bg-muted/40" />
-                  <div className="h-32 rounded-2xl bg-muted/40" />
-                  <div className="h-32 rounded-2xl bg-muted/40" />
+          <main className="flex-1 flex flex-col items-center overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-6">
+            <div className="w-full max-w-[1000px] flex-1 flex flex-col mx-auto">
+              {!initialized ? (
+                <div className="flex-1 w-full space-y-6 animate-pulse">
+                  <div className="h-44 rounded-2xl bg-muted/60" />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="h-32 rounded-2xl bg-muted/40" />
+                    <div className="h-32 rounded-2xl bg-muted/40" />
+                    <div className="h-32 rounded-2xl bg-muted/40" />
+                  </div>
+                  <div className="h-64 rounded-2xl bg-muted/30" />
                 </div>
-                <div className="h-64 rounded-2xl bg-muted/30" />
-              </div>
-            ) : (
-              <Outlet />
-            )}
+              ) : (
+                <Outlet />
+              )}
+            </div>
           </main>
         </SidebarInset>
 

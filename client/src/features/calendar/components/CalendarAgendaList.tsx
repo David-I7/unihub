@@ -1,28 +1,15 @@
 import { useMemo } from "react";
-import {
-  Bell,
-  Calendar as CalendarIcon,
-  Clock,
-  MapPin,
-} from "lucide-react";
+import { Calendar as CalendarIcon } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
-import {
-  getEventCategoryConfig,
-  isEventCompleted,
-} from "../utils/eventUtils";
-import {
-  formatDayHeader,
-  formatTimeRange,
-  getLocalDateKey,
-} from "@/lib/dateUtils";
+import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { CalendarEventCard } from "./CalendarEventCard";
 
 interface CalendarAgendaListProps {
   events: CalendarEvent[];
 }
-
 
 export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
@@ -81,19 +68,18 @@ export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {groupedEvents.map((group) => (
-        <div
-          key={group.dateStr}
-          className="overflow-hidden rounded-2xl border bg-card shadow-xs"
-        >
-          {/* Day Header */}
-          <div className="flex items-center justify-between border-b bg-muted/40 px-4 py-2.5">
-            <div className="flex items-center gap-2">
+        <div key={group.dateStr} className="space-y-3">
+          {/* Day Header with Sticky-friendly style */}
+          <div className="flex items-center justify-between gap-3 px-1">
+            <div className="flex items-center gap-2.5">
               <span
                 className={cn(
-                  "font-heading text-xs font-bold uppercase tracking-wider",
-                  group.isToday ? "text-primary font-extrabold" : "text-foreground",
+                  "font-heading text-sm font-bold uppercase tracking-wider",
+                  group.isToday
+                    ? "text-primary font-extrabold"
+                    : "text-foreground",
                 )}
               >
                 {group.weekday}, {group.formattedDate}
@@ -102,98 +88,28 @@ export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
               {group.isToday && (
                 <Badge
                   variant="default"
-                  className="h-4 px-1.5 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground"
+                  className="h-5 px-2 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-xs"
                 >
                   Today
                 </Badge>
               )}
             </div>
+
+            <span className="text-xs text-muted-foreground font-medium">
+              {group.events.length}{" "}
+              {group.events.length === 1 ? "event" : "events"}
+            </span>
           </div>
 
-          {/* Day Events Feed */}
-          <div className="divide-y divide-border">
-            {group.events.map((event) => {
-              const config = getEventCategoryConfig(event.type);
-              const Icon = config.icon;
-              const timeStr = formatTimeRange(event.startTime, event.endTime);
-              const abbreviation =
-                event.courseAbbreviation?.trim() || "ABBV";
-
-              return (
-                <div
-                  key={event.id}
-                  onClick={() => openEventDetails(event.id)}
-                  className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 transition-colors hover:bg-muted/30 cursor-pointer"
-                >
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    {/* Top Row: Category Badge + Course Abbreviation + Course Name */}
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
-                          config.container,
-                        )}
-                      >
-                        <Icon className="size-3 shrink-0" />
-                        {config.label}
-                      </span>
-
-                      <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                        {abbreviation}
-                      </span>
-
-                      {event.studyYear && (
-                        <span className="text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
-                          {event.studyYear}
-                        </span>
-                      )}
-
-                      {event.courseName && (
-                        <span className="text-[11px] font-medium text-muted-foreground truncate max-w-[200px]">
-                          {event.courseName}
-                        </span>
-                      )}
-
-                      {event.isSubscribed && !isEventCompleted(event) && (
-                        <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          <Bell className="size-2.5 fill-current" />
-                          Reminder
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Event Title */}
-                    <h4 className="font-heading text-sm font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                      {event.title}
-                    </h4>
-
-                    {/* Community name subtitle */}
-                    {event.communityName && (
-                      <p className="text-[11px] text-muted-foreground line-clamp-1">
-                        {event.communityName}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Right Side / Meta: Time and Location */}
-                  <div className="flex flex-wrap sm:flex-col sm:items-end items-center gap-2 sm:gap-1 text-xs text-muted-foreground shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0">
-                    {timeStr && (
-                      <div className="flex items-center gap-1 font-mono text-[11px] font-semibold text-foreground">
-                        <Clock className="size-3 text-muted-foreground" />
-                        <span>{timeStr}</span>
-                      </div>
-                    )}
-
-                    {event.location && (
-                      <div className="flex items-center gap-1 text-[11px] capitalize text-muted-foreground">
-                        <MapPin className="size-3 text-muted-foreground shrink-0" />
-                        <span>{event.location.toLowerCase().replace("_", " ")}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          {/* Events List for this Day */}
+          <div className="space-y-3">
+            {group.events.map((event) => (
+              <CalendarEventCard
+                key={event.id}
+                event={event}
+                onClick={() => openEventDetails(event.id)}
+              />
+            ))}
           </div>
         </div>
       ))}

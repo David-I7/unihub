@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Send, CornerDownLeft } from "lucide-react";
+import { Send } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -45,8 +45,9 @@ export function CommentComposer({ postId }: CommentComposerProps) {
     <form onSubmit={handleSubmit} className="flex gap-2.5 items-start pt-2">
       <UserAvatar
         username={user?.username}
-        size="sm"
-        className="size-6 shrink-0 mt-1"
+        size="xs"
+        className="size-6 rounded-lg text-[10px]"
+        fallbackClassName="rounded-lg"
       />
 
       <div className="flex-1 space-y-2">
@@ -70,13 +71,6 @@ export function CommentComposer({ postId }: CommentComposerProps) {
           >
             <Send className="size-3" />
           </Button>
-        </div>
-
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground px-1">
-          <span className="hidden sm:inline flex items-center gap-1">
-            <CornerDownLeft className="size-2.5" /> Press Ctrl+Enter to post
-          </span>
-          <span>{content.length} / 2000</span>
         </div>
       </div>
     </form>

@@ -4,7 +4,6 @@ import {
   UploadCloud,
   FileText,
   X,
-  CheckCircle2,
   AlertCircle,
   Folder,
 } from "lucide-react";
@@ -20,7 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import {
   ALLOWED_MEDIA_TYPES,
@@ -115,7 +119,8 @@ export function UploadFileModal({
     if (validateSelectedFile(file)) {
       setSelectedFile(file);
       // Auto-populate title if empty or unchanged
-      const rawName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+      const rawName =
+        file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
       setTitle(rawName);
       setTitleError(null);
     } else {
@@ -187,7 +192,10 @@ export function UploadFileModal({
       resetForm();
       onOpenChange(false);
     } catch (err: unknown) {
-      if ((err as Error)?.name === "CanceledError" || (err as Error)?.name === "AbortError") {
+      if (
+        (err as Error)?.name === "CanceledError" ||
+        (err as Error)?.name === "AbortError"
+      ) {
         return;
       }
       const message = getErrorMessage(err, "Failed to upload file.");
@@ -209,7 +217,7 @@ export function UploadFileModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           {serverError && (
             <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
               <AlertCircle className="size-4 shrink-0" />
@@ -277,7 +285,10 @@ export function UploadFileModal({
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <span>{formatBytes(selectedFile.size)}</span>
                     <span>•</span>
-                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
+                    <Badge
+                      variant="secondary"
+                      className="text-[9px] px-1.5 py-0 font-mono"
+                    >
                       {selectedFile.type || "binary"}
                     </Badge>
                   </div>
@@ -320,7 +331,10 @@ export function UploadFileModal({
           {/* Description Field */}
           <Field>
             <FieldLabel htmlFor="materialDescription">
-              Description <span className="text-muted-foreground font-normal">(Optional)</span>
+              Description{" "}
+              <span className="text-muted-foreground font-normal">
+                (Optional)
+              </span>
             </FieldLabel>
             <Textarea
               id="materialDescription"
@@ -345,7 +359,9 @@ export function UploadFileModal({
                   <UploadCloud className="size-4 text-primary animate-bounce" />
                   Uploading file to storage...
                 </span>
-                <span className="font-mono text-primary">{uploadProgress}%</span>
+                <span className="font-mono text-primary">
+                  {uploadProgress}%
+                </span>
               </div>
               <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
                 <div
@@ -380,7 +396,6 @@ export function UploadFileModal({
                   disabled={!selectedFile || isUploading}
                   className="gap-1.5 font-bold cursor-pointer"
                 >
-                  <CheckCircle2 className="size-4" />
                   Upload File
                 </Button>
               </>

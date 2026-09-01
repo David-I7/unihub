@@ -1,4 +1,4 @@
-import { SearchX } from "lucide-react";
+import { SearchX } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 
 interface CommunityEmptyStateProps {

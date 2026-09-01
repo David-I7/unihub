@@ -168,7 +168,7 @@ CREATE TABLE MATERIAL_FILES(
 );
 
 CREATE TYPE MATERIAL_LINK_TYPE AS ENUM(
-  'VIDEO', 'DRIVE', 'GITHUB', 'OTHER'
+  'VIDEO', 'DRIVE', 'GITHUB', 'DOCS', 'DOCX','OTHER'
 );
 
 CREATE TABLE MATERIAL_LINKS(
@@ -191,8 +191,7 @@ CREATE TABLE EVENTS(
     description text,
     type EVENT_TYPE not null,
     start_time timestamptz not null,
-    end_time timestamptz,
-    duration_minutes int,
+    duration_hours double precision,
     location EVENT_LOCATION not null,
     location_details text,
     course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
@@ -214,22 +213,7 @@ CREATE TABLE EVENT_REMINDERS(
     remind_at timestamptz not null,
     status REMINDER_STATUS not null default 'PENDING',
     created_at timestamptz not null default now(),
-    UNIQUE (user_id, event_id, offset_minutes)
-);
-
-CREATE TYPE NOTIFICATION_TYPE AS ENUM(
-  'EVENT_REMINDER', 'EVENT_UPDATED', 'EVENT_CANCELLED', 'SYSTEM'
-);
-
-CREATE TABLE NOTIFICATIONS(
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID not null REFERENCES USERS(id) ON DELETE CASCADE,
-    title text not null,
-    message text not null,
-    type NOTIFICATION_TYPE not null,
-    event_id UUID REFERENCES EVENTS(id) ON DELETE SET NULL,
-    is_read boolean not null default false,
-    created_at timestamptz not null default now()
+    UNIQUE (user_id, event_id)
 );
 
 CREATE TABLE COMMUNITY_JOIN_CODES(
@@ -241,6 +225,25 @@ CREATE TABLE COMMUNITY_JOIN_CODES(
      uses_count INTEGER NOT NULL DEFAULT 0,
      expires_at TIMESTAMPTZ DEFAULT NULL,
      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TYPE NOTIFICATION_CATEGORY AS ENUM ('EVENT', 'POST', 'SYSTEM');
+CREATE TYPE NOTIFICATION_TYPE AS ENUM (
+    'EVENT_REMINDER', 'EVENT_UPDATED', 'EVENT_CANCELLED',
+    'COMMUNITY_POST', 'COURSE_POST', 'POST_COMMENT', 'POST_LIKE',
+    'SYSTEM_ANNOUNCEMENT', 'SYSTEM_MAINTENANCE', 'SYSTEM_GENERAL');
+
+-- Base NOTIFICATIONS table
+CREATE TABLE NOTIFICATIONS (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES USERS(id) ON DELETE CASCADE,
+    type NOTIFICATION_TYPE NOT NULL,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    category NOTIFICATION_CATEGORY NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    metadata JSONB
 );
 
 -- Indexes
@@ -255,6 +258,7 @@ CREATE INDEX idx_folders_course_parent_name ON folders(course_id, parent_folder_
 CREATE INDEX idx_events_community_start_time ON events(community_id, start_time ASC, type);
 CREATE INDEX idx_events_course_start_time ON events(course_id, start_time ASC, type);
 CREATE INDEX idx_event_reminders_pending_remind_at ON event_reminders(status, remind_at ASC);
-CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, created_at DESC);
 CREATE INDEX idx_community_join_codes_code ON COMMUNITY_JOIN_CODES(code);
 CREATE INDEX idx_community_join_codes_community_id ON COMMUNITY_JOIN_CODES(community_id);
+CREATE INDEX idx_notifications_user_category_created ON NOTIFICATIONS(user_id, category, created_at DESC);
+CREATE INDEX idx_notifications_user_unread ON NOTIFICATIONS(user_id, is_read, created_at DESC);

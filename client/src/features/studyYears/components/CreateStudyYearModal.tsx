@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,

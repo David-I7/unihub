@@ -1,4 +1,4 @@
-import { Calendar } from "lucide-react";
+import { Calendar } from "@/components/ui/icons";
 import { StudyYearCard } from "./StudyYearCard";
 import { studyYearNameToSlug, type StudyYearMetrics } from "../api/types";
 import { useNavigate } from "react-router";

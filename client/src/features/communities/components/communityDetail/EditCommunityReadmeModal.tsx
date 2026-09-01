@@ -1,17 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
-import {
-  Eye,
-  Edit3,
-  Check,
-  Heading1,
-  Bold,
-  Italic,
-  List,
-  Code,
-  Table as TableIcon,
-} from "lucide-react";
+import { Eye, Edit2 as Edit3, Code } from "@/components/ui/icons";
+import { Heading1, Bold, Italic, List, Table as TableIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +35,9 @@ export function EditCommunityReadmeModal({
   );
   const updateMutation = useUpdateCommunity();
 
-  const isEditing = Boolean(community.readme && community.readme.trim().length > 0);
+  const isEditing = Boolean(
+    community.readme && community.readme.trim().length > 0,
+  );
 
   const handleInsertSnippet = (before: string, after: string = "") => {
     setReadme((prev) => `${prev}\n${before}${after}`);
@@ -73,47 +67,53 @@ export function EditCommunityReadmeModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="w-full max-w-5xl h-[85vh] p-0 overflow-hidden flex flex-col rounded-2xl border shadow-2xl"
-        contentClassName="p-0 gap-0 h-full flex-1 overflow-hidden"
+        contentClassName="p-0 gap-0 h-full flex-1 flex flex-col min-h-0 overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 pb-3 border-b border-border/70 pr-10 sm:pr-12">
+        <div className="p-4 sm:p-0 pb-3 border-b border-border/70 pr-10 sm:pr-12 shrink-0">
           <DialogHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <DialogTitle className="truncate">
-                  {isEditing ? "Edit Community Readme" : "Create Community Readme"}
+                  {isEditing
+                    ? "Edit Community Readme"
+                    : "Create Community Readme"}
                 </DialogTitle>
                 <DialogDescription className="text-xs truncate">
                   {isEditing
-                    ? `Update rich documentation for ${community.name}.`
-                    : `Write rich documentation using GitHub Flavored Markdown for ${community.name}.`}
+                    ? `Update documentation for ${community.name}.`
+                    : `Write documentation using Markdown for ${community.name}.`}
                 </DialogDescription>
               </div>
 
-              {/* Mobile View Toggle */}
-              <div className="flex sm:hidden items-center shrink-0 rounded-lg bg-muted p-0.5 gap-0.5">
-                <Button
+              {/* Mobile View Toggle (Tab-like design) */}
+              <div className="flex sm:hidden items-center shrink-0 rounded-xl bg-muted/60 p-1 border border-border/40 gap-1">
+                <button
                   type="button"
-                  variant={activeMobileView === "edit" ? "secondary" : "ghost"}
-                  size="xs"
                   onClick={() => setActiveMobileView("edit")}
-                  className="text-xs px-2.5 py-1 h-7 gap-1"
+                  className={cn(
+                    "inline-flex h-7.5 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all duration-150 cursor-pointer",
+                    activeMobileView === "edit"
+                      ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                  )}
                 >
-                  <Edit3 className="size-3" />
-                  Edit
-                </Button>
-                <Button
+                  <Edit3 className="size-3.5" />
+                  <span>Edit</span>
+                </button>
+                <button
                   type="button"
-                  variant={
-                    activeMobileView === "preview" ? "secondary" : "ghost"
-                  }
-                  size="xs"
                   onClick={() => setActiveMobileView("preview")}
-                  className="text-xs px-2.5 py-1 h-7 gap-1"
+                  className={cn(
+                    "inline-flex h-7.5 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all duration-150 cursor-pointer",
+                    activeMobileView === "preview"
+                      ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
+                      : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                  )}
                 >
-                  <Eye className="size-3" />
-                  Preview
-                </Button>
+                  <Eye className="size-3.5" />
+                  <span>Preview</span>
+                </button>
               </div>
             </div>
           </DialogHeader>
@@ -201,34 +201,36 @@ export function EditCommunityReadmeModal({
         <div className="grid grid-cols-1 sm:grid-cols-2 flex-1 min-h-0 divide-y sm:divide-y-0 sm:divide-x divide-border overflow-hidden">
           {/* Left Column: Markdown Input */}
           <div
-            className={`flex flex-col h-full min-w-0 p-3 sm:p-4 space-y-2 ${
+            className={`flex flex-col h-full min-h-0 min-w-0 p-4 sm:p-2 space-y-2 overflow-hidden ${
               activeMobileView === "preview" ? "hidden sm:flex" : "flex"
             }`}
           >
-            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground pb-0.5">
+            <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground pb-0.5 shrink-0">
               <span>Markdown Source</span>
               <span>{readme.length} / 50,000 chars</span>
             </div>
-            <Textarea
-              value={readme}
-              onChange={(e) => setReadme(e.target.value)}
-              placeholder="# Community Overview&#10;&#10;Write detailed curriculum instructions, academic resources, or community guidelines here..."
-              maxLength={50000}
-              className="flex-1 min-h-0 resize-none font-mono text-xs leading-relaxed p-3 sm:p-3.5 border border-input rounded-xl bg-background"
-            />
+            <div className="flex-1 min-h-0 relative h-full">
+              <Textarea
+                value={readme}
+                onChange={(e) => setReadme(e.target.value)}
+                placeholder="# Community Overview&#10;&#10;Write detailed curriculum instructions, academic resources, or community guidelines here..."
+                maxLength={50000}
+                className="w-full h-full min-h-0 resize-none font-mono text-xs leading-relaxed p-3 sm:p-3.5 border border-input rounded-xl bg-background overflow-y-auto [field-sizing:normal]"
+              />
+            </div>
           </div>
 
           {/* Right Column: Live Rendered Preview */}
           <div
-            className={`flex flex-col h-full min-w-0 p-3 sm:p-4 overflow-y-auto space-y-2 bg-muted/20 ${
+            className={`flex flex-col h-full min-h-0 min-w-0 p-4 sm:p-2 space-y-2 bg-muted/20 overflow-hidden ${
               activeMobileView === "edit" ? "hidden sm:flex" : "flex"
             }`}
           >
-            <div className="text-xs font-semibold text-muted-foreground pb-0.5">
+            <div className="text-xs font-semibold text-muted-foreground pb-0.5 shrink-0">
               Live Preview
             </div>
 
-            <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-6 overflow-x-auto min-h-0 flex-1 break-words">
+            <div className="rounded-xl border border-border/80 bg-card p-4 sm:p-6 overflow-y-auto overflow-x-auto min-h-0 flex-1 break-words">
               {readme.trim() ? (
                 <MarkdownRenderer content={readme} />
               ) : (
@@ -243,7 +245,7 @@ export function EditCommunityReadmeModal({
         </div>
 
         {/* Footer */}
-        <DialogFooter className="p-3.5 sm:p-4 border-t border-border bg-muted/30 -mx-0 -mb-0 mt-0 rounded-b-2xl sm:flex-row sm:justify-end flex gap-2">
+        <DialogFooter className="p-3.5 sm:p-4 border-t border-border bg-muted/30 -mx-0 -mb-0 mt-0 rounded-b-2xl sm:flex-row sm:justify-end flex gap-2 shrink-0">
           <Button
             type="button"
             variant="outline"
@@ -257,7 +259,6 @@ export function EditCommunityReadmeModal({
             disabled={updateMutation.isPending}
             className="gap-1.5 font-bold cursor-pointer"
           >
-            <Check className="size-4" />
             {updateMutation.isPending
               ? "Saving..."
               : isEditing

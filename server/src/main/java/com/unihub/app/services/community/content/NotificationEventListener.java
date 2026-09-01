@@ -1,7 +1,10 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.*;
+import com.unihub.app.entities.community.content.Notification;
+import com.unihub.app.entities.community.content.NotificationCategory;
+import com.unihub.app.entities.community.content.NotificationMetadata;
+import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.events.notification.*;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
@@ -44,16 +47,17 @@ public class NotificationEventListener {
 
         String title = "New post in " + event.community().getName();
         String message = event.author().getUsername() + " posted: '" + event.post().getTitle() + "'";
+        NotificationMetadata metadata = contentMapper.toCommunityPostNotificationMetadata(event.community(), event.author());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
-            notifications.add(contentMapper.toPostNotificationEntity(
+            notifications.add(contentMapper.toNotificationEntity(
                     member,
                     title,
                     message,
-                    PostNotificationType.COMMUNITY_POST,
-                    event.post(),
-                    event.author()
+                    NotificationCategory.POST,
+                    NotificationType.COMMUNITY_POST,
+                    metadata
             ));
         }
 
@@ -77,16 +81,17 @@ public class NotificationEventListener {
 
         String title = "New post in " + event.course().getName();
         String message = event.author().getUsername() + " posted: '" + event.post().getTitle() + "'";
+        NotificationMetadata metadata = contentMapper.toCoursePostNotificationMetadata(event.course(), event.author());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
-            notifications.add(contentMapper.toPostNotificationEntity(
+            notifications.add(contentMapper.toNotificationEntity(
                     member,
                     title,
                     message,
-                    PostNotificationType.COURSE_POST,
-                    event.post(),
-                    event.author()
+                    NotificationCategory.POST,
+                    NotificationType.COURSE_POST,
+                    metadata
             ));
         }
 
@@ -110,11 +115,11 @@ public class NotificationEventListener {
                 : event.comment().getContent();
         String message = event.commentAuthor().getUsername() + " commented: '" + commentSnippet + "'";
 
-        PostNotification notification = contentMapper.toPostNotificationEntity(
+        Notification notification = contentMapper.toPostNotificationEntity(
                 postOwner,
                 title,
                 message,
-                PostNotificationType.COMMENT,
+                NotificationType.POST_COMMENT,
                 event.post(),
                 event.commentAuthor()
         );
@@ -136,11 +141,11 @@ public class NotificationEventListener {
         String title = "New like on your post";
         String message = event.liker().getUsername() + " liked your post: '" + event.post().getTitle() + "'";
 
-        PostNotification notification = contentMapper.toPostNotificationEntity(
+        Notification notification = contentMapper.toPostNotificationEntity(
                 postOwner,
                 title,
                 message,
-                PostNotificationType.LIKE,
+                NotificationType.POST_LIKE,
                 event.post(),
                 event.liker()
         );
@@ -170,7 +175,7 @@ public class NotificationEventListener {
                     recipient,
                     title,
                     message,
-                    EventNotificationType.UPDATED,
+                    NotificationType.EVENT_UPDATED,
                     event.event(),
                     event.updater()
             ));
@@ -193,19 +198,20 @@ public class NotificationEventListener {
         List<User> recipients = userRepository.findAllById(event.recipientUserIds());
         String title = "Event Cancelled: " + event.eventTitle();
         String message = "The event '" + event.eventTitle() + "' has been cancelled";
+        NotificationMetadata metadata = contentMapper.toEventCancelledNotificationMetadata(event.communitySlug(), event.canceller());
 
         List<Notification> notifications = new ArrayList<>();
         for (User recipient : recipients) {
             if (event.canceller() != null && recipient.getId().equals(event.canceller().getId())) {
                 continue;
             }
-            notifications.add(contentMapper.toEventNotificationEntity(
+            notifications.add(contentMapper.toNotificationEntity(
                     recipient,
                     title,
                     message,
-                    EventNotificationType.CANCELLED,
-                    null,
-                    event.canceller()
+                    NotificationCategory.EVENT,
+                    NotificationType.EVENT_CANCELLED,
+                    metadata
             ));
         }
 

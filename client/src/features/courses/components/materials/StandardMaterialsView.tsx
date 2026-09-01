@@ -4,8 +4,6 @@ import {
   Folder,
   ChevronRight,
   FolderOpen,
-  Globe,
-  FileText,
   Plus,
   UploadCloud,
   Link2,
@@ -55,12 +53,14 @@ interface StandardMaterialsViewProps {
   communitySlug: string;
   studyYearSlug: string;
   courseSlug: string;
+  isArchived?: boolean;
 }
 
 export function StandardMaterialsView({
   communitySlug,
   studyYearSlug,
   courseSlug,
+  isArchived = false,
 }: StandardMaterialsViewProps) {
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
     { id: null, name: "Root", type: "folder" },
@@ -113,16 +113,27 @@ export function StandardMaterialsView({
       : null;
 
   const {
-    canCreateFolder,
-    canCreateMaterial,
-    canEditFolder,
-    canDeleteFolder,
-    canEditMaterial,
-    canDeleteMaterial,
+    canCreateFolder: rawCanCreateFolder,
+    canCreateMaterial: rawCanCreateMaterial,
+    canEditFolder: rawCanEditFolder,
+    canDeleteFolder: rawCanDeleteFolder,
+    canEditMaterial: rawCanEditMaterial,
+    canDeleteMaterial: rawCanDeleteMaterial,
     hasPermission,
   } = usePermissions(communitySlug);
 
-  const isFolderModerator = hasPermission(PERMISSIONS.MODERATE_FOLDER);
+  const canCreateFolder = !isArchived && rawCanCreateFolder;
+  const canCreateMaterial = !isArchived && rawCanCreateMaterial;
+  const canEditFolder = (ownerId?: string | number | null) =>
+    !isArchived && rawCanEditFolder(ownerId);
+  const canDeleteFolder = (ownerId?: string | number | null) =>
+    !isArchived && rawCanDeleteFolder(ownerId);
+  const canEditMaterial = (ownerId?: string | number | null) =>
+    !isArchived && rawCanEditMaterial(ownerId);
+  const canDeleteMaterial = (ownerId?: string | number | null) =>
+    !isArchived && rawCanDeleteMaterial(ownerId);
+  const isFolderModerator =
+    !isArchived && hasPermission(PERMISSIONS.MODERATE_FOLDER);
 
   const {
     data: materials,
@@ -175,9 +186,7 @@ export function StandardMaterialsView({
   };
 
   // Move an item up one level in the hierarchy
-  const handleMoveUpOneLevel = async (
-    item: DraggedItemData,
-  ) => {
+  const handleMoveUpOneLevel = async (item: DraggedItemData) => {
     if (!parentOfCurrentFolder) return;
 
     try {
@@ -230,18 +239,13 @@ export function StandardMaterialsView({
         });
       }
 
-      toast.success(
-        `Moved "${dragged.title}" into "${targetFolderName}".`,
-      );
+      toast.success(`Moved "${dragged.title}" into "${targetFolderName}".`);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Failed to move item."));
     }
   };
 
-  const handleDragStart = (
-    e: React.DragEvent,
-    item: DraggedItemData,
-  ) => {
+  const handleDragStart = (e: React.DragEvent, item: DraggedItemData) => {
     e.dataTransfer.setData("application/json", JSON.stringify(item));
     e.dataTransfer.effectAllowed = "move";
   };
@@ -255,12 +259,7 @@ export function StandardMaterialsView({
   return (
     <div className="space-y-6">
       {/* Top Toolbar: Title on left, Action Buttons on right */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b pb-4">
-        <div className="flex items-center gap-2 text-foreground font-heading font-bold text-base">
-          <FolderOpen className="size-5 text-primary" />
-          <span>Course Materials & Repository</span>
-        </div>
-
+      <div className="flex items-center justify-end gap-4 border-b pb-4">
         {/* Action Buttons (Only shown when browsing a folder) */}
         {!isMaterialDetail && (
           <div className="flex flex-wrap items-center gap-2">
@@ -281,20 +280,19 @@ export function StandardMaterialsView({
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setAddLinkOpen(true)}
-                  className="gap-1.5 font-bold cursor-pointer"
-                >
-                  <Link2 className="size-4" />
-                  <span>Add Link</span>
-                </Button>
-
-                <Button
-                  size="sm"
                   onClick={() => setUploadFileOpen(true)}
                   className="gap-1.5 font-bold cursor-pointer"
                 >
                   <UploadCloud className="size-4" />
                   <span>Upload File</span>
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setAddLinkOpen(true)}
+                  className="gap-1.5 font-bold cursor-pointer"
+                >
+                  <Link2 className="size-4" />
+                  <span>Add Link</span>
                 </Button>
               </>
             )}
@@ -308,7 +306,9 @@ export function StandardMaterialsView({
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
           const isBreadcrumbDropTarget =
-            !isLast && item.type === "folder" && dragOverBreadcrumbId === (item.id ?? "root");
+            !isLast &&
+            item.type === "folder" &&
+            dragOverBreadcrumbId === (item.id ?? "root");
 
           return (
             <div
@@ -322,7 +322,7 @@ export function StandardMaterialsView({
                 type="button"
                 onClick={() => handleNavigateBreadcrumb(index)}
                 onDragOver={(e) => {
-                  if (!isLast && item.type === "folder") {
+                  if (!isArchived && !isLast && item.type === "folder") {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = "move";
                     setDragOverBreadcrumbId(item.id ?? "root");
@@ -330,7 +330,7 @@ export function StandardMaterialsView({
                 }}
                 onDragLeave={() => setDragOverBreadcrumbId(null)}
                 onDrop={(e) => {
-                  if (!isLast && item.type === "folder") {
+                  if (!isArchived && !isLast && item.type === "folder") {
                     e.preventDefault();
                     setDragOverBreadcrumbId(null);
                     const raw = e.dataTransfer.getData("application/json");
@@ -364,8 +364,8 @@ export function StandardMaterialsView({
       {isMaterialDetail && currentBreadcrumb.material ? (
         <MaterialDetailViewer
           material={currentBreadcrumb.material}
-          filePath={breadcrumbs.map((b) => b.name).join(" / ")}
           communitySlug={communitySlug}
+          isArchived={isArchived}
           onDeleted={() => {
             // Navigate back to the parent folder
             setBreadcrumbs((prev) => prev.slice(0, -1));
@@ -375,10 +375,7 @@ export function StandardMaterialsView({
               setBreadcrumbs((prev) => {
                 const next = [...prev];
                 const lastIdx = next.length - 1;
-                const updatedName =
-                  updated.type === "folder"
-                    ? updated.data.name
-                    : updated.data.title;
+                const updatedName = updated.data.title;
                 next[lastIdx] = {
                   ...next[lastIdx],
                   name: updatedName,
@@ -435,46 +432,10 @@ export function StandardMaterialsView({
                   Folder is Empty
                 </h3>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  No files, links, or subfolders have been added to this location yet.
+                  No files, links, or subfolders have been added to this
+                  location yet.
                 </p>
               </div>
-
-              {(canCreateFolder || canCreateMaterial) && (
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                  {canCreateFolder && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setCreateFolderOpen(true)}
-                      className="gap-1.5 font-bold cursor-pointer"
-                    >
-                      <Plus className="size-4" />
-                      <span>New Folder</span>
-                    </Button>
-                  )}
-                  {canCreateMaterial && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setAddLinkOpen(true)}
-                        className="gap-1.5 font-bold cursor-pointer"
-                      >
-                        <Link2 className="size-4" />
-                        <span>Add Link</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => setUploadFileOpen(true)}
-                        className="gap-1.5 font-bold cursor-pointer"
-                      >
-                        <UploadCloud className="size-4" />
-                        <span>Upload File</span>
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           )}
 
@@ -485,8 +446,7 @@ export function StandardMaterialsView({
               {folders.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Folder className="size-3.5 text-primary" /> Folders (
-                    {folders.length})
+                    Folders ({folders.length})
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {folders.map((folder) => {
@@ -506,21 +466,30 @@ export function StandardMaterialsView({
                             })
                           }
                           onDragOver={(e) => {
-                            e.preventDefault();
-                            e.dataTransfer.dropEffect = "move";
-                            setDragOverFolderId(folder.id);
+                            if (!isArchived) {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = "move";
+                              setDragOverFolderId(folder.id);
+                            }
                           }}
                           onDragLeave={() => setDragOverFolderId(null)}
                           onDrop={(e) => {
-                            e.preventDefault();
-                            setDragOverFolderId(null);
-                            const raw = e.dataTransfer.getData("application/json");
-                            if (raw) {
-                              try {
-                                const parsed: DraggedItemData = JSON.parse(raw);
-                                handleMoveIntoFolder(parsed, folder.id, folder.name);
-                              } catch {
-                                // Ignore error
+                            if (!isArchived) {
+                              e.preventDefault();
+                              setDragOverFolderId(null);
+                              const raw =
+                                e.dataTransfer.getData("application/json");
+                              if (raw) {
+                                try {
+                                  const parsed: DraggedItemData = JSON.parse(raw);
+                                  handleMoveIntoFolder(
+                                    parsed,
+                                    folder.id,
+                                    folder.name,
+                                  );
+                                } catch {
+                                  // Ignore error
+                                }
                               }
                             }
                           }}
@@ -557,7 +526,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() => setActiveFolderToEdit(folder)}
                               onMoveUp={() =>
                                 handleMoveUpOneLevel({
@@ -568,7 +537,6 @@ export function StandardMaterialsView({
                               }
                               onDelete={() => setActiveFolderToDelete(folder)}
                             />
-                            <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary transition-all" />
                           </div>
                         </div>
                       );
@@ -581,8 +549,7 @@ export function StandardMaterialsView({
               {files.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <FileText className="size-3.5 text-primary" /> Files (
-                    {files.length})
+                    Files ({files.length})
                   </h3>
                   <div className="space-y-2">
                     {files.map((file: CourseMaterialFile) => {
@@ -629,7 +596,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "file",
@@ -650,7 +617,6 @@ export function StandardMaterialsView({
                                 })
                               }
                             />
-                            <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary transition-all" />
                           </div>
                         </div>
                       );
@@ -663,8 +629,7 @@ export function StandardMaterialsView({
               {links.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Globe className="size-3.5 text-primary" /> External Links (
-                    {links.length})
+                    External Links ({links.length})
                   </h3>
                   <div className="space-y-2">
                     {links.map((link: CourseMaterialLink) => {
@@ -717,7 +682,7 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={Boolean(parentOfCurrentFolder)}
+                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "link",
@@ -738,7 +703,6 @@ export function StandardMaterialsView({
                                 })
                               }
                             />
-                            <ChevronRight className="size-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary transition-all" />
                           </div>
                         </div>
                       );

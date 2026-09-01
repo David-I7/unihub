@@ -1,10 +1,18 @@
 import client from "@/api/client";
+import {
+  getPaginatedNextPageParam,
+  getPaginatedPrevPageParam,
+  type PaginatedResponse,
+} from "@/api/types";
 import { useAuthStore } from "@/features/auth";
 import {
   useQuery,
+  useInfiniteQuery,
   useMutation,
   useQueryClient,
   keepPreviousData,
+  type InfiniteData,
+  type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
 import type {
   CalendarEvent,
@@ -18,29 +26,16 @@ export const calendarKeys = {
   all: ["calendar"] as const,
   events: (params: CalendarQueryParams = {}) =>
     [...calendarKeys.all, "events", params] as const,
+  upcoming: (params: { days?: number; size?: number } = {}) =>
+    [...calendarKeys.all, "upcoming", params] as const,
   detail: (id: string) => [...calendarKeys.all, "detail", id] as const,
 };
 
 export async function getEvents(
   params: CalendarQueryParams = {},
 ): Promise<CalendarEvent[]> {
-  try {
-    const response = await client.get<CalendarEvent[]>("/calendar", { params });
-    if (Array.isArray(response.data)) {
-      return response.data;
-    }
-    const dataObj = response.data as Record<string, unknown> | null | undefined;
-    if (dataObj && Array.isArray(dataObj.content)) {
-      return dataObj.content as CalendarEvent[];
-    }
-    if (dataObj && Array.isArray(dataObj.data)) {
-      return dataObj.data as CalendarEvent[];
-    }
-    return [];
-  } catch (error) {
-    console.error("Failed to fetch calendar events:", error);
-    return [];
-  }
+  const response = await client.get<CalendarEvent[]>("/calendar", { params });
+  return response.data;
 }
 
 export async function getEventById(eventId: string): Promise<Event> {
@@ -133,5 +128,53 @@ export function useDeleteEvent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.all });
     },
+  });
+}
+
+export async function getUpcomingEvents(
+  params: { days?: number; page?: number; size?: number } = {},
+): Promise<PaginatedResponse<CalendarEvent>> {
+  const { days = 7, page = 0, size = 5 } = params;
+  const response = await client.get<PaginatedResponse<CalendarEvent>>(
+    "/calendar/upcoming",
+    { params: { days, page, size } },
+  );
+  return response.data;
+}
+
+export function useInfiniteUpcomingEvents(
+  params: { days?: number; size?: number } = {},
+  options?: Omit<
+    UseInfiniteQueryOptions<
+      PaginatedResponse<CalendarEvent>,
+      Error,
+      InfiniteData<PaginatedResponse<CalendarEvent>>,
+      ReturnType<typeof calendarKeys.upcoming>,
+      number
+    >,
+    | "queryKey"
+    | "queryFn"
+    | "initialPageParam"
+    | "getNextPageParam"
+    | "getPreviousPageParam"
+  >,
+) {
+  const user = useAuthStore((state) => state.user);
+  const { days = 7, size = 5 } = params;
+
+  return useInfiniteQuery({
+    queryKey: calendarKeys.upcoming({ days, size }),
+    queryFn: ({ pageParam }) =>
+      getUpcomingEvents({
+        days,
+        page: pageParam,
+        size,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: getPaginatedNextPageParam,
+    getPreviousPageParam: getPaginatedPrevPageParam,
+    enabled: Boolean(user),
+    placeholderData: keepPreviousData,
+    ...options,
   });
 }
