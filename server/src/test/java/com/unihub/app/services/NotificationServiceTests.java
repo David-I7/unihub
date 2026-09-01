@@ -9,7 +9,6 @@ import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
-import com.unihub.app.repositories.community.content.NotificationProjection;
 import com.unihub.app.repositories.community.content.NotificationRepository;
 import com.unihub.app.services.community.content.NotificationService;
 import org.junit.jupiter.api.DisplayName;
@@ -54,39 +53,39 @@ public class NotificationServiceTests {
     @InjectMocks
     private NotificationService notificationService;
 
-    private static class TestNotificationProjection implements NotificationProjection {
-        private final UUID id = UUID.randomUUID();
-        private final UUID eventId = UUID.randomUUID();
-        private final UUID actorId = UUID.randomUUID();
-        private final OffsetDateTime createdAt = OffsetDateTime.now();
-
-        @Override public UUID getId() { return id; }
-        @Override public String getTitle() { return "Reminder: Algorithms Exam"; }
-        @Override public String getMessage() { return "Exam starts soon"; }
-        @Override public NotificationCategory getCategory() { return NotificationCategory.EVENT; }
-        @Override public NotificationType getType() { return NotificationType.EVENT_REMINDER; }
-        @Override public boolean getIsRead() { return false; }
-        @Override public OffsetDateTime getCreatedAt() { return createdAt; }
-        @Override public UUID getEventId() { return eventId; }
-        @Override public UUID getActorId() { return actorId; }
-        @Override public String getActorUsername() { return "prof_smith"; }
-        @Override public Boolean getActorActive() { return true; }
-        @Override public String getCommunitySlug() { return "fmi-info"; }
-        @Override public String getCommunityName() { return "FMI Info"; }
-        @Override public String getStudyYearName() { return "YEAR_1"; }
-        @Override public String getCourseName() { return "Algorithms"; }
-        @Override public String getCourseSlug() { return "algorithms"; }
-    }
-
     @Test
     @DisplayName("getUserNotifications returns mapped page of notification DTOs")
     public void testGetUserNotifications_Success() {
         UUID userId = UUID.randomUUID();
-        TestNotificationProjection projection = new TestNotificationProjection();
+        UUID eventId = UUID.randomUUID();
+        UUID actorId = UUID.randomUUID();
+
+        NotificationMetadata metadata = NotificationMetadata.builder()
+                .eventId(eventId)
+                .actorId(actorId)
+                .actorUsername("prof_smith")
+                .communitySlug("fmi-info")
+                .communityName("FMI Info")
+                .studyYearName("YEAR_1")
+                .courseName("Algorithms")
+                .courseSlug("algorithms")
+                .build();
+
+        Notification notification = Notification.builder()
+                .id(UUID.randomUUID())
+                .user(User.builder().id(userId).build())
+                .title("Reminder: Algorithms Exam")
+                .message("Exam starts soon")
+                .category(NotificationCategory.EVENT)
+                .type(NotificationType.EVENT_REMINDER)
+                .isRead(false)
+                .createdAt(OffsetDateTime.now())
+                .metadata(metadata)
+                .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
-        when(notificationRepository.findUserNotifications(eq(userId), eq(NotificationCategory.EVENT), eq(NotificationType.EVENT_REMINDER), eq(false), eq(pageRequest)))
-                .thenReturn(new PageImpl<>(List.of(projection), pageRequest, 1));
+        when(notificationRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageRequest)))
+                .thenReturn(new PageImpl<>(List.of(notification), pageRequest, 1));
 
         PageDto<NotificationResponseDto> result = notificationService.getUserNotifications(
                 userId,

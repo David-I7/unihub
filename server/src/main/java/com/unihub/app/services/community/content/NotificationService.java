@@ -8,18 +8,20 @@ import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
-import com.unihub.app.repositories.community.content.NotificationProjection;
 import com.unihub.app.repositories.community.content.NotificationRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -43,36 +45,46 @@ public class NotificationService {
             Boolean isRead,
             Pageable pageable
     ) {
-        Page<NotificationProjection> page = notificationRepository.findUserNotifications(
-                userId,
-                category,
-                type,
-                isRead,
-                pageable
-        );
+        Specification<Notification> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("user").get("id"), userId));
+            if (category != null) {
+                predicates.add(cb.equal(root.get("category"), category));
+            }
+            if (type != null) {
+                predicates.add(cb.equal(root.get("type"), type));
+            }
+            if (isRead != null) {
+                predicates.add(cb.equal(root.get("isRead"), isRead));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        Page<Notification> page = notificationRepository.findAll(spec, pageable);
         return pageMapper.toPageDto(page.map(this::toDto));
     }
 
-    private NotificationResponseDto toDto(NotificationProjection p) {
-        OwnerDto actor = p.getActorId() != null
-                ? new OwnerDto(p.getActorId(), p.getActorUsername(), Boolean.TRUE.equals(p.getActorActive()))
+    private NotificationResponseDto toDto(Notification n) {
+        NotificationMetadata meta = n.getMetadata();
+        OwnerDto actor = (meta != null && (meta.actorId() != null || meta.actorUsername() != null))
+                ? new OwnerDto(meta.actorId(), meta.actorUsername(), true)
                 : null;
 
         return NotificationResponseDto.builder()
-                .id(p.getId())
-                .title(p.getTitle())
-                .message(p.getMessage())
-                .category(p.getCategory())
-                .type(p.getType())
-                .isRead(p.getIsRead())
-                .createdAt(p.getCreatedAt())
-                .eventId(p.getEventId())
+                .id(n.getId())
+                .title(n.getTitle())
+                .message(n.getMessage())
+                .category(n.getCategory())
+                .type(n.getType())
+                .isRead(n.isRead())
+                .createdAt(n.getCreatedAt())
+                .eventId(meta != null ? meta.eventId() : null)
                 .actor(actor)
-                .communitySlug(p.getCommunitySlug())
-                .communityName(p.getCommunityName())
-                .studyYearName(p.getStudyYearName())
-                .courseName(p.getCourseName())
-                .courseSlug(p.getCourseSlug())
+                .communitySlug(meta != null ? meta.communitySlug() : null)
+                .communityName(meta != null ? meta.communityName() : null)
+                .studyYearName(meta != null ? meta.studyYearName() : null)
+                .courseName(meta != null ? meta.courseName() : null)
+                .courseSlug(meta != null ? meta.courseSlug() : null)
                 .build();
     }
 

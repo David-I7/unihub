@@ -1,3 +1,4 @@
+import { createElement } from "react";
 import { FileText, Globe, Layers, MapPin, Pen, Video, type LucideIcon } from "lucide-react";
 import type { EventLocation, EventType } from "../api/types";
 
@@ -74,6 +75,17 @@ export function getEventLocationIcon(
     default:
       return MapPin;
   }
+}
+
+export function EventLocationIcon({
+  location,
+  className,
+}: {
+  location?: EventLocation | string | null;
+  className?: string;
+}) {
+  const Icon = getEventLocationIcon(location);
+  return createElement(Icon, { className });
 }
 
 export function getEventCategoryConfig(type: EventType): EventCategoryConfig {

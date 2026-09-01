@@ -225,9 +225,7 @@ public class CommunityContentMapper {
             String message,
             NotificationCategory category,
             NotificationType type,
-            Event event,
-            Post post,
-            User actor
+            NotificationMetadata metadata
     ) {
         return Notification.builder()
                 .user(user)
@@ -235,19 +233,109 @@ public class CommunityContentMapper {
                 .message(message)
                 .category(category)
                 .type(type)
-                .event(event)
-                .post(post)
-                .actor(actor)
+                .metadata(metadata)
                 .isRead(false)
                 .build();
     }
 
     public Notification toEventNotificationEntity(User user, String title, String message, NotificationType type, Event event, User actor) {
-        return toNotificationEntity(user, title, message, NotificationCategory.EVENT, type, event, null, actor);
+        NotificationMetadata metadata = toEventNotificationMetadata(event, actor);
+        return toNotificationEntity(user, title, message, NotificationCategory.EVENT, type, metadata);
     }
 
     public Notification toPostNotificationEntity(User user, String title, String message, NotificationType type, Post post, User actor) {
-        return toNotificationEntity(user, title, message, NotificationCategory.POST, type, null, post, actor);
+        NotificationMetadata metadata = toPostNotificationMetadata(post, actor);
+        return toNotificationEntity(user, title, message, NotificationCategory.POST, type, metadata);
     }
 
+    public NotificationMetadata toPostNotificationMetadata(Post post, User actor) {
+        NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
+        if (actor != null) {
+            builder.actorId(actor.getId());
+            builder.actorUsername(actor.getUsername());
+        }
+        if (post != null) {
+            if (post.getCommunityPost() != null && post.getCommunityPost().getCommunity() != null) {
+                builder.communitySlug(post.getCommunityPost().getCommunity().getSlug());
+                builder.communityName(post.getCommunityPost().getCommunity().getName());
+            } else if (post.getCoursePost() != null && post.getCoursePost().getCourse() != null) {
+                var course = post.getCoursePost().getCourse();
+                builder.courseSlug(course.getSlug());
+                builder.courseName(course.getName());
+                if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
+                    builder.studyYearName(course.getStudyYear().getStudyYearName().name());
+                    if (course.getStudyYear().getCommunity() != null) {
+                        builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
+                        builder.communityName(course.getStudyYear().getCommunity().getName());
+                    }
+                }
+            }
+        }
+        return builder.build();
+    }
+
+    public NotificationMetadata toEventNotificationMetadata(Event event, User actor) {
+        NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
+        if (actor != null) {
+            builder.actorId(actor.getId());
+            builder.actorUsername(actor.getUsername());
+        }
+        if (event != null) {
+            builder.eventId(event.getId());
+            if (event.getCommunity() != null) {
+                builder.communitySlug(event.getCommunity().getSlug());
+                builder.communityName(event.getCommunity().getName());
+            }
+            if (event.getCourse() != null) {
+                var course = event.getCourse();
+                builder.courseSlug(course.getSlug());
+                builder.courseName(course.getName());
+                if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
+                    builder.studyYearName(course.getStudyYear().getStudyYearName().name());
+                    if (course.getStudyYear().getCommunity() != null) {
+                        builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
+                        builder.communityName(course.getStudyYear().getCommunity().getName());
+                    }
+                }
+            }
+        }
+        return builder.build();
+    }
+
+    public NotificationMetadata toCommunityPostNotificationMetadata(com.unihub.app.entities.community.resources.Community community, User author) {
+        return NotificationMetadata.builder()
+                .communitySlug(community != null ? community.getSlug() : null)
+                .communityName(community != null ? community.getName() : null)
+                .actorId(author != null ? author.getId() : null)
+                .actorUsername(author != null ? author.getUsername() : null)
+                .build();
+    }
+
+    public NotificationMetadata toCoursePostNotificationMetadata(com.unihub.app.entities.community.resources.Course course, User author) {
+        NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
+        if (author != null) {
+            builder.actorId(author.getId());
+            builder.actorUsername(author.getUsername());
+        }
+        if (course != null) {
+            builder.courseSlug(course.getSlug());
+            builder.courseName(course.getName());
+            if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
+                builder.studyYearName(course.getStudyYear().getStudyYearName().name());
+                if (course.getStudyYear().getCommunity() != null) {
+                    builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
+                    builder.communityName(course.getStudyYear().getCommunity().getName());
+                }
+            }
+        }
+        return builder.build();
+    }
+
+    public NotificationMetadata toEventCancelledNotificationMetadata(String communitySlug, User canceller) {
+        return NotificationMetadata.builder()
+                .communitySlug(communitySlug)
+                .actorId(canceller != null ? canceller.getId() : null)
+                .actorUsername(canceller != null ? canceller.getUsername() : null)
+                .build();
+    }
 }

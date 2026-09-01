@@ -10,6 +10,7 @@ export * from "./components/CalendarAgendaList";
 export * from "./components/CalendarFilters";
 export * from "./components/CalendarToolbar";
 export * from "./components/EventDetailSheet";
+export * from "./components/DeleteEventDialog";
 export * from "./components/EventFormModal";
 export * from "./components/DayOverflowModal";
 export * from "./components/CalendarEventCard";

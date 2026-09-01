@@ -237,20 +237,13 @@ CREATE TYPE NOTIFICATION_TYPE AS ENUM (
 CREATE TABLE NOTIFICATIONS (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES USERS(id) ON DELETE CASCADE,
-    actor_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     type NOTIFICATION_TYPE NOT NULL,
-    event_id UUID REFERENCES EVENTS(id) ON DELETE SET NULL,
-    post_id UUID REFERENCES POSTS(id) ON DELETE CASCADE,
     title TEXT NOT NULL,
     message TEXT NOT NULL,
     category NOTIFICATION_CATEGORY NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (
-        (type IN ('EVENT_REMINDER', 'EVENT_UPDATED', 'EVENT_CANCELLED') AND category = 'EVENT' AND post_id IS NULL) OR
-        (type IN ('COMMUNITY_POST', 'COURSE_POST', 'POST_COMMENT', 'POST_LIKE') AND category = 'POST' AND event_id IS NULL AND post_id IS NOT NULL) OR
-        (type IN ('SYSTEM_ANNOUNCEMENT', 'SYSTEM_MAINTENANCE', 'SYSTEM_GENERAL') AND category = 'SYSTEM' AND event_id IS NULL AND post_id IS NULL)
-    )
+    metadata JSONB
 );
 
 -- Indexes
@@ -269,5 +262,3 @@ CREATE INDEX idx_community_join_codes_code ON COMMUNITY_JOIN_CODES(code);
 CREATE INDEX idx_community_join_codes_community_id ON COMMUNITY_JOIN_CODES(community_id);
 CREATE INDEX idx_notifications_user_category_created ON NOTIFICATIONS(user_id, category, created_at DESC);
 CREATE INDEX idx_notifications_user_unread ON NOTIFICATIONS(user_id, is_read, created_at DESC);
-CREATE INDEX idx_notifications_event_id ON NOTIFICATIONS(event_id);
-CREATE INDEX idx_notifications_post_id ON NOTIFICATIONS(post_id);

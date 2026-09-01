@@ -4,6 +4,7 @@ import type { AppNotification, NotificationCategory } from "../api/types";
 import { NotificationItem } from "./NotificationItem";
 import { NotificationSkeleton } from "./NotificationSkeleton";
 import { NotificationEmptyState } from "./NotificationEmptyState";
+import { groupNotificationsByTime } from "../lib/notificationGrouping";
 
 interface NotificationListProps {
   notifications: AppNotification[];
@@ -38,13 +39,30 @@ export function NotificationList({
     );
   }
 
+  const groups = groupNotificationsByTime(notifications);
+
   return (
-    <div className="space-y-2.5">
-      {notifications.map((notification) => (
-        <NotificationItem
-          key={notification.id}
-          notification={notification}
-        />
+    <div className="space-y-6">
+      {groups.map((group) => (
+        <section key={group.key} className="space-y-2.5">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.label}
+            </h3>
+            <span className="text-[11px] font-medium text-muted-foreground/70 bg-muted/80 px-1.5 py-0.2 rounded-full">
+              {group.notifications.length}
+            </span>
+          </div>
+
+          <div className="space-y-2.5">
+            {group.notifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+              />
+            ))}
+          </div>
+        </section>
       ))}
 
       {hasNextPage && (

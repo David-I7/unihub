@@ -5,17 +5,19 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  X,
 } from "lucide-react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { useCalendarEvent, useDeleteEvent } from "../api/events";
+import { useCalendarEvent } from "../api/events";
 import { useCreateReminder, useDeleteReminder } from "../api/reminders";
 import { useCalendarStore } from "../store/useCalendarStore";
+import { DeleteEventDialog } from "./DeleteEventDialog";
 import {
+  EventLocationIcon,
   formatEventLocation,
   getEventCategoryConfig,
-  getEventLocationIcon,
 } from "../utils/eventUtils";
 import {
   formatDurationHours,
@@ -30,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -57,9 +60,9 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 
 const QUICK_PRESETS = [
-  { label: "15m before", value: 15 },
   { label: "1h before", value: 60 },
   { label: "1d before", value: 1440 },
+  { label: "1w before", value: 10080 },
 ];
 
 function renderStatusBadge(status: ReminderStatus) {
@@ -99,13 +102,23 @@ export function EventDetailSheet() {
   const closeEventDetails = useCalendarStore((s) => s.closeEventDetails);
   const openEditModal = useCalendarStore((s) => s.openEditModal);
 
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
+
+  if (selectedEventId && selectedEventId !== activeEventId) {
+    setActiveEventId(selectedEventId);
+  }
+
+  const queryEventId = selectedEventId ?? activeEventId;
+
   const {
     data: event,
     isLoading,
     isError,
-  } = useCalendarEvent(selectedEventId ?? "", {
-    enabled: Boolean(selectedEventId),
+  } = useCalendarEvent(queryEventId ?? "", {
+    enabled: Boolean(queryEventId),
   });
+
+  const activeEvent = event;
 
   const [selectedInterval, setSelectedInterval] = useState<number | "custom">(
     60,
@@ -134,30 +147,34 @@ export function EventDetailSheet() {
     }
   };
 
-  const { mutate: deleteEventMutate, isPending: isDeleting } = useDeleteEvent();
   const { mutate: createReminderMutate, isPending: isCreatingReminder } =
     useCreateReminder();
   const { mutate: deleteReminderMutate, isPending: isDeletingReminder } =
     useDeleteReminder();
 
-  const { canEditEvent, canDeleteEvent } = usePermissions(event?.communitySlug);
+  const { canEditEvent, canDeleteEvent } = usePermissions(
+    activeEvent?.communitySlug,
+  );
 
   const isUrl = (val?: string) =>
     Boolean(val && (val.startsWith("http://") || val.startsWith("https://")));
 
-  const startTimeMs = event?.startTime
-    ? new Date(event.startTime).getTime()
+  const startTimeMs = activeEvent?.startTime
+    ? new Date(activeEvent.startTime).getTime()
     : 0;
   const timeUntilStartMinutes = Math.floor(
     (startTimeMs - currentTime) / (1000 * 60),
   );
   const isConcluded = Boolean(startTimeMs && startTimeMs <= currentTime);
 
-  const relativeStatus = event
-    ? formatEventRelativeStatus(event.startTime, event.durationHours)
+  const relativeStatus = activeEvent
+    ? formatEventRelativeStatus(
+        activeEvent.startTime,
+        activeEvent.durationHours,
+      )
     : { label: "", isPast: false, isOngoing: false, isSoon: false };
 
-  const activeReminder = event?.reminders?.[0];
+  const activeReminder = activeEvent?.reminders?.[0];
 
   const computedCustomOffsetMinutes = (() => {
     const val = Math.max(1, customAmount);
@@ -178,7 +195,7 @@ export function EventDetailSheet() {
     : null;
 
   const handleSetReminder = () => {
-    if (!event) return;
+    if (!activeEvent) return;
     setReminderError(null);
 
     const offsetToSubmit =
@@ -205,7 +222,7 @@ export function EventDetailSheet() {
 
     createReminderMutate(
       {
-        eventId: event.id,
+        eventId: activeEvent.id,
         payload: { offsetMinutes: offsetToSubmit },
       },
       {
@@ -224,41 +241,29 @@ export function EventDetailSheet() {
   };
 
   const handleRemoveReminder = () => {
-    if (!event) return;
-    deleteReminderMutate(event.id, {
+    if (!activeEvent) return;
+    deleteReminderMutate(activeEvent.id, {
       onSuccess: () => toast.success("Reminder removed"),
       onError: () => toast.error("Failed to remove reminder"),
     });
   };
 
-  const handleDelete = () => {
-    if (!event) return;
-    deleteEventMutate(event.id, {
-      onSuccess: () => {
-        setIsConfirmingDelete(false);
-        toast.success("Event deleted");
-        handleClose();
-      },
-      onError: (err) => {
-        toast.error(
-          err instanceof Error ? err.message : "Failed to delete event",
-        );
-      },
-    });
-  };
-
-  const config = event ? getEventCategoryConfig(event.type) : null;
+  const config = activeEvent ? getEventCategoryConfig(activeEvent.type) : null;
   const Icon = config?.icon;
-  const LocationIcon = event ? getEventLocationIcon(event.location) : null;
-  const timeStr = event
-    ? formatEventTimeWithDuration(event.startTime, event.durationHours)
+  const timeStr = activeEvent
+    ? formatEventTimeWithDuration(
+        activeEvent.startTime,
+        activeEvent.durationHours,
+      )
     : "";
-  const abbreviation = event?.courseAbbreviation?.trim();
+  const abbreviation = activeEvent?.courseAbbreviation?.trim();
 
   const isAuthorizedToEdit =
-    Boolean(event) && !isConcluded && canEditEvent(event?.owner?.id);
+    Boolean(activeEvent) &&
+    !isConcluded &&
+    canEditEvent(activeEvent?.owner?.id);
   const isAuthorizedToDelete =
-    Boolean(event) && canDeleteEvent(event?.owner?.id);
+    Boolean(activeEvent) && canDeleteEvent(activeEvent?.owner?.id);
   const hasActions = isAuthorizedToEdit || isAuthorizedToDelete;
 
   return (
@@ -268,17 +273,44 @@ export function EventDetailSheet() {
     >
       <SheetContent
         side="right"
+        showCloseButton={false}
         className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6"
       >
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-3">
+        {isLoading && !activeEvent ? (
+          <div className="relative flex flex-col items-center justify-center py-20 gap-3">
+            <SheetClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="absolute top-0 right-0 size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                  title="Close sheet"
+                >
+                  <X className="size-3.5" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              }
+            />
             <Spinner className="size-6 text-primary" />
             <p className="text-xs text-muted-foreground font-medium">
               Loading event details...
             </p>
           </div>
-        ) : isError || !event || !config || !Icon || !LocationIcon ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-2 text-center">
+        ) : isError ? (
+          <div className="relative flex flex-col items-center justify-center py-16 gap-2 text-center">
+            <SheetClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="absolute top-0 right-0 size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                  title="Close sheet"
+                >
+                  <X className="size-3.5" />
+                  <span className="sr-only">Close</span>
+                </Button>
+              }
+            />
             <p className="text-sm font-semibold text-destructive">
               Failed to load event details
             </p>
@@ -294,10 +326,10 @@ export function EventDetailSheet() {
               Close
             </Button>
           </div>
-        ) : (
+        ) : activeEvent && config && Icon ? (
           <div className="space-y-5 text-xs">
-            {/* Header: Category Badge + Countdown Badge on left; 3-Dots on right */}
-            <SheetHeader className="space-y-2 p-0 pr-8">
+            {/* Header: Badges on left; 3-Dots + Close on right */}
+            <SheetHeader className="space-y-2 p-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span
@@ -331,106 +363,84 @@ export function EventDetailSheet() {
                   )}
                 </div>
 
-                {hasActions && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                          title="Event options"
-                        >
-                          <MoreVertical className="size-3.5" />
-                        </Button>
-                      }
-                    />
-                    <DropdownMenuContent align="end" className="w-36">
-                      {isAuthorizedToEdit && (
-                        <DropdownMenuItem
-                          onClick={() => openEditModal(event)}
-                          className="gap-2 cursor-pointer text-xs"
-                        >
-                          <Pencil className="size-3.5 text-muted-foreground" />
-                          <span>Edit Event</span>
-                        </DropdownMenuItem>
-                      )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {hasActions && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            title="Event options"
+                          >
+                            <MoreVertical className="size-3.5" />
+                          </Button>
+                        }
+                      />
+                      <DropdownMenuContent align="end" className="w-36">
+                        {isAuthorizedToEdit && (
+                          <DropdownMenuItem
+                            onClick={() => openEditModal(activeEvent)}
+                            className="gap-2 cursor-pointer text-xs"
+                          >
+                            <Pencil className="size-3.5 text-muted-foreground" />
+                            <span>Edit Event</span>
+                          </DropdownMenuItem>
+                        )}
 
-                      {isAuthorizedToEdit && isAuthorizedToDelete && (
-                        <DropdownMenuSeparator />
-                      )}
+                        {isAuthorizedToEdit && isAuthorizedToDelete && (
+                          <DropdownMenuSeparator />
+                        )}
 
-                      {isAuthorizedToDelete && (
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => setIsConfirmingDelete(true)}
-                          className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive"
-                        >
-                          <Trash2 className="size-3.5" />
-                          <span>Delete Event</span>
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        {isAuthorizedToDelete && (
+                          <DropdownMenuItem
+                            variant="destructive"
+                            onClick={() => setIsConfirmingDelete(true)}
+                            className="gap-2 cursor-pointer text-xs text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="size-3.5" />
+                            <span>Delete Event</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
+                  <SheetClose
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                        title="Close sheet"
+                      >
+                        <X className="size-3.5" />
+                        <span className="sr-only">Close</span>
+                      </Button>
+                    }
+                  />
+                </div>
               </div>
 
               {/* Title */}
               <SheetTitle className="text-lg font-bold font-heading text-foreground leading-snug text-left">
-                {event.title}
+                {activeEvent.title}
               </SheetTitle>
 
               {/* Creator & Community Subtitle */}
               <SheetDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
-                {event.owner?.username && (
+                {activeEvent.owner?.username && (
                   <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
                     <UserAvatar
-                      username={event.owner.username}
+                      username={activeEvent.owner.username}
                       size="xs"
-                      className="size-4 border-0"
                     />
-                    <span>@{event.owner.username}</span>
-                  </span>
-                )}
-                {event.communityName && (
-                  <span>
-                    {event.owner?.username ? "• " : ""}
-                    {event.communityName}
+                    <span>@{activeEvent.owner.username}</span>
                   </span>
                 )}
               </SheetDescription>
             </SheetHeader>
-
-            {/* Delete Confirmation Alert */}
-            {isConfirmingDelete && (
-              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 space-y-2">
-                <p className="text-xs font-semibold text-destructive">
-                  Are you sure you want to delete this event? This action cannot
-                  be undone.
-                </p>
-                <div className="flex items-center justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsConfirmingDelete(false)}
-                    className="h-7 text-xs cursor-pointer"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="h-7 text-xs cursor-pointer font-semibold"
-                  >
-                    {isDeleting ? "Deleting..." : "Confirm Delete"}
-                  </Button>
-                </div>
-              </div>
-            )}
 
             <Separator />
 
@@ -440,13 +450,13 @@ export function EventDetailSheet() {
                 Schedule
               </div>
               <div className="font-semibold text-foreground">
-                {formatFullDate(event.startTime)}
+                {formatFullDate(activeEvent.startTime)}
               </div>
               <div className="text-muted-foreground font-mono text-xs">
                 {timeStr}
-                {event.durationHours ? (
+                {activeEvent.durationHours ? (
                   <span className="text-muted-foreground/80 ml-1 font-sans">
-                    ({formatDurationHours(event.durationHours)})
+                    ({formatDurationHours(activeEvent.durationHours)})
                   </span>
                 ) : null}
               </div>
@@ -458,55 +468,59 @@ export function EventDetailSheet() {
                 Location
               </div>
               <div>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-semibold text-foreground">
-                  <LocationIcon className="size-3.5 text-muted-foreground" />
-                  <span>{formatEventLocation(event.location)}</span>
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-foreground">
+                  <EventLocationIcon
+                    location={activeEvent.location}
+                    className="size-3.5 text-muted-foreground"
+                  />
+                  <span>{formatEventLocation(activeEvent.location)}</span>
                 </span>
               </div>
-              {event.locationDetails && (
+              {activeEvent.locationDetails && (
                 <div className="text-xs text-muted-foreground pt-0.5">
-                  {isUrl(event.locationDetails) ? (
+                  {isUrl(activeEvent.locationDetails) ? (
                     <a
-                      href={event.locationDetails}
+                      href={activeEvent.locationDetails}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
                     >
-                      <span>{event.locationDetails}</span>
+                      <span>{activeEvent.locationDetails}</span>
                       <ExternalLink className="size-3" />
                     </a>
                   ) : (
-                    <span>{event.locationDetails}</span>
+                    <span>{activeEvent.locationDetails}</span>
                   )}
                 </div>
               )}
             </div>
 
             {/* COURSE */}
-            {event.courseName && (
+            {activeEvent.courseName && (
               <div className="space-y-1.5">
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Course
                 </div>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
+                  {activeEvent.communityName}
                   <div className="flex items-center gap-2">
                     {abbreviation && (
                       <span className="font-mono text-[11px] font-bold text-foreground bg-muted px-1.5 py-0.5 rounded">
-                        [{abbreviation}]
+                        {abbreviation}
                       </span>
                     )}
                     <span className="font-semibold text-foreground">
-                      {event.courseName}
+                      {activeEvent.courseName}
                     </span>
-                    {event.studyYear && (
+                    {activeEvent.studyYear && (
                       <span className="text-muted-foreground">
-                        • {event.studyYear}
+                        • {activeEvent.studyYear}
                       </span>
                     )}
                   </div>
 
                   <Link
-                    to={`/communities/${event.communitySlug}/courses/${event.courseSlug}`}
+                    to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                   >
                     <span>View Course Page</span>
@@ -516,14 +530,14 @@ export function EventDetailSheet() {
               </div>
             )}
 
-            {/* Description & Instructions */}
-            {event.description && (
+            {/* Description */}
+            {activeEvent.description && (
               <div className="space-y-1">
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                  Description & Instructions
+                  Description
                 </div>
                 <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
-                  {event.description}
+                  {activeEvent.description}
                 </p>
               </div>
             )}
@@ -538,17 +552,11 @@ export function EventDetailSheet() {
 
               {activeReminder ? (
                 <div className="flex items-center justify-between p-2.5 rounded-xl border bg-muted/20 text-xs">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center flex-1 justify-between gap-2">
                     <span className="font-medium text-foreground">
-                      Scheduled:{" "}
                       {formatOffsetLabel(activeReminder.offsetMinutes)}
                     </span>
-                    {activeReminder.remindAt && (
-                      <span className="text-muted-foreground text-[11px]">
-                        ({formatFullDate(activeReminder.remindAt)} at{" "}
-                        {formatTime(activeReminder.remindAt)})
-                      </span>
-                    )}
+
                     {renderStatusBadge(activeReminder.status)}
                   </div>
 
@@ -699,8 +707,15 @@ export function EventDetailSheet() {
               )}
             </div>
           </div>
-        )}
+        ) : null}
       </SheetContent>
+
+      <DeleteEventDialog
+        open={isConfirmingDelete}
+        onOpenChange={setIsConfirmingDelete}
+        event={activeEvent ?? null}
+        onDeleted={handleClose}
+      />
     </Sheet>
   );
 }

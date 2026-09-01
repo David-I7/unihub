@@ -71,6 +71,9 @@ public class NotificationEventListenerTests {
         assertEquals(2, savedList.size());
         assertEquals(NotificationType.COMMUNITY_POST, savedList.get(0).getType());
         assertEquals("New post in FMI Community", savedList.get(0).getTitle());
+        assertEquals("fmi", savedList.get(0).getMetadata().communitySlug());
+        assertEquals("FMI Community", savedList.get(0).getMetadata().communityName());
+        assertEquals("author", savedList.get(0).getMetadata().actorUsername());
     }
 
     @Test

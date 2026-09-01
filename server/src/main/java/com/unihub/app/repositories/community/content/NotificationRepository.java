@@ -19,57 +19,6 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
 
     long countByUserIdAndCategoryAndIsReadFalse(UUID userId, NotificationCategory category);
 
-    @Query(value = """
-            SELECT
-                n.id AS id,
-                n.title AS title,
-                n.message AS message,
-                n.category AS category,
-                n.type AS type,
-                n.isRead AS isRead,
-                n.createdAt AS createdAt,
-                e.id AS eventId,
-                a.id AS actorId,
-                a.username AS actorUsername,
-                CASE WHEN a.id IS NOT NULL AND a.deletedAt IS NULL THEN true ELSE false END AS actorActive,
-                COALESCE(eComm.slug, cpComm.slug, crsComm.slug) AS communitySlug,
-                COALESCE(eComm.name, cpComm.name, crsComm.name) AS communityName,
-                COALESCE(eSy.studyYearName, crsSy.studyYearName) AS studyYearName,
-                COALESCE(eCrs.name, crs.name) AS courseName,
-                COALESCE(eCrs.slug, crs.slug) AS courseSlug
-            FROM Notification n
-            LEFT JOIN n.actor a
-            LEFT JOIN n.event e
-            LEFT JOIN e.community eComm
-            LEFT JOIN e.course eCrs
-            LEFT JOIN eCrs.studyYear eSy
-            LEFT JOIN n.post p
-            LEFT JOIN p.communityPost cp
-            LEFT JOIN cp.community cpComm
-            LEFT JOIN p.coursePost crsp
-            LEFT JOIN crsp.course crs
-            LEFT JOIN crs.studyYear crsSy
-            LEFT JOIN crsSy.community crsComm
-            WHERE n.user.id = :userId
-              AND (COALESCE(:category,'') = ''  OR n.category = :category)
-              AND (COALESCE(:type,'') = '' OR n.type = :type)
-              AND (:isRead IS NULL OR n.isRead = :isRead)
-            """,
-            countQuery = """
-            SELECT COUNT(n)
-            FROM Notification n
-            WHERE n.user.id = :userId
-              AND (COALESCE(:category,'') = ''  OR n.category = :category)
-              AND (COALESCE(:type,'') = '' OR n.type = :type)
-              AND (:isRead IS NULL OR n.isRead = :isRead)
-            """)
-    Page<NotificationProjection> findUserNotifications(
-            @Param("userId") UUID userId,
-            @Param("category") NotificationCategory category,
-            @Param("type") NotificationType type,
-            @Param("isRead") Boolean isRead,
-            Pageable pageable
-    );
 
     @Modifying
     @Query(value = """

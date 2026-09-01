@@ -100,7 +100,6 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
     }),
   openEditModal: (event) =>
     set({
-      selectedEventId: null,
       editingEvent: event,
       isFormModalOpen: true,
     }),
