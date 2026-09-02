@@ -179,49 +179,47 @@ public class CommunityService {
 
     @Transactional
     public CommunityResponseDto updateCommunity(String slug, UUID userId, UpdateCommunityRequestDto dto) {
-        if (dto.name() == null && dto.slug() == null && dto.description() == null && dto.readme() == null && dto.backgroundColor() == null && dto.verified() == null && dto.newOwnerUsername() == null) {
+        if (dto.name().isUndefined() && dto.slug().isUndefined() && dto.description().isUndefined() && dto.readme().isUndefined() && dto.backgroundColor().isUndefined() && dto.verified().isUndefined() && dto.newOwnerUsername().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
         Community community = communityRepository.findBySlugWithOwner(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        if (dto.description() != null) {
-            community.setDescription(dto.description());
-        }
+        dto.description().ifPresent(community::setDescription);
+        dto.readme().ifPresent(community::setReadme);
+        dto.backgroundColor().ifPresent(community::setBackgroundColor);
 
-        if (dto.readme() != null) {
-            community.setReadme(dto.readme());
-        }
-
-        if (dto.slug() != null && !dto.slug().equals(community.getSlug())) {
-            if (communityRepository.existsBySlug(dto.slug())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this slug already exists");
+        if (dto.slug().isPresent()) {
+            String newSlug = dto.slug().get();
+            if (newSlug != null && !newSlug.equals(community.getSlug())) {
+                if (communityRepository.existsBySlug(newSlug)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this slug already exists");
+                }
+                community.setSlug(newSlug);
             }
-            community.setSlug(dto.slug());
         }
 
-        if (dto.name() != null && !dto.name().equals(community.getName())) {
-            if (communityRepository.existsByName(dto.name())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this name already exists");
+        if (dto.name().isPresent()) {
+            String newName = dto.name().get();
+            if (newName != null && !newName.equals(community.getName())) {
+                if (communityRepository.existsByName(newName)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "A community with this name already exists");
+                }
+                community.setName(newName);
             }
-            community.setName(dto.name());
         }
 
-        if (dto.backgroundColor() != null) {
-            community.setBackgroundColor(dto.backgroundColor());
-        }
-
-        if (dto.verified() != null) {
+        if (dto.verified().isPresent()) {
             if (authorizationService.hasGlobalPermission(PermissionType.VERIFY_COMMUNITY)) {
-                community.setVerified(dto.verified());
+                community.setVerified(dto.verified().get());
             } else {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only platform administrators can verify communities");
             }
         }
 
-        if (dto.newOwnerUsername() != null && !dto.newOwnerUsername().equals(community.getOwner().getUsername())) {
-            User newOwner = userRepository.findByUsername(dto.newOwnerUsername())
+        if (dto.newOwnerUsername().isPresent() && dto.newOwnerUsername().get() != null && !dto.newOwnerUsername().get().equals(community.getOwner().getUsername())) {
+            User newOwner = userRepository.findByUsername(dto.newOwnerUsername().get())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New owner user not found"));
 
             Role ownerRole = roleService.getRoleByName(RoleType.COMMUNITY_OWNER);

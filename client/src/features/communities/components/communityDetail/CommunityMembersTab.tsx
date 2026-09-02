@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { UserPlus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/app/SearchInput";
@@ -7,7 +7,11 @@ import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObserver } from "@/hooks/useObserver";
-import { useDebounce } from "@/hooks/useDebounce";
+import {
+  useUrlFilters,
+  useDebouncedInput,
+  type FilterSchema,
+} from "@/hooks/useUrlFilters";
 import { useInfiniteCommunityMembers } from "../../api/getCommunityMembers";
 import { MemberCard } from "./MemberCard";
 import { MemberCardSkeleton } from "./MemberCardSkeleton";
@@ -20,6 +24,20 @@ const ROLE_FILTER_OPTIONS = [
   { value: "COMMUNITY_MEMBER", label: "Members" },
 ];
 
+interface CommunityMembersFilters {
+  search: string;
+  role: string;
+}
+
+const MEMBERS_FILTER_SCHEMA: FilterSchema<CommunityMembersFilters> = {
+  search: { defaultValue: "", paramKey: "search" },
+  role: {
+    defaultValue: "ALL",
+    allowedValues: ["ALL", "COMMUNITY_ADMIN", "COMMUNITY_MEMBER"] as const,
+    paramKey: "role",
+  },
+};
+
 interface CommunityMembersTabProps {
   communitySlug: string;
   callerMembership?: CallerMembership | null;
@@ -29,9 +47,19 @@ export function CommunityMembersTab({
   communitySlug,
   callerMembership,
 }: CommunityMembersTabProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput.trim(), 350);
-  const [selectedRole, setSelectedRole] = useState<string>("ALL");
+  const { filters, setFilters, setFilter, resetFilters } = useUrlFilters(
+    MEMBERS_FILTER_SCHEMA,
+  );
+
+  const handleCommitSearch = useCallback(
+    (val: string) => setFilters({ search: val }),
+    [setFilters],
+  );
+  const [searchInput, setSearchInput, debouncedSearch] = useDebouncedInput(
+    filters.search,
+    handleCommitSearch,
+    350,
+  );
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
@@ -46,7 +74,9 @@ export function CommunityMembersTab({
     user?.role === "ROOT";
 
   const roleParam =
-    selectedRole !== "ALL" ? (selectedRole as CommunityMemberRole) : undefined;
+    filters.role !== "ALL"
+      ? (filters.role as CommunityMemberRole)
+      : undefined;
 
   const {
     data,
@@ -78,11 +108,11 @@ export function CommunityMembersTab({
     enabled: Boolean(hasNextPage),
   });
 
-  const hasActiveFilters = Boolean(debouncedSearch) || selectedRole !== "ALL";
+  const hasActiveFilters = Boolean(debouncedSearch) || filters.role !== "ALL";
 
   const handleClearFilters = () => {
     setSearchInput("");
-    setSelectedRole("ALL");
+    resetFilters();
   };
 
   return (
@@ -118,8 +148,8 @@ export function CommunityMembersTab({
           {/* Role Filter Select */}
           <FilterSelect
             label="Role"
-            value={selectedRole}
-            onChange={setSelectedRole}
+            value={filters.role}
+            onChange={(val) => setFilter("role", val)}
             options={ROLE_FILTER_OPTIONS}
           />
 

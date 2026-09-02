@@ -95,15 +95,15 @@ export function EventFormModal() {
           : undefined;
 
       if (isEditing && editingEvent) {
-        const payload: UpdateEventPayload = {
-          title: values.title.trim(),
-          description: values.description?.trim() || undefined,
-          type: values.type,
-          startTime: editingEvent.startTime,
-          durationHours: durationNum,
-          location: values.location,
-          locationDetails: values.locationDetails?.trim() || undefined,
-        };
+        const dirty = form.dirtyFields;
+        const payload: UpdateEventPayload = {};
+
+        if (dirty.title) payload.title = values.title.trim();
+        if (dirty.description) payload.description = values.description?.trim() || "";
+        if (dirty.type) payload.type = values.type;
+        if (dirty.durationHours) payload.durationHours = durationNum;
+        if (dirty.location) payload.location = values.location;
+        if (dirty.locationDetails) payload.locationDetails = values.locationDetails?.trim() || "";
 
         try {
           await updateEventMutateAsync({ id: editingEvent.id, payload });
@@ -708,9 +708,6 @@ export function EventFormModal() {
                 id="event-dur"
                 name="durationHours"
                 type="number"
-                min="0.25"
-                step="0.5"
-                max="168"
                 placeholder="e.g. 1.5 (optional)"
                 value={form.values.durationHours ?? ""}
                 onChange={(e) =>
@@ -765,7 +762,11 @@ export function EventFormModal() {
             <Button
               type="submit"
               size="sm"
-              disabled={isSubmitting || (!isEditing && !canCreateInCommunity)}
+              disabled={
+                isSubmitting ||
+                (!isEditing && !canCreateInCommunity) ||
+                (isEditing && !form.isDirty)
+              }
               className="h-8 text-xs font-semibold cursor-pointer"
             >
               {isSubmitting

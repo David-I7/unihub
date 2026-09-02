@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Plus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/app/SearchInput";
@@ -7,12 +7,16 @@ import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObserver } from "@/hooks/useObserver";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useCommunityStudyYears } from "@/features/communities";
 import {
   formatStudyYearName,
   slugToStudyYearEnum,
 } from "@/features/studyYears";
+import {
+  useUrlFilters,
+  useDebouncedInput,
+  type FilterSchema,
+} from "@/hooks/useUrlFilters";
 import { useInfiniteCommunityTeachers } from "../api/getCommunityTeachers";
 import { TeacherCard } from "./TeacherCard";
 import { TeacherCardSkeleton } from "./TeacherCardSkeleton";
@@ -25,6 +29,22 @@ const SEMESTER_FILTER_OPTIONS = [
   { value: "2", label: "Semester 2" },
 ];
 
+interface CommunityTeachersFilters {
+  search: string;
+  studyYear: string;
+  semester: string;
+}
+
+const TEACHERS_FILTER_SCHEMA: FilterSchema<CommunityTeachersFilters> = {
+  search: { defaultValue: "", paramKey: "search" },
+  studyYear: { defaultValue: "ALL", paramKey: "studyYear" },
+  semester: {
+    defaultValue: "ALL",
+    allowedValues: ["ALL", "1", "2"] as const,
+    paramKey: "semester",
+  },
+};
+
 interface CommunityTeachersTabProps {
   communitySlug: string;
   callerMembership?: CallerMembership | null;
@@ -34,10 +54,19 @@ export function CommunityTeachersTab({
   communitySlug,
   callerMembership,
 }: CommunityTeachersTabProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput.trim(), 350);
-  const [selectedStudyYear, setSelectedStudyYear] = useState<string>("ALL");
-  const [selectedSemester, setSelectedSemester] = useState<string>("ALL");
+  const { filters, setFilters, setFilter, resetFilters } = useUrlFilters(
+    TEACHERS_FILTER_SCHEMA,
+  );
+
+  const handleCommitSearch = useCallback(
+    (val: string) => setFilters({ search: val }),
+    [setFilters],
+  );
+  const [searchInput, setSearchInput, debouncedSearch] = useDebouncedInput(
+    filters.search,
+    handleCommitSearch,
+    350,
+  );
   const [createTeacherOpen, setCreateTeacherOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
@@ -73,9 +102,9 @@ export function CommunityTeachersTab({
       user?.role === "ROOT");
 
   const studyYearParam =
-    selectedStudyYear !== "ALL" ? selectedStudyYear : undefined;
+    filters.studyYear !== "ALL" ? filters.studyYear : undefined;
   const semesterParam =
-    selectedSemester !== "ALL" ? parseInt(selectedSemester, 10) : undefined;
+    filters.semester !== "ALL" ? parseInt(filters.semester, 10) : undefined;
 
   const {
     data,
@@ -110,13 +139,12 @@ export function CommunityTeachersTab({
 
   const hasActiveFilters =
     Boolean(debouncedSearch) ||
-    selectedStudyYear !== "ALL" ||
-    selectedSemester !== "ALL";
+    filters.studyYear !== "ALL" ||
+    filters.semester !== "ALL";
 
   const handleClearFilters = () => {
     setSearchInput("");
-    setSelectedStudyYear("ALL");
-    setSelectedSemester("ALL");
+    resetFilters();
   };
 
   return (
@@ -152,8 +180,8 @@ export function CommunityTeachersTab({
           {/* Study Year Select */}
           <FilterSelect
             label="Year"
-            value={selectedStudyYear}
-            onChange={setSelectedStudyYear}
+            value={filters.studyYear}
+            onChange={(val) => setFilter("studyYear", val)}
             options={studyYearOptions}
             disabled={isStudyYearsLoading}
           />
@@ -161,8 +189,8 @@ export function CommunityTeachersTab({
           {/* Semester Select */}
           <FilterSelect
             label="Semester"
-            value={selectedSemester}
-            onChange={setSelectedSemester}
+            value={filters.semester}
+            onChange={(val) => setFilter("semester", val)}
             options={SEMESTER_FILTER_OPTIONS}
           />
 

@@ -13,7 +13,7 @@ public record CalendarEventResponseDto(
         String title,
         EventType type,
         OffsetDateTime startTime,
-        Double durationHours,
+        Float durationHours,
         EventLocation location,
         String courseAbbreviation,
         boolean isSubscribed

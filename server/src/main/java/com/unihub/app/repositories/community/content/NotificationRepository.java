@@ -2,9 +2,6 @@ package com.unihub.app.repositories.community.content;
 
 import com.unihub.app.entities.community.content.Notification;
 import com.unihub.app.entities.community.content.NotificationCategory;
-import com.unihub.app.entities.community.content.NotificationType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;

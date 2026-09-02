@@ -71,17 +71,21 @@ function UpdateTeacherForm({
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
-        const ageNum = values.estimatedAge.trim()
-          ? parseInt(values.estimatedAge.trim(), 10)
-          : undefined;
+        const dirty = form.dirtyFields;
+        const payload: Record<string, unknown> = {};
+
+        if (dirty.firstName) payload.firstName = values.firstName.trim();
+        if (dirty.lastName) payload.lastName = values.lastName.trim();
+        if (dirty.estimatedAge) {
+          const ageNum = values.estimatedAge.trim()
+            ? parseInt(values.estimatedAge.trim(), 10)
+            : undefined;
+          payload.estimatedAge = isNaN(ageNum as number) ? undefined : ageNum;
+        }
 
         const updated = await updateMutation.mutateAsync({
           teacherId: teacher.id,
-          payload: {
-            firstName: values.firstName.trim(),
-            lastName: values.lastName.trim(),
-            estimatedAge: isNaN(ageNum as number) ? undefined : ageNum,
-          },
+          payload,
         });
 
         toast.success(
@@ -160,7 +164,9 @@ function UpdateTeacherForm({
         </Button>
         <Button
           type="submit"
-          disabled={form.isSubmitting || updateMutation.isPending}
+          disabled={
+            form.isSubmitting || updateMutation.isPending || !form.isDirty
+          }
           className="font-bold cursor-pointer"
         >
           {form.isSubmitting || updateMutation.isPending

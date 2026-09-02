@@ -2,9 +2,7 @@ package com.unihub.app.dto.community.content.request;
 
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 
 import java.time.OffsetDateTime;
@@ -24,13 +22,14 @@ public record CreateEventRequestDto(
         @NotNull(message = "Start time is required")
         OffsetDateTime startTime,
 
-        @jakarta.validation.constraints.Positive(message = "Duration must be positive")
-        @jakarta.validation.constraints.Max(value = 168, message = "Duration cannot exceed 168 hours")
-        Double durationHours,
+        @Positive(message = "Duration must be positive")
+        @Max(value = 168, message = "Duration cannot exceed 168 hours")
+        Float durationHours,
 
         @NotNull(message = "Event location is required")
         EventLocation location,
 
+        @Size(max = 500, message = "Location details must not exceed 500 characters")
         String locationDetails,
 
         @NotNull(message = "Course ID is required")
@@ -39,4 +38,9 @@ public record CreateEventRequestDto(
         @NotBlank(message = "Community slug is required")
         String communitySlug
 ) {
+        public CreateEventRequestDto {
+                title = title != null ? title.trim() : title;
+                description = description != null ? description.trim() : description;
+                locationDetails = locationDetails != null ? locationDetails.trim() : locationDetails;
+        }
 }

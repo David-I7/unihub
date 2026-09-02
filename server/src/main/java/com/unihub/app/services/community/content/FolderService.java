@@ -100,29 +100,41 @@ public class FolderService {
 
         Long courseId = folder.getCourse().getId();
 
-        if (Boolean.TRUE.equals(requestDto.moveToRoot())) {
-            folder.setParentFolder(null);
-        } else if (requestDto.parentFolderId() != null) {
-            if (requestDto.parentFolderId().equals(folder.getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot set folder parent to itself");
-            }
-
-            Folder newParent = folderRepository.findById(requestDto.parentFolderId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
-
-            if (!newParent.getCourse().getId().equals(courseId)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder does not belong to this course");
-            }
-
-            if (isDescendantOf(newParent, folder.getId())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot move folder into its own subfolder");
-            }
-
-            folder.setParentFolder(newParent);
+        if (requestDto.name().isUndefined() && requestDto.parentFolderId().isUndefined() && requestDto.moveToRoot().isUndefined()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
-        if (requestDto.name() != null && !requestDto.name().isBlank()) {
-            folder.setName(requestDto.name().trim());
+        if (Boolean.TRUE.equals(requestDto.moveToRoot().orElse(false))) {
+            folder.setParentFolder(null);
+        } else if (requestDto.parentFolderId().isPresent()) {
+            UUID targetParentId = requestDto.parentFolderId().get();
+            if (targetParentId == null) {
+                folder.setParentFolder(null);
+            } else {
+                if (targetParentId.equals(folder.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot set folder parent to itself");
+                }
+
+                Folder newParent = folderRepository.findById(targetParentId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
+
+                if (!newParent.getCourse().getId().equals(courseId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder does not belong to this course");
+                }
+
+                if (isDescendantOf(newParent, folder.getId())) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot move folder into its own subfolder");
+                }
+
+                folder.setParentFolder(newParent);
+            }
+        }
+
+        if (requestDto.name().isPresent()) {
+            String name = requestDto.name().get();
+            if (name != null && !name.isBlank()) {
+                folder.setName(name.trim());
+            }
         }
 
         UUID parentId = folder.getParentFolder() != null ? folder.getParentFolder().getId() : null;

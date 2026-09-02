@@ -1,4 +1,3 @@
-import { useSearchParams } from "react-router";
 import {
   Bell,
   Calendar,
@@ -17,24 +16,42 @@ import {
   type NotificationCategory,
   NotificationList,
 } from "@/features/notifications";
-import { useUrlTab } from "@/hooks/useUrlTab";
+import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
 
 const VALID_CATEGORIES = ["all", "event", "post", "system"] as const;
 type CategoryTab = (typeof VALID_CATEGORIES)[number];
 
-export default function NotificationsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [currentTab, setTab] = useUrlTab<CategoryTab>("all", {
+interface NotificationsFilters {
+  category: CategoryTab;
+  unread: boolean;
+}
+
+const NOTIFICATIONS_FILTER_SCHEMA: FilterSchema<NotificationsFilters> = {
+  category: {
+    defaultValue: "all",
+    allowedValues: VALID_CATEGORIES,
     paramKey: "category",
-    validTabs: VALID_CATEGORIES,
-  });
+  },
+  unread: {
+    defaultValue: false,
+    type: "boolean",
+    paramKey: "unread",
+  },
+};
+
+export default function NotificationsPage() {
+  const { filters, setFilters, setFilter } = useUrlFilters(
+    NOTIFICATIONS_FILTER_SCHEMA,
+  );
 
   const category: NotificationCategory | undefined =
-    currentTab === "event" || currentTab === "post" || currentTab === "system"
-      ? (currentTab.toUpperCase() as NotificationCategory)
+    filters.category === "event" ||
+    filters.category === "post" ||
+    filters.category === "system"
+      ? (filters.category.toUpperCase() as NotificationCategory)
       : undefined;
 
-  const isUnreadOnly = searchParams.get("unread") === "true";
+  const isUnreadOnly = filters.unread;
 
   const { data: totalUnread = 0 } = useUnreadNotificationCount();
   const { mutate: markAllRead, isPending: isMarkingAll } =
@@ -55,18 +72,7 @@ export default function NotificationsPage() {
   const notifications = data?.pages.flatMap((page) => page.content) ?? [];
 
   const handleUnreadToggle = (checked: boolean) => {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        if (checked) {
-          next.set("unread", "true");
-        } else {
-          next.delete("unread");
-        }
-        return next;
-      },
-      { replace: true },
-    );
+    setFilter("unread", checked);
   };
 
   return (
@@ -93,8 +99,10 @@ export default function NotificationsPage() {
 
       {/* Tabs and Content */}
       <Tabs
-        value={currentTab}
-        onValueChange={(val) => setTab(val as CategoryTab)}
+        value={filters.category}
+        onValueChange={(val) =>
+          setFilters({ category: val as CategoryTab, unread: false })
+        }
         className="w-full space-y-6 min-w-0"
       >
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">

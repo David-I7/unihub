@@ -13,6 +13,7 @@ import {
 import { formatPostDate } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { usePermissions } from "@/hooks/usePermissions";
+import { isFieldValueEqual } from "@/hooks/useForm";
 import { useUpdateComment } from "../api/updateComment";
 import { DeleteCommentDialog } from "./DeleteCommentDialog";
 import type { Comment } from "@/types/domain";
@@ -43,9 +44,11 @@ export function CommentItem({
   const isAuthorizedToDelete =
     !isArchived && canDeleteComment(comment.owner?.id);
 
+  const isContentDirty = !isFieldValueEqual(editContent, comment.content);
+
   const handleSaveEdit = async () => {
     const cleanContent = editContent.trim();
-    if (!cleanContent) return;
+    if (!cleanContent || !isContentDirty) return;
 
     try {
       await updateMutation.mutateAsync({
@@ -157,7 +160,11 @@ export function CommentItem({
                 type="button"
                 size="xs"
                 onClick={handleSaveEdit}
-                disabled={!editContent.trim() || updateMutation.isPending}
+                disabled={
+                  !editContent.trim() ||
+                  updateMutation.isPending ||
+                  !isContentDirty
+                }
                 className="h-6 px-2 text-xs font-bold cursor-pointer"
               >
                 <Check className="size-3 mr-1" />

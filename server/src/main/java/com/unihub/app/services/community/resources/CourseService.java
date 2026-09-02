@@ -129,10 +129,10 @@ public class CourseService {
 
     @Transactional
     public CourseResponseDto updateCourse(String communitySlug, StudyYearName studyYearName, String courseSlug, UpdateCourseRequestDto dto) {
-        if (dto.name() == null && dto.slug() == null && dto.abbreviation() == null
-                && dto.semester() == null && dto.creditPoints() == null
-                && dto.description() == null && dto.readme() == null
-                && dto.archived() == null && dto.teacherIds() == null) {
+        if (dto.name().isUndefined() && dto.slug().isUndefined() && dto.abbreviation().isUndefined()
+                && dto.semester().isUndefined() && dto.creditPoints().isUndefined()
+                && dto.description().isUndefined() && dto.readme().isUndefined()
+                && dto.archived().isUndefined() && dto.teacherIds().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -141,49 +141,39 @@ public class CourseService {
 
         int studyYearId = course.getStudyYear().getId();
 
-        if (dto.name() != null && !dto.name().equalsIgnoreCase(course.getName())) {
-            if (courseRepository.existsByStudyYearIdAndNameIgnoreCaseAndIdNot(studyYearId, dto.name(), course.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Course with this name already exists in this study year");
+        if (dto.name().isPresent()) {
+            String name = dto.name().get();
+            if (name != null && !name.equalsIgnoreCase(course.getName())) {
+                if (courseRepository.existsByStudyYearIdAndNameIgnoreCaseAndIdNot(studyYearId, name, course.getId())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Course with this name already exists in this study year");
+                }
+                course.setName(name);
             }
-            course.setName(dto.name());
         }
 
-        if (dto.slug() != null && !dto.slug().equalsIgnoreCase(course.getSlug())) {
-            if (courseRepository.existsByStudyYearIdAndSlugIgnoreCaseAndIdNot(studyYearId, dto.slug(), course.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Course with this slug already exists in this study year");
+        if (dto.slug().isPresent()) {
+            String slug = dto.slug().get();
+            if (slug != null && !slug.equalsIgnoreCase(course.getSlug())) {
+                if (courseRepository.existsByStudyYearIdAndSlugIgnoreCaseAndIdNot(studyYearId, slug, course.getId())) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Course with this slug already exists in this study year");
+                }
+                course.setSlug(slug);
             }
-            course.setSlug(dto.slug());
         }
 
-        if (dto.abbreviation() != null) {
-            course.setAbbreviation(dto.abbreviation());
-        }
+        dto.abbreviation().ifPresent(course::setAbbreviation);
+        dto.semester().ifPresent(course::setSemester);
+        dto.creditPoints().ifPresent(course::setCreditPoints);
+        dto.description().ifPresent(course::setDescription);
+        dto.readme().ifPresent(course::setReadme);
+        dto.archived().ifPresent(course::setArchived);
 
-        if (dto.semester() != null) {
-            course.setSemester(dto.semester());
-        }
-
-        if (dto.creditPoints() != null) {
-            course.setCreditPoints(dto.creditPoints());
-        }
-
-        if (dto.description() != null) {
-            course.setDescription(dto.description());
-        }
-
-        if (dto.readme() != null) {
-            course.setReadme(dto.readme());
-        }
-
-        if (dto.archived() != null) {
-            course.setArchived(dto.archived());
-        }
-
-        if (dto.teacherIds() != null) {
+        if (dto.teacherIds().isPresent()) {
+            List<UUID> teacherIds = dto.teacherIds().get();
             List<Teacher> newTeachers = Collections.emptyList();
-            if (!dto.teacherIds().isEmpty()) {
-                newTeachers = teacherRepository.findAllByIdInAndCommunityId(dto.teacherIds(), course.getStudyYear().getCommunity().getId());
-                if (newTeachers.size() != dto.teacherIds().size()) {
+            if (teacherIds != null && !teacherIds.isEmpty()) {
+                newTeachers = teacherRepository.findAllByIdInAndCommunityId(teacherIds, course.getStudyYear().getCommunity().getId());
+                if (newTeachers.size() != teacherIds.size()) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more teachers were not found in this community");
                 }
             }

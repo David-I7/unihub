@@ -7,6 +7,7 @@ import {
   Users,
 } from "@/components/ui/icons";
 import {
+  CALENDAR_FILTER_SCHEMA,
   CalendarAgendaList,
   CalendarMonthGrid,
   CalendarToolbar,
@@ -21,9 +22,13 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
+import type { StudyYearNameDto } from "@/features/studyYears";
 
 export default function CalendarPage() {
   const [searchParams] = useSearchParams();
+  const { filters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
+  const hydrateFromUrl = useCalendarStore((s) => s.hydrateFromUrl);
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
   const openCreateModal = useCalendarStore((s) => s.openCreateModal);
 
@@ -38,6 +43,29 @@ export default function CalendarPage() {
   const { canCreateEvent } = usePermissions(communitySlug);
 
   const eventIdParam = searchParams.get("eventId");
+
+  // Synchronize URL query params into the central Zustand store
+  useEffect(() => {
+    const validYear =
+      filters.year > 1970 && filters.year < 2100
+        ? filters.year
+        : new Date().getFullYear();
+    const validMonth =
+      filters.month >= 1 && filters.month <= 12
+        ? filters.month
+        : new Date().getMonth() + 1;
+    const date = new Date(validYear, validMonth - 1, 1);
+
+    hydrateFromUrl({
+      currentDate: date,
+      viewMode: filters.view,
+      communitySlug: filters.community || null,
+      studyYear: (filters.studyYear as StudyYearNameDto) || null,
+      courseSlug: filters.course || null,
+      selectedType: filters.type,
+      searchQuery: filters.q,
+    });
+  }, [filters, hydrateFromUrl]);
 
   useEffect(() => {
     if (eventIdParam) {

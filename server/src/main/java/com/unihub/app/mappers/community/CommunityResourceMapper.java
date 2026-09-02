@@ -271,4 +271,9 @@ public class CommunityResourceMapper {
                 .isMember(isMember)
                 .build();
     }
+
+    public OwnerDto toOwnerDto(User user) {
+        if(user == null) return null;
+        return new OwnerDto(user.getId(), user.getUsername(), user.isActive());
+    }
 }

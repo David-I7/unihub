@@ -83,18 +83,26 @@ function EditCourseForm({
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
-        const payload: UpdateCoursePayload = {
-          name: values.name?.trim(),
-          slug: values.slug?.trim(),
-          abbreviation: values.abbreviation?.trim().toUpperCase(),
-          semester: values.semester !== undefined ? Number(values.semester) : undefined,
-          creditPoints:
+        const dirty = form.dirtyFields;
+        const payload: UpdateCoursePayload = {};
+
+        if (dirty.name) payload.name = values.name?.trim();
+        if (dirty.slug) payload.slug = values.slug?.trim();
+        if (dirty.abbreviation)
+          payload.abbreviation = values.abbreviation?.trim().toUpperCase();
+        if (dirty.semester)
+          payload.semester =
+            values.semester !== undefined ? Number(values.semester) : undefined;
+        if (dirty.creditPoints)
+          payload.creditPoints =
             values.creditPoints !== undefined
               ? Number(values.creditPoints)
-              : undefined,
-          description: values.description ? values.description.trim() : "",
-          teacherIds: selectedTeacherIds,
-        };
+              : undefined;
+        if (dirty.description)
+          payload.description = values.description
+            ? values.description.trim()
+            : "";
+        if (dirty.teacherIds) payload.teacherIds = selectedTeacherIds;
 
         const updated = await updateMutation.mutateAsync({
           communitySlug,
@@ -352,7 +360,9 @@ function EditCourseForm({
         </Button>
         <Button
           type="submit"
-          disabled={form.isSubmitting || updateMutation.isPending}
+          disabled={
+            form.isSubmitting || updateMutation.isPending || !form.isDirty
+          }
           className="font-bold cursor-pointer"
         >
           {form.isSubmitting || updateMutation.isPending

@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { FileText, Pen, Video } from "@/components/ui/icons";
 import { useUserCommunities } from "@/features/users";
 import { useCalendarStore } from "../store/useCalendarStore";
@@ -17,6 +18,8 @@ import {
   useStudyYearCourses,
   type StudyYearNameDto,
 } from "@/features/studyYears";
+import { useUrlFilters, useDebouncedInput } from "@/hooks/useUrlFilters";
+import { CALENDAR_FILTER_SCHEMA } from "../schemas/calendarFilterSchema";
 
 interface CalendarFiltersProps {
   examCount: number;
@@ -31,18 +34,23 @@ export function CalendarFilters({
   lectureCount,
   totalCount,
 }: CalendarFiltersProps) {
-  // Pull state directly from useCalendarStore
+  const { filters, setFilters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
+
+  // Pull store state for display and queries
   const communitySlug = useCalendarStore((s) => s.communitySlug);
   const studyYear = useCalendarStore((s) => s.studyYear);
   const courseSlug = useCalendarStore((s) => s.courseSlug);
   const selectedType = useCalendarStore((s) => s.selectedType);
-  const searchQuery = useCalendarStore((s) => s.searchQuery);
 
-  const setCommunitySlug = useCalendarStore((s) => s.setCommunitySlug);
-  const setStudyYear = useCalendarStore((s) => s.setStudyYear);
-  const setCourseSlug = useCalendarStore((s) => s.setCourseSlug);
-  const setSelectedType = useCalendarStore((s) => s.setSelectedType);
-  const setSearchQuery = useCalendarStore((s) => s.setSearchQuery);
+  const handleCommitSearch = useCallback(
+    (val: string) => setFilters({ q: val }),
+    [setFilters],
+  );
+  const [searchInput, setSearchInput] = useDebouncedInput(
+    filters.q,
+    handleCommitSearch,
+    300,
+  );
 
   // Fetch user enrolled communities list
   const { data: userCommunitiesData } = useUserCommunities();
@@ -88,8 +96,8 @@ export function CalendarFilters({
       {/* Row 1: Standard Search Input */}
       <div className="w-full pt-1">
         <SearchInput
-          value={searchQuery}
-          onChange={setSearchQuery}
+          value={searchInput}
+          onChange={setSearchInput}
           placeholder="Search events by title, course, or room..."
           totalCount={totalCount}
           resultLabel="events"
@@ -107,7 +115,11 @@ export function CalendarFilters({
             value={communitySlug ?? null}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_COMMUNITIES") return;
-              setCommunitySlug(val);
+              setFilters({
+                community: val,
+                studyYear: "",
+                course: "",
+              });
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">
@@ -139,11 +151,11 @@ export function CalendarFilters({
             value={studyYear ?? "All"}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_YEARS") return;
-              if (val === "All") {
-                setStudyYear(null);
-                return;
-              }
-              setStudyYear(val as StudyYearNameDto);
+              const nextYear = val === "All" ? "" : (val as StudyYearNameDto);
+              setFilters({
+                studyYear: nextYear,
+                course: "",
+              });
             }}
             disabled={!communitySlug}
           >
@@ -183,8 +195,8 @@ export function CalendarFilters({
             value={courseSlug ?? "All"}
             onValueChange={(val: string | null) => {
               if (!val || val === "NO_COURSES") return;
-              const next = val === "All" ? null : val;
-              setCourseSlug(next);
+              const nextCourse = val === "All" ? "" : val;
+              setFilters({ course: nextCourse });
             }}
             disabled={!studyYear}
           >
@@ -217,7 +229,9 @@ export function CalendarFilters({
           <Select
             value={selectedType}
             onValueChange={(val: string | null) => {
-              if (val) setSelectedType(val as EventType | "All");
+              if (val) {
+                setFilters({ type: (val as EventType | "All") || "All" });
+              }
             }}
           >
             <SelectTrigger className="w-full h-9 bg-background text-xs rounded-xl">

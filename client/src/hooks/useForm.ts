@@ -1,6 +1,7 @@
 import {
   useState,
   useCallback,
+  useMemo,
   type ChangeEvent,
   type FocusEvent,
   type SyntheticEvent,
@@ -9,6 +10,56 @@ import { type ZodType, ZodError } from "zod";
 
 export type FormErrors<T> = Partial<Record<keyof T, string>>;
 export type FormTouched<T> = Partial<Record<keyof T, boolean>>;
+export type FormDirty<T> = Partial<Record<keyof T, boolean>>;
+
+export function isFieldValueEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+
+  // Normalized empty value handling (null, undefined, empty string after trimming)
+  const isAEmpty =
+    a === null ||
+    a === undefined ||
+    (typeof a === "string" && a.trim() === "");
+  const isBEmpty =
+    b === null ||
+    b === undefined ||
+    (typeof b === "string" && b.trim() === "");
+  if (isAEmpty && isBEmpty) return true;
+  if (isAEmpty !== isBEmpty) return false;
+
+  // Strings trimmed comparison
+  if (typeof a === "string" && typeof b === "string") {
+    return a.trim() === b.trim();
+  }
+
+  // Arrays comparison
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    const sortedA = [...a].sort();
+    const sortedB = [...b].sort();
+    return sortedA.every((val, index) => isFieldValueEqual(val, sortedB[index]));
+  }
+
+  // Objects comparison
+  if (
+    typeof a === "object" &&
+    typeof b === "object" &&
+    a !== null &&
+    b !== null
+  ) {
+    const keysA = Object.keys(a as Record<string, unknown>);
+    const keysB = Object.keys(b as Record<string, unknown>);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every((k) =>
+      isFieldValueEqual(
+        (a as Record<string, unknown>)[k],
+        (b as Record<string, unknown>)[k],
+      ),
+    );
+  }
+
+  return false;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface UseFormOptions<T extends Record<string, any>> {
@@ -27,6 +78,7 @@ export function useForm<T extends Record<string, any>>({
   validateOnChange = false,
   validateOnBlur = true,
 }: UseFormOptions<T>) {
+  const [baseValues, setBaseValues] = useState<T>(initialValues);
   const [values, setValues] = useState<T>(initialValues);
   const [errors, setErrors] = useState<FormErrors<T>>({});
   const [touched, setTouched] = useState<FormTouched<T>>({});
@@ -149,9 +201,37 @@ export function useForm<T extends Record<string, any>>({
     [touched, errors],
   );
 
+  const dirtyFields = useMemo(() => {
+    const dirty: FormDirty<T> = {};
+    for (const key in values) {
+      if (!isFieldValueEqual(values[key], baseValues[key])) {
+        dirty[key] = true;
+      }
+    }
+    return dirty;
+  }, [values, baseValues]);
+
+  const isDirty = useMemo(() => {
+    return Object.keys(dirtyFields).length > 0;
+  }, [dirtyFields]);
+
+  const getDirtyValues = useCallback((): Partial<T> => {
+    const dirtyPayload: Partial<T> = {};
+    for (const key in values) {
+      if (!isFieldValueEqual(values[key], baseValues[key])) {
+        dirtyPayload[key] = values[key];
+      }
+    }
+    return dirtyPayload;
+  }, [values, baseValues]);
+
   const reset = useCallback(
     (newValues?: Partial<T>) => {
-      setValues({ ...initialValues, ...newValues });
+      const nextValues = newValues
+        ? { ...initialValues, ...newValues }
+        : initialValues;
+      setBaseValues(nextValues);
+      setValues(nextValues);
       setErrors({});
       setTouched({});
       setIsSubmitting(false);
@@ -204,11 +284,16 @@ export function useForm<T extends Record<string, any>>({
 
   return {
     values,
+    baseValues,
     errors,
     touched,
+    dirtyFields,
+    isDirty,
+    getDirtyValues,
     isSubmitting,
     serverError,
     setValues,
+    setBaseValues,
     setValue,
     setErrors,
     setFieldError,

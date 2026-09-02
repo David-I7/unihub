@@ -68,7 +68,7 @@ public class TeacherService {
 
     @Transactional
     public TeacherResponseDto updateTeacher(UUID teacherId, UserDto caller, UpdateTeacherRequestDto dto) {
-        if (dto.firstName() == null && dto.lastName() == null && dto.estimatedAge() == null) {
+        if (dto.firstName().isUndefined() && dto.lastName().isUndefined() && dto.estimatedAge().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -81,23 +81,24 @@ public class TeacherService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update teacher");
         }
 
-        if (!dto.firstName().equalsIgnoreCase(teacher.getFirstName()) || !dto.lastName().equalsIgnoreCase(teacher.getLastName())) {
+        String targetFirstName = dto.firstName().isPresent() ? dto.firstName().get() : teacher.getFirstName();
+        String targetLastName = dto.lastName().isPresent() ? dto.lastName().get() : teacher.getLastName();
+
+        if (targetFirstName != null && targetLastName != null &&
+                (!targetFirstName.equalsIgnoreCase(teacher.getFirstName()) || !targetLastName.equalsIgnoreCase(teacher.getLastName()))) {
             Optional<Teacher> duplicate = teacherRepository.findByCommunityIdAndFirstNameAndLastName(
-                    teacher.getCommunity().getId(), dto.firstName(), dto.lastName()
+                    teacher.getCommunity().getId(), targetFirstName, targetLastName
             );
             if (duplicate.isPresent() && !duplicate.get().getId().equals(teacherId)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Teacher with the same name already exists in this community");
             }
         }
 
-        if (dto.firstName() != null) {
-            teacher.setFirstName(dto.firstName());
-        }
-        if (dto.lastName() != null) {
-            teacher.setLastName(dto.lastName());
-        }
-        if (dto.estimatedAge() != null) {
-            teacher.setEstimatedBirthDate(LocalDate.now().minusYears(dto.estimatedAge()));
+        dto.firstName().ifPresent(teacher::setFirstName);
+        dto.lastName().ifPresent(teacher::setLastName);
+        if (dto.estimatedAge().isPresent()) {
+            Integer age = dto.estimatedAge().get();
+            teacher.setEstimatedBirthDate(age != null ? LocalDate.now().minusYears(age) : null);
         }
 
         Teacher saved = teacherRepository.save(teacher);

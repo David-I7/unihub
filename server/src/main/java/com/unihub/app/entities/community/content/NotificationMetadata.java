@@ -13,8 +13,6 @@ public record NotificationMetadata(
         String studyYearName,
         String courseSlug,
         String courseName,
-        UUID eventId,
-        UUID actorId,
-        String actorUsername
+        UUID eventId
 ) {
 }

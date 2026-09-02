@@ -57,7 +57,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto updatePost(UUID postId, UserDto caller, UpdatePostRequestDto dto) {
-        if (dto.title() == null && dto.description() == null) {
+        if (dto.title().isUndefined() && dto.description().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -73,12 +73,8 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update post");
         }
 
-        if (dto.title() != null) {
-            post.setTitle(dto.title());
-        }
-        if (dto.description() != null) {
-            post.setDescription(dto.description());
-        }
+        dto.title().ifPresent(post::setTitle);
+        dto.description().ifPresent(post::setDescription);
 
         Post saved = postRepository.save(post);
         Boolean isLiked = postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id());

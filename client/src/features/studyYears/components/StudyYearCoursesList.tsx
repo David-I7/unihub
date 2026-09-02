@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { BookOpen, Plus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -6,9 +6,13 @@ import { Spinner } from "@/components/ui/spinner";
 import { SearchInput } from "@/components/app/SearchInput";
 import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useObserver } from "@/hooks/useObserver";
 import { usePermissions } from "@/hooks/usePermissions";
+import {
+  useUrlFilters,
+  useDebouncedInput,
+  type FilterSchema,
+} from "@/hooks/useUrlFilters";
 import { CourseCard, CreateCourseModal } from "@/features/courses";
 import { useInfiniteStudyYearHome } from "../api/getStudyYearHome";
 
@@ -21,6 +25,20 @@ const FILTER_OPTIONS = [
   { value: "archived", label: "Archived" },
 ];
 
+interface StudyYearCoursesFilters {
+  search: string;
+  filter: FilterOption;
+}
+
+const COURSES_FILTER_SCHEMA: FilterSchema<StudyYearCoursesFilters> = {
+  search: { defaultValue: "", paramKey: "search" },
+  filter: {
+    defaultValue: "all",
+    allowedValues: ["all", "sem-1", "sem-2", "archived"] as const,
+    paramKey: "filter",
+  },
+};
+
 interface StudyYearCoursesListProps {
   communitySlug: string;
   studyYearSlug: string;
@@ -30,22 +48,32 @@ export function StudyYearCoursesList({
   communitySlug,
   studyYearSlug,
 }: StudyYearCoursesListProps) {
-  const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput.trim(), 350);
-  const [filterOption, setFilterOption] = useState<FilterOption>("all");
+  const { filters, setFilters, setFilter } = useUrlFilters(
+    COURSES_FILTER_SCHEMA,
+  );
+
+  const handleCommitSearch = useCallback(
+    (val: string) => setFilters({ search: val }),
+    [setFilters],
+  );
+  const [searchInput, setSearchInput, debouncedSearch] = useDebouncedInput(
+    filters.search,
+    handleCommitSearch,
+    350,
+  );
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const { canCreateCourse } = usePermissions(communitySlug);
 
   const semesterParam = useMemo(() => {
-    if (filterOption === "sem-1") return 1;
-    if (filterOption === "sem-2") return 2;
+    if (filters.filter === "sem-1") return 1;
+    if (filters.filter === "sem-2") return 2;
     return undefined;
-  }, [filterOption]);
+  }, [filters.filter]);
 
   const archivedParam = useMemo(() => {
-    return filterOption === "archived";
-  }, [filterOption]);
+    return filters.filter === "archived";
+  }, [filters.filter]);
 
   const {
     data,
@@ -99,8 +127,8 @@ export function StudyYearCoursesList({
         <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
           <FilterSelect
             label="Filter"
-            value={filterOption}
-            onChange={(val) => setFilterOption(val as FilterOption)}
+            value={filters.filter}
+            onChange={(val) => setFilter("filter", val as FilterOption)}
             options={FILTER_OPTIONS}
           />
 
@@ -159,7 +187,7 @@ export function StudyYearCoursesList({
             <p className="text-xs text-muted-foreground max-w-sm">
               {debouncedSearch
                 ? "Try searching for a different keyword or clearing your filter."
-                : filterOption === "archived"
+                : filters.filter === "archived"
                   ? "There are currently no archived courses for this study year."
                   : "No courses are currently registered in this study year."}
             </p>
@@ -167,7 +195,10 @@ export function StudyYearCoursesList({
           {debouncedSearch && (
             <button
               type="button"
-              onClick={() => setSearchInput("")}
+              onClick={() => {
+                setSearchInput("");
+                setFilters({ search: "" });
+              }}
               className="text-xs font-semibold text-primary hover:underline cursor-pointer"
             >
               Clear search query

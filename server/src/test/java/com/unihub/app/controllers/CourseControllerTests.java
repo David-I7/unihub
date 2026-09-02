@@ -64,7 +64,8 @@ public class CourseControllerTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private CourseService courseService;

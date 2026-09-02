@@ -19,7 +19,7 @@ public record UserReminderResponseDto(
         String eventTitle,
         EventType eventType,
         OffsetDateTime eventStartTime,
-        Double durationHours,
+        Float durationHours,
         EventLocation eventLocation,
         String courseSlug,
         String courseName,

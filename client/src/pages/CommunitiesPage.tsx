@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import {
   useInfiniteCommunities,
   CommunityHeader,
@@ -17,8 +17,12 @@ import {
   ChevronDown,
   ChevronUp,
 } from "@/components/ui/icons";
-import { useDebounce } from "@/hooks/useDebounce";
 import { useObserver } from "@/hooks/useObserver";
+import {
+  useUrlFilters,
+  useDebouncedInput,
+  type FilterSchema,
+} from "@/hooks/useUrlFilters";
 
 const SORT_FIELD_OPTIONS = [
   { value: "memberCount", label: "Member Count" },
@@ -26,25 +30,55 @@ const SORT_FIELD_OPTIONS = [
   { value: "name", label: "Name" },
 ];
 
+interface CommunitiesFilters {
+  search: string;
+  verified: boolean;
+  sort: string;
+  dir: "desc" | "asc";
+}
+
+const COMMUNITIES_FILTER_SCHEMA: FilterSchema<CommunitiesFilters> = {
+  search: { defaultValue: "", paramKey: "search" },
+  verified: { defaultValue: false, type: "boolean", paramKey: "verified" },
+  sort: {
+    defaultValue: "memberCount",
+    allowedValues: ["memberCount", "createdAt", "name"] as const,
+    paramKey: "sort",
+  },
+  dir: {
+    defaultValue: "desc",
+    allowedValues: ["desc", "asc"] as const,
+    paramKey: "dir",
+  },
+};
+
 export default function CommunitiesPage() {
-  const [searchInput, setSearchInput] = useState("");
-  const debouncedSearch = useDebounce(searchInput.trim(), 350);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [sortField, setSortField] = useState<string>("memberCount");
-  const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
+  const { filters, setFilters, setFilter } = useUrlFilters(
+    COMMUNITIES_FILTER_SCHEMA,
+  );
+
+  const handleCommitSearch = useCallback(
+    (val: string) => setFilters({ search: val }),
+    [setFilters],
+  );
+  const [searchInput, setSearchInput, debouncedSearch] = useDebouncedInput(
+    filters.search,
+    handleCommitSearch,
+    350,
+  );
 
   const sortBy = useMemo(() => {
-    return `${sortField},${sortDirection}`;
-  }, [sortField, sortDirection]);
+    return `${filters.sort},${filters.dir}`;
+  }, [filters.sort, filters.dir]);
 
   const queryParams = useMemo(() => {
     return {
       size: 12,
       sort: sortBy,
       search: debouncedSearch || undefined,
-      verified: verifiedOnly ? true : undefined,
+      verified: filters.verified ? true : undefined,
     };
-  }, [debouncedSearch, verifiedOnly, sortBy]);
+  }, [debouncedSearch, filters.verified, sortBy]);
 
   const {
     data,
@@ -95,18 +129,18 @@ export default function CommunitiesPage() {
           {/* Verified Toggle Filter */}
           <Button
             type="button"
-            variant={verifiedOnly ? "secondary" : "outline"}
+            variant={filters.verified ? "secondary" : "outline"}
             size="sm"
-            onClick={() => setVerifiedOnly((prev) => !prev)}
+            onClick={() => setFilter("verified", !filters.verified)}
             className="h-9 gap-1.5 text-xs font-normal rounded-xl cursor-pointer"
           >
             <ShieldCheck
               className={`size-3.5 ${
-                verifiedOnly ? "text-emerald-500" : "text-muted-foreground"
+                filters.verified ? "text-emerald-500" : "text-muted-foreground"
               }`}
             />
             <span>Verified Only</span>
-            {verifiedOnly && (
+            {filters.verified && (
               <Check className="size-3 text-emerald-500 ml-0.5" />
             )}
           </Button>
@@ -114,8 +148,8 @@ export default function CommunitiesPage() {
           {/* Sort By Filter */}
           <FilterSelect
             label="Sort by"
-            value={sortField}
-            onChange={setSortField}
+            value={filters.sort}
+            onChange={(val) => setFilter("sort", val)}
             options={SORT_FIELD_OPTIONS}
           />
 
@@ -125,18 +159,18 @@ export default function CommunitiesPage() {
             variant="outline"
             size="sm"
             onClick={() =>
-              setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))
+              setFilter("dir", filters.dir === "asc" ? "desc" : "asc")
             }
             className="h-9 gap-1.5 text-xs font-normal rounded-xl cursor-pointer"
-            title={`Sort Direction: ${sortDirection === "desc" ? "Descending" : "Ascending"}`}
+            title={`Sort Direction: ${filters.dir === "desc" ? "Descending" : "Ascending"}`}
           >
-            {sortDirection === "desc" ? (
+            {filters.dir === "desc" ? (
               <>
                 <ChevronDown className="size-3.5 text-muted-foreground" />
                 <span className="text-xs">
-                  {sortField === "name"
+                  {filters.sort === "name"
                     ? "Z → A"
-                    : sortField === "createdAt"
+                    : filters.sort === "createdAt"
                       ? "Newest"
                       : "High → Low"}
                 </span>
@@ -145,9 +179,9 @@ export default function CommunitiesPage() {
               <>
                 <ChevronUp className="size-3.5 text-muted-foreground" />
                 <span className="text-xs">
-                  {sortField === "name"
+                  {filters.sort === "name"
                     ? "A → Z"
-                    : sortField === "createdAt"
+                    : filters.sort === "createdAt"
                       ? "Oldest"
                       : "Low → High"}
                 </span>
@@ -168,7 +202,10 @@ export default function CommunitiesPage() {
       ) : allCommunities.length === 0 ? (
         <CommunityEmptyState
           searchQuery={searchInput}
-          onClear={() => setSearchInput("")}
+          onClear={() => {
+            setSearchInput("");
+            setFilters({ search: "" });
+          }}
         />
       ) : (
         <div className="space-y-6">

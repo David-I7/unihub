@@ -129,7 +129,7 @@ public class CalendarServiceTests {
                 "Midterm Exam",
                 EventType.EXAM,
                 OffsetDateTime.now().plusDays(1),
-                2.0,
+                2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
                 false
@@ -162,7 +162,7 @@ public class CalendarServiceTests {
                 "Year 1 Exam",
                 EventType.EXAM,
                 OffsetDateTime.now().plusDays(1),
-                2.0,
+                2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
                 false
@@ -224,7 +224,7 @@ public class CalendarServiceTests {
                 "Midterm Exam",
                 EventType.EXAM,
                 OffsetDateTime.now().plusDays(1),
-                2.0,
+                2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
                 true
@@ -261,14 +261,13 @@ public class CalendarServiceTests {
                 .description("Exam description")
                 .type(EventType.EXAM)
                 .startTime(OffsetDateTime.now().plusDays(2))
-                .durationHours(2.0)
+                .durationHours(2.0f)
                 .location(EventLocation.IN_PERSON)
                 .courseId(1L)
                 .communitySlug(slug)
                 .build();
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
-        when(communityMemberRepository.isMemberOfCommunity(slug, userId)).thenReturn(true);
         when(authorizationService.hasCommunityPermission(slug, userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
         when(userMapper.toEntity(userDto)).thenReturn(owner);
@@ -311,7 +310,6 @@ public class CalendarServiceTests {
                 .build();
 
         when(communityRepository.findBySlug("comm-1")).thenReturn(Optional.of(community1));
-        when(communityMemberRepository.isMemberOfCommunity("comm-1", userId)).thenReturn(true);
         when(authorizationService.hasCommunityPermission("comm-1", userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(courseFromComm2));
 

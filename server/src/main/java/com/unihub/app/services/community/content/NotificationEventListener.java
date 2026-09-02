@@ -47,12 +47,13 @@ public class NotificationEventListener {
 
         String title = "New post in " + event.community().getName();
         String message = event.author().getUsername() + " posted: '" + event.post().getTitle() + "'";
-        NotificationMetadata metadata = contentMapper.toCommunityPostNotificationMetadata(event.community(), event.author());
+        NotificationMetadata metadata = contentMapper.toCommunityPostNotificationMetadata(event.community());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
             notifications.add(contentMapper.toNotificationEntity(
                     member,
+                    event.author(),
                     title,
                     message,
                     NotificationCategory.POST,
@@ -81,12 +82,13 @@ public class NotificationEventListener {
 
         String title = "New post in " + event.course().getName();
         String message = event.author().getUsername() + " posted: '" + event.post().getTitle() + "'";
-        NotificationMetadata metadata = contentMapper.toCoursePostNotificationMetadata(event.course(), event.author());
+        NotificationMetadata metadata = contentMapper.toCoursePostNotificationMetadata(event.course());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
             notifications.add(contentMapper.toNotificationEntity(
                     member,
+                    event.author(),
                     title,
                     message,
                     NotificationCategory.POST,
@@ -198,7 +200,7 @@ public class NotificationEventListener {
         List<User> recipients = userRepository.findAllById(event.recipientUserIds());
         String title = "Event Cancelled: " + event.eventTitle();
         String message = "The event '" + event.eventTitle() + "' has been cancelled";
-        NotificationMetadata metadata = contentMapper.toEventCancelledNotificationMetadata(event.communitySlug(), event.canceller());
+        NotificationMetadata metadata = contentMapper.toEventCancelledNotificationMetadata(event.communitySlug());
 
         List<Notification> notifications = new ArrayList<>();
         for (User recipient : recipients) {
@@ -207,6 +209,7 @@ public class NotificationEventListener {
             }
             notifications.add(contentMapper.toNotificationEntity(
                     recipient,
+                    event.canceller(),
                     title,
                     message,
                     NotificationCategory.EVENT,
