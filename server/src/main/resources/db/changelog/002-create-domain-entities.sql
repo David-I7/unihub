@@ -191,7 +191,7 @@ CREATE TABLE EVENTS(
     description text,
     type EVENT_TYPE not null,
     start_time timestamptz not null,
-    duration_hours double precision,
+    duration_hours real,
     location EVENT_LOCATION not null,
     location_details text,
     course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
@@ -237,6 +237,7 @@ CREATE TYPE NOTIFICATION_TYPE AS ENUM (
 CREATE TABLE NOTIFICATIONS (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES USERS(id) ON DELETE CASCADE,
+    actor_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     type NOTIFICATION_TYPE NOT NULL,
     title TEXT NOT NULL,
     message TEXT NOT NULL,

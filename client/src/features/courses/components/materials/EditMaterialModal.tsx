@@ -131,17 +131,17 @@ function EditMaterialForm({
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
-        const payload = isLink
-          ? {
-              title: values.title?.trim(),
-              description: values.description?.trim() || undefined,
-              url: values.url?.trim(),
-              linkType: values.linkType,
-            }
-          : {
-              title: values.title?.trim(),
-              description: values.description?.trim() || undefined,
-            };
+        const dirty = form.dirtyFields;
+        const payload: Record<string, unknown> = {};
+
+        if (dirty.title) payload.title = values.title?.trim();
+        if (dirty.description)
+          payload.description = values.description?.trim() || undefined;
+
+        if (isLink) {
+          if (dirty.url) payload.url = values.url?.trim();
+          if (dirty.linkType) payload.linkType = values.linkType;
+        }
 
         const updated = await updateMutation.mutateAsync({
           materialId: material.data.id,
@@ -278,7 +278,9 @@ function EditMaterialForm({
         </Button>
         <Button
           type="submit"
-          disabled={form.isSubmitting || updateMutation.isPending}
+          disabled={
+            form.isSubmitting || updateMutation.isPending || !form.isDirty
+          }
           className="gap-1.5 font-bold cursor-pointer"
         >
           {updateMutation.isPending ? "Saving..." : "Save Changes"}

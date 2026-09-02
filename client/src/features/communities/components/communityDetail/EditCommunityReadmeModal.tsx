@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/api/types";
+import { isFieldValueEqual } from "@/hooks/useForm";
 import { useUpdateCommunity } from "../../api/updateCommunity";
 import type { Community } from "../../api/types";
 
@@ -35,15 +36,28 @@ export function EditCommunityReadmeModal({
   );
   const updateMutation = useUpdateCommunity();
 
+  useEffect(() => {
+    if (open) {
+      setReadme(community.readme ?? "");
+    }
+  }, [open, community.readme]);
+
   const isEditing = Boolean(
     community.readme && community.readme.trim().length > 0,
   );
+
+  const isDirty = !isFieldValueEqual(readme, community.readme ?? "");
 
   const handleInsertSnippet = (before: string, after: string = "") => {
     setReadme((prev) => `${prev}\n${before}${after}`);
   };
 
   const handleSave = async () => {
+    if (!isDirty) {
+      onOpenChange(false);
+      return;
+    }
+
     try {
       await updateMutation.mutateAsync({
         communitySlug: community.slug,
@@ -256,7 +270,7 @@ export function EditCommunityReadmeModal({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || !isDirty}
             className="gap-1.5 font-bold cursor-pointer"
           >
             {updateMutation.isPending

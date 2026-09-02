@@ -137,4 +137,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     """)
     Optional<EventResponseDto> findEventById(@Param("eventId") UUID eventId);
 
+    @Query("SELECT e FROM Event e JOIN FETCH e.owner JOIN FETCH e.community WHERE e.id = :id")
+    Optional<Event> findByIdWithOwnerAndCommunity(UUID id);
 }

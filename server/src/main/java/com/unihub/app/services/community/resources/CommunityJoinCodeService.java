@@ -107,7 +107,7 @@ public class CommunityJoinCodeService {
 
     @Transactional
     public CommunityJoinCodeResponseDto updateJoinCode(String communitySlug, UUID codeId, UpdateJoinCodeRequestDto dto) {
-        if (dto.maxUses() == null && dto.validForHours() == null) {
+        if (dto.maxUses().isUndefined() && dto.validForHours().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -118,21 +118,23 @@ public class CommunityJoinCodeService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code not found in this community");
         }
 
-        if (dto.maxUses() != null) {
-            if (dto.maxUses() == -1) {
+        if (dto.maxUses().isPresent()) {
+            Integer maxUses = dto.maxUses().get();
+            if (maxUses == null || maxUses == -1) {
                 joinCode.setMaxUses(null);
-            } else if (dto.maxUses() > 0) {
-                joinCode.setMaxUses(dto.maxUses());
+            } else if (maxUses > 0) {
+                joinCode.setMaxUses(maxUses);
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be -1 or greater than 0");
             }
         }
 
-        if (dto.validForHours() != null) {
-            if (dto.validForHours() == -1) {
+        if (dto.validForHours().isPresent()) {
+            Integer validForHours = dto.validForHours().get();
+            if (validForHours == null || validForHours == -1) {
                 joinCode.setExpiresAt(null);
-            } else if (dto.validForHours() > 0) {
-                joinCode.setExpiresAt(OffsetDateTime.now().plusHours(dto.validForHours()));
+            } else if (validForHours > 0) {
+                joinCode.setExpiresAt(OffsetDateTime.now().plusHours(validForHours));
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "validForHours must be -1 or greater than 0");
             }

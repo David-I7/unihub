@@ -4,8 +4,10 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
+import org.openapitools.jackson.nullable.JsonNullable;
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.resources.StudyYearName;
@@ -53,7 +55,8 @@ public class CalendarControllerTests extends BaseIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockitoBean
     private CalendarService calendarService;
@@ -89,7 +92,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .title("Final Exam")
                 .type(EventType.EXAM)
                 .startTime(startTime)
-                .durationHours(2.0)
+                .durationHours(2.0f)
                 .location(EventLocation.IN_PERSON)
                 .courseAbbreviation("PA")
                 .isSubscribed(true)
@@ -277,10 +280,9 @@ public class CalendarControllerTests extends BaseIntegrationTest {
             """)
     public void testUpdateEvent_Success() throws Exception {
         UUID eventId = UUID.randomUUID();
-        com.unihub.app.dto.community.content.request.UpdateEventRequestDto requestDto =
-                com.unihub.app.dto.community.content.request.UpdateEventRequestDto.builder()
-                        .title("Updated Title")
-                        .build();
+        UpdateEventRequestDto requestDto = UpdateEventRequestDto.builder()
+                .title(JsonNullable.of("Updated Title"))
+                .build();
 
         CalendarEventResponseDto responseDto = CalendarEventResponseDto.builder()
                 .id(eventId)
@@ -292,7 +294,7 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .isSubscribed(false)
                 .build();
 
-        when(calendarService.updateEvent(eq(eventId), eq(userDto), any(com.unihub.app.dto.community.content.request.UpdateEventRequestDto.class)))
+        when(calendarService.updateEvent(eq(eventId), eq(userDto), any(UpdateEventRequestDto.class)))
                 .thenReturn(responseDto);
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch(BASE_URL + "/events/" + eventId)

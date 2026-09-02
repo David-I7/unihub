@@ -35,6 +35,15 @@ interface CalendarActions {
   closeEventDetails: () => void;
   openOverflowModal: (dateStr: string) => void;
   closeOverflowModal: () => void;
+  hydrateFromUrl: (params: {
+    currentDate?: Date;
+    viewMode?: "auto" | "month" | "list";
+    communitySlug?: string | null;
+    studyYear?: StudyYearNameDto | null;
+    courseSlug?: string | null;
+    selectedType?: EventType | "All";
+    searchQuery?: string;
+  }) => void;
 }
 
 export type CalendarStore = CalendarState & CalendarActions;
@@ -113,4 +122,30 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
   closeEventDetails: () => set({ selectedEventId: null }),
   openOverflowModal: (dateStr) => set({ overflowDate: dateStr }),
   closeOverflowModal: () => set({ overflowDate: null }),
+  hydrateFromUrl: (params) =>
+    set((state) => {
+      const updates: Partial<CalendarState> = {};
+      if (params.currentDate !== undefined && params.currentDate.getTime() !== state.currentDate.getTime()) {
+        updates.currentDate = params.currentDate;
+      }
+      if (params.viewMode !== undefined && params.viewMode !== state.viewMode) {
+        updates.viewMode = params.viewMode;
+      }
+      if (params.communitySlug !== undefined && params.communitySlug !== state.communitySlug) {
+        updates.communitySlug = params.communitySlug;
+      }
+      if (params.studyYear !== undefined && params.studyYear !== state.studyYear) {
+        updates.studyYear = params.studyYear;
+      }
+      if (params.courseSlug !== undefined && params.courseSlug !== state.courseSlug) {
+        updates.courseSlug = params.courseSlug;
+      }
+      if (params.selectedType !== undefined && params.selectedType !== state.selectedType) {
+        updates.selectedType = params.selectedType;
+      }
+      if (params.searchQuery !== undefined && params.searchQuery !== state.searchQuery) {
+        updates.searchQuery = params.searchQuery;
+      }
+      return Object.keys(updates).length > 0 ? updates : state;
+    }),
 }));

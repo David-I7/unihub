@@ -1,6 +1,10 @@
 import client from "@/api/client";
 import { useAuthStore } from "@/features/auth";
-import type { PaginatedResponse } from "@/api/types";
+import {
+  getPaginatedNextPageParam,
+  getPaginatedPrevPageParam,
+  type PaginatedResponse,
+} from "@/api/types";
 import {
   useQuery,
   useMutation,
@@ -65,8 +69,8 @@ export function useInfiniteNotifications(
     queryFn: ({ pageParam = 0 }) =>
       getNotifications({ ...params, page: pageParam, size: 20 }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage) =>
-      lastPage.last ? undefined : lastPage.number + 1,
+    getNextPageParam: getPaginatedNextPageParam,
+    getPreviousPageParam: getPaginatedPrevPageParam,
     enabled: enabled && Boolean(user),
   });
 }

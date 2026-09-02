@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -14,7 +14,7 @@ import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
 import { formatDateTime24h } from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { useUpdateJoinCode } from "../../api/joinCodes";
-import type { CommunityJoinCode } from "../../api/types";
+import type { CommunityJoinCode, UpdateJoinCodeDto } from "../../api/types";
 
 interface EditJoinCodeModalProps {
   communitySlug: string;
@@ -44,37 +44,87 @@ export function EditJoinCodeModal({
 
   const updateMutation = useUpdateJoinCode();
 
+  useEffect(() => {
+    if (joinCode && open) {
+      setMaxUses(
+        joinCode.maxUses !== null && joinCode.maxUses !== undefined
+          ? String(joinCode.maxUses)
+          : "",
+      );
+      setValidForHours("");
+      setIsUnlimitedUses(
+        joinCode.maxUses === null || joinCode.maxUses === undefined,
+      );
+      setIsUnlimitedDuration(
+        joinCode.expiresAt === null || joinCode.expiresAt === undefined,
+      );
+    }
+  }, [joinCode, open]);
+
   if (!joinCode) return null;
+
+  const initialIsUnlimitedUses =
+    joinCode.maxUses === null || joinCode.maxUses === undefined;
+  const initialNeverExpires =
+    joinCode.expiresAt === null || joinCode.expiresAt === undefined;
+
+  let maxUsesChanged = false;
+  let maxUsesPayload: number | undefined;
+
+  if (isUnlimitedUses) {
+    if (!initialIsUnlimitedUses) {
+      maxUsesChanged = true;
+      maxUsesPayload = -1;
+    }
+  } else {
+    const parsed = parseInt(maxUses, 10);
+    if (!isNaN(parsed) && parsed >= 1) {
+      if (initialIsUnlimitedUses || parsed !== joinCode.maxUses) {
+        maxUsesChanged = true;
+        maxUsesPayload = parsed;
+      }
+    }
+  }
+
+  let validForHoursChanged = false;
+  let validForHoursPayload: number | undefined;
+
+  if (isUnlimitedDuration) {
+    if (!initialNeverExpires) {
+      validForHoursChanged = true;
+      validForHoursPayload = -1;
+    }
+  } else {
+    const parsed = parseInt(validForHours, 10);
+    if (!isNaN(parsed) && parsed >= 1) {
+      validForHoursChanged = true;
+      validForHoursPayload = parsed;
+    }
+  }
+
+  const isDirty = maxUsesChanged || validForHoursChanged;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const maxUsesPayload = isUnlimitedUses
-      ? -1
-      : maxUses
-        ? parseInt(maxUses, 10)
-        : undefined;
-
-    const validForHoursPayload = isUnlimitedDuration
-      ? -1
-      : validForHours
-        ? parseInt(validForHours, 10)
-        : undefined;
-
-    if (maxUsesPayload === undefined && validForHoursPayload === undefined) {
-      toast.info("No modifications made.");
+    if (!isDirty) {
       onOpenChange(false);
       return;
+    }
+
+    const payload: UpdateJoinCodeDto = {};
+    if (maxUsesChanged && maxUsesPayload !== undefined) {
+      payload.maxUses = maxUsesPayload;
+    }
+    if (validForHoursChanged && validForHoursPayload !== undefined) {
+      payload.validForHours = validForHoursPayload;
     }
 
     try {
       await updateMutation.mutateAsync({
         communitySlug,
         codeId: joinCode.id,
-        payload: {
-          maxUses: maxUsesPayload,
-          validForHours: validForHoursPayload,
-        },
+        payload,
       });
 
       toast.success(`Join code ${joinCode.code} updated successfully!`);
@@ -187,7 +237,7 @@ export function EditJoinCodeModal({
             </Button>
             <Button
               type="submit"
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || !isDirty}
               className="font-bold cursor-pointer"
             >
               {updateMutation.isPending ? "Updating..." : "Save Changes"}

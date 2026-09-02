@@ -57,26 +57,38 @@ public class ResourceService {
 
         Long courseId = resource.getCourse().getId();
 
-        if (Boolean.TRUE.equals(requestDto.moveToRoot())) {
+        if (requestDto.title().isUndefined() && requestDto.description().isUndefined()
+                && requestDto.folderId().isUndefined() && requestDto.moveToRoot().isUndefined()
+                && requestDto.url().isUndefined() && requestDto.linkType().isUndefined()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
+        }
+
+        if (Boolean.TRUE.equals(requestDto.moveToRoot().orElse(false))) {
             resource.setFolder(null);
-        } else if (requestDto.folderId() != null) {
-            Folder newFolder = folderRepository.findById(requestDto.folderId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+        } else if (requestDto.folderId().isPresent()) {
+            UUID targetFolderId = requestDto.folderId().get();
+            if (targetFolderId == null) {
+                resource.setFolder(null);
+            } else {
+                Folder newFolder = folderRepository.findById(targetFolderId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
 
-            if (!newFolder.getCourse().getId().equals(courseId)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder does not belong to this course");
+                if (!newFolder.getCourse().getId().equals(courseId)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Folder does not belong to this course");
+                }
+
+                resource.setFolder(newFolder);
             }
-
-            resource.setFolder(newFolder);
         }
 
-        if (requestDto.title() != null && !requestDto.title().isBlank()) {
-            resource.setTitle(requestDto.title().trim());
+        if (requestDto.title().isPresent()) {
+            String title = requestDto.title().get();
+            if (title != null && !title.isBlank()) {
+                resource.setTitle(title.trim());
+            }
         }
 
-        if (requestDto.description() != null) {
-            resource.setDescription(requestDto.description());
-        }
+        requestDto.description().ifPresent(resource::setDescription);
 
         UUID folderId = resource.getFolder() != null ? resource.getFolder().getId() : null;
         if (folderId != null) {
@@ -90,9 +102,11 @@ public class ResourceService {
         }
 
         if (resource instanceof MaterialLink materialLink) {
-            if (requestDto.url() != null || requestDto.linkType() != null) {
-                String newUrl = requestDto.url() != null ? requestDto.url().trim() : materialLink.getUrl();
-                MaterialLinkType newType = requestDto.linkType() != null ? requestDto.linkType() : materialLink.getLinkType();
+            if (requestDto.url().isPresent() || requestDto.linkType().isPresent()) {
+                String newUrl = requestDto.url().isPresent() && requestDto.url().get() != null
+                        ? requestDto.url().get().trim() : materialLink.getUrl();
+                MaterialLinkType newType = requestDto.linkType().isPresent() && requestDto.linkType().get() != null
+                        ? requestDto.linkType().get() : materialLink.getLinkType();
 
                 materialLinkValidator.validate(newUrl, newType);
 

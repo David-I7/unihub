@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import {
   Folder,
@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourseMaterials } from "../../api/getCourseMaterials";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
 import { PERMISSIONS } from "@/lib/permissions";
 import { formatBytes, getFileIcon, getLinkIcon } from "./materialsUtils";
 import {
@@ -49,6 +50,18 @@ interface DraggedItemData {
   title: string;
 }
 
+interface MaterialsUrlFilters {
+  folder: string;
+  file: string;
+  link: string;
+}
+
+const MATERIALS_FILTER_SCHEMA: FilterSchema<MaterialsUrlFilters> = {
+  folder: { defaultValue: "", paramKey: "folder" },
+  file: { defaultValue: "", paramKey: "file" },
+  link: { defaultValue: "", paramKey: "link" },
+};
+
 interface StandardMaterialsViewProps {
   communitySlug: string;
   studyYearSlug: string;
@@ -62,9 +75,11 @@ export function StandardMaterialsView({
   courseSlug,
   isArchived = false,
 }: StandardMaterialsViewProps) {
-  const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([
-    { id: null, name: "Root", type: "folder" },
-  ]);
+  const { filters, setFilters } = useUrlFilters(MATERIALS_FILTER_SCHEMA);
+
+  const [folderBreadcrumbs, setFolderBreadcrumbs] = useState<
+    Array<{ id: string | null; name: string }>
+  >([{ id: filters.folder || null, name: "Root" }]);
 
   // Modal visibility states
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
@@ -94,19 +109,11 @@ export function StandardMaterialsView({
     string | null
   >(null);
 
-  const currentBreadcrumb = breadcrumbs[breadcrumbs.length - 1];
-  const isMaterialDetail =
-    currentBreadcrumb.type === "file" || currentBreadcrumb.type === "link";
-
-  // Find the active folder ID (the last folder in the breadcrumb trail)
-  const lastFolder = [...breadcrumbs]
-    .reverse()
-    .find((b) => b.type === "folder");
-  const currentFolderId = lastFolder?.id ?? undefined;
+  const currentFolderId = filters.folder || undefined;
+  const lastFolder = folderBreadcrumbs[folderBreadcrumbs.length - 1];
   const currentFolderName = lastFolder?.name ?? "Root";
 
   // Parent folder of current folder (for "Move up one level")
-  const folderBreadcrumbs = breadcrumbs.filter((b) => b.type === "folder");
   const parentOfCurrentFolder =
     folderBreadcrumbs.length > 1
       ? folderBreadcrumbs[folderBreadcrumbs.length - 2]
@@ -147,42 +154,74 @@ export function StandardMaterialsView({
     currentFolderId,
   );
 
+  const selectedFile = useMemo(
+    () =>
+      filters.file ? materials?.files?.find((f) => f.id === filters.file) : null,
+    [filters.file, materials?.files],
+  );
+  const selectedLink = useMemo(
+    () =>
+      filters.link ? materials?.links?.find((l) => l.id === filters.link) : null,
+    [filters.link, materials?.links],
+  );
+
+  const activeMaterial: SelectedMaterial = useMemo(() => {
+    if (selectedFile) return { type: "file", data: selectedFile };
+    if (selectedLink) return { type: "link", data: selectedLink };
+    return null;
+  }, [selectedFile, selectedLink]);
+
+  const isMaterialDetail = Boolean(activeMaterial);
+
+  const displayBreadcrumbs: BreadcrumbItem[] = useMemo(() => {
+    const list: BreadcrumbItem[] = folderBreadcrumbs.map((b) => ({
+      id: b.id,
+      name: b.name,
+      type: "folder" as const,
+    }));
+    if (selectedFile) {
+      list.push({
+        id: selectedFile.id,
+        name: selectedFile.title,
+        type: "file",
+        material: { type: "file", data: selectedFile },
+      });
+    } else if (selectedLink) {
+      list.push({
+        id: selectedLink.id,
+        name: selectedLink.title,
+        type: "link",
+        material: { type: "link", data: selectedLink },
+      });
+    }
+    return list;
+  }, [folderBreadcrumbs, selectedFile, selectedLink]);
+
   const updateFolderMutation = useUpdateFolder();
   const updateMaterialMutation = useUpdateMaterial();
 
   const handleOpenFolder = (folder: CourseMaterialFolder) => {
-    setBreadcrumbs((prev) => [
+    setFilters({ folder: folder.id, file: "", link: "" });
+    setFolderBreadcrumbs((prev) => [
       ...prev,
-      { id: folder.id, name: folder.name, type: "folder" },
+      { id: folder.id, name: folder.name },
     ]);
   };
 
   const handleOpenFile = (file: CourseMaterialFile) => {
-    setBreadcrumbs((prev) => [
-      ...prev,
-      {
-        id: file.id,
-        name: file.title,
-        type: "file",
-        material: { type: "file", data: file },
-      },
-    ]);
+    setFilters({ file: file.id, link: "" });
   };
 
   const handleOpenLink = (link: CourseMaterialLink) => {
-    setBreadcrumbs((prev) => [
-      ...prev,
-      {
-        id: link.id,
-        name: link.title,
-        type: "link",
-        material: { type: "link", data: link },
-      },
-    ]);
+    setFilters({ link: link.id, file: "" });
   };
 
   const handleNavigateBreadcrumb = (index: number) => {
-    setBreadcrumbs((prev) => prev.slice(0, index + 1));
+    if (index < folderBreadcrumbs.length) {
+      const target = folderBreadcrumbs[index];
+      setFolderBreadcrumbs((prev) => prev.slice(0, index + 1));
+      setFilters({ folder: target.id ?? "", file: "", link: "" });
+    }
   };
 
   // Move an item up one level in the hierarchy
@@ -303,8 +342,8 @@ export function StandardMaterialsView({
       {/* Breadcrumb Navigation Bar with Drop Targets */}
       <div className="flex items-center gap-1.5 overflow-x-auto rounded-xl border bg-card px-4 py-2.5 text-xs text-muted-foreground">
         <FolderOpen className="size-4 text-primary shrink-0 mr-1" />
-        {breadcrumbs.map((item, index) => {
-          const isLast = index === breadcrumbs.length - 1;
+        {displayBreadcrumbs.map((item, index) => {
+          const isLast = index === displayBreadcrumbs.length - 1;
           const isBreadcrumbDropTarget =
             !isLast &&
             item.type === "folder" &&
@@ -332,6 +371,7 @@ export function StandardMaterialsView({
                 onDrop={(e) => {
                   if (!isArchived && !isLast && item.type === "folder") {
                     e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
                     setDragOverBreadcrumbId(null);
                     const raw = e.dataTransfer.getData("application/json");
                     if (raw) {
@@ -361,29 +401,16 @@ export function StandardMaterialsView({
       </div>
 
       {/* When a material (file or link) is selected, show detail viewer */}
-      {isMaterialDetail && currentBreadcrumb.material ? (
+      {isMaterialDetail && activeMaterial ? (
         <MaterialDetailViewer
-          material={currentBreadcrumb.material}
+          material={activeMaterial}
           communitySlug={communitySlug}
           isArchived={isArchived}
           onDeleted={() => {
-            // Navigate back to the parent folder
-            setBreadcrumbs((prev) => prev.slice(0, -1));
+            setFilters({ file: "", link: "" });
           }}
-          onUpdated={(updated) => {
-            if (updated) {
-              setBreadcrumbs((prev) => {
-                const next = [...prev];
-                const lastIdx = next.length - 1;
-                const updatedName = updated.data.title;
-                next[lastIdx] = {
-                  ...next[lastIdx],
-                  name: updatedName,
-                  material: updated,
-                };
-                return next;
-              });
-            }
+          onUpdated={() => {
+            refetch();
           }}
         />
       ) : (

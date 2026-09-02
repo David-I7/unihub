@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/api/types";
+import { isFieldValueEqual } from "@/hooks/useForm";
 import { useUpdateCourse } from "../api/updateCourse";
 import type { Course } from "../api/types";
 
@@ -39,13 +40,26 @@ export function EditCourseReadmeModal({
   );
   const updateMutation = useUpdateCourse();
 
+  useEffect(() => {
+    if (open) {
+      setReadme(course.readme ?? "");
+    }
+  }, [open, course.readme]);
+
   const isEditing = Boolean(course.readme && course.readme.trim().length > 0);
+
+  const isDirty = !isFieldValueEqual(readme, course.readme ?? "");
 
   const handleInsertSnippet = (before: string, after: string = "") => {
     setReadme((prev) => `${prev}\n${before}${after}`);
   };
 
   const handleSave = async () => {
+    if (!isDirty) {
+      onOpenChange(false);
+      return;
+    }
+
     try {
       await updateMutation.mutateAsync({
         communitySlug,
@@ -262,7 +276,7 @@ export function EditCourseReadmeModal({
           <Button
             type="button"
             onClick={handleSave}
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || !isDirty}
             className="gap-1.5 font-bold cursor-pointer"
           >
             {updateMutation.isPending

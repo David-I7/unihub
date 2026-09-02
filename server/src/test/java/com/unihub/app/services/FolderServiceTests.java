@@ -64,6 +64,9 @@ public class FolderServiceTests {
     @Mock
     private AuthorizationService authorizationService;
 
+    @Mock
+    private com.unihub.app.mappers.UserMapper userMapper;
+
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
@@ -96,8 +99,8 @@ public class FolderServiceTests {
                 .thenReturn(Optional.of(course));
         when(folderRepository.existsByCourseIdAndParentFolderIsNullAndNameIgnoreCase(10L, "Lectures"))
                 .thenReturn(false);
-        when(userRepository.findById(owner.getId()))
-                .thenReturn(Optional.of(owner));
+        when(userMapper.toEntity(ownerDto))
+                .thenReturn(owner);
         when(folderRepository.save(any(Folder.class))).thenAnswer(invocation -> {
             Folder f = invocation.getArgument(0);
             f.setId(UUID.randomUUID());

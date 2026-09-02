@@ -254,17 +254,20 @@ public class UserService {
 
     @Transactional
     public UserProfileResponseDto updateProfile(UUID userId, UpdateUserProfileRequestDto dto) {
-        if(dto.username() == null ){
+        if (dto.username().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid update request.");
         }
 
         User user = findById(userId);
 
-        if (dto.username() != null) {
-            if (userRepository.findByUsername(dto.username()).isPresent()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
+        if (dto.username().isPresent() && dto.username().get() != null) {
+            String newUsername = dto.username().get();
+            if (!newUsername.equalsIgnoreCase(user.getUsername())) {
+                if (userRepository.findByUsername(newUsername).isPresent()) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already taken");
+                }
+                user.setUsername(newUsername);
             }
-            user.setUsername(dto.username());
         }
 
         user.setUpdatedAt(OffsetDateTime.now());

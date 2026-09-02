@@ -2,6 +2,7 @@ export * from "./api/types";
 export * from "./api/events";
 export * from "./api/reminders";
 export * from "./schemas/eventSchemas";
+export * from "./schemas/calendarFilterSchema";
 export * from "./store/useCalendarStore";
 export * from "./components/CalendarEventPill";
 export * from "./components/CalendarDayCell";

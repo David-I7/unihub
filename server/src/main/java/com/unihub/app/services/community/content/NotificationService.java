@@ -7,8 +7,10 @@ import com.unihub.app.entities.community.content.*;
 import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.NotificationRepository;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,7 @@ public class NotificationService {
     private final CommunityContentMapper contentMapper;
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommunityResourceMapper communityResourceMapper;
 
     @Transactional(readOnly = true)
     public PageDto<NotificationResponseDto> getUserNotifications(
@@ -47,6 +50,11 @@ public class NotificationService {
     ) {
         Specification<Notification> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                root.fetch("actor", JoinType.LEFT);
+            }
+
             predicates.add(cb.equal(root.get("user").get("id"), userId));
             if (category != null) {
                 predicates.add(cb.equal(root.get("category"), category));
@@ -66,9 +74,7 @@ public class NotificationService {
 
     private NotificationResponseDto toDto(Notification n) {
         NotificationMetadata meta = n.getMetadata();
-        OwnerDto actor = (meta != null && (meta.actorId() != null || meta.actorUsername() != null))
-                ? new OwnerDto(meta.actorId(), meta.actorUsername(), true)
-                : null;
+        OwnerDto actor = communityResourceMapper.toOwnerDto(n.getActor());
 
         return NotificationResponseDto.builder()
                 .id(n.getId())

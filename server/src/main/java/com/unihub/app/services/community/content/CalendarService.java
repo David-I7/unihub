@@ -124,13 +124,12 @@ public class CalendarService {
 
     @Transactional
     public CalendarEventResponseDto createEvent(UserDto user, CreateEventRequestDto requestDto) {
+        if(requestDto.startTime().isBefore(OffsetDateTime.now(ZoneOffset.UTC))) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Event start time cannot be in the past");
+        }
+
         Community community = communityRepository.findBySlug(requestDto.communitySlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-
-        boolean isMember = communityMemberRepository.isMemberOfCommunity(requestDto.communitySlug(), user.id());
-        if (!isMember) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
-        }
 
         if (!authorizationService.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create event");
@@ -152,43 +151,24 @@ public class CalendarService {
 
     @Transactional
     public CalendarEventResponseDto updateEvent(UUID eventId, UserDto user, UpdateEventRequestDto dto) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdWithOwnerAndCommunity(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
 
         String communitySlug = event.getCommunity().getSlug();
         boolean isOwner = event.getOwner() != null && event.getOwner().getId().equals(user.id());
 
-        if (isOwner) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, user.id(), PermissionType.UPDATE_EVENT)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update event");
-            }
-        } else {
+        if (!isOwner) {
             if (!authorizationService.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_EVENT)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate event");
             }
         }
 
-        if (dto.title() != null) {
-            event.setTitle(dto.title());
-        }
-        if (dto.description() != null) {
-            event.setDescription(dto.description());
-        }
-        if (dto.type() != null) {
-            event.setType(dto.type());
-        }
-        if (dto.startTime() != null) {
-            event.setStartTime(dto.startTime());
-        }
-        if (dto.durationHours() != null) {
-            event.setDurationHours(dto.durationHours());
-        }
-        if (dto.location() != null) {
-            event.setLocation(dto.location());
-        }
-        if (dto.locationDetails() != null) {
-            event.setLocationDetails(dto.locationDetails());
-        }
+        dto.title().ifPresent(event::setTitle);
+        dto.description().ifPresent(event::setDescription);
+        dto.type().ifPresent(event::setType);
+        dto.durationHours().ifPresent(event::setDurationHours);
+        dto.location().ifPresent(event::setLocation);
+        dto.locationDetails().ifPresent(event::setLocationDetails);
 
         Event saved = eventRepository.save(event);
 

@@ -8,6 +8,7 @@ import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.events.email.EventReminderNotificationEvent;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
+import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.NotificationRepository;
 import com.unihub.app.services.community.content.NotificationService;
@@ -45,6 +46,9 @@ public class NotificationServiceTests {
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
     @Spy
+    private CommunityResourceMapper communityResourceMapper = new CommunityResourceMapper();
+
+    @Spy
     private PageMapper pageMapper = new PageMapper();
 
     @Mock
@@ -62,8 +66,6 @@ public class NotificationServiceTests {
 
         NotificationMetadata metadata = NotificationMetadata.builder()
                 .eventId(eventId)
-                .actorId(actorId)
-                .actorUsername("prof_smith")
                 .communitySlug("fmi-info")
                 .communityName("FMI Info")
                 .studyYearName("YEAR_1")
@@ -71,9 +73,12 @@ public class NotificationServiceTests {
                 .courseSlug("algorithms")
                 .build();
 
+        User actor = User.builder().id(actorId).username("prof_smith").deletedAt(null).build();
+
         Notification notification = Notification.builder()
                 .id(UUID.randomUUID())
                 .user(User.builder().id(userId).build())
+                .actor(actor)
                 .title("Reminder: Algorithms Exam")
                 .message("Exam starts soon")
                 .category(NotificationCategory.EVENT)

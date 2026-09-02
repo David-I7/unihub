@@ -48,12 +48,16 @@ export function EditPostModal({
     onSubmit: async (values) => {
       if (!post) return;
       try {
+        const dirty = form.dirtyFields;
+        const payload: Record<string, unknown> = {};
+
+        if (dirty.title) payload.title = values.title?.trim();
+        if (dirty.description)
+          payload.description = values.description?.trim();
+
         await updateMutation.mutateAsync({
           postId: post.id,
-          payload: {
-            title: values.title?.trim(),
-            description: values.description?.trim(),
-          },
+          payload,
         });
 
         toast.success("Post updated successfully!");
@@ -172,7 +176,11 @@ export function EditPostModal({
             </Button>
             <Button
               type="submit"
-              disabled={form.isSubmitting || updateMutation.isPending}
+              disabled={
+                form.isSubmitting ||
+                updateMutation.isPending ||
+                !form.isDirty
+              }
               className="gap-1.5 font-bold cursor-pointer"
             >
               {form.isSubmitting || updateMutation.isPending

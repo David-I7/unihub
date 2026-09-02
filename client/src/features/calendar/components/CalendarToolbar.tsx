@@ -3,6 +3,8 @@ import { LayoutGrid, List } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarFilters } from "./CalendarFilters";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
+import { CALENDAR_FILTER_SCHEMA } from "../schemas/calendarFilterSchema";
 
 interface CalendarToolbarProps {
   examCount: number;
@@ -34,13 +36,37 @@ export function CalendarToolbar({
 }: CalendarToolbarProps) {
   const currentDate = useCalendarStore((s) => s.currentDate);
   const viewMode = useCalendarStore((s) => s.viewMode);
-  const goToPrevMonth = useCalendarStore((s) => s.goToPrevMonth);
-  const goToNextMonth = useCalendarStore((s) => s.goToNextMonth);
-  const goToToday = useCalendarStore((s) => s.goToToday);
-  const setViewMode = useCalendarStore((s) => s.setViewMode);
+  const { setFilters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
 
   const monthName = MONTH_NAMES[currentDate.getMonth()];
   const yearNumber = currentDate.getFullYear();
+
+  const handlePrevMonth = () => {
+    const prev = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - 1,
+      1,
+    );
+    setFilters({ year: prev.getFullYear(), month: prev.getMonth() + 1 });
+  };
+
+  const handleNextMonth = () => {
+    const next = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1,
+    );
+    setFilters({ year: next.getFullYear(), month: next.getMonth() + 1 });
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setFilters({ year: today.getFullYear(), month: today.getMonth() + 1 });
+  };
+
+  const handleViewModeChange = (val: string) => {
+    setFilters({ view: val as "auto" | "month" | "list" });
+  };
 
   return (
     <div className="rounded-2xl border bg-card p-4 sm:p-5 shadow-xs space-y-4">
@@ -51,7 +77,7 @@ export function CalendarToolbar({
           <div className="flex items-center gap-1 rounded-xl border bg-muted/40 p-1">
             <button
               type="button"
-              onClick={goToPrevMonth}
+              onClick={handlePrevMonth}
               title="Previous Month"
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
@@ -59,14 +85,14 @@ export function CalendarToolbar({
             </button>
             <button
               type="button"
-              onClick={goToToday}
+              onClick={handleToday}
               className="px-3 py-1 text-xs font-semibold rounded-lg text-foreground hover:bg-background transition-colors cursor-pointer"
             >
               Today
             </button>
             <button
               type="button"
-              onClick={goToNextMonth}
+              onClick={handleNextMonth}
               title="Next Month"
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
@@ -83,9 +109,7 @@ export function CalendarToolbar({
         <div className="flex flex-wrap items-center gap-3">
           <Tabs
             value={viewMode}
-            onValueChange={(val) =>
-              setViewMode(val as "auto" | "month" | "list")
-            }
+            onValueChange={handleViewModeChange}
             className="w-auto"
           >
             <TabsList className="h-9 p-1 bg-muted/60 rounded-xl gap-1">

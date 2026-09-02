@@ -22,7 +22,7 @@ public class EventResponseDto{
         private String description;
         private String locationDetails;
         private OffsetDateTime startTime;
-        private Double durationHours;
+        private Float durationHours;
         private EventLocation location;
         private String courseSlug;
         private String courseName;

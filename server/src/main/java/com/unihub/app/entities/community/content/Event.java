@@ -46,7 +46,7 @@ public class Event {
     private OffsetDateTime startTime;
 
     @Column(name = "duration_hours")
-    private Double durationHours;
+    private Float durationHours;
 
     @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)

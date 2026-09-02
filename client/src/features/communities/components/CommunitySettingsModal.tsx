@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -53,13 +54,14 @@ export function CommunitySettingsModal({
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
-        const payload: UpdateCommunityFormData = {
-          name: values.name?.trim(),
-          slug: values.slug?.trim(),
-          description: values.description?.trim(),
-          readme: values.readme?.trim() || undefined,
-          backgroundColor: values.backgroundColor,
-        };
+        const dirty = form.dirtyFields;
+        const payload: UpdateCommunityFormData = {};
+
+        if (dirty.name) payload.name = values.name?.trim();
+        if (dirty.slug) payload.slug = values.slug?.trim();
+        if (dirty.description) payload.description = values.description?.trim();
+        if (dirty.readme) payload.readme = values.readme?.trim() || undefined;
+        if (dirty.backgroundColor) payload.backgroundColor = values.backgroundColor;
 
         const updated = await updateMutation.mutateAsync({
           communitySlug: community.slug,
@@ -75,6 +77,19 @@ export function CommunitySettingsModal({
       }
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: community.name,
+        slug: community.slug,
+        description: community.description,
+        readme: community.readme ?? "",
+        backgroundColor:
+          community.backgroundColor || DEFAULT_COMMUNITY_PRESETS[0]!,
+      });
+    }
+  }, [open, community]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,7 +170,9 @@ export function CommunitySettingsModal({
             </Button>
             <Button
               type="submit"
-              disabled={form.isSubmitting || updateMutation.isPending}
+              disabled={
+                form.isSubmitting || updateMutation.isPending || !form.isDirty
+              }
               className="gap-1.5 font-bold cursor-pointer"
             >
               <span>

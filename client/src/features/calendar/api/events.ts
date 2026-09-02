@@ -114,9 +114,20 @@ export function useUpdateEvent() {
     }: {
       id: string;
       payload: UpdateEventPayload;
-    }) => updateEvent(id, payload),
+    }) => {
+      queryClient.setQueryData<Event | undefined>(
+        calendarKeys.detail(id),
+        (oldEvent) => {
+          if (!oldEvent) return oldEvent;
+          return { ...oldEvent, ...payload };
+        },
+      );
+
+      return updateEvent(id, payload);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: calendarKeys.all });
+      queryClient.invalidateQueries({ queryKey: calendarKeys.events() });
+      queryClient.invalidateQueries({ queryKey: calendarKeys.upcoming() });
     },
   });
 }

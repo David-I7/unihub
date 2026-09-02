@@ -96,7 +96,9 @@ function EditFolderForm({
         </Button>
         <Button
           type="submit"
-          disabled={form.isSubmitting || updateMutation.isPending}
+          disabled={
+            form.isSubmitting || updateMutation.isPending || !form.isDirty
+          }
           className="gap-1.5 font-bold cursor-pointer"
         >
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
