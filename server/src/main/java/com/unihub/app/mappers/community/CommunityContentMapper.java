@@ -179,6 +179,7 @@ public class CommunityContentMapper {
                 .durationHours(event.getDurationHours())
                 .location(event.getLocation())
                 .courseAbbreviation(event.getCourse() != null ? event.getCourse().getAbbreviation() : null)
+                .communityName(event.getCommunity() != null ? event.getCommunity().getName() : null)
                 .isSubscribed(isSubscribed)
                 .build();
     }
@@ -195,8 +196,6 @@ public class CommunityContentMapper {
 
     public UserReminderResponseDto toUserReminderResponseDto(EventReminder reminder) {
         Event event = reminder.getEvent();
-        Course course = event != null ? event.getCourse() : null;
-        Community community = event != null ? event.getCommunity() : null;
 
         return UserReminderResponseDto.builder()
                 .id(reminder.getId())
@@ -207,14 +206,6 @@ public class CommunityContentMapper {
                 .eventTitle(event != null ? event.getTitle() : null)
                 .eventType(event != null ? event.getType() : null)
                 .eventStartTime(event != null ? event.getStartTime() : null)
-                .durationHours(event != null ? event.getDurationHours() : null)
-                .eventLocation(event != null ? event.getLocation() : null)
-                .courseSlug(course != null ? course.getSlug() : null)
-                .courseName(course != null ? course.getName() : null)
-                .courseAbbreviation(course != null ? course.getAbbreviation() : null)
-                .communitySlug(community != null ? community.getSlug() : null)
-                .communityName(community != null ? community.getName() : null)
-                .studyYear(course != null && course.getStudyYear() != null ? course.getStudyYear().getStudyYearName() : null)
                 .build();
     }
 

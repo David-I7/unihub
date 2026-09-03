@@ -114,8 +114,7 @@ public class CalendarController {
             @PathVariable UUID eventId,
             @RequestBody(required = false) @Valid CreateEventReminderRequestDto requestDto
     ) {
-        CreateEventReminderRequestDto dto = requestDto != null ? requestDto : new CreateEventReminderRequestDto(null);
-        EventReminderResponseDto reminder = calendarService.createReminder(eventId, user, dto);
+        EventReminderResponseDto reminder = calendarService.createReminder(eventId, user, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(reminder);
     }
 

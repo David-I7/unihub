@@ -18,7 +18,10 @@ export const eventFormSchema = z
     type: eventTypeSchema,
     startTime: z.string().min(1, "Start time is required"),
     durationHours: z.union([
-      z.number().positive("Duration must be greater than 0").max(168, "Duration cannot exceed 168 hours"),
+      z
+        .number()
+        .positive("Duration must be greater than 0")
+        .max(168, "Duration cannot exceed 168 hours"),
       z.literal(""),
       z.undefined(),
     ]),
@@ -61,6 +64,14 @@ export const eventFormSchema = z
           code: "custom",
           path: ["startTime"],
           message: "Please enter a valid start date and time",
+        });
+      }
+
+      if (startD.getTime() < Date.now()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startTime"],
+          message: "Start time cannot be in the past",
         });
       }
     }

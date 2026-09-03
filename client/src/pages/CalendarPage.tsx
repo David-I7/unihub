@@ -28,44 +28,24 @@ import type { StudyYearNameDto } from "@/features/studyYears";
 export default function CalendarPage() {
   const [searchParams] = useSearchParams();
   const { filters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
-  const hydrateFromUrl = useCalendarStore((s) => s.hydrateFromUrl);
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
   const openCreateModal = useCalendarStore((s) => s.openCreateModal);
 
-  const currentDate = useCalendarStore((s) => s.currentDate);
-  const communitySlug = useCalendarStore((s) => s.communitySlug);
-  const studyYear = useCalendarStore((s) => s.studyYear);
-  const courseSlug = useCalendarStore((s) => s.courseSlug);
-  const selectedType = useCalendarStore((s) => s.selectedType);
-  const searchQuery = useCalendarStore((s) => s.searchQuery);
-  const viewMode = useCalendarStore((s) => s.viewMode);
+  // Derive all filter state directly from URL params
+  const currentDate = useMemo(() => {
+    return new Date(filters.year, filters.month - 1, 1);
+  }, [filters.year, filters.month]);
+
+  const communitySlug = filters.community || null;
+  const studyYear = (filters.studyYear as StudyYearNameDto) || null;
+  const courseSlug = filters.course || null;
+  const selectedType = filters.type;
+  const searchQuery = filters.q;
+  const viewMode = filters.view;
 
   const { canCreateEvent } = usePermissions(communitySlug);
 
   const eventIdParam = searchParams.get("eventId");
-
-  // Synchronize URL query params into the central Zustand store
-  useEffect(() => {
-    const validYear =
-      filters.year > 1970 && filters.year < 2100
-        ? filters.year
-        : new Date().getFullYear();
-    const validMonth =
-      filters.month >= 1 && filters.month <= 12
-        ? filters.month
-        : new Date().getMonth() + 1;
-    const date = new Date(validYear, validMonth - 1, 1);
-
-    hydrateFromUrl({
-      currentDate: date,
-      viewMode: filters.view,
-      communitySlug: filters.community || null,
-      studyYear: (filters.studyYear as StudyYearNameDto) || null,
-      courseSlug: filters.course || null,
-      selectedType: filters.type,
-      searchQuery: filters.q,
-    });
-  }, [filters, hydrateFromUrl]);
 
   useEffect(() => {
     if (eventIdParam) {
@@ -139,6 +119,16 @@ export default function CalendarPage() {
     [eventsList],
   );
 
+  console.log("CalendarPage render: ", {
+    ...filters,
+  });
+  console.log(
+    "Filter fetching: ",
+    isFetching,
+    "Loading events: ",
+    isLoadingEvents,
+  );
+
   return (
     <div className="min-h-full space-y-6 pb-12">
       {/* Header */}
@@ -191,7 +181,7 @@ export default function CalendarPage() {
         ) : (
           /* Empty State 2: User has communities, but none selected yet */
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
-            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4">
+            <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-4">
               <CalendarIcon className="size-6" />
             </div>
             <h3 className="font-heading text-base font-bold text-foreground">
@@ -233,12 +223,16 @@ export default function CalendarPage() {
             <>
               <div className="hidden @[640px]:block">
                 <CalendarMonthGrid
+                  currentDate={currentDate}
                   events={filteredEvents}
                   canCreateEvent={canCreateEvent}
                 />
               </div>
               <div className="block @[640px]:hidden">
-                <CalendarAgendaList events={filteredEvents} />
+                <CalendarAgendaList
+                  currentDate={currentDate}
+                  events={filteredEvents}
+                />
               </div>
             </>
           )}
@@ -246,6 +240,7 @@ export default function CalendarPage() {
           {/* Explicit Month Grid Mode */}
           {viewMode === "month" && (
             <CalendarMonthGrid
+              currentDate={currentDate}
               events={filteredEvents}
               canCreateEvent={canCreateEvent}
             />
@@ -253,7 +248,10 @@ export default function CalendarPage() {
 
           {/* Explicit Agenda List Mode */}
           {viewMode === "list" && (
-            <CalendarAgendaList events={filteredEvents} />
+            <CalendarAgendaList
+              currentDate={currentDate}
+              events={filteredEvents}
+            />
           )}
         </div>
       )}

@@ -14,7 +14,7 @@ export function NotificationEmptyState({
   if (isUnreadOnly) {
     return (
       <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-3">
+        <div className="flex size-12 items-center justify-center rounded-xl bg-muted/60  text-muted-foreground mb-3">
           <CheckCircle2 className="size-6" />
         </div>
         <h3 className="font-heading text-base font-semibold text-foreground">

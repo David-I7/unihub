@@ -58,6 +58,7 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
+import { getErrorMessage } from "@/api/types";
 
 const QUICK_PRESETS = [
   { label: "1h before", value: 60 },
@@ -102,23 +103,15 @@ export function EventDetailSheet() {
   const closeEventDetails = useCalendarStore((s) => s.closeEventDetails);
   const openEditModal = useCalendarStore((s) => s.openEditModal);
 
-  const [activeEventId, setActiveEventId] = useState<string | null>(null);
-
-  if (selectedEventId && selectedEventId !== activeEventId) {
-    setActiveEventId(selectedEventId);
-  }
-
-  const queryEventId = selectedEventId ?? activeEventId;
+  const queryEventId = selectedEventId;
 
   const {
-    data: event,
+    data: activeEvent,
     isLoading,
     isError,
   } = useCalendarEvent(queryEventId ?? "", {
     enabled: Boolean(queryEventId),
   });
-
-  const activeEvent = event;
 
   const [selectedInterval, setSelectedInterval] = useState<number | "custom">(
     60,
@@ -135,6 +128,11 @@ export function EventDetailSheet() {
 
   const handleClose = () => {
     closeEventDetails();
+    setIsConfirmingDelete(false);
+    setSelectedInterval(60);
+    setCustomAmount(1);
+    setCustomUnit("hours");
+    setReminderError(null);
     if (searchParams.has("eventId")) {
       setSearchParams(
         (prev) => {
@@ -215,7 +213,7 @@ export function EventDetailSheet() {
 
     if (timeUntilStartMinutes - offsetToSubmit <= 0) {
       setReminderError(
-        "The reminder trigger time must be at least 15 minutes in the future",
+        "Event reminders must be scheduled at least 15 minutes before the event starts",
       );
       return;
     }
@@ -231,8 +229,7 @@ export function EventDetailSheet() {
           toast.success("Reminder scheduled successfully");
         },
         onError: (err: unknown) => {
-          const msg =
-            err instanceof Error ? err.message : "Failed to set reminder";
+          const msg = getErrorMessage(err, "Failed to set reminder");
           setReminderError(msg);
           toast.error(msg);
         },
@@ -243,7 +240,7 @@ export function EventDetailSheet() {
   const handleRemoveReminder = () => {
     if (!activeEvent) return;
     deleteReminderMutate(activeEvent.id, {
-      onSuccess: () => toast.success("Reminder removed"),
+      onSuccess: () => toast.success("Reminder removed successfully"),
       onError: () => toast.error("Failed to remove reminder"),
     });
   };
@@ -253,7 +250,9 @@ export function EventDetailSheet() {
   const timeStr = activeEvent
     ? formatEventTimeWithDuration(
         activeEvent.startTime,
-        activeEvent.durationHours,
+        activeEvent.type !== "ASSIGNMENT"
+          ? activeEvent.durationHours
+          : undefined,
       )
     : "";
   const abbreviation = activeEvent?.courseAbbreviation?.trim();
@@ -274,7 +273,7 @@ export function EventDetailSheet() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6"
+        className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6 focus:outline-none"
       >
         {isLoading && !activeEvent ? (
           <div className="relative flex flex-col items-center justify-center py-20 gap-3">
@@ -431,13 +430,16 @@ export function EventDetailSheet() {
               {/* Creator & Community Subtitle */}
               <SheetDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
                 {activeEvent.owner?.username && (
-                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                    <UserAvatar
-                      username={activeEvent.owner.username}
-                      size="xs"
-                    />
-                    <span>@{activeEvent.owner.username}</span>
-                  </span>
+                  <>
+                    Created by
+                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                      <UserAvatar
+                        username={activeEvent.owner.username}
+                        size="xxs"
+                      />
+                      <span>{activeEvent.owner.username}</span>
+                    </span>
+                  </>
                 )}
               </SheetDescription>
             </SheetHeader>
@@ -518,15 +520,15 @@ export function EventDetailSheet() {
                       </span>
                     )}
                   </div>
-
-                  <Link
-                    to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                  >
-                    <span>View Course Page</span>
-                    <ExternalLink className="size-3" />
-                  </Link>
                 </div>
+
+                <Link
+                  to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  <span>View Course Page</span>
+                  <ExternalLink className="size-3" />
+                </Link>
               </div>
             )}
 

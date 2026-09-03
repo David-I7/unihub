@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useDeleteEvent } from "../api/events";
 import type { Event } from "../api/types";
+import { getErrorMessage } from "@/api/types";
 
 interface DeleteEventDialogProps {
   event: Event | null;
@@ -31,13 +32,11 @@ export function DeleteEventDialog({
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(event.id);
-      toast.success("Event deleted");
+      toast.success("Event deleted successfully");
       onOpenChange(false);
       onDeleted?.();
     } catch (err: unknown) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to delete event",
-      );
+      toast.error(getErrorMessage(err, "Failed to delete event"));
     }
   };
 

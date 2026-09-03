@@ -16,24 +16,11 @@ export interface EventReminder {
   status: ReminderStatus;
 }
 
-export interface UserReminder {
-  id: string;
-  offsetMinutes: number;
-  remindAt: string;
-  status: ReminderStatus;
-  eventId: string;
+export type UserReminder = EventReminder & {
   eventTitle: string;
   eventType: EventType;
   eventStartTime: string;
-  durationHours?: number;
-  eventLocation?: EventLocation;
-  courseSlug?: string;
-  courseName?: string;
-  courseAbbreviation?: string;
-  communitySlug?: string;
-  communityName?: string;
-  studyYear?: string;
-}
+};
 
 export interface CalendarEvent {
   id: string;
@@ -43,6 +30,7 @@ export interface CalendarEvent {
   durationHours?: number;
   location: EventLocation;
   courseAbbreviation?: string;
+  communityName: string;
   isSubscribed: boolean;
 }
 
@@ -66,8 +54,8 @@ export interface Event {
 }
 
 export interface CalendarQueryParams {
-  year?: number;
-  month?: number;
+  year: number;
+  month: number;
   communitySlug?: string;
   studyYearName?: StudyYearNameDto;
   courseSlug?: string;

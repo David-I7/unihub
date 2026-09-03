@@ -103,7 +103,7 @@ export function MyCommunitiesWidget() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {communities.map((community) => (
               <CommunityCard key={community.id} community={community} />
             ))}
@@ -111,7 +111,7 @@ export function MyCommunitiesWidget() {
 
           {/* Load More Button */}
           {hasNextPage && (
-            <div className="pt-2 flex justify-center">
+            <div className="pt-2 pb-4 flex justify-center">
               <Button
                 variant="ghost"
                 size="sm"

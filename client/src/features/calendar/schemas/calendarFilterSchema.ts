@@ -23,11 +23,23 @@ export const CALENDAR_FILTER_SCHEMA: FilterSchema<CalendarUrlFilters> = {
     type: "number",
     defaultValue: new Date().getFullYear(),
     paramKey: "year",
+    parse: (value) => {
+      const parsed = parseInt(value, 10);
+      return isNaN(parsed) || parsed < 2000 || parsed > 3000
+        ? new Date().getFullYear()
+        : parsed;
+    },
   },
   month: {
     type: "number",
     defaultValue: new Date().getMonth() + 1,
     paramKey: "month",
+    parse: (value) => {
+      const parsed = parseInt(value, 10);
+      return isNaN(parsed) || parsed < 1 || parsed > 12
+        ? new Date().getMonth() + 1
+        : parsed;
+    },
   },
   view: {
     type: "enum",

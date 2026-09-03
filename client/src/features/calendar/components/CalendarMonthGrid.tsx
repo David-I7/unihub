@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import type { CalendarEvent } from "../api/types";
-import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarDayCell } from "./CalendarDayCell";
 import { getEventDateKey, getLocalDateKey } from "@/lib/dateUtils";
 
 interface CalendarMonthGridProps {
+  currentDate: Date;
   events: CalendarEvent[];
   canCreateEvent?: boolean;
 }
@@ -22,10 +22,10 @@ interface GridCell {
 }
 
 export function CalendarMonthGrid({
+  currentDate,
   events,
   canCreateEvent = true,
 }: CalendarMonthGridProps) {
-  const currentDate = useCalendarStore((s) => s.currentDate);
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth(); // 0-11
 

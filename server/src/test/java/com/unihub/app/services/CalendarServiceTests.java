@@ -3,14 +3,13 @@ package com.unihub.app.services;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
+import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Event;
-import com.unihub.app.entities.community.content.EventLocation;
-import com.unihub.app.entities.community.content.EventReminder;
-import com.unihub.app.entities.community.content.EventType;
+import com.unihub.app.entities.community.content.*;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Course;
 import com.unihub.app.entities.community.resources.StudyYear;
@@ -32,6 +31,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -132,6 +135,7 @@ public class CalendarServiceTests {
                 2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
+                "FMI - Informatica ID",
                 false
         );
 
@@ -165,6 +169,7 @@ public class CalendarServiceTests {
                 2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
+                "FMI - Informatica ID",
                 false
         );
 
@@ -227,6 +232,7 @@ public class CalendarServiceTests {
                 2.0f,
                 EventLocation.IN_PERSON,
                 "PA",
+                "FMI - Informatica ID",
                 true
         );
 
@@ -380,9 +386,11 @@ public class CalendarServiceTests {
         UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
 
         Community community = createTestCommunity(UUID.randomUUID(), "fmi");
-        Event event = Event.builder().id(eventId).community(community).build();
+        Event event = Event.builder().id(eventId).community(community)
+                .startTime(OffsetDateTime.now().plusDays(1))
+                .build();
 
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdWithOwnerAndCommunity(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
         when(reminderRepository.existsByUserIdAndEventId(userId, eventId)).thenReturn(true);
 
@@ -410,7 +418,7 @@ public class CalendarServiceTests {
                 .community(community)
                 .build();
 
-        when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdWithOwnerAndCommunity(eventId)).thenReturn(Optional.of(event));
         when(communityMemberRepository.isMemberOfCommunity("fmi", userId)).thenReturn(true);
         when(reminderRepository.existsByUserIdAndEventId(userId, eventId)).thenReturn(false);
         when(userMapper.toEntity(userDto)).thenReturn(user);
@@ -420,8 +428,8 @@ public class CalendarServiceTests {
             return r;
         });
 
-        com.unihub.app.dto.community.content.response.EventReminderResponseDto result =
-                calendarService.createReminder(eventId, userDto, new com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto(15));
+       EventReminderResponseDto result =
+                calendarService.createReminder(eventId, userDto, new CreateEventReminderRequestDto(15));
 
         assertNotNull(result);
         assertEquals(15, result.offsetMinutes());
@@ -486,7 +494,7 @@ public class CalendarServiceTests {
     @DisplayName("getUpcomingEvents returns empty page when user has no enrolled communities")
     public void testGetUpcomingEvents_NoCommunities() {
         UUID userId = UUID.randomUUID();
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);
+        Pageable pageable = PageRequest.of(0, 5);
 
         when(communityMemberRepository.findCommunityIdsByUserId(userId)).thenReturn(Collections.emptyList());
 
@@ -523,15 +531,15 @@ public class CalendarServiceTests {
                 .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
                 .build();
 
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 5);
-        org.springframework.data.domain.Page<EventReminder> page = new org.springframework.data.domain.PageImpl<>(
+        Pageable pageable = PageRequest.of(0, 5);
+        Page<EventReminder> page = new PageImpl<>(
                 List.of(reminder), pageable, 1
         );
 
-        when(reminderRepository.findUserRemindersByStatus(userId, com.unihub.app.entities.community.content.ReminderStatus.PENDING, pageable))
+        when(reminderRepository.findUserRemindersByStatus(userId, ReminderStatus.PENDING, pageable))
                 .thenReturn(page);
 
-        var result = calendarService.getUserReminders(userId, com.unihub.app.entities.community.content.ReminderStatus.PENDING, pageable);
+        var result = calendarService.getUserReminders(userId,ReminderStatus.PENDING, pageable);
 
         assertNotNull(result);
         assertEquals(1, result.content().size());

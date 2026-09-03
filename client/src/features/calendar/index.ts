@@ -15,4 +15,4 @@ export * from "./components/DeleteEventDialog";
 export * from "./components/EventFormModal";
 export * from "./components/DayOverflowModal";
 export * from "./components/CalendarEventCard";
-
+export * from "./components/CalendarEventCardList";
