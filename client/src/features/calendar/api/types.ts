@@ -66,8 +66,8 @@ export interface Event {
 }
 
 export interface CalendarQueryParams {
-  year?: number;
-  month?: number;
+  year: number;
+  month: number;
   communitySlug?: string;
   studyYearName?: StudyYearNameDto;
   courseSlug?: string;

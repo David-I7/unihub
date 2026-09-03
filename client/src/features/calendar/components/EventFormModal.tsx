@@ -9,8 +9,10 @@ import {
   type StudyYearName,
 } from "@/features/studyYears";
 import { useForm } from "@/hooks/useForm";
+import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { useCreateEvent, useUpdateEvent } from "../api/events";
 import { useCalendarStore } from "../store/useCalendarStore";
+import { CALENDAR_FILTER_SCHEMA } from "../schemas/calendarFilterSchema";
 import { eventFormSchema, type EventFormData } from "../schemas/eventSchemas";
 import type {
   CreateEventPayload,
@@ -44,15 +46,19 @@ import {
   EVENT_TYPE_OPTIONS,
   EVENT_LOCATION_OPTIONS,
 } from "../utils/eventUtils";
+import { getFormErrors } from "@/api/types";
+import { toast } from "sonner";
 
 export function EventFormModal() {
   const isOpen = useCalendarStore((s) => s.isFormModalOpen);
   const onClose = useCalendarStore((s) => s.closeFormModal);
   const defaultDate = useCalendarStore((s) => s.formDefaultDate);
   const editingEvent = useCalendarStore((s) => s.editingEvent);
-  const defaultCommunitySlug = useCalendarStore((s) => s.communitySlug);
-  const defaultStudyYear = useCalendarStore((s) => s.studyYear);
-  const defaultCourseSlug = useCalendarStore((s) => s.courseSlug);
+
+  const { filters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
+  const defaultCommunitySlug = filters.community || null;
+  const defaultStudyYear = filters.studyYear || null;
+  const defaultCourseSlug = filters.course || null;
 
   const isEditing = Boolean(editingEvent);
 
@@ -99,26 +105,21 @@ export function EventFormModal() {
         const payload: UpdateEventPayload = {};
 
         if (dirty.title) payload.title = values.title.trim();
-        if (dirty.description) payload.description = values.description?.trim() || "";
+        if (dirty.description)
+          payload.description = values.description?.trim() || "";
         if (dirty.type) payload.type = values.type;
         if (dirty.durationHours) payload.durationHours = durationNum;
         if (dirty.location) payload.location = values.location;
-        if (dirty.locationDetails) payload.locationDetails = values.locationDetails?.trim() || "";
+        if (dirty.locationDetails)
+          payload.locationDetails = values.locationDetails?.trim() || "";
 
         try {
           await updateEventMutateAsync({ id: editingEvent.id, payload });
+          toast.success("Event updated successfully");
           onClose();
         } catch (err) {
-          if (isAxiosError(err)) {
-            const apiError = err.response?.data;
-            form.setServerError(
-              apiError?.detail || apiError?.title || "Failed to update event",
-            );
-          } else {
-            form.setServerError(
-              err instanceof Error ? err.message : "Failed to update event",
-            );
-          }
+          setFormErrors(err, "Failed to update event");
+          toast.error("Failed to update event");
         }
       } else {
         const payload: CreateEventPayload = {
@@ -135,18 +136,11 @@ export function EventFormModal() {
 
         try {
           await createEventMutateAsync(payload);
+          toast.success("Event created successfully");
           onClose();
         } catch (err) {
-          if (isAxiosError(err)) {
-            const apiError = err.response?.data;
-            form.setServerError(
-              apiError?.detail || apiError?.title || "Failed to create event",
-            );
-          } else {
-            form.setServerError(
-              err instanceof Error ? err.message : "Failed to create event",
-            );
-          }
+          toast.error("Failed to create event");
+          setFormErrors(err, "Failed to create event");
         }
       }
     },
@@ -210,6 +204,24 @@ export function EventFormModal() {
     defaultStudyYear,
     communities,
   ]);
+
+  const setFormErrors = (err: unknown, defaultErrorMessage: string) => {
+    const { server, validation } = getFormErrors(err, defaultErrorMessage);
+
+    if (server) {
+      form.setServerError(server);
+    }
+
+    if (validation) {
+      const errors: typeof form.errors = {} as typeof form.errors;
+      for (const error of validation) {
+        if (error.type === "FIELD") {
+          errors[error.field! as keyof EventFormData] = error.message;
+        }
+      }
+      form.setErrors((prev) => ({ ...prev, ...errors }));
+    }
+  };
 
   // When study years load for the selected community, ensure a valid study year is selected
   useEffect(() => {

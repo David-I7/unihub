@@ -9,12 +9,18 @@ export interface ApiError {
   errors?: ConstraintValidation[];
 }
 
-export interface ConstraintValidation {
-  type: "FIELD" | "OBJECT";
-  objectName: string;
-  field?: string;
-  message: string;
-}
+export type ConstraintValidation =
+  | {
+      type: "OBJECT";
+      objectName: string;
+      message: string;
+    }
+  | {
+      type: "FIELD";
+      objectName: string;
+      field: string;
+      message: string;
+    };
 
 export interface PaginatedResponse<T> {
   content: T[];
@@ -50,7 +56,7 @@ export function getErrorMessage(
 ): string {
   if (axios.isAxiosError(err)) {
     if (err.response) {
-      // Your server responded with an HTTP error
+      // Server responded with an HTTP error
       const data = err.response.data as ApiError;
       return data.detail || data.title || fallback;
     } else if (err.request) {

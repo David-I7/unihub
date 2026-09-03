@@ -196,7 +196,10 @@ export function formatHeadingDate(dateStr?: string | null): string {
 /**
  * Converts an ISO string or default date string to input-compatible YYYY-MM-DDTHH:mm string.
  */
-export function toDatetimeLocal(isoStr?: string, defaultDateStr?: string): string {
+export function toDatetimeLocal(
+  isoStr?: string,
+  defaultDateStr?: string,
+): string {
   if (isoStr) {
     const d = new Date(isoStr);
     if (!isNaN(d.getTime())) {
@@ -210,14 +213,14 @@ export function toDatetimeLocal(isoStr?: string, defaultDateStr?: string): strin
   }
 
   if (defaultDateStr) {
-    return `${defaultDateStr}T09:00`;
+    return `${defaultDateStr}T23:59`;
   }
 
   const now = new Date();
   const y = now.getFullYear();
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}T09:00`;
+  return `${y}-${m}-${day}T23:59`;
 }
 
 /**
@@ -265,10 +268,20 @@ export function formatEventRelativeStatus(
       : startMs;
 
   if (nowMs > endMs) {
-    return { label: "Concluded", isPast: true, isOngoing: false, isSoon: false };
+    return {
+      label: "Concluded",
+      isPast: true,
+      isOngoing: false,
+      isSoon: false,
+    };
   }
   if (nowMs >= startMs && nowMs <= endMs) {
-    return { label: "Happening now", isPast: false, isOngoing: true, isSoon: true };
+    return {
+      label: "Happening now",
+      isPast: false,
+      isOngoing: true,
+      isSoon: true,
+    };
   }
 
   const diffMs = startMs - nowMs;

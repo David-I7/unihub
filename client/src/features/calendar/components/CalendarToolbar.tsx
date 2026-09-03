@@ -1,7 +1,7 @@
+import { useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "@/components/ui/icons";
 import { LayoutGrid, List } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCalendarStore } from "../store/useCalendarStore";
 import { CalendarFilters } from "./CalendarFilters";
 import { useUrlFilters } from "@/hooks/useUrlFilters";
 import { CALENDAR_FILTER_SCHEMA } from "../schemas/calendarFilterSchema";
@@ -34,9 +34,12 @@ export function CalendarToolbar({
   lectureCount,
   totalCount,
 }: CalendarToolbarProps) {
-  const currentDate = useCalendarStore((s) => s.currentDate);
-  const viewMode = useCalendarStore((s) => s.viewMode);
-  const { setFilters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
+  const { filters, setFilters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
+  const currentDate = useMemo(
+    () => new Date(filters.year, filters.month - 1, 1),
+    [filters.year, filters.month],
+  );
+  const viewMode = filters.view;
 
   const monthName = MONTH_NAMES[currentDate.getMonth()];
   const yearNumber = currentDate.getFullYear();

@@ -27,9 +27,6 @@ public class AppUtils {
     }
 
     public List<String> getAllowedOrigins(){
-        if (developmentProperties == null) {
-            return List.of();
-        }
         if (isDevelopment()){
             return java.util.stream.Stream.of(developmentProperties.clientOrigin(), developmentProperties.origin())
                     .filter(java.util.Objects::nonNull)

@@ -8,11 +8,11 @@ import { cn } from "@/lib/utils";
 import { CalendarEventCard } from "./CalendarEventCard";
 
 interface CalendarAgendaListProps {
+  currentDate: Date;
   events: CalendarEvent[];
 }
 
-export function CalendarAgendaList({ events }: CalendarAgendaListProps) {
-  const currentDate = useCalendarStore((s) => s.currentDate);
+export function CalendarAgendaList({ currentDate, events }: CalendarAgendaListProps) {
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
 
   const groupedEvents = useMemo(() => {

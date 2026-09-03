@@ -94,6 +94,15 @@ export function useMarkNotificationAsRead() {
     onMutate: async (notificationId: string) => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
 
+      const previousData = queryClient.getQueriesData<
+        InfiniteData<PaginatedResponse<AppNotification>>
+      >({
+        queryKey: notificationKeys.infinites(),
+      });
+
+      const previousCount =
+        queryClient.getQueryData<number>(notificationKeys.unreadCount()) ?? 0;
+
       // Optimistically update infinite queries
       queryClient.setQueriesData<
         InfiniteData<PaginatedResponse<AppNotification>>
@@ -112,15 +121,27 @@ export function useMarkNotificationAsRead() {
 
       // Optimistically decrement unread count
       queryClient.setQueriesData<number>(
-        { queryKey: notificationKeys.unreadCounts() },
+        { queryKey: notificationKeys.unreadCount() },
         (oldCount) => {
           if (typeof oldCount !== "number") return oldCount;
           return Math.max(0, oldCount - 1);
         },
       );
+
+      return { previousData, previousCount };
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    onError: (_err, _variables, context) => {
+      if (context) {
+        const { previousData, previousCount } = context;
+
+        for (const [queryKey, data] of previousData ?? []) {
+          queryClient.setQueryData(queryKey, data);
+        }
+        queryClient.setQueriesData<number>(
+          { queryKey: notificationKeys.unreadCount() },
+          () => previousCount,
+        );
+      }
     },
   });
 }
@@ -133,7 +154,16 @@ export function useMarkAllNotificationsAsRead() {
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: notificationKeys.all });
 
-      // Optimistically mark all as read in infinite queries
+      const previousData = queryClient.getQueriesData<
+        InfiniteData<PaginatedResponse<AppNotification>>
+      >({
+        queryKey: notificationKeys.infinites(),
+      });
+
+      const previousCount =
+        queryClient.getQueryData<number>(notificationKeys.unreadCount()) ?? 0;
+
+      // Optimistically update infinite queries
       queryClient.setQueriesData<
         InfiniteData<PaginatedResponse<AppNotification>>
       >({ queryKey: notificationKeys.infinites() }, (oldData) => {
@@ -147,14 +177,26 @@ export function useMarkAllNotificationsAsRead() {
         };
       });
 
-      // Optimistically reset unread counts to 0
+      // Optimistically decrement unread count
       queryClient.setQueriesData<number>(
-        { queryKey: notificationKeys.unreadCounts() },
+        { queryKey: notificationKeys.unreadCount() },
         () => 0,
       );
+
+      return { previousData, previousCount };
     },
-    onError: () => {
-      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    onError: (_err, _variables, context) => {
+      if (context) {
+        const { previousData, previousCount } = context;
+
+        for (const [queryKey, data] of previousData) {
+          queryClient.setQueryData(queryKey, data);
+        }
+        queryClient.setQueriesData<number>(
+          { queryKey: notificationKeys.unreadCount() },
+          () => previousCount,
+        );
+      }
     },
   });
 }

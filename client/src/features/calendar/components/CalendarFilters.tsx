@@ -1,7 +1,6 @@
 import { useCallback } from "react";
 import { FileText, Pen, Video } from "@/components/ui/icons";
 import { useUserCommunities } from "@/features/users";
-import { useCalendarStore } from "../store/useCalendarStore";
 import type { EventType } from "../api/types";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,11 +35,11 @@ export function CalendarFilters({
 }: CalendarFiltersProps) {
   const { filters, setFilters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
 
-  // Pull store state for display and queries
-  const communitySlug = useCalendarStore((s) => s.communitySlug);
-  const studyYear = useCalendarStore((s) => s.studyYear);
-  const courseSlug = useCalendarStore((s) => s.courseSlug);
-  const selectedType = useCalendarStore((s) => s.selectedType);
+  // Derive filter values directly from URL params
+  const communitySlug = filters.community || null;
+  const studyYear = (filters.studyYear as StudyYearNameDto) || null;
+  const courseSlug = filters.course || null;
+  const selectedType = filters.type;
 
   const handleCommitSearch = useCallback(
     (val: string) => setFilters({ q: val }),
