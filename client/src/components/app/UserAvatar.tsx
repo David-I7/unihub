@@ -2,17 +2,30 @@ import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn, getInitials } from "@/lib/utils";
 
-export type UserAvatarSize = "xs" | "sm" | "default" | "md" | "lg" | "xl";
+export type UserAvatarSize =
+  | "xxs"
+  | "xs"
+  | "sm"
+  | "default"
+  | "md"
+  | "lg"
+  | "xl";
 
-export interface UserAvatarProps
-  extends Omit<React.ComponentProps<typeof Avatar>, "size"> {
+export interface UserAvatarProps extends Omit<
+  React.ComponentProps<typeof Avatar>,
+  "size"
+> {
   username?: string | null;
   src?: string | null;
   size?: UserAvatarSize;
   fallbackClassName?: string;
 }
 
-const sizeClasses: Record<UserAvatarSize, { root: string; fallback: string; rounded: string }> = {
+const sizeClasses: Record<
+  UserAvatarSize,
+  { root: string; fallback: string; rounded: string }
+> = {
+  xxs: { root: "size-4", fallback: "text-[8px]", rounded: "rounded-sm" },
   xs: { root: "size-6", fallback: "text-[10px]", rounded: "rounded-lg" },
   sm: { root: "size-8", fallback: "text-xs", rounded: "rounded-xl" },
   default: { root: "size-8", fallback: "text-xs", rounded: "rounded-xl" },
@@ -30,7 +43,11 @@ export function UserAvatar({
   ...props
 }: UserAvatarProps) {
   const initials = getInitials(username);
-  const { root: sizeClass, fallback: textSizeClass, rounded } = sizeClasses[size] ?? sizeClasses.default;
+  const {
+    root: sizeClass,
+    fallback: textSizeClass,
+    rounded,
+  } = sizeClasses[size] ?? sizeClasses.default;
 
   return (
     <Avatar

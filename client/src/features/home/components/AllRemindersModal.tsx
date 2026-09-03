@@ -10,11 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
   useCalendarStore,
 } from "@/features/calendar";
+import { getEventCategoryConfig } from "@/features/calendar/utils/eventUtils";
 import {
   formatDateTime24h,
   formatOffsetLabel,
@@ -63,7 +65,7 @@ export function AllRemindersModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-5 sm:p-6 gap-4">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-4">
         <DialogHeader className="space-y-1 pr-6">
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
@@ -88,8 +90,7 @@ export function AllRemindersModal({
           </DialogDescription>
         </DialogHeader>
 
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto space-y-2.5 pr-1 min-h-[220px]">
+        <div className="flex-1 space-y-2.5 pr-1 min-h-[220px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <Spinner className="size-6 text-primary" />
@@ -126,47 +127,69 @@ export function AllRemindersModal({
           ) : (
             <div className="space-y-2">
               {reminders.map((reminder) => {
-                const remindAtFormatted = formatDateTime24h(reminder.remindAt);
-                const offsetText = formatOffsetLabel(reminder.offsetMinutes);
-                const relative = formatEventRelativeStatus(
-                  reminder.eventStartTime,
-                  reminder.durationHours,
+                const compactOffset = formatOffsetLabel(
+                  reminder.offsetMinutes,
+                  { compact: true },
                 );
+                const dateLine = formatDateTime24h(
+                  reminder.eventStartTime,
+                  { separator: " • " },
+                );
+                const countdown = formatEventRelativeStatus(
+                  reminder.remindAt,
+                  null,
+                  { verb: "Fires" },
+                );
+                const config = getEventCategoryConfig(reminder.eventType);
+                const TypeIcon = config.icon;
 
                 return (
                   <div
                     key={reminder.id}
                     onClick={() => openEventDetails(reminder.eventId)}
-                    className="group flex items-center justify-between gap-3 p-3 rounded-xl border bg-card hover:border-primary/60 hover:shadow-xs transition-all cursor-pointer"
+                    className="group flex items-stretch gap-3 p-3 rounded-xl border bg-card hover:border-primary/60 hover:shadow-xs transition-all cursor-pointer"
                   >
-                    {/* Left: Alert Time Anchor */}
-                    <div className="flex flex-col items-start min-w-[76px] shrink-0">
+                    {/* Left: offset badge */}
+                    <div className="flex flex-col items-center justify-center gap-0.5 min-w-[64px] px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center shrink-0">
+                      <Bell className="size-3.5 text-amber-500" />
                       <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
-                        {remindAtFormatted.split(",")[1]?.trim() ||
-                          remindAtFormatted}
+                        {compactOffset}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        {remindAtFormatted.split(",")[0]}
+                        before
                       </span>
                     </div>
 
-                    {/* Middle: Event Title & Notification Subtitle */}
-                    <div className="flex-1 min-w-0 space-y-0.5">
+                    {/* Middle: event info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
                       <h4 className="font-heading text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                         {reminder.eventTitle}
                       </h4>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        <span>{offsetText}</span>
-                        {relative.label && (
-                          <span> • {relative.label}</span>
-                        )}
+                        {dateLine}
                         {reminder.communityName && (
                           <span> • {reminder.communityName}</span>
                         )}
                       </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 font-bold text-[10px] px-1.5 py-0.5 rounded-md",
+                            config.badge,
+                          )}
+                        >
+                          <TypeIcon className="size-2.5 shrink-0" />
+                          {config.label}
+                        </span>
+                        {countdown.label && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {countdown.label}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Right: Delete Action */}
+                    {/* Right: delete */}
                     <Button
                       variant="ghost"
                       size="icon-xs"
@@ -175,7 +198,7 @@ export function AllRemindersModal({
                         handleDelete(e, reminder.eventId, reminder.eventTitle)
                       }
                       disabled={deleteReminderMutation.isPending}
-                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
+                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer self-center"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>
@@ -185,7 +208,7 @@ export function AllRemindersModal({
 
               {/* Load More Button */}
               {hasNextPage && (
-                <div className="pt-2 flex justify-center">
+                <div className="pt-2 pb-4 flex justify-center">
                   <Button
                     variant="ghost"
                     size="sm"

@@ -45,7 +45,10 @@ export function formatPostDate(dateStr?: string): string {
 /**
  * Formats full date and time in 24h format (e.g., "Aug 28, 2026, 14:30").
  */
-export function formatDateTime24h(isoStr?: string | null): string {
+export function formatDateTime24h(
+  isoStr?: string | null,
+  options?: { separator?: string },
+): string {
   if (!isoStr) return "";
   try {
     const d = new Date(isoStr);
@@ -60,7 +63,8 @@ export function formatDateTime24h(isoStr?: string | null): string {
       minute: "2-digit",
       hour12: false,
     });
-    return `${datePart}, ${timePart}`;
+    const sep = options?.separator ?? ", ";
+    return `${datePart}${sep}${timePart}`;
   } catch {
     return isoStr;
   }
@@ -226,7 +230,20 @@ export function toDatetimeLocal(
 /**
  * Formats reminder offset minutes into human-readable labels.
  */
-export function formatOffsetLabel(offsetMinutes: number): string {
+export function formatOffsetLabel(
+  offsetMinutes: number,
+  options?: { compact?: boolean },
+): string {
+  if (options?.compact) {
+    if (offsetMinutes < 60) return `${offsetMinutes}m`;
+    if (offsetMinutes % 10080 === 0) return `${offsetMinutes / 10080}w`;
+    if (offsetMinutes % 1440 === 0) return `${offsetMinutes / 1440}d`;
+    if (offsetMinutes % 60 === 0) return `${offsetMinutes / 60}h`;
+    const h = Math.floor(offsetMinutes / 60);
+    const m = offsetMinutes % 60;
+    return `${h}h${m}m`;
+  }
+
   if (offsetMinutes === 15) return "15 minutes before";
   if (offsetMinutes === 30) return "30 minutes before";
   if (offsetMinutes === 45) return "45 minutes before";
@@ -253,6 +270,7 @@ export function formatOffsetLabel(offsetMinutes: number): string {
 export function formatEventRelativeStatus(
   startTime?: string,
   durationHours?: number | null,
+  options?: { verb?: string },
 ): { label: string; isPast: boolean; isOngoing: boolean; isSoon: boolean } {
   if (!startTime) {
     return { label: "", isPast: false, isOngoing: false, isSoon: false };
@@ -264,8 +282,9 @@ export function formatEventRelativeStatus(
   const nowMs = Date.now();
   const endMs =
     durationHours && durationHours > 0
-      ? startMs + durationHours * 3600 * 1000
+      ? startMs + durationHours * 60 * 60 * 1000
       : startMs;
+  const verb = options?.verb ?? "Starts";
 
   if (nowMs > endMs) {
     return {
@@ -291,7 +310,7 @@ export function formatEventRelativeStatus(
 
   if (diffMinutes < 60) {
     return {
-      label: `Starts in ${diffMinutes}m`,
+      label: `${verb} in ${diffMinutes}m`,
       isPast: false,
       isOngoing: false,
       isSoon: true,
@@ -299,7 +318,7 @@ export function formatEventRelativeStatus(
   }
   if (diffHours < 24) {
     return {
-      label: `Starts in ${diffHours}h`,
+      label: `${verb} in ${diffHours}h`,
       isPast: false,
       isOngoing: false,
       isSoon: true,
@@ -307,7 +326,7 @@ export function formatEventRelativeStatus(
   }
   if (diffDays === 1) {
     return {
-      label: "Starts tomorrow",
+      label: `${verb} tomorrow`,
       isPast: false,
       isOngoing: false,
       isSoon: false,
@@ -319,4 +338,27 @@ export function formatEventRelativeStatus(
     isOngoing: false,
     isSoon: false,
   };
+}
+
+export function getTime(
+  date: Date,
+  unit: "weeks" | "days" | "hours" | "minutes" | "seconds" | "milliseconds",
+) {
+  const time = date.getTime();
+  switch (unit) {
+    case "weeks":
+      return time / (1000 * 60 * 60 * 24 * 7);
+    case "days":
+      return time / (1000 * 60 * 60 * 24);
+    case "hours":
+      return time / (1000 * 60 * 60);
+    case "minutes":
+      return time / (1000 * 60);
+    case "seconds":
+      return time / 1000;
+    case "milliseconds":
+      return time;
+    default:
+      throw new Error(`Unsupported unit: ${unit}`);
+  }
 }

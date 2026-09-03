@@ -90,7 +90,7 @@ public class UserMapper {
                 .build();
     }
 
-    public UserEnrolledCommunityDto toUserEnrolledCommunityDto(Community community, String roleName, OffsetDateTime joinedAt) {
+    public UserEnrolledCommunityDto toUserEnrolledCommunityDto(Community community,String roleName,OffsetDateTime joinedAt) {
         return UserEnrolledCommunityDto.builder()
                 .id(community.getId())
                 .name(community.getName())

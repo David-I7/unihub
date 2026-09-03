@@ -11,8 +11,9 @@ import {
   type CalendarEvent,
 } from "@/features/calendar";
 import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
-import { cn } from "@/lib/utils";
 import { AllUpcomingEventsModal } from "./AllUpcomingEventsModal";
+import Ca from "zod/v4/locales/ca.cjs";
+import CalendarEventCardList from "@/features/calendar/components/CalendarEventCardList";
 
 export function UpcomingEventsWidget() {
   const [isAllModalOpen, setIsAllModalOpen] = useState(false);
@@ -129,44 +130,10 @@ export function UpcomingEventsWidget() {
             </div>
           ) : (
             <div className="space-y-3">
-              {groupedEvents.map((group) => (
-                <div key={group.dateStr} className="space-y-1.5">
-                  {/* Day Subheader */}
-                  <div className="flex items-center justify-between gap-2 px-1">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={cn(
-                          "font-heading text-xs font-bold uppercase tracking-wider",
-                          group.isToday
-                            ? "text-primary font-extrabold"
-                            : "text-foreground",
-                        )}
-                      >
-                        {group.weekday}, {group.formattedDate}
-                      </span>
-                      {group.isToday && (
-                        <Badge
-                          variant="default"
-                          className="h-3.5 px-1 text-[8px] font-bold uppercase tracking-wider bg-primary text-primary-foreground"
-                        >
-                          Today
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Events */}
-                  <div className="space-y-1.5">
-                    {group.events.map((event) => (
-                      <CalendarEventCard
-                        key={event.id}
-                        event={event}
-                        onClick={() => openEventDetails(event.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+              <CalendarEventCardList
+                groupedEvents={groupedEvents}
+                onEventClick={openEventDetails}
+              />
             </div>
           )}
         </div>

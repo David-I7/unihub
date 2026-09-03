@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Bell, Trash2, CheckCircle2 } from "lucide-react";
+import { Bell, Trash2, CheckCircle2, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
@@ -60,12 +61,18 @@ export function MyRemindersWidget() {
                 <h2 className="font-heading text-sm sm:text-base font-bold text-foreground">
                   My Reminders
                 </h2>
-                <p className="text-[11px] text-muted-foreground">Active alerts</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Active alerts
+                </p>
               </div>
             </div>
 
             {totalCount > 0 && (
-              <Badge variant="secondary" size="xs" className="font-mono font-bold">
+              <Badge
+                variant="secondary"
+                size="xs"
+                className="font-mono font-bold"
+              >
                 {totalCount}
               </Badge>
             )}
@@ -77,13 +84,14 @@ export function MyRemindersWidget() {
               {Array.from({ length: 3 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl border bg-card animate-pulse space-y-2"
+                  className="flex items-stretch gap-3 p-3 rounded-xl border bg-card animate-pulse"
                 >
-                  <div className="flex justify-between items-center">
-                    <div className="h-3.5 w-16 bg-muted rounded-md" />
-                    <div className="h-3.5 w-24 bg-muted rounded-md" />
+                  <div className="min-w-[64px] h-16 bg-muted rounded-xl shrink-0" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-3.5 w-3/4 bg-muted rounded-md" />
+                    <div className="h-3 w-1/2 bg-muted rounded-md" />
+                    <div className="h-3 w-1/3 bg-muted rounded-md" />
                   </div>
-                  <div className="h-4 w-3/4 bg-muted rounded-md" />
                 </div>
               ))}
             </div>
@@ -110,50 +118,71 @@ export function MyRemindersWidget() {
                 No active reminders
               </p>
               <p className="text-[11px] text-muted-foreground max-w-xs leading-relaxed">
-                Click the reminder button on any event to schedule notifications.
+                Click the reminder button on any event to schedule
+                notifications.
               </p>
             </div>
           ) : (
             <div className="space-y-2">
               {displayedReminders.map((reminder) => {
-                const remindAtFormatted = formatDateTime24h(reminder.remindAt);
-                const offsetText = formatOffsetLabel(reminder.offsetMinutes);
-                const relative = formatEventRelativeStatus(
-                  reminder.eventStartTime,
-                  reminder.durationHours,
+                const compactOffset = formatOffsetLabel(
+                  reminder.offsetMinutes,
+                  { compact: true },
+                );
+                const dateLine = formatDateTime24h(reminder.eventStartTime, {
+                  separator: " • ",
+                });
+                const relativeStatus = formatEventRelativeStatus(
+                  reminder.remindAt,
+                  null,
+                  { verb: "Fires" },
                 );
 
                 return (
                   <div
                     key={reminder.id}
                     onClick={() => openEventDetails(reminder.eventId)}
-                    className="group flex items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl border bg-card hover:border-primary/60 hover:shadow-xs transition-all cursor-pointer"
+                    className="group flex items-stretch gap-3 p-3 rounded-xl border bg-card hover:border-primary/60 hover:shadow-xs transition-all cursor-pointer"
                   >
-                    {/* Left: Alert Time Anchor */}
-                    <div className="flex flex-col items-start min-w-[70px] shrink-0">
+                    {/* Left: offset badge */}
+                    <div className="flex flex-col items-center justify-center gap-0.5 min-w-[64px] px-2 py-2 rounded-xl shrink-0">
                       <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
-                        {remindAtFormatted.split(",")[1]?.trim() ||
-                          remindAtFormatted}
+                        {compactOffset}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        {remindAtFormatted.split(",")[0]}
+                        before
                       </span>
                     </div>
 
-                    {/* Middle: Event Title & Notification Subtitle */}
-                    <div className="flex-1 min-w-0 space-y-0.5">
+                    {/* Middle: event info */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {dateLine}
+                      </p>
                       <h4 className="font-heading text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
                         {reminder.eventTitle}
                       </h4>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        <span>{offsetText}</span>
-                        {relative.label && (
-                          <span> • {relative.label}</span>
-                        )}
-                      </p>
+                      {relativeStatus.label && (
+                        <Badge
+                          variant="secondary"
+                          className={cn(
+                            "gap-1 text-[11px] font-medium h-5 px-1.5",
+                            relativeStatus.isOngoing &&
+                              "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-bold",
+                            relativeStatus.isSoon &&
+                              !relativeStatus.isOngoing &&
+                              "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 font-semibold",
+                            relativeStatus.isPast &&
+                              "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          <Clock className="size-2.5" />
+                          <span>{relativeStatus.label}</span>
+                        </Badge>
+                      )}
                     </div>
 
-                    {/* Right: Delete Action */}
+                    {/* Right: delete */}
                     <Button
                       variant="ghost"
                       size="icon-xs"
@@ -162,7 +191,7 @@ export function MyRemindersWidget() {
                         handleDelete(e, reminder.eventId, reminder.eventTitle)
                       }
                       disabled={deleteReminderMutation.isPending}
-                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer"
+                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer self-center"
                     >
                       <Trash2 className="size-3.5" />
                     </Button>

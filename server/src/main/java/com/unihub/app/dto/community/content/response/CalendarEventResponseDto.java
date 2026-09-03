@@ -16,6 +16,7 @@ public record CalendarEventResponseDto(
         Float durationHours,
         EventLocation location,
         String courseAbbreviation,
+        String communityName,
         boolean isSubscribed
 ) {
 }

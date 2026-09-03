@@ -427,7 +427,6 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                         .remindAt(OffsetDateTime.now().plusHours(2))
                         .status(com.unihub.app.entities.community.content.ReminderStatus.PENDING)
                         .eventTitle("Upcoming Exam")
-                        .communitySlug("fmi-info-id")
                         .build();
 
         com.unihub.app.dto.PageDto<com.unihub.app.dto.community.content.response.UserReminderResponseDto> pageDto =

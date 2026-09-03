@@ -18,6 +18,7 @@ import type {
   NotificationQueryParams,
   UnreadCountResponse,
 } from "./types";
+import queryClient from "@/lib/queryClient";
 
 export const notificationKeys = {
   all: ["notifications"] as const,
@@ -80,7 +81,17 @@ export function useUnreadNotificationCount(category?: NotificationCategory) {
 
   return useQuery({
     queryKey: notificationKeys.unreadCount(category),
-    queryFn: () => getUnreadCount(category),
+    queryFn: async () => {
+      const prevCount = queryClient.getQueryData<number>(
+        notificationKeys.unreadCount(category),
+      );
+      const newCount = await getUnreadCount(category);
+
+      if (newCount !== prevCount) {
+        queryClient.removeQueries({ queryKey: notificationKeys.infinites() });
+      }
+      return newCount;
+    },
     enabled: Boolean(user),
     refetchInterval: 60000,
   });

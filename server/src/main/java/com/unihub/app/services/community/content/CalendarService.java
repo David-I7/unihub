@@ -196,6 +196,12 @@ public class CalendarService {
             }
         }
 
+        // Only send notification if the event has not started yet
+        if(event.getStartTime().isAfter(OffsetDateTime.now(ZoneOffset.UTC))) {
+            eventRepository.delete(event);
+            return;
+        }
+
         List<EventReminder> reminders = reminderRepository.findByEventIdWithUser(eventId);
         List<UUID> reminderUserIds = reminders.stream().map(r -> r.getUser().getId()).toList();
         String title = event.getTitle();
@@ -208,8 +214,28 @@ public class CalendarService {
 
     @Transactional
     public EventReminderResponseDto createReminder(UUID eventId, UserDto user, CreateEventReminderRequestDto dto) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdWithOwnerAndCommunity(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime eventStart = event.getStartTime();
+
+        if (!eventStart.isAfter(now.plusMinutes(15))) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Event reminders must be scheduled at least 15 minutes before the event starts"
+            );
+        }
+
+        int offsetMinutes = dto.offsetMinutes();
+        OffsetDateTime remindAt = eventStart.minusMinutes(offsetMinutes);
+
+        if (remindAt.isBefore(now)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "The reminder time cannot be in the past"
+            );
+        }
 
         String communitySlug = event.getCommunity().getSlug();
         if (!communityMemberRepository.isMemberOfCommunity(communitySlug, user.id())) {
@@ -219,9 +245,6 @@ public class CalendarService {
         if (reminderRepository.existsByUserIdAndEventId(user.id(), eventId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A reminder is already set for this event");
         }
-
-        int offsetMinutes = dto.offsetMinutes();
-        OffsetDateTime remindAt = event.getStartTime().minusMinutes(offsetMinutes);
 
         User userEntity = userMapper.toEntity(user);
         EventReminder reminder = EventReminder.builder()

@@ -103,7 +103,6 @@ export function useCreateReminder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.all });
       queryClient.invalidateQueries({ queryKey: reminderKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }
@@ -115,7 +114,6 @@ export function useDeleteReminder() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: calendarKeys.all });
       queryClient.invalidateQueries({ queryKey: reminderKeys.all });
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
   });
 }

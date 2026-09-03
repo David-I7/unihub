@@ -27,11 +27,13 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.durationHours,
                 e.location,
                 c.abbreviation,
-                CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
+                comm.name,
+                CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e
                 AND er.user.id = :userId) > 0 THEN true ELSE false END
         ) FROM Event e 
-          JOIN e.course c 
-        WHERE e.community.id IN :communityIds
+          JOIN e.course c
+          JOIN e.community comm  
+        WHERE comm.id IN :communityIds
           AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
           AND e.startTime >= :from
           AND e.startTime <= :to
@@ -54,12 +56,14 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.durationHours,
                 e.location,
                 c.abbreviation,
+                comm.name,
                 CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
                 AND er.user.id = :userId) > 0 THEN true ELSE false END
         ) FROM Event e 
           JOIN e.course c 
+          JOIN e.community comm    
           JOIN c.studyYear sy
-        WHERE e.community.id IN :communityIds
+        WHERE comm.id IN :communityIds
           AND (CAST(:courseSlug AS string) IS NULL OR c.slug = :courseSlug)
           AND sy.studyYearName = :studyYearName
           AND e.startTime >= :from
@@ -84,11 +88,13 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                 e.durationHours,
                 e.location,
                 c.abbreviation,
+                comm.name,
                 CASE WHEN (SELECT COUNT(er.id) FROM EventReminder er WHERE er.event = e 
                 AND er.user.id = :userId) > 0 THEN true ELSE false END
         ) FROM Event e 
-          JOIN e.course c 
-        WHERE e.community.id IN :communityIds
+          JOIN e.course c
+          JOIN e.community comm     
+        WHERE comm.id IN :communityIds
           AND e.startTime >= :from
           AND e.startTime <= :to
         ORDER BY e.startTime ASC

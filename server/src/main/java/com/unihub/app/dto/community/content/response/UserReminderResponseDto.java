@@ -18,14 +18,6 @@ public record UserReminderResponseDto(
         UUID eventId,
         String eventTitle,
         EventType eventType,
-        OffsetDateTime eventStartTime,
-        Float durationHours,
-        EventLocation eventLocation,
-        String courseSlug,
-        String courseName,
-        String courseAbbreviation,
-        String communitySlug,
-        String communityName,
-        StudyYearName studyYear
+        OffsetDateTime eventStartTime
 ) {
 }

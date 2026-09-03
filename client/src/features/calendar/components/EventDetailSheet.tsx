@@ -213,7 +213,7 @@ export function EventDetailSheet() {
 
     if (timeUntilStartMinutes - offsetToSubmit <= 0) {
       setReminderError(
-        "The reminder trigger time must be at least 15 minutes in the future",
+        "Event reminders must be scheduled at least 15 minutes before the event starts",
       );
       return;
     }
@@ -250,7 +250,9 @@ export function EventDetailSheet() {
   const timeStr = activeEvent
     ? formatEventTimeWithDuration(
         activeEvent.startTime,
-        activeEvent.durationHours,
+        activeEvent.type !== "ASSIGNMENT"
+          ? activeEvent.durationHours
+          : undefined,
       )
     : "";
   const abbreviation = activeEvent?.courseAbbreviation?.trim();
@@ -271,7 +273,7 @@ export function EventDetailSheet() {
       <SheetContent
         side="right"
         showCloseButton={false}
-        className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6"
+        className="w-full sm:max-w-md overflow-y-auto p-5 sm:p-6 focus:outline-none"
       >
         {isLoading && !activeEvent ? (
           <div className="relative flex flex-col items-center justify-center py-20 gap-3">
@@ -428,13 +430,16 @@ export function EventDetailSheet() {
               {/* Creator & Community Subtitle */}
               <SheetDescription className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-left">
                 {activeEvent.owner?.username && (
-                  <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                    <UserAvatar
-                      username={activeEvent.owner.username}
-                      size="xs"
-                    />
-                    <span>@{activeEvent.owner.username}</span>
-                  </span>
+                  <>
+                    Created by
+                    <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                      <UserAvatar
+                        username={activeEvent.owner.username}
+                        size="xxs"
+                      />
+                      <span>{activeEvent.owner.username}</span>
+                    </span>
+                  </>
                 )}
               </SheetDescription>
             </SheetHeader>
@@ -515,15 +520,15 @@ export function EventDetailSheet() {
                       </span>
                     )}
                   </div>
-
-                  <Link
-                    to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                  >
-                    <span>View Course Page</span>
-                    <ExternalLink className="size-3" />
-                  </Link>
                 </div>
+
+                <Link
+                  to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                  <span>View Course Page</span>
+                  <ExternalLink className="size-3" />
+                </Link>
               </div>
             )}
 

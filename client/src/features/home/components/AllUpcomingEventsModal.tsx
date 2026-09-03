@@ -13,11 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import {
   useInfiniteUpcomingEvents,
   useCalendarStore,
-  CalendarEventCard,
   type CalendarEvent,
 } from "@/features/calendar";
 import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
-import { cn } from "@/lib/utils";
+import CalendarEventCardList from "@/features/calendar/components/CalendarEventCardList";
 
 interface AllUpcomingEventsModalProps {
   open: boolean;
@@ -75,7 +74,7 @@ export function AllUpcomingEventsModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col p-5 sm:p-6 gap-4">
+      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-4">
         <DialogHeader className="space-y-1 pr-6">
           <div className="flex items-center gap-2">
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -101,7 +100,7 @@ export function AllUpcomingEventsModal({
         </DialogHeader>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-[220px]">
+        <div className="flex-1  space-y-4 pr-1 min-h-[220px]">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <Spinner className="size-6 text-primary" />
@@ -137,52 +136,14 @@ export function AllUpcomingEventsModal({
             </div>
           ) : (
             <div className="space-y-4">
-              {groupedEvents.map((group) => (
-                <div key={group.dateStr} className="space-y-2">
-                  {/* Day Subheader */}
-                  <div className="flex items-center justify-between gap-2 px-1">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          "font-heading text-xs font-bold uppercase tracking-wider",
-                          group.isToday
-                            ? "text-primary font-extrabold"
-                            : "text-foreground",
-                        )}
-                      >
-                        {group.weekday}, {group.formattedDate}
-                      </span>
-                      {group.isToday && (
-                        <Badge
-                          variant="default"
-                          className="h-4 px-1.5 text-[9px] font-bold uppercase tracking-wider bg-primary text-primary-foreground shadow-xs"
-                        >
-                          Today
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">
-                      {group.events.length}{" "}
-                      {group.events.length === 1 ? "event" : "events"}
-                    </span>
-                  </div>
-
-                  {/* Day Events */}
-                  <div className="space-y-2">
-                    {group.events.map((event) => (
-                      <CalendarEventCard
-                        key={event.id}
-                        event={event}
-                        onClick={() => openEventDetails(event.id)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+              <CalendarEventCardList
+                groupedEvents={groupedEvents}
+                onEventClick={openEventDetails}
+              />
 
               {/* Load More Button */}
               {hasNextPage && (
-                <div className="pt-2 flex justify-center">
+                <div className="pt-2 pb-4 flex justify-center">
                   <Button
                     variant="ghost"
                     size="sm"

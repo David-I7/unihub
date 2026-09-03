@@ -4,10 +4,7 @@ import {
   UpcomingEventsWidget,
   MyCommunitiesWidget,
 } from "@/features/home";
-import {
-  EventDetailSheet,
-  EventFormModal,
-} from "@/features/calendar";
+import { EventDetailSheet, EventFormModal } from "@/features/calendar";
 
 export default function HomePage() {
   const user = useAuthStore((state) => state.user);
@@ -17,11 +14,11 @@ export default function HomePage() {
       {/* Welcome Header */}
       <div className="space-y-1">
         <h1 className="font-heading text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-          {user ? `Welcome back, ${user.username}` : "Welcome to Unihub"}
+          {user && `Welcome back, ${user.username}`}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          Here is an overview of your active reminders, upcoming academic events,
-          and enrolled communities.
+          Here is an overview of your active reminders, upcoming academic
+          events, and enrolled communities.
         </p>
       </div>
 

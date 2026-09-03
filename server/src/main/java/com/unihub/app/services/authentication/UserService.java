@@ -450,8 +450,8 @@ public class UserService {
         Page<CommunityMember> memberships = communityMemberRepository.findMembershipsByUserIdWithCommunity(userId, pageable);
         return pageMapper.toPageDto(memberships.map(membership -> {
             Community community = membership.getCommunity();
-            RoleType role = RoleType.valueOf(roleService.getRoleById(membership.getRoleId()).getName());
-            return userMapper.toUserEnrolledCommunityDto(community, role.name(), membership.getJoinedAt());
+            String role = roleService.getRoleById(membership.getRoleId()).getName();
+            return userMapper.toUserEnrolledCommunityDto(community, role, membership.getJoinedAt());
         }));
     }
 
