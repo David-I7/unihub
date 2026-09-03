@@ -212,7 +212,6 @@ public class CommunityContentMapper {
     public Notification toNotificationEntity(
             User user,
             User actor,
-            String title,
             String message,
             NotificationCategory category,
             NotificationType type,
@@ -221,7 +220,6 @@ public class CommunityContentMapper {
         return Notification.builder()
                 .user(user)
                 .actor(actor)
-                .title(title)
                 .message(message)
                 .category(category)
                 .type(type)
@@ -230,14 +228,14 @@ public class CommunityContentMapper {
                 .build();
     }
 
-    public Notification toEventNotificationEntity(User user, String title, String message, NotificationType type, Event event, User actor) {
+    public Notification toEventNotificationEntity(User user, String message, NotificationType type, Event event, User actor) {
         NotificationMetadata metadata = toEventNotificationMetadata(event);
-        return toNotificationEntity(user,actor, title, message, NotificationCategory.EVENT, type, metadata);
+        return toNotificationEntity(user,actor, message, NotificationCategory.EVENT, type, metadata);
     }
 
-    public Notification toPostNotificationEntity(User user,String title, String message, NotificationType type, Post post, User actor) {
+    public Notification toPostNotificationEntity(User user, String message, NotificationType type, Post post, User actor) {
         NotificationMetadata metadata = toPostNotificationMetadata(post);
-        return toNotificationEntity(user,actor, title, message, NotificationCategory.POST, type, metadata);
+        return toNotificationEntity(user,actor,message, NotificationCategory.POST, type, metadata);
     }
 
     public NotificationMetadata toPostNotificationMetadata(Post post) {

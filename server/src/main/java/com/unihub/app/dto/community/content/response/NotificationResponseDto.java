@@ -11,7 +11,6 @@ import java.util.UUID;
 @Builder
 public record NotificationResponseDto(
         UUID id,
-        String title,
         String message,
         NotificationCategory category,
         NotificationType type,
