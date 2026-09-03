@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Calendar,
@@ -72,6 +73,16 @@ export function NotificationItem({ notification }: NotificationItemProps) {
   const { mutate: markRead, isPending: isMarkingRead } =
     useMarkNotificationAsRead();
 
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = messageRef.current;
+    if (!el) return;
+    setIsOverflowing(el.scrollHeight > el.clientHeight);
+  }, [notification.message]);
+
   const { icon: Icon, className: iconClass } =
     getNotificationIcon(notification);
 
@@ -104,21 +115,55 @@ export function NotificationItem({ notification }: NotificationItemProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 space-y-1.5">
+      <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div className="text-sm line-clamp-2 leading-relaxed">
+            <div
+              ref={messageRef}
+              className={cn(
+                "text-sm leading-relaxed",
+                !isExpanded && "line-clamp-2",
+              )}
+            >
               {notification.actor && (
                 <span className="text-sm font-semibold leading-none">
                   {notification.actor.username}{" "}
                 </span>
               )}
-              <p className="inline">{notification.message}</p>
+              {notification.message}
+              {isExpanded && isOverflowing && (
+                <Button
+                  variant="link"
+                  size="link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(false);
+                  }}
+                  className="text-muted-foreground inline text-xs font-semibold h-auto p-0 ml-1 cursor-pointer"
+                >
+                  See less
+                </Button>
+              )}
             </div>
 
-            <span className="text-[11px] inline text-muted-foreground shrink-0 whitespace-nowrap px-1">
-              {formatRelativeTime(notification.createdAt)} ago
-            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {!isExpanded && isOverflowing && (
+                <Button
+                  variant="link"
+                  size="link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(true);
+                  }}
+                  className="text-muted-foreground text-xs font-semibold h-auto p-0 cursor-pointer"
+                >
+                  See more
+                </Button>
+              )}
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                {formatRelativeTime(notification.createdAt)} ago
+              </span>
+            </div>
           </div>
         </div>
       </div>
