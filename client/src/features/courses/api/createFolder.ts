@@ -28,9 +28,14 @@ export function useCreateFolder() {
 
   return useMutation({
     mutationFn: createFolder,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: courseMaterialsKeys.all,
+        queryKey: [
+          ...courseMaterialsKeys.all,
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ],
       });
     },
   });

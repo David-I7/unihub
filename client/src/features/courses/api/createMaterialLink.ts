@@ -28,9 +28,14 @@ export function useCreateMaterialLink() {
 
   return useMutation({
     mutationFn: createMaterialLink,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: courseMaterialsKeys.all,
+        queryKey: [
+          ...courseMaterialsKeys.all,
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ],
       });
     },
   });

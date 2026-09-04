@@ -4,6 +4,7 @@ import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateFolderRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateFolderRequestDto;
+import com.unihub.app.dto.community.content.response.BreadcrumbDto;
 import com.unihub.app.dto.community.content.response.FolderSummaryDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Folder;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -203,5 +205,23 @@ public class FolderService {
             parent = parent.getParentFolder();
         }
         return false;
+    }
+
+    @Transactional(readOnly = true)
+    public List<BreadcrumbDto> getBreadcrumbs(UUID folderId) {
+        Folder folder = folderRepository.findById(folderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+
+        List<BreadcrumbDto> breadcrumbs = new ArrayList<>();
+        Folder current = folder;
+        while (current != null) {
+            breadcrumbs.add(0, BreadcrumbDto.builder()
+                    .id(current.getId())
+                    .name(current.getName())
+                    .type("FOLDER")
+                    .build());
+            current = current.getParentFolder();
+        }
+        return breadcrumbs;
     }
 }

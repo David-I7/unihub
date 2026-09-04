@@ -1,6 +1,6 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Course } from "./types";
+import type { Course, CourseHome } from "./types";
 import { courseHomeKeys } from "./getCourseHome";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 import { studyYearCoursesKeys } from "@/features/studyYears/api/getStudyYearCourses";
@@ -34,18 +34,51 @@ export function useArchiveCourse() {
 
   return useMutation({
     mutationFn: archiveCourse,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: courseHomeKeys.byCourse(
+    onMutate: async ({ communitySlug, studyYearSlug, courseSlug, archived }) => {
+      const courseKey = courseHomeKeys.byCourse(
+        communitySlug,
+        studyYearSlug,
+        courseSlug,
+      );
+      await queryClient.cancelQueries({ queryKey: courseKey });
+      const previousCourseHome = queryClient.getQueryData<CourseHome>(courseKey);
+
+      if (previousCourseHome) {
+        queryClient.setQueryData<CourseHome>(courseKey, {
+          ...previousCourseHome,
+          course: {
+            ...previousCourseHome.course,
+            archived,
+          },
+        });
+      }
+
+      return { previousCourseHome, courseKey };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.courseKey && context.previousCourseHome) {
+        queryClient.setQueryData(context.courseKey, context.previousCourseHome);
+      }
+    },
+    onSuccess: (updatedCourse, variables) => {
+      queryClient.setQueryData<CourseHome>(
+        courseHomeKeys.byCourse(
           variables.communitySlug,
           variables.studyYearSlug,
           variables.courseSlug,
+        ),
+        (old) => (old ? { ...old, course: updatedCourse } : old),
+      );
+      queryClient.invalidateQueries({
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
+      });
+      queryClient.invalidateQueries({
+        queryKey: studyYearCoursesKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
         ),
       });
       queryClient.invalidateQueries({

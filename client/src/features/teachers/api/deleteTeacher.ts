@@ -17,7 +17,11 @@ export function useDeleteTeacher(teacherId?: string) {
       }
       return deleteTeacher(id);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const id = variables || teacherId;
+      if (id) {
+        queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
+      }
       queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
     },
   });

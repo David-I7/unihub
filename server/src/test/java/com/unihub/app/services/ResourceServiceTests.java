@@ -4,8 +4,10 @@ import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateMaterialRequestDto;
+import com.unihub.app.dto.community.content.response.BreadcrumbDto;
 import com.unihub.app.dto.community.content.response.MaterialResponseDto;
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.MaterialLink;
 import com.unihub.app.entities.community.content.MaterialLinkType;
@@ -32,6 +34,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -180,5 +183,42 @@ public class ResourceServiceTests {
 
         verify(fileStorageService).deleteFile("key/file.pdf");
         verify(resourceRepository).delete(file);
+    }
+
+    @Test
+    @DisplayName("getBreadcrumbs returns breadcrumbs including ancestor folders and file at end")
+    public void testGetBreadcrumbs_Success() {
+        UUID rootFolderId = UUID.randomUUID();
+        Folder rootFolder = Folder.builder()
+                .id(rootFolderId)
+                .name("Root Folder")
+                .parentFolder(null)
+                .build();
+
+        UUID resourceId = UUID.randomUUID();
+        MaterialFile file = MaterialFile.builder()
+                .id(resourceId)
+                .title("Lecture 1.pdf")
+                .folder(rootFolder)
+                .build();
+
+        when(resourceRepository.findById(resourceId)).thenReturn(Optional.of(file));
+
+        List<BreadcrumbDto> breadcrumbs = resourceService.getBreadcrumbs(resourceId);
+
+        assertEquals(2, breadcrumbs.size());
+        assertEquals("Root Folder", breadcrumbs.get(0).name());
+        assertEquals("FOLDER", breadcrumbs.get(0).type());
+        assertEquals("Lecture 1.pdf", breadcrumbs.get(1).name());
+        assertEquals("FILE", breadcrumbs.get(1).type());
+    }
+
+    @Test
+    @DisplayName("getBreadcrumbs throws 404 when material not found")
+    public void testGetBreadcrumbs_NotFound() {
+        UUID nonExistentId = UUID.randomUUID();
+        when(resourceRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> resourceService.getBreadcrumbs(nonExistentId));
     }
 }

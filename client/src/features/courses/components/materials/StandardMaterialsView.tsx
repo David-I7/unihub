@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
   Folder,
@@ -12,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCourseMaterials } from "../../api/getCourseMaterials";
+import {
+  useFolderBreadcrumbs,
+  useMaterialBreadcrumbs,
+} from "../../api/getBreadcrumbs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -80,7 +84,45 @@ export function StandardMaterialsView({
 
   const [folderBreadcrumbs, setFolderBreadcrumbs] = useState<
     Array<{ id: string | null; name: string }>
-  >([{ id: filters.folder || null, name: "Root" }]);
+  >([{ id: null, name: "Root" }]);
+
+  const needsFolderBreadcrumbs = Boolean(
+    filters.folder && folderBreadcrumbs.length <= 1,
+  );
+  const { data: serverFolderBreadcrumbs } = useFolderBreadcrumbs(
+    needsFolderBreadcrumbs ? filters.folder : undefined,
+  );
+
+  const activeMaterialId = filters.file || filters.link || undefined;
+  const needsMaterialBreadcrumbs = Boolean(
+    activeMaterialId && folderBreadcrumbs.length <= 1,
+  );
+  const { data: serverMaterialBreadcrumbs } = useMaterialBreadcrumbs(
+    needsMaterialBreadcrumbs ? activeMaterialId : undefined,
+  );
+
+  useEffect(() => {
+    if (serverFolderBreadcrumbs && serverFolderBreadcrumbs.length > 0) {
+      queueMicrotask(() => {
+        setFolderBreadcrumbs([
+          { id: null, name: "Root" },
+          ...serverFolderBreadcrumbs.map((b) => ({ id: b.id, name: b.name })),
+        ]);
+      });
+    }
+  }, [serverFolderBreadcrumbs]);
+
+  useEffect(() => {
+    if (serverMaterialBreadcrumbs && serverMaterialBreadcrumbs.length > 0) {
+      const ancestorFolders = serverMaterialBreadcrumbs.slice(0, -1);
+      queueMicrotask(() => {
+        setFolderBreadcrumbs([
+          { id: null, name: "Root" },
+          ...ancestorFolders.map((b) => ({ id: b.id, name: b.name })),
+        ]);
+      });
+    }
+  }, [serverMaterialBreadcrumbs]);
 
   // Modal visibility states
   const [createFolderOpen, setCreateFolderOpen] = useState(false);

@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Community, UpdateCommunityDto } from "./types";
 import { communityKeys } from "./communityKeys";
 
+import { userKeys } from "@/features/users";
+
 export interface UpdateCommunityVariables {
   communitySlug: string;
   payload: UpdateCommunityDto;
@@ -24,8 +26,21 @@ export function useUpdateCommunity() {
 
   return useMutation({
     mutationFn: updateCommunity,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: communityKeys.all });
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
+      });
+      if (data.slug && data.slug !== variables.communitySlug) {
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.homeDetail(data.slug),
+        });
+      }
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.communityInfinities(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.communities(),
+      });
     },
   });
 }

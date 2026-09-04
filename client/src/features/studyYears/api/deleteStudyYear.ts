@@ -26,10 +26,10 @@ export function useDeleteStudyYear() {
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: ["communities", variables.communitySlug, "study-years"],
+        queryKey: communityKeys.studyYearDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: ["study-years", "home"],
+        queryKey: ["study-years", "home", variables.communitySlug, variables.studyYearName],
       });
     },
   });

@@ -144,9 +144,14 @@ export function useUploadMaterialFile() {
 
   return useMutation({
     mutationFn: uploadMaterialFileFlow,
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
-        queryKey: courseMaterialsKeys.all,
+        queryKey: [
+          ...courseMaterialsKeys.all,
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ],
       });
     },
   });

@@ -2,6 +2,7 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CommunityMember, UpdateMemberRoleDto } from "./types";
 import { communityKeys } from "./communityKeys";
+import { useAuthStore } from "@/features/auth";
 
 export interface UpdateCommunityMemberRoleVariables {
   communitySlug: string;
@@ -30,6 +31,12 @@ export function useUpdateCommunityMemberRole() {
       queryClient.invalidateQueries({
         queryKey: communityKeys.membersList(variables.communitySlug),
       });
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser?.username === variables.username) {
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.membershipDetail(variables.communitySlug),
+        });
+      }
     },
   });
 }

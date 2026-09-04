@@ -353,6 +353,11 @@ export default function PostDetailPage() {
               <Heart className={cn("size-3.5", isLiked && "fill-current")} />
               <span>{likes}</span>
             </Button>
+
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold">
+              <MessageSquare className="size-3.5" />
+              <span>{post.commentsCount ?? 0} Comments</span>
+            </span>
           </div>
 
           <Button

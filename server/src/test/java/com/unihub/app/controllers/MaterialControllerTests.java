@@ -4,6 +4,7 @@ import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateMaterialRequestDto;
+import com.unihub.app.dto.community.content.response.BreadcrumbDto;
 import com.unihub.app.dto.community.content.response.DownloadUrlResponseDto;
 import com.unihub.app.dto.community.content.response.MaterialFileDto;
 import com.unihub.app.dto.community.content.response.MaterialResponseDto;
@@ -24,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -138,5 +140,25 @@ public class MaterialControllerTests extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/materials/" + materialId))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/materials/{materialId}/breadcrumbs returns breadcrumbs list")
+    public void testGetBreadcrumbs_Success() throws Exception {
+        UUID materialId = UUID.randomUUID();
+        List<BreadcrumbDto> responseDtos = List.of(
+                BreadcrumbDto.builder().id(UUID.randomUUID()).name("Lectures").type("FOLDER").build(),
+                BreadcrumbDto.builder().id(materialId).name("Slides.pdf").type("FILE").build()
+        );
+
+        when(resourceService.getBreadcrumbs(materialId)).thenReturn(responseDtos);
+
+        mockMvc.perform(get("/api/v1/materials/" + materialId + "/breadcrumbs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Lectures"))
+                .andExpect(jsonPath("$[0].type").value("FOLDER"))
+                .andExpect(jsonPath("$[1].id").value(materialId.toString()))
+                .andExpect(jsonPath("$[1].name").value("Slides.pdf"))
+                .andExpect(jsonPath("$[1].type").value("FILE"));
     }
 }

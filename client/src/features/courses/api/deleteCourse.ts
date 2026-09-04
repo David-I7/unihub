@@ -28,19 +28,26 @@ export function useDeleteCourse() {
     mutationFn: deleteCourse,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.all,
+        queryKey: studyYearHomeKeys.courses(variables.communitySlug, variables.studyYearSlug),
       });
       queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.all,
+        queryKey: ["study-years", "home", "infinite", variables.communitySlug, variables.studyYearSlug],
       });
       queryClient.invalidateQueries({
-        queryKey: courseHomeKeys.all,
+        queryKey: studyYearCoursesKeys.courses(variables.communitySlug, variables.studyYearSlug),
+      });
+      queryClient.removeQueries({
+        queryKey: courseHomeKeys.byCourse(
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: ["communities", variables.communitySlug, "study-years"],
+        queryKey: communityKeys.studyYearDetail(variables.communitySlug),
       });
     },
   });

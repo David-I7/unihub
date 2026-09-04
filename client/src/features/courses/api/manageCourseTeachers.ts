@@ -41,19 +41,23 @@ export function useAddCourseTeacher() {
 
   return useMutation({
     mutationFn: addCourseTeacher,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: courseHomeKeys.byCourse(
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(
+        courseHomeKeys.byCourse(
           variables.communitySlug,
           variables.studyYearSlug,
           variables.courseSlug,
         ),
+        data,
+      );
+      queryClient.invalidateQueries({
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: teacherKeys.all,
+        queryKey: teacherKeys.lists(),
       });
     },
   });
@@ -64,19 +68,23 @@ export function useRemoveCourseTeacher() {
 
   return useMutation({
     mutationFn: removeCourseTeacher,
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: courseHomeKeys.byCourse(
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(
+        courseHomeKeys.byCourse(
           variables.communitySlug,
           variables.studyYearSlug,
           variables.courseSlug,
         ),
+        data,
+      );
+      queryClient.invalidateQueries({
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.all,
-      });
-      queryClient.invalidateQueries({
-        queryKey: teacherKeys.all,
+        queryKey: teacherKeys.lists(),
       });
     },
   });

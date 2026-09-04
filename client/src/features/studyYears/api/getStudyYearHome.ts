@@ -51,15 +51,17 @@ export async function getStudyYearHome(
 
 export const studyYearHomeKeys = {
   all: ["study-years", "home"] as const,
+  byStudyYear: (communitySlug: string, studyYearName: string) =>
+    [...studyYearHomeKeys.all, communitySlug, studyYearName] as const,
+  byStudyYearInfinite: (communitySlug: string, studyYearName: string) =>
+    [...studyYearHomeKeys.all, "infinite", communitySlug, studyYearName] as const,
   courses: (
     communitySlug: string,
     studyYearName: string,
     params: StudyYearHomePaginatedRequest = { page: 0, size: 12 },
   ) =>
     [
-      ...studyYearHomeKeys.all,
-      communitySlug,
-      studyYearName,
+      ...studyYearHomeKeys.byStudyYear(communitySlug, studyYearName),
       params,
     ] as const,
   infinite: (
@@ -68,10 +70,7 @@ export const studyYearHomeKeys = {
     params: StudyYearHomeQueryParams = {},
   ) =>
     [
-      ...studyYearHomeKeys.all,
-      "infinite",
-      communitySlug,
-      studyYearName,
+      ...studyYearHomeKeys.byStudyYearInfinite(communitySlug, studyYearName),
       params,
     ] as const,
 };
