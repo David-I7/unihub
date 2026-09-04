@@ -13,6 +13,7 @@ export interface SearchInputProps {
   className?: string;
   inputClassName?: string;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
 function SearchInputComponent({
@@ -24,6 +25,7 @@ function SearchInputComponent({
   className,
   inputClassName,
   disabled = false,
+  autoFocus = false,
 }: SearchInputProps) {
   const countText =
     totalCount !== undefined
@@ -45,6 +47,7 @@ function SearchInputComponent({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
+        autoFocus={autoFocus}
         className={cn(
           "h-8 pl-8 text-xs rounded-xl bg-card transition-all",
           value || totalCount !== undefined ? "pr-20" : "pr-3",

@@ -8,7 +8,7 @@ export interface FilterToggleProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   icon?: React.ComponentType<{ className?: string }>;
-  activeColor?: "primary" | "emerald";
+  activeColor?: "secondary" | "emerald";
   className?: string;
   disabled?: boolean;
 }
@@ -18,7 +18,7 @@ export function FilterToggle({
   checked,
   onCheckedChange,
   icon: IconComponent,
-  activeColor = "primary",
+  activeColor = "secondary",
   className,
   disabled = false,
 }: FilterToggleProps) {
@@ -26,11 +26,11 @@ export function FilterToggle({
 
   const activeStyles = isEmerald
     ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 dark:bg-emerald-500/20 hover:bg-emerald-500/15"
-    : "border-primary/50 bg-primary/10 text-primary dark:bg-primary/20 hover:bg-primary/15";
+    : "border-border bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80";
 
   const iconActiveColor = isEmerald
     ? "text-emerald-600 dark:text-emerald-400"
-    : "text-primary";
+    : "text-secondary-foreground";
 
   return (
     <Button

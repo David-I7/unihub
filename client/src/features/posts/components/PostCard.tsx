@@ -144,7 +144,7 @@ export function PostCard({
                   {post.owner?.username ?? "Anonymous"}
                 </span>
                 {isPostAuthor && (
-                  <span className="rounded-md bg-primary/10 px-1.5 py-0.2 text-[10px] font-bold text-primary">
+                  <span className="rounded-md bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.2 text-[10px] font-bold">
                     Author
                   </span>
                 )}
@@ -252,7 +252,7 @@ export function PostCard({
                 "gap-1.5 font-semibold text-xs transition-colors",
                 isArchived ? "opacity-70 cursor-default" : "cursor-pointer",
                 isLiked
-                  ? "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100"
+                  ? "text-rose-500 dark:text-rose-600 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -283,7 +283,7 @@ export function PostCard({
         {commentsOpen && (
           <div className="pt-3 border-t border-border/70 space-y-4">
             <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <MessageSquare className="size-3.5 text-primary" />
+              <MessageSquare className="size-3.5 text-foreground" />
               Comments ({totalComments})
             </h4>
 

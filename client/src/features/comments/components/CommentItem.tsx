@@ -83,7 +83,7 @@ export function CommentItem({
               {comment.owner?.username ?? "Anonymous"}
             </span>
             {isAuthor && (
-              <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
+              <span className="rounded-md bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.5 text-[9px] font-bold">
                 Author
               </span>
             )}

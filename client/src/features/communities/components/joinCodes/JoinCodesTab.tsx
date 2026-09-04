@@ -151,7 +151,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                 {/* Code & Badges */}
                 <div className="space-y-1.5 min-w-[180px]">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                    <span className="font-mono text-sm font-bold tracking-widest text-secondary-foreground bg-secondary border border-border/60 px-2 py-0.5 rounded-md">
                       {code.code}
                     </span>
 

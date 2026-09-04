@@ -64,7 +64,7 @@ export function FilterSelect({
           className={cn(
             "rounded-xl text-xs font-normal transition-colors min-w-[110px] max-w-[220px]",
             isFiltered
-              ? "border-primary/50 bg-primary/10 text-primary dark:bg-primary/20 hover:bg-primary/15"
+              ? "border-border bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80"
               : "bg-card text-foreground hover:bg-muted",
             triggerClassName,
           )}
@@ -76,7 +76,9 @@ export function FilterSelect({
                 <IconComponent
                   className={cn(
                     "size-3.5 shrink-0",
-                    isFiltered ? "text-primary" : "text-muted-foreground",
+                    isFiltered
+                      ? "text-secondary-foreground"
+                      : "text-muted-foreground",
                   )}
                 />
               )}

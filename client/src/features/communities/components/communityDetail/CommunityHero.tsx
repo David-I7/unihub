@@ -248,7 +248,7 @@ export function CommunityHero({
         {/* Stats Row */}
         <div className="grid grid-cols-2 @[560px]:grid-cols-4 gap-2.5 @[560px]:gap-3.5 pt-2 border-t border-border/60">
           <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground border border-border/50">
               <Users className="size-4.5" />
             </div>
             <div className="min-w-0">
@@ -262,7 +262,7 @@ export function CommunityHero({
           </div>
 
           <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground border border-border/50">
               <GraduationCap className="size-4.5" />
             </div>
             <div className="min-w-0">
@@ -276,7 +276,7 @@ export function CommunityHero({
           </div>
 
           <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground border border-border/50">
               <BookOpen className="size-4.5" />
             </div>
             <div className="min-w-0">
@@ -290,7 +290,7 @@ export function CommunityHero({
           </div>
 
           <div className="flex items-center gap-3 p-2.5 @[560px]:p-3 rounded-xl bg-muted/40 border border-border/40">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground border border-border/50">
               <Award className="size-4.5" />
             </div>
             <div className="min-w-0">
