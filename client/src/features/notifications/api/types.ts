@@ -31,6 +31,10 @@ export interface BaseNotification {
   type: NotificationType;
   isRead: boolean;
   createdAt: string;
+  eventId?: string | null;
+  postId?: string | null;
+  commentId?: string | null;
+  actor?: ResourceOwner | null;
 }
 
 export interface EventNotification extends BaseNotification {
@@ -38,35 +42,24 @@ export interface EventNotification extends BaseNotification {
   type: EventNotificationType;
   eventId: string | null;
   actor: ResourceOwner | null;
-  communitySlug: string | null;
-  communityName: string | null;
-  studyYearName: string | null;
-  courseName: string | null;
-  courseSlug: string | null;
 }
 
 export interface PostNotification extends BaseNotification {
   category: "POST";
   type: PostNotificationType;
-  eventId: null;
+  eventId?: null;
+  postId: string;
+  commentId?: string | null;
   actor: ResourceOwner | null;
-  communitySlug: string;
-  communityName: string;
-  studyYearName: string | null;
-  courseName: string | null;
-  courseSlug: string | null;
 }
 
 export interface SystemNotification extends BaseNotification {
   category: "SYSTEM";
   type: SystemNotificationType;
-  eventId: null;
+  eventId?: null;
+  postId?: null;
+  commentId?: null;
   actor: null;
-  communitySlug: null;
-  communityName: null;
-  studyYearName: null;
-  courseName: null;
-  courseSlug: null;
 }
 
 export type NotificationResponse =

@@ -32,7 +32,7 @@ export function FilterSelect({
   value,
   onChange,
   options,
-  placeholder = "Select filter",
+  placeholder,
   defaultValue,
   icon: IconComponent = Filter,
   className,
@@ -47,8 +47,9 @@ export function FilterSelect({
       ? value !== defaultValue
       : value !== "" && value !== "ALL" && value !== "all";
 
-  const displayValue = currentOption ? currentOption.label : placeholder;
-  const displayText = label ? `${label}: ${displayValue}` : displayValue;
+  const promptLabel =
+    placeholder ?? (label ? `Select ${label}` : "Select filter");
+  const displayText = currentOption ? currentOption.label : promptLabel;
 
   return (
     <div className={cn("inline-flex items-center shrink-0", className)}>
@@ -68,9 +69,9 @@ export function FilterSelect({
               : "bg-card text-foreground hover:bg-muted",
             triggerClassName,
           )}
-          aria-label={label ?? placeholder}
+          aria-label={promptLabel}
         >
-          <SelectValue placeholder={placeholder}>
+          <SelectValue placeholder={promptLabel}>
             <span className="flex items-center gap-1.5 truncate">
               {IconComponent && (
                 <IconComponent

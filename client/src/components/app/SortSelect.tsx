@@ -1,4 +1,3 @@
-import * as React from "react";
 import { ArrowUpDown } from "@/components/ui/icons";
 import {
   Select,
@@ -20,7 +19,11 @@ export interface SortSelectProps {
   dir: "asc" | "desc";
   onSortChange: (field: string, dir: "asc" | "desc") => void;
   options: SortOption[];
+  placeholder?: string;
+  defaultField?: string;
+  defaultDir?: "asc" | "desc";
   className?: string;
+  triggerClassName?: string;
   disabled?: boolean;
 }
 
@@ -29,13 +32,24 @@ export function SortSelect({
   dir,
   onSortChange,
   options,
+  placeholder = "Sort by",
+  defaultField,
+  defaultDir,
   className,
+  triggerClassName,
   disabled = false,
 }: SortSelectProps) {
   const currentValueKey = `${field}:${dir}`;
   const currentOption = options.find(
     (opt) => opt.field === field && opt.dir === dir,
   );
+
+  const isSorted =
+    defaultField !== undefined && defaultDir !== undefined
+      ? field !== defaultField || dir !== defaultDir
+      : Boolean(field) && field !== "" && Boolean(currentOption);
+
+  const displayText = currentOption ? currentOption.label : placeholder;
 
   const handleValueChange = (val: string | null) => {
     if (!val) return;
@@ -52,15 +66,26 @@ export function SortSelect({
       >
         <SelectTrigger
           size="sm"
-          className="rounded-xl bg-card text-xs font-normal transition-colors max-w-[220px]"
-          aria-label="Sort by"
+          className={cn(
+            "rounded-xl text-xs font-normal transition-colors max-w-[220px]",
+            isSorted
+              ? "border-border bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80"
+              : "bg-card text-foreground hover:bg-muted",
+            triggerClassName,
+          )}
+          aria-label={placeholder}
         >
-          <SelectValue placeholder="Sort">
+          <SelectValue placeholder={placeholder}>
             <span className="flex items-center gap-1.5 truncate">
-              <ArrowUpDown className="size-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate">
-                {currentOption ? currentOption.label : "Sort"}
-              </span>
+              <ArrowUpDown
+                className={cn(
+                  "size-3.5 shrink-0",
+                  isSorted
+                    ? "text-secondary-foreground"
+                    : "text-muted-foreground",
+                )}
+              />
+              <span className="truncate">{displayText}</span>
             </span>
           </SelectValue>
         </SelectTrigger>

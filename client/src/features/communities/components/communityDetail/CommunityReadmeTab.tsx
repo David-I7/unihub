@@ -29,6 +29,7 @@ export function CommunityReadmeTab({
       {canEditCommunity && (
         <div className="flex justify-end">
           <Button
+            size="sm"
             onClick={() => setEditModalOpen(true)}
             className="gap-1.5 font-semibold cursor-pointer"
           >

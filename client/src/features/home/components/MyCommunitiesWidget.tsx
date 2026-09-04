@@ -25,11 +25,11 @@ export function MyCommunitiesWidget() {
     data?.pages.flatMap((page) => page.content) ?? [];
 
   return (
-    <Card className="rounded-2xl border bg-card p-5 space-y-4 shadow-xs">
+    <Card className="@container rounded-2xl border bg-card p-5 space-y-4 shadow-xs">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-1 border-b border-border/60">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-secondary text-foreground/80">
             <Users className="size-4" />
           </div>
           <div>
@@ -51,7 +51,7 @@ export function MyCommunitiesWidget() {
 
       {/* Body */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 @[640px]:grid-cols-2 @[920px]:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, idx) => (
             <div
               key={idx}
@@ -103,7 +103,7 @@ export function MyCommunitiesWidget() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 @[560px]:grid-cols-2 @[920px]:grid-cols-3 gap-4">
             {communities.map((community) => (
               <CommunityCard key={community.id} community={community} />
             ))}

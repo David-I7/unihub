@@ -17,11 +17,8 @@ public record NotificationResponseDto(
         boolean isRead,
         OffsetDateTime createdAt,
         UUID eventId,
-        OwnerDto actor,
-        String communitySlug,
-        String communityName,
-        String studyYearName,
-        String courseName,
-        String courseSlug
+        UUID postId,
+        UUID commentId,
+        OwnerDto actor
 ) {
 }

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router";
 import { Calendar as CalendarIcon, Sparkles } from "lucide-react";
 import {
   Dialog,
@@ -12,7 +13,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import {
   useInfiniteUpcomingEvents,
-  useCalendarStore,
   type CalendarEvent,
 } from "@/features/calendar";
 import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
@@ -27,6 +27,7 @@ export function AllUpcomingEventsModal({
   open,
   onOpenChange,
 }: AllUpcomingEventsModalProps) {
+  const navigate = useNavigate();
   const {
     data,
     isLoading,
@@ -35,9 +36,7 @@ export function AllUpcomingEventsModal({
     fetchNextPage,
     isFetchingNextPage,
     refetch,
-  } = useInfiniteUpcomingEvents({ days: 30, size: 10 });
-
-  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
+  } = useInfiniteUpcomingEvents({ days: 7, size: 6 });
 
   const events: CalendarEvent[] =
     data?.pages.flatMap((page) => page.content) ?? [];
@@ -138,7 +137,10 @@ export function AllUpcomingEventsModal({
             <div className="space-y-4 pb-4">
               <CalendarEventCardList
                 groupedEvents={groupedEvents}
-                onEventClick={openEventDetails}
+                onEventClick={(id) => {
+                  onOpenChange(false);
+                  navigate(`/calendar?eventId=${id}`);
+                }}
               />
 
               {/* Load More Button */}

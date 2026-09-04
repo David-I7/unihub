@@ -77,8 +77,6 @@ public class NotificationControllerTests extends BaseIntegrationTest {
                 .category(NotificationCategory.EVENT)
                 .type(NotificationType.EVENT_REMINDER)
                 .eventId(eventId)
-                .communitySlug("fmi-hub")
-                .communityName("FMI Hub")
                 .isRead(false)
                 .createdAt(createdAt)
                 .build();
@@ -88,12 +86,8 @@ public class NotificationControllerTests extends BaseIntegrationTest {
                 .message("Alice posted: 'Homework 1 discussion'")
                 .category(NotificationCategory.POST)
                 .type(NotificationType.COURSE_POST)
+                .postId(postId)
                 .actor(new OwnerDto(UUID.randomUUID(), "alice", true))
-                .communitySlug("fmi-hub")
-                .communityName("FMI Hub")
-                .studyYearName("YEAR_2")
-                .courseName("Algorithms")
-                .courseSlug("algorithms")
                 .isRead(false)
                 .createdAt(createdAt)
                 .build();
@@ -118,10 +112,9 @@ public class NotificationControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content[0].category").value("EVENT"))
                 .andExpect(jsonPath("$.content[0].type").value("EVENT_REMINDER"))
                 .andExpect(jsonPath("$.content[0].eventId").value(eventId.toString()))
-                .andExpect(jsonPath("$.content[0].communitySlug").value("fmi-hub"))
                 .andExpect(jsonPath("$.content[1].category").value("POST"))
                 .andExpect(jsonPath("$.content[1].type").value("COURSE_POST"))
-                .andExpect(jsonPath("$.content[1].courseSlug").value("algorithms"))
+                .andExpect(jsonPath("$.content[1].postId").value(postId.toString()))
                 .andExpect(jsonPath("$.totalElements").value(2));
     }
 

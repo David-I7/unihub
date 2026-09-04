@@ -4,7 +4,6 @@ import {
   UpcomingEventsWidget,
   MyCommunitiesWidget,
 } from "@/features/home";
-import { EventDetailSheet, EventFormModal } from "@/features/calendar";
 
 export default function HomePage() {
   const user = useAuthStore((state) => state.user);
@@ -37,10 +36,6 @@ export default function HomePage() {
       <section className="w-full">
         <MyCommunitiesWidget />
       </section>
-
-      {/* Shared Event Detail Sheet & Edit Modal */}
-      <EventDetailSheet />
-      <EventFormModal />
     </div>
   );
 }

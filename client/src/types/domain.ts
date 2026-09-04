@@ -47,3 +47,12 @@ export interface Post {
   owner: ResourceOwner;
   isLiked?: boolean;
 }
+
+export interface PostDetail extends Post {
+  communitySlug?: string | null;
+  communityName?: string | null;
+  studyYearSlug?: string | null;
+  studyYearName?: string | null;
+  courseSlug?: string | null;
+  courseName?: string | null;
+}

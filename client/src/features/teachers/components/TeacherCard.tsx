@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { Star, MoreVertical, Edit2, Trash2 } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,23 +13,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { TeacherDetailDialog } from "./TeacherDetailDialog";
 import { UpdateTeacherDialog } from "./UpdateTeacherDialog";
 import { DeleteTeacherAlertDialog } from "./DeleteTeacherAlertDialog";
 import type { Teacher, CallerMembership } from "../api/types";
 
 interface TeacherCardProps {
   teacher: Teacher;
-  communitySlug: string;
   callerMembership?: CallerMembership | null;
 }
 
 export function TeacherCard({
   teacher,
-  communitySlug,
   callerMembership,
 }: TeacherCardProps) {
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [, setSearchParams] = useSearchParams();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -43,10 +41,21 @@ export function TeacherCard({
     user?.role === "ADMIN" ||
     user?.role === "ROOT";
 
+  const handleCardClick = () => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("teacherId", teacher.id);
+        return next;
+      },
+      { replace: false },
+    );
+  };
+
   return (
     <>
       <Card
-        onClick={() => setDetailOpen(true)}
+        onClick={handleCardClick}
         className="group relative rounded-2xl border bg-card p-5 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer flex flex-col justify-between space-y-4"
       >
         <div className="flex items-start justify-between gap-3">
@@ -123,15 +132,6 @@ export function TeacherCard({
           </span>
         </div>
       </Card>
-
-      {/* Teacher Detail Dialog */}
-      <TeacherDetailDialog
-        teacherId={teacher.id}
-        communitySlug={communitySlug}
-        open={detailOpen}
-        onOpenChange={setDetailOpen}
-        callerMembership={callerMembership}
-      />
 
       {/* Admin Mutation Dialogs */}
       <UpdateTeacherDialog

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Bell, CheckCircle2 } from "lucide-react";
 import {
@@ -13,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
-  useCalendarStore,
 } from "@/features/calendar";
 import { getErrorMessage } from "@/api/types";
 import ReminderList from "./ReminderList";
@@ -27,6 +27,7 @@ export function AllRemindersModal({
   open,
   onOpenChange,
 }: AllRemindersModalProps) {
+  const navigate = useNavigate();
   const {
     data,
     isLoading,
@@ -38,7 +39,6 @@ export function AllRemindersModal({
   } = useInfiniteUserReminders({ status: "PENDING", size: 10 });
 
   const deleteReminderMutation = useDeleteReminder();
-  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
 
   const reminders = data?.pages.flatMap((page) => page.content) ?? [];
   const totalCount = data?.pages[0]?.totalElements ?? reminders.length;
@@ -124,7 +124,10 @@ export function AllRemindersModal({
                 onDelete={handleDelete}
                 reminders={reminders}
                 isDeleting={deleteReminderMutation.isPending}
-                onOpen={openEventDetails}
+                onOpen={(eventId) => {
+                  onOpenChange(false);
+                  navigate(`/calendar?eventId=${eventId}`);
+                }}
               />
 
               {/* Load More Button */}

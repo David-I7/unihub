@@ -16,15 +16,16 @@ export async function getUserCommunities(
 }
 
 export function useUserCommunities(
-  params: PaginatedRequest = { page: 0, size: 100 },
+  params: Partial<PaginatedRequest> = {},
   options: { enabled?: boolean } = { enabled: true },
 ) {
   const user = useAuthStore((state) => state.user);
   const { enabled } = options;
+  const { page = 0, size = 100 } = params;
 
   return useQuery({
     queryKey: [...userKeys.communities(), params],
-    queryFn: () => getUserCommunities(params),
+    queryFn: () => getUserCommunities({ page, size }),
     placeholderData: keepPreviousData,
     enabled: enabled && Boolean(user),
   });

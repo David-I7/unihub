@@ -21,19 +21,13 @@ export function useNotificationNavigation() {
     }
 
     if (notification.category === "POST") {
-      const { communitySlug, studyYearName, courseSlug } = notification;
-
-      if (courseSlug && studyYearName && communitySlug) {
-        navigate(
-          `/communities/${communitySlug}/study-years/${studyYearName.toLowerCase()}/courses/${courseSlug}?tab=posts`,
-        );
-        return;
+      if (notification.postId) {
+        const commentParam = notification.commentId
+          ? `?commentId=${notification.commentId}`
+          : "";
+        navigate(`/posts/${notification.postId}${commentParam}`);
       }
-
-      if (communitySlug) {
-        navigate(`/communities/${communitySlug}?tab=posts`);
-        return;
-      }
+      return;
     }
   };
 

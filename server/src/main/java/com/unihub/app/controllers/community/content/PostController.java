@@ -6,6 +6,7 @@ import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
+import com.unihub.app.dto.community.content.response.PostDetailResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.services.community.content.CommentService;
 import com.unihub.app.services.community.content.PostService;
@@ -30,11 +31,11 @@ public class PostController {
     private final CommentService commentService;
 
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponseDto> getPost(
+    public ResponseEntity<PostDetailResponseDto> getPost(
             @PathVariable UUID postId,
             @AuthenticationPrincipal UserDto user
     ) {
-        PostResponseDto post = postService.getPostById(postId, user);
+        PostDetailResponseDto post = postService.getPostById(postId, user);
         return ResponseEntity.ok(post);
     }
 
@@ -88,7 +89,7 @@ public class PostController {
     @GetMapping("/{postId}/comments")
     public ResponseEntity<PageDto<CommentResponseDto>> getPostComments(
             @PathVariable UUID postId,
-            @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable
+            @PageableDefault(page = 0, size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         PageDto<CommentResponseDto> comments = commentService.getComments(postId, pageable);
         return ResponseEntity.ok(comments);

@@ -187,7 +187,7 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
                 backgroundColor: form.values.backgroundColor,
                 verified: false,
                 memberCount: 1,
-                isJoined: true,
+                joined: true,
                 createdAt: new Date().toISOString(),
                 owner: {
                   id: user?.id ?? "preview-user",

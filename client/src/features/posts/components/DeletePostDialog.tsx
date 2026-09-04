@@ -16,12 +16,14 @@ interface DeletePostDialogProps {
   post: Post | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: () => void;
 }
 
 export function DeletePostDialog({
   post,
   open,
   onOpenChange,
+  onDeleted,
 }: DeletePostDialogProps) {
   const deleteMutation = useDeletePost();
 
@@ -32,6 +34,7 @@ export function DeletePostDialog({
       await deleteMutation.mutateAsync(post.id);
       toast.success("Post deleted successfully.");
       onOpenChange(false);
+      onDeleted?.();
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Failed to delete post."));
     }

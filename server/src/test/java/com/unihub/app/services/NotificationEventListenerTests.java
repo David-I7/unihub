@@ -70,8 +70,7 @@ public class NotificationEventListenerTests {
         List<Notification> savedList = captor.getValue();
         assertEquals(2, savedList.size());
         assertEquals(NotificationType.COMMUNITY_POST, savedList.get(0).getType());
-        assertEquals("fmi", savedList.get(0).getMetadata().communitySlug());
-        assertEquals("FMI Community", savedList.get(0).getMetadata().communityName());
+        assertEquals(post.getId(), savedList.get(0).getMetadata().postId());
         assertEquals("author", savedList.get(0).getActor().getUsername());
     }
 

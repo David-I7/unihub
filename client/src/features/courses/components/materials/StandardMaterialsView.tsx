@@ -36,6 +36,7 @@ import type {
   CourseMaterialFile,
   CourseMaterialLink,
 } from "../../api/types";
+import { UserAvatar } from "@/components/app/UserAvatar";
 
 interface BreadcrumbItem {
   id: string | null;
@@ -156,12 +157,16 @@ export function StandardMaterialsView({
 
   const selectedFile = useMemo(
     () =>
-      filters.file ? materials?.files?.find((f) => f.id === filters.file) : null,
+      filters.file
+        ? materials?.files?.find((f) => f.id === filters.file)
+        : null,
     [filters.file, materials?.files],
   );
   const selectedLink = useMemo(
     () =>
-      filters.link ? materials?.links?.find((l) => l.id === filters.link) : null,
+      filters.link
+        ? materials?.links?.find((l) => l.id === filters.link)
+        : null,
     [filters.link, materials?.links],
   );
 
@@ -307,7 +312,7 @@ export function StandardMaterialsView({
                 size="sm"
                 variant="outline"
                 onClick={() => setCreateFolderOpen(true)}
-                className="gap-1.5 font-bold cursor-pointer"
+                className="gap-1.5 cursor-pointer"
               >
                 <Plus className="size-4" />
                 <span>New Folder</span>
@@ -320,7 +325,7 @@ export function StandardMaterialsView({
                   size="sm"
                   variant="outline"
                   onClick={() => setUploadFileOpen(true)}
-                  className="gap-1.5 font-bold cursor-pointer"
+                  className="gap-1.5 cursor-pointer"
                 >
                   <UploadCloud className="size-4" />
                   <span>Upload File</span>
@@ -328,7 +333,7 @@ export function StandardMaterialsView({
                 <Button
                   size="sm"
                   onClick={() => setAddLinkOpen(true)}
-                  className="gap-1.5 font-bold cursor-pointer"
+                  className="gap-1.5 cursor-pointer"
                 >
                   <Link2 className="size-4" />
                   <span>Add Link</span>
@@ -508,7 +513,8 @@ export function StandardMaterialsView({
                                 e.dataTransfer.getData("application/json");
                               if (raw) {
                                 try {
-                                  const parsed: DraggedItemData = JSON.parse(raw);
+                                  const parsed: DraggedItemData =
+                                    JSON.parse(raw);
                                   handleMoveIntoFolder(
                                     parsed,
                                     folder.id,
@@ -536,8 +542,12 @@ export function StandardMaterialsView({
                                 {folder.name}
                               </span>
                               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <UserAvatar
+                                  size="xxs"
+                                  username={folder.owner?.username}
+                                />
                                 <span className="truncate">
-                                  By {folder.owner?.username}
+                                  {folder.owner?.username}
                                 </span>
                                 <span>•</span>
                                 <span>
@@ -553,7 +563,9 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
+                              canMoveUp={
+                                !isArchived && Boolean(parentOfCurrentFolder)
+                              }
                               onEdit={() => setActiveFolderToEdit(folder)}
                               onMoveUp={() =>
                                 handleMoveUpOneLevel({
@@ -608,7 +620,11 @@ export function StandardMaterialsView({
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                                 <span>{formatBytes(file.size)}</span>
                                 <span>•</span>
-                                <span>Uploaded by {file.owner.username}</span>
+                                <UserAvatar
+                                  size="xxs"
+                                  username={file.owner?.username}
+                                />
+                                <span>{file.owner.username}</span>
                                 <span>•</span>
                                 <span>
                                   {new Date(
@@ -623,7 +639,9 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
+                              canMoveUp={
+                                !isArchived && Boolean(parentOfCurrentFolder)
+                              }
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "file",
@@ -694,7 +712,11 @@ export function StandardMaterialsView({
                                 </Badge>
                               </div>
                               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                                <span>Added by {link.owner.username}</span>
+                                <UserAvatar
+                                  size="xxs"
+                                  username={link.owner?.username}
+                                />
+                                <span>{link.owner.username}</span>
                                 <span>•</span>
                                 <span>
                                   {new Date(
@@ -709,7 +731,9 @@ export function StandardMaterialsView({
                             <MaterialItemActions
                               canEdit={canUserEdit}
                               canDelete={canUserDelete}
-                              canMoveUp={!isArchived && Boolean(parentOfCurrentFolder)}
+                              canMoveUp={
+                                !isArchived && Boolean(parentOfCurrentFolder)
+                              }
                               onEdit={() =>
                                 setActiveMaterialToEdit({
                                   type: "link",

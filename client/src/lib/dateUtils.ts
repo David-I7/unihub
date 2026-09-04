@@ -384,93 +384,21 @@ export function getTime(date: Date, unit: TimeUnit) {
   return toTimeUnit(time, "milliseconds", unit);
 }
 
+const UNIT_IN_MS: Record<TimeUnit, number> = {
+  milliseconds: 1,
+  seconds: 1000,
+  minutes: 60 * 1000,
+  hours: 60 * 60 * 1000,
+  days: 24 * 60 * 60 * 1000,
+  weeks: 7 * 24 * 60 * 60 * 1000,
+};
+
 export function toTimeUnit(
   value: number,
   fromUnit: TimeUnit,
   toUnit: TimeUnit,
 ): number {
   if (fromUnit === toUnit) return value;
-
-  switch (fromUnit) {
-    case "weeks":
-      switch (toUnit) {
-        case "days":
-          return value * 7;
-        case "hours":
-          return value * 7 * 24;
-        case "minutes":
-          return value * 7 * 24 * 60;
-        case "seconds":
-          return value * 7 * 24 * 60 * 60;
-        case "milliseconds":
-          return value * 7 * 24 * 60 * 60 * 1000;
-      }
-    case "days":
-      switch (toUnit) {
-        case "weeks":
-          return value / 7;
-        case "hours":
-          return value * 24;
-        case "minutes":
-          return value * 24 * 60;
-        case "seconds":
-          return value * 24 * 60 * 60;
-        case "milliseconds":
-          return value * 24 * 60 * 60 * 1000;
-      }
-    case "hours":
-      switch (toUnit) {
-        case "weeks":
-          return value / (7 * 24);
-        case "days":
-          return value / 24;
-        case "minutes":
-          return value * 60;
-        case "seconds":
-          return value * 60 * 60;
-        case "milliseconds":
-          return value * 60 * 60 * 1000;
-      }
-    case "minutes":
-      switch (toUnit) {
-        case "weeks":
-          return value / (7 * 24 * 60);
-        case "days":
-          return value / (24 * 60);
-        case "hours":
-          return value / 60;
-        case "seconds":
-          return value * 60;
-        case "milliseconds":
-          return value * 60 * 1000;
-      }
-    case "seconds":
-      switch (toUnit) {
-        case "weeks":
-          return value / (7 * 24 * 60 * 60);
-        case "days":
-          return value / (24 * 60 * 60);
-        case "hours":
-          return value / (60 * 60);
-        case "minutes":
-          return value / 60;
-        case "milliseconds":
-          return value * 1000;
-      }
-    case "milliseconds":
-      switch (toUnit) {
-        case "weeks":
-          return value / (7 * 24 * 60 * 60 * 1000);
-        case "days":
-          return value / (24 * 60 * 60 * 1000);
-        case "hours":
-          return value / (60 * 60 * 1000);
-        case "minutes":
-          return value / (60 * 1000);
-        case "seconds":
-          return value / 1000;
-      }
-    default:
-      throw new Error(`Unsupported fromUnit: ${fromUnit}`);
-  }
+  const ms = value * UNIT_IN_MS[fromUnit];
+  return ms / UNIT_IN_MS[toUnit];
 }

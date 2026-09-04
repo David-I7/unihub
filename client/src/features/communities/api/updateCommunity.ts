@@ -2,7 +2,6 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Community, UpdateCommunityDto } from "./types";
 import { communityKeys } from "./communityKeys";
-import { userKeys } from "@/features/users/api/getUserProfile";
 
 export interface UpdateCommunityVariables {
   communitySlug: string;
@@ -25,7 +24,7 @@ export function useUpdateCommunity() {
 
   return useMutation({
     mutationFn: updateCommunity,
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
     },
   });

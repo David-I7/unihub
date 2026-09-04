@@ -85,12 +85,9 @@ public class NotificationService {
                 .isRead(n.isRead())
                 .createdAt(n.getCreatedAt())
                 .eventId(meta != null ? meta.eventId() : null)
+                .postId(meta != null ? meta.postId() : null)
+                .commentId(meta != null ? meta.commentId() : null)
                 .actor(actor)
-                .communitySlug(meta != null ? meta.communitySlug() : null)
-                .communityName(meta != null ? meta.communityName() : null)
-                .studyYearName(meta != null ? meta.studyYearName() : null)
-                .courseName(meta != null ? meta.courseName() : null)
-                .courseSlug(meta != null ? meta.courseSlug() : null)
                 .build();
     }
 

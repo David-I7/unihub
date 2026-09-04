@@ -9,6 +9,7 @@ import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
+import com.unihub.app.dto.community.content.response.PostDetailResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.security.JwtAuthentication;
@@ -76,7 +77,7 @@ public class PostControllerTests extends BaseIntegrationTest {
     @DisplayName("GET /api/v1/posts/{postId} returns post")
     public void testGetPost_Success() throws Exception {
         UUID postId = UUID.randomUUID();
-        PostResponseDto postDto = PostResponseDto.builder()
+        PostDetailResponseDto postDto = PostDetailResponseDto.builder()
                 .id(postId)
                 .title("Post Title")
                 .description("Post Description")

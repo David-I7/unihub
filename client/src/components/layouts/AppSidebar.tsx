@@ -125,7 +125,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <Badge
                           variant="notification"
                           size="xs"
-                          className="ml-auto font-bold rounded-full group-data-[collapsible=icon]:hidden"
+                          className="ml-auto text-foreground font-bold rounded-full group-data-[collapsible=icon]:hidden"
                         >
                           {totalUnread > 99 ? "99+" : totalUnread}
                         </Badge>

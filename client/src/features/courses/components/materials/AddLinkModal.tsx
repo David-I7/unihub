@@ -94,7 +94,7 @@ const LINK_TYPE_OPTIONS: Array<{
   },
   {
     value: "OTHER",
-    label: "https",
+    label: "Https",
     hint: "Any valid HTTPS URL",
     icon: Globe,
     iconColor: "text-emerald-500",
@@ -215,7 +215,11 @@ export function AddLinkModal({
           <Field>
             <FieldLabel htmlFor="resourceType">Resource Type</FieldLabel>
             <Select
-              value={form.values.linkType}
+              value={
+                LINK_TYPE_OPTIONS.find(
+                  (opt) => opt.value === form.values.linkType,
+                )!.label
+              }
               onValueChange={(val: string | null) => {
                 if (val) {
                   form.setValue("linkType", val as MaterialLinkType);
@@ -286,7 +290,7 @@ export function AddLinkModal({
               maxLength={2000}
               className="text-xs"
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground flex justify-end">
               {(form.values.description ?? "").length} / 2000 characters
             </FieldDescription>
             <FieldError errors={[{ message: form.errors.description }]} />

@@ -2,7 +2,11 @@ import { useMemo } from "react";
 import { Calendar as CalendarIcon, Plus } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
-import { formatHeadingDate, getLocalDateKey } from "@/lib/dateUtils";
+import {
+  formatDayHeader,
+  formatHeadingDate,
+  getLocalDateKey,
+} from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -72,6 +76,7 @@ export function DayOverflowModal({
                   closeOverflowModal();
                   openEventDetails(event.id);
                 }}
+                formattedDate={formatDayHeader(overflowDate).formattedDate}
               />
             ))
           )}
