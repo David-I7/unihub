@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
   Select,
   SelectContent,
@@ -5,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Filter } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 export interface FilterOption {
@@ -18,6 +20,8 @@ export interface FilterSelectProps {
   onChange: (value: string) => void;
   options: FilterOption[];
   placeholder?: string;
+  defaultValue?: string;
+  icon?: React.ComponentType<{ className?: string }>;
   className?: string;
   triggerClassName?: string;
   disabled?: boolean;
@@ -29,19 +33,25 @@ export function FilterSelect({
   onChange,
   options,
   placeholder = "Select filter",
+  defaultValue,
+  icon: IconComponent = Filter,
   className,
   triggerClassName,
   disabled = false,
 }: FilterSelectProps) {
   const currentOption = options.find((opt) => opt.value === value);
 
+  // Check if non-default option is selected
+  const isFiltered =
+    defaultValue !== undefined
+      ? value !== defaultValue
+      : value !== "" && value !== "ALL" && value !== "all";
+
+  const displayValue = currentOption ? currentOption.label : placeholder;
+  const displayText = label ? `${label}: ${displayValue}` : displayValue;
+
   return (
-    <div className={cn("flex items-center gap-1.5 shrink-0", className)}>
-      {label && (
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-          {label}:
-        </span>
-      )}
+    <div className={cn("inline-flex items-center shrink-0", className)}>
       <Select
         value={value}
         onValueChange={(val: string | null) => {
@@ -50,14 +60,27 @@ export function FilterSelect({
         disabled={disabled}
       >
         <SelectTrigger
+          size="sm"
           className={cn(
-            "h-9 min-w-[130px] max-w-[200px] text-xs font-normal rounded-xl bg-card transition-colors truncate",
+            "rounded-xl text-xs font-normal transition-colors min-w-[110px] max-w-[220px]",
+            isFiltered
+              ? "border-primary/50 bg-primary/10 text-primary dark:bg-primary/20 hover:bg-primary/15"
+              : "bg-card text-foreground hover:bg-muted",
             triggerClassName,
           )}
+          aria-label={label ?? placeholder}
         >
           <SelectValue placeholder={placeholder}>
-            <span className="truncate">
-              {currentOption ? currentOption.label : placeholder}
+            <span className="flex items-center gap-1.5 truncate">
+              {IconComponent && (
+                <IconComponent
+                  className={cn(
+                    "size-3.5 shrink-0",
+                    isFiltered ? "text-primary" : "text-muted-foreground",
+                  )}
+                />
+              )}
+              <span className="truncate">{displayText}</span>
             </span>
           </SelectValue>
         </SelectTrigger>

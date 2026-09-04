@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpDown,
   Award,
   Bell,
   BookOpen,
@@ -83,6 +84,7 @@ import {
   Shield,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Sun,
@@ -110,6 +112,7 @@ export {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpDown,
   Award,
   Bell,
   BookOpen,
@@ -188,6 +191,7 @@ export {
   Shield,
   ShieldAlert,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Star,
   Sun,
@@ -205,6 +209,7 @@ export {
   XIcon,
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const Icons = {
   // Navigation
   Home,
@@ -218,6 +223,8 @@ export const Icons = {
   Search,
   SearchX,
   Filter,
+  Sort: ArrowUpDown,
+  Sliders: SlidersHorizontal,
   Trash: Trash2,
   Edit: Edit2,
   More: MoreVertical,

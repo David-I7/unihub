@@ -37,8 +37,8 @@ function SearchInputComponent({
       : null;
 
   return (
-    <div className={cn("relative flex items-center w-full", className)}>
-      <Search className="absolute left-3.5 size-4 text-muted-foreground pointer-events-none" />
+    <div className={cn("relative flex items-center w-full min-w-[160px]", className)}>
+      <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
       <Input
         type="text"
         placeholder={placeholder}
@@ -46,26 +46,26 @@ function SearchInputComponent({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         className={cn(
-          "pl-10 h-10 text-xs sm:text-sm rounded-xl bg-card transition-colors",
-          value || totalCount !== undefined ? "pr-24" : "pr-4",
+          "h-8 pl-8 text-xs rounded-xl bg-card transition-all",
+          value || totalCount !== undefined ? "pr-20" : "pr-3",
           inputClassName,
         )}
       />
-      <div className="absolute right-2 flex items-center gap-1.5">
+      <div className="absolute right-1.5 flex items-center gap-1">
         {value && (
           <Button
             type="button"
             variant="ghost"
             size="icon-xs"
             onClick={() => onChange("")}
-            className="size-6 text-muted-foreground hover:text-foreground cursor-pointer"
+            className="size-5 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
             title="Clear search"
           >
-            <X className="size-3.5" />
+            <X className="size-3" />
           </Button>
         )}
         {countText && (
-          <span className="text-[11px] font-semibold text-muted-foreground px-1.5 hidden sm:inline-block truncate max-w-[100px]">
+          <span className="text-[10px] font-medium text-muted-foreground px-1 hidden sm:inline-block truncate max-w-[90px]">
             {countText}
           </span>
         )}

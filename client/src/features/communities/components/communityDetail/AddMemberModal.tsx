@@ -156,7 +156,7 @@ export function AddMemberModal({
                   }
                 }}
               >
-                <SelectTrigger className="h-10 text-xs rounded-xl">
+                <SelectTrigger className="h-8 text-xs rounded-xl">
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>

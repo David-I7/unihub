@@ -49,8 +49,8 @@ function CommunityHeaderComponent({
             render={
               <Button
                 variant="ghost"
-                size="icon-xs"
-                className="size-9 rounded-xl  hover:bg-muted cursor-pointer"
+                size="icon"
+                className="rounded-xl hover:bg-muted cursor-pointer"
                 aria-label="Community actions"
               >
                 <MoreVertical className="size-4" />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { Plus, Users } from "@/components/ui/icons";
+import { Calendar, GraduationCap, Plus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/app/SearchInput";
 import { FilterSelect } from "@/components/app/FilterSelect";
@@ -149,40 +149,27 @@ export function CommunityTeachersTab({
 
   return (
     <div className="space-y-6">
-      {/* 2-tier Header Toolbar */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-row items-center justify-between gap-3">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              placeholder="Search teachers by name..."
-              totalCount={totalTeachers}
-              resultLabel="teachers"
-            />
-          </div>
-
-          {/* Add Teacher Button */}
-          {canAddTeacher && (
-            <Button
-              onClick={() => setCreateTeacherOpen(true)}
-              className="gap-1.5 font-semibold cursor-pointer shrink-0"
-            >
-              <Plus className="size-4" />
-              <span>Add Teacher</span>
-            </Button>
-          )}
+      {/* Unified Toolbar: Search on left, Filters on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex-1 min-w-[180px] max-w-md">
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Search teachers by name..."
+            totalCount={totalTeachers}
+            resultLabel="teachers"
+          />
         </div>
 
-        {/* Filter Strip */}
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Study Year Select */}
           <FilterSelect
             label="Year"
             value={filters.studyYear}
             onChange={(val) => setFilter("studyYear", val)}
             options={studyYearOptions}
+            defaultValue="ALL"
+            icon={GraduationCap}
             disabled={isStudyYearsLoading}
           />
 
@@ -192,21 +179,37 @@ export function CommunityTeachersTab({
             value={filters.semester}
             onChange={(val) => setFilter("semester", val)}
             options={SEMESTER_FILTER_OPTIONS}
+            defaultValue="ALL"
+            icon={Calendar}
           />
 
           {/* Reset Filters Shortcut */}
           {hasActiveFilters && (
             <Button
+              type="button"
               variant="ghost"
-              size="xs"
+              size="sm"
               onClick={handleClearFilters}
-              className="text-xs text-muted-foreground hover:text-foreground h-9 px-2.5 rounded-xl cursor-pointer"
+              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
             >
-              Reset Filters
+              Reset
             </Button>
           )}
         </div>
       </div>
+
+      {/* Dedicated Action Button Row */}
+      {canAddTeacher && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setCreateTeacherOpen(true)}
+          >
+            <Plus />
+            <span>Add Teacher</span>
+          </Button>
+        </div>
+      )}
 
       {/* Main Teachers Grid & States */}
       {isLoading ? (
