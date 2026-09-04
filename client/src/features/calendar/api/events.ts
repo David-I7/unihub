@@ -22,6 +22,14 @@ import type {
   UpdateEventPayload,
 } from "./types";
 import queryClient from "@/lib/queryClient";
+import { toTimeUnit } from "@/lib/dateUtils";
+
+const UPCOMING_EVENTS_DAYS = 7;
+const UPCOMING_EVENTS_DAYS_MS = toTimeUnit(
+  UPCOMING_EVENTS_DAYS,
+  "days",
+  "milliseconds",
+);
 
 export const calendarKeys = {
   all: ["calendar"] as const,
@@ -106,14 +114,14 @@ export function useCreateEvent() {
     onSuccess: (data, createPayload) => {
       // Invalidate upcoming events if the new event is within the next 7 days
       const startMs = new Date(data.startTime).getTime();
-      const sevenDaysFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      const sevenDaysFromNow = Date.now() + UPCOMING_EVENTS_DAYS_MS;
       if (startMs <= sevenDaysFromNow) {
         if (import.meta.env.DEV) {
           console.log(
             "Invalidating upcoming events due to new event within 7 days",
           );
         }
-        queryClient.invalidateQueries({
+        queryClient.resetQueries({
           queryKey: calendarKeys.upcomingList(),
         });
       }
@@ -147,7 +155,7 @@ export function useCreateEvent() {
               `Invalidating key: ${JSON.stringify(key)} events list due to new event`,
             );
           }
-          queryClient.invalidateQueries({ queryKey: key });
+          queryClient.resetQueries({ queryKey: key });
           break;
         }
       }
@@ -164,7 +172,7 @@ interface UpdateContext {
   ][];
 }
 
-const getQueryEventCache = (eventId: string) => {
+export const getQueryEventCache = (eventId: string) => {
   const detailKey = calendarKeys.detail(eventId);
   const detail = queryClient.getQueryData<Event>(detailKey);
 
@@ -318,7 +326,7 @@ export function useDeleteEvent() {
 export async function getUpcomingEvents(
   params: { days?: number; page?: number; size?: number } = {},
 ): Promise<PaginatedResponse<CalendarEvent>> {
-  const { days = 7, page = 0, size = 5 } = params;
+  const { days = UPCOMING_EVENTS_DAYS, page = 0, size = 5 } = params;
   const response = await client.get<PaginatedResponse<CalendarEvent>>(
     "/calendar/upcoming",
     { params: { days, page, size } },
@@ -344,7 +352,7 @@ export function useInfiniteUpcomingEvents(
   >,
 ) {
   const user = useAuthStore((state) => state.user);
-  const { days = 7, size = 5 } = params;
+  const { days = UPCOMING_EVENTS_DAYS, size = 5 } = params;
 
   return useInfiniteQuery({
     queryKey: calendarKeys.upcoming({ days, size }),

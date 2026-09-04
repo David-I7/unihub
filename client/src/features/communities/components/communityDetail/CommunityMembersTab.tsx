@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
-import { UserPlus, Users } from "@/components/ui/icons";
+import { User, UserPlus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/app/SearchInput";
 import { FilterSelect } from "@/components/app/FilterSelect";
@@ -117,55 +117,54 @@ export function CommunityMembersTab({
 
   return (
     <div className="space-y-6">
-      {/* 2-tier Header Toolbar */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-row items-center justify-between gap-3">
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              placeholder="Search members by username..."
-              totalCount={totalMembers}
-              resultLabel="members"
-            />
-          </div>
-
-          {/* Add Member Button */}
-          {canAddMember && (
-            <Button
-              onClick={() => setAddMemberOpen(true)}
-              className="gap-1.5 font-semibold cursor-pointer shrink-0"
-            >
-              <UserPlus className="size-4" />
-              <span>Add Member</span>
-            </Button>
-          )}
+      {/* Unified Toolbar: Search on left, Filters on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex-1 min-w-[180px] max-w-md">
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Search members by username..."
+            totalCount={totalMembers}
+            resultLabel="members"
+          />
         </div>
 
-        {/* Filter Strip */}
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          {/* Role Filter Select */}
+        <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Role"
             value={filters.role}
             onChange={(val) => setFilter("role", val)}
             options={ROLE_FILTER_OPTIONS}
+            defaultValue="ALL"
+            icon={User}
           />
 
-          {/* Reset Filters Shortcut */}
           {hasActiveFilters && (
             <Button
+              type="button"
               variant="ghost"
-              size="xs"
+              size="sm"
               onClick={handleClearFilters}
-              className="text-xs text-muted-foreground hover:text-foreground h-9 px-2.5 rounded-xl cursor-pointer"
+              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
             >
-              Reset Filters
+              Reset
             </Button>
           )}
         </div>
       </div>
+
+      {/* Dedicated Action Button Row */}
+      {canAddMember && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setAddMemberOpen(true)}
+          >
+            <UserPlus />
+            <span>Add Member</span>
+          </Button>
+        </div>
+      )}
 
       {/* Main Members Grid & States */}
       {isLoading ? (

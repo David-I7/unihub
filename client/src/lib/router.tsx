@@ -62,7 +62,14 @@ export const router = createBrowserRouter([
       },
       {
         path: "/communities/:communitySlug/join",
-        element: <CommunityJoinPage />,
+        element: (
+          <AuthenticatedRoute
+            title="Join Community"
+            description="Sign in to join a community using a join code."
+          >
+            <CommunityJoinPage />
+          </AuthenticatedRoute>
+        ),
       },
       {
         path: "/communities/:communitySlug",

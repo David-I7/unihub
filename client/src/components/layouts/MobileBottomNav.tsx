@@ -24,26 +24,26 @@ export function MobileBottomNav() {
             className={cn(
               "flex flex-1 flex-col items-center justify-center gap-1 py-1 text-[11px] font-medium transition-colors select-none",
               active
-                ? "text-primary font-semibold"
+                ? "text-foreground font-semibold"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
             <div
               className={cn(
                 "relative flex h-7 w-12 items-center justify-center rounded-full transition-all",
-                active && "bg-primary/10",
+                active && "bg-secondary text-secondary-foreground",
               )}
             >
               <Icon
                 className={cn(
                   "size-5",
                   active
-                    ? "text-primary stroke-[2.25]"
+                    ? "text-foreground stroke-[2.25]"
                     : "text-muted-foreground",
                 )}
               />
               {isNotifications && totalUnread > 0 && (
-                <span className="absolute top-1 right-3 size-2 rounded-full bg-primary ring-2 ring-background" />
+                <span className="absolute top-1 right-3 size-2 rounded-full bg-rose-500 ring-2 ring-background dark:bg-rose-600" />
               )}
             </div>
             <span>{item.title}</span>

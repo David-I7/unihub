@@ -42,9 +42,6 @@ public class Notification {
     private NotificationType type;
 
     @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
     private String message;
 
     @Enumerated(EnumType.STRING)

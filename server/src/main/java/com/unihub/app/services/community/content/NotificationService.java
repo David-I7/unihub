@@ -22,6 +22,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +79,6 @@ public class NotificationService {
 
         return NotificationResponseDto.builder()
                 .id(n.getId())
-                .title(n.getTitle())
                 .message(n.getMessage())
                 .category(n.getCategory())
                 .type(n.getType())
@@ -124,26 +124,26 @@ public class NotificationService {
 
         log.info("Processing {} due event reminders", dueReminders.size());
 
+        List<Notification> notifications = new ArrayList<>();
+        List<EventReminder> sentReminders = new ArrayList<>();
         for (EventReminder reminder : dueReminders) {
-            String title = "Reminder: " + reminder.getEvent().getTitle();
-            String message = String.format("The %s for %s starts at %s",
+
+            String message = String.format("The %s for %s %s",
                     reminder.getEvent().getType().name().toLowerCase(),
                     reminder.getEvent().getCourse().getName(),
-                    reminder.getEvent().getStartTime());
+                    getUrgencyLabel(reminder.getEvent().getStartTime(), reminder.getEvent().getType()));
 
             Notification notification = contentMapper.toEventNotificationEntity(
                     reminder.getUser(),
-                    title,
                     message,
                     NotificationType.EVENT_REMINDER,
                     reminder.getEvent(),
                     null
             );
 
-            notificationRepository.save(notification);
-
+            notifications.add(notification);
             reminder.setStatus(ReminderStatus.SENT);
-            reminderRepository.save(reminder);
+            sentReminders.add(reminder);
 
             eventPublisher.publishEvent(new EventReminderNotificationEvent(
                     reminder.getUser().getEmail(),
@@ -156,5 +156,40 @@ public class NotificationService {
                     reminder.getEvent().getLocationDetails()
             ));
         }
+        notificationRepository.saveAll(notifications);
+        reminderRepository.saveAll(sentReminders);
+    }
+
+    public static String getUrgencyLabel(OffsetDateTime startTime, EventType eventType) {
+        OffsetDateTime now = OffsetDateTime.now();
+        long minutesUntilStart = Duration.between(now, startTime).toMinutes();
+
+        if (minutesUntilStart <= 0) {
+            return eventType.equals(EventType.ASSIGNMENT) ? "is due now" : "is starting now";
+        }
+
+        String verb = eventType.equals(EventType.ASSIGNMENT) ? "is due" : "starts";
+
+        if (minutesUntilStart < 60) {
+            return String.format("%s in %dm", verb, minutesUntilStart);
+        }
+
+        long hours = minutesUntilStart / 60;
+        long remainingMinutes = minutesUntilStart % 60;
+
+        if (hours < 24) {
+            if (remainingMinutes == 0) {
+                return  String.format("%s in %dh", verb, hours);
+            }
+            return String.format("%s in %dh %dm", verb, hours, remainingMinutes);
+        }
+
+        long days = hours / 24;
+        if (days < 7) {
+            return String.format("%s in %dd", verb, days);
+        }
+
+        long weeks = days / 7;
+        return String.format("%s in %dw", verb, weeks);
     }
 }

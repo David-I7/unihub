@@ -1,6 +1,7 @@
 import client from "@/api/client";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { CommunityStudyYears } from "./types";
+import { communityKeys } from "./communityKeys";
 
 export async function getCommunityStudyYears(
   communitySlug: string,
@@ -11,14 +12,9 @@ export async function getCommunityStudyYears(
   return response.data;
 }
 
-export const communityStudyYearsKeys = {
-  all: ["communities", "study-years"] as const,
-  detail: (slug: string) => [...communityStudyYearsKeys.all, slug] as const,
-};
-
 export function useCommunityStudyYears(communitySlug: string) {
   return useQuery<CommunityStudyYears>({
-    queryKey: communityStudyYearsKeys.detail(communitySlug),
+    queryKey: communityKeys.studyYearDetail(communitySlug),
     queryFn: () => getCommunityStudyYears(communitySlug),
     placeholderData: keepPreviousData,
     enabled: communitySlug.length > 0,

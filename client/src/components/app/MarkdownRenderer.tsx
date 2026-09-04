@@ -58,7 +58,7 @@ const markdownComponents: Components = {
     const isInline = !className;
     if (isInline) {
       return (
-        <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-primary font-medium break-all">
+        <code className="rounded bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.5 font-mono text-xs font-medium break-all">
           {children}
         </code>
       );

@@ -70,23 +70,31 @@ public class CommunityService {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required to filter by joined communities");
             }
             joinedUserId = caller.id();
+
+            Page<CommunityResponseDto> page = communityRepository.findAllWithFilters(normalizedSearch, verified, joinedUserId, pageable);
+
+            return pageMapper.toPageDto(page);
         }
 
-        Page<Community> page = communityRepository.findAllWithFilters(normalizedSearch, verified, joinedUserId, pageable);
+        Page<CommunityResponseDto> page = communityRepository.findAllWithFilters(normalizedSearch, verified, joinedUserId, pageable);
 
         if (page.isEmpty()) {
-            return pageMapper.toPageDto(page.map(c -> communityMapper.toCommunityResponseDto(c, false)));
+            return pageMapper.toPageDto(page);
         }
 
         Set<UUID> enrolledIds = Collections.emptySet();
         if (caller != null) {
-            List<UUID> pageIds = page.getContent().stream().map(Community::getId).toList();
+            List<UUID> pageIds = page.getContent().stream().map(CommunityResponseDto::getId).toList();
             enrolledIds = new HashSet<>(communityMemberRepository.findEnrolledCommunityIdsByUserIdAndCommunityIdIn(caller.id(), pageIds));
         }
 
         final Set<UUID> finalEnrolledIds = enrolledIds;
         List<CommunityResponseDto> dtos = page.getContent().stream()
-                .map(community -> communityMapper.toCommunityResponseDto(community, finalEnrolledIds.contains(community.getId())))
+                .map(community -> {
+                    boolean isEnrolled = finalEnrolledIds.contains(community.getId());
+                    community.setJoined(isEnrolled);
+                    return community;
+                })
                 .toList();
 
         Page<CommunityResponseDto> dtoPage = new PageImpl<>(dtos, pageable, page.getTotalElements());

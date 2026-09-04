@@ -26,6 +26,8 @@ const badgeVariants = cva(
         info: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20 [a]:hover:bg-blue-500/20",
         verified:
           "bg-primary/10 text-primary border-primary/20 [a]:hover:bg-primary/20",
+        notification:
+          "bg-rose-500 text-white border-transparent dark:bg-rose-600",
       },
       size: {
         xs: "h-4 text-[10px] px-1.5 py-0",
@@ -65,4 +67,5 @@ function Badge({
   });
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { Badge, badgeVariants };

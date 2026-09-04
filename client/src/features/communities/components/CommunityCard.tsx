@@ -1,10 +1,11 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { ShieldCheck, Users, User, Check } from "@/components/ui/icons";
+import { ShieldCheck, Users, Check } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { computeGradient } from "@/lib/gradientUtils";
 import type { Community } from "../api/types";
+import { UserAvatar } from "@/components/app/UserAvatar";
 
 interface CommunityCardProps {
   community: Community;
@@ -40,7 +41,7 @@ function CommunityCardComponent({ community }: CommunityCardProps) {
           )}
         </div>
 
-        {community.isJoined && (
+        {community.joined && (
           <Badge
             variant="secondary"
             size="sm"
@@ -73,8 +74,11 @@ function CommunityCardComponent({ community }: CommunityCardProps) {
         {/* Card Footer */}
         <div className="pt-3 border-t border-border flex items-center justify-between text-xs mt-2">
           <span className="text-muted-foreground text-[11px] flex items-center gap-1">
-            <User className="size-3" />
             Created by{" "}
+            <UserAvatar
+              username={community.owner.username}
+              size="xxs"
+            ></UserAvatar>
             <strong className="text-foreground font-semibold">
               {community.owner.username}
             </strong>

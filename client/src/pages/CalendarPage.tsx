@@ -107,28 +107,17 @@ export default function CalendarPage() {
 
   // Category counts calculated from current server-scoped events
   const examCount = useMemo(
-    () => eventsList.filter((e) => e.type === "EXAM").length,
-    [eventsList],
+    () => filteredEvents.filter((e) => e.type === "EXAM").length,
+    [filteredEvents],
   );
   const assignmentCount = useMemo(
-    () => eventsList.filter((e) => e.type === "ASSIGNMENT").length,
-    [eventsList],
+    () => filteredEvents.filter((e) => e.type === "ASSIGNMENT").length,
+    [filteredEvents],
   );
   const lectureCount = useMemo(
-    () => eventsList.filter((e) => e.type === "LECTURE").length,
-    [eventsList],
+    () => filteredEvents.filter((e) => e.type === "LECTURE").length,
+    [filteredEvents],
   );
-
-  console.log("CalendarPage render: ", {
-    ...filters,
-  });
-  console.log(
-    "Filter fetching: ",
-    isFetching,
-    "Loading events: ",
-    isLoadingEvents,
-  );
-
   return (
     <div className="min-h-full space-y-6 pb-12">
       {/* Header */}
@@ -149,7 +138,7 @@ export default function CalendarPage() {
         examCount={examCount}
         assignmentCount={assignmentCount}
         lectureCount={lectureCount}
-        totalCount={eventsList.length}
+        totalCount={filteredEvents.length}
       />
 
       {/* Calendar View Container */}

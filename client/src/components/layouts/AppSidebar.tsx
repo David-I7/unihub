@@ -102,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className={cn(
                         "transition-colors",
                         active &&
-                          "bg-primary/10 text-primary font-semibold data-active:bg-primary/10 data-active:text-primary hover:bg-primary/15 hover:text-primary",
+                          "bg-secondary text-secondary-foreground font-semibold data-active:bg-secondary data-active:text-secondary-foreground hover:bg-secondary/90 hover:text-secondary-foreground",
                       )}
                     >
                       <div className="relative flex items-center justify-center">
@@ -110,12 +110,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           className={cn(
                             "size-4.5 sm:size-5 transition-all",
                             active
-                              ? "text-primary stroke-[2.25]"
+                              ? "text-foreground stroke-[2.25]"
                               : "text-sidebar-foreground/80",
                           )}
                         />
                         {isNotifications && totalUnread > 0 && (
-                          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary ring-2 ring-sidebar group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
+                          <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-rose-500 ring-2 ring-sidebar dark:bg-rose-600 group-data-[collapsible=none]:hidden group-data-[collapsible=offcanvas]:hidden" />
                         )}
                       </div>
                       <span className="truncate group-data-[collapsible=icon]:hidden">
@@ -123,7 +123,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       </span>
                       {isNotifications && totalUnread > 0 && (
                         <Badge
-                          variant="verified"
+                          variant="notification"
                           size="xs"
                           className="ml-auto font-bold rounded-full group-data-[collapsible=icon]:hidden"
                         >

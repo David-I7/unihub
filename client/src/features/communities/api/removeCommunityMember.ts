@@ -1,7 +1,7 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { memberKeys } from "./getCommunityMembers";
-import { communityHomeKeys } from "./getCommunityHome";
+import { communityKeys } from "./communityKeys";
+import { userKeys } from "@/features/users";
 
 export interface RemoveCommunityMemberVariables {
   communitySlug: string;
@@ -21,11 +21,16 @@ export function useRemoveCommunityMember() {
   return useMutation({
     mutationFn: removeCommunityMember,
     onSuccess: (_, variables) => {
+      // Must invalidate: members list, gome detail, infinite communities (to get the new member count).
+      queryClient.invalidateQueries({ queryKey: userKeys.communities() });
       queryClient.invalidateQueries({
-        queryKey: memberKeys.list(variables.communitySlug),
+        queryKey: communityKeys.communityInfinities(),
       });
       queryClient.invalidateQueries({
-        queryKey: communityHomeKeys.detail(variables.communitySlug),
+        queryKey: communityKeys.membersList(variables.communitySlug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
     },
   });

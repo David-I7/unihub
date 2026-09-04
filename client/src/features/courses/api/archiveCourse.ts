@@ -4,7 +4,7 @@ import type { Course } from "./types";
 import { courseHomeKeys } from "./getCourseHome";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 import { studyYearCoursesKeys } from "@/features/studyYears/api/getStudyYearCourses";
-import { communityHomeKeys } from "@/features/communities/api/getCommunityHome";
+import { communityKeys } from "@/features/communities";
 
 export interface ArchiveCourseVariables {
   communitySlug: string;
@@ -49,7 +49,7 @@ export function useArchiveCourse() {
         ),
       });
       queryClient.invalidateQueries({
-        queryKey: communityHomeKeys.detail(variables.communitySlug),
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
     },
   });

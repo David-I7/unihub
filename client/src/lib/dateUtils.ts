@@ -43,6 +43,37 @@ export function formatPostDate(dateStr?: string): string {
 }
 
 /**
+ * Formats an ISO timestamp as a compact relative time string.
+ * e.g., "now", "3m", "2h", "5d", "1w", "2mo", "1y"
+ */
+export function formatRelativeTime(isoStr?: string): string {
+  if (!isoStr) return "";
+  const then = new Date(isoStr).getTime();
+  if (isNaN(then)) return "";
+
+  const diffSeconds = Math.floor((Date.now() - then) / 1000);
+  if (diffSeconds < 60) return "now";
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  if (diffMinutes < 60) return `${diffMinutes}m`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d`;
+
+  const diffWeeks = Math.floor(diffDays / 7);
+  if (diffWeeks < 4) return `${diffWeeks}w`;
+
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths < 12) return `${diffMonths}mo`;
+
+  const diffYears = Math.floor(diffDays / 365);
+  return `${diffYears}y`;
+}
+
+/**
  * Formats full date and time in 24h format (e.g., "Aug 28, 2026, 14:30").
  */
 export function formatDateTime24h(
@@ -340,25 +371,106 @@ export function formatEventRelativeStatus(
   };
 }
 
-export function getTime(
-  date: Date,
-  unit: "weeks" | "days" | "hours" | "minutes" | "seconds" | "milliseconds",
-) {
+type TimeUnit =
+  | "weeks"
+  | "days"
+  | "hours"
+  | "minutes"
+  | "seconds"
+  | "milliseconds";
+
+export function getTime(date: Date, unit: TimeUnit) {
   const time = date.getTime();
-  switch (unit) {
+  return toTimeUnit(time, "milliseconds", unit);
+}
+
+export function toTimeUnit(
+  value: number,
+  fromUnit: TimeUnit,
+  toUnit: TimeUnit,
+): number {
+  if (fromUnit === toUnit) return value;
+
+  switch (fromUnit) {
     case "weeks":
-      return time / (1000 * 60 * 60 * 24 * 7);
+      switch (toUnit) {
+        case "days":
+          return value * 7;
+        case "hours":
+          return value * 7 * 24;
+        case "minutes":
+          return value * 7 * 24 * 60;
+        case "seconds":
+          return value * 7 * 24 * 60 * 60;
+        case "milliseconds":
+          return value * 7 * 24 * 60 * 60 * 1000;
+      }
     case "days":
-      return time / (1000 * 60 * 60 * 24);
+      switch (toUnit) {
+        case "weeks":
+          return value / 7;
+        case "hours":
+          return value * 24;
+        case "minutes":
+          return value * 24 * 60;
+        case "seconds":
+          return value * 24 * 60 * 60;
+        case "milliseconds":
+          return value * 24 * 60 * 60 * 1000;
+      }
     case "hours":
-      return time / (1000 * 60 * 60);
+      switch (toUnit) {
+        case "weeks":
+          return value / (7 * 24);
+        case "days":
+          return value / 24;
+        case "minutes":
+          return value * 60;
+        case "seconds":
+          return value * 60 * 60;
+        case "milliseconds":
+          return value * 60 * 60 * 1000;
+      }
     case "minutes":
-      return time / (1000 * 60);
+      switch (toUnit) {
+        case "weeks":
+          return value / (7 * 24 * 60);
+        case "days":
+          return value / (24 * 60);
+        case "hours":
+          return value / 60;
+        case "seconds":
+          return value * 60;
+        case "milliseconds":
+          return value * 60 * 1000;
+      }
     case "seconds":
-      return time / 1000;
+      switch (toUnit) {
+        case "weeks":
+          return value / (7 * 24 * 60 * 60);
+        case "days":
+          return value / (24 * 60 * 60);
+        case "hours":
+          return value / (60 * 60);
+        case "minutes":
+          return value / 60;
+        case "milliseconds":
+          return value * 1000;
+      }
     case "milliseconds":
-      return time;
+      switch (toUnit) {
+        case "weeks":
+          return value / (7 * 24 * 60 * 60 * 1000);
+        case "days":
+          return value / (24 * 60 * 60 * 1000);
+        case "hours":
+          return value / (60 * 60 * 1000);
+        case "minutes":
+          return value / (60 * 1000);
+        case "seconds":
+          return value / 1000;
+      }
     default:
-      throw new Error(`Unsupported unit: ${unit}`);
+      throw new Error(`Unsupported fromUnit: ${fromUnit}`);
   }
 }

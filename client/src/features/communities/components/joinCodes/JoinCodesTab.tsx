@@ -61,7 +61,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
 
   const handleCopyLink = async (code: string) => {
     try {
-      const url = `${window.location.origin}/join/${code}`;
+      const url = `${window.location.origin}/communities/${communitySlug}/join?code=${code}`;
       await navigator.clipboard.writeText(url);
       toast.success("Copied invite link to clipboard!");
     } catch {
@@ -151,7 +151,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                 {/* Code & Badges */}
                 <div className="space-y-1.5 min-w-[180px]">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                    <span className="font-mono text-sm font-bold tracking-widest text-secondary-foreground bg-secondary border border-border/60 px-2 py-0.5 rounded-md">
                       {code.code}
                     </span>
 

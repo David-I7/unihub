@@ -160,7 +160,6 @@ public class CommunityResourceMapper {
                 .id(community.getId())
                 .name(community.getName())
                 .description(community.getDescription())
-                .readme(community.getReadme())
                 .memberCount(community.getMemberCount())
                 .createdAt(community.getCreatedAt())
                 .owner(new OwnerDto(community.getOwner().getId(), community.getOwner().getUsername(), community.getOwner().isActive()))

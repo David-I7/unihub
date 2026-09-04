@@ -8,15 +8,11 @@ import {
 } from "@/features/communities";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { SearchInput } from "@/components/app/SearchInput";
-import { FilterSelect } from "@/components/app/FilterSelect";
+import { FilterToggle } from "@/components/app/FilterToggle";
+import { SortSelect, type SortOption } from "@/components/app/SortSelect";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Check,
-  ShieldCheck,
-  ChevronDown,
-  ChevronUp,
-} from "@/components/ui/icons";
+import { ShieldCheck } from "@/components/ui/icons";
 import { useObserver } from "@/hooks/useObserver";
 import {
   useUrlFilters,
@@ -24,10 +20,13 @@ import {
   type FilterSchema,
 } from "@/hooks/useUrlFilters";
 
-const SORT_FIELD_OPTIONS = [
-  { value: "memberCount", label: "Member Count" },
-  { value: "createdAt", label: "Creation Date" },
-  { value: "name", label: "Name" },
+const COMMUNITIES_SORT_OPTIONS: SortOption[] = [
+  { field: "memberCount", dir: "desc", label: "Most members" },
+  { field: "memberCount", dir: "asc", label: "Fewest members" },
+  { field: "createdAt", dir: "desc", label: "Newest first" },
+  { field: "createdAt", dir: "asc", label: "Oldest first" },
+  { field: "name", dir: "asc", label: "Name (A → Z)" },
+  { field: "name", dir: "desc", label: "Name (Z → A)" },
 ];
 
 interface CommunitiesFilters {
@@ -111,83 +110,55 @@ export default function CommunitiesPage() {
       {/* Self-contained Community Header with dialogs */}
       <CommunityHeader />
 
-      {/* 2-tier Toolbar: Search Bar on Top, Filter Row below */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex-1 max-w-xl">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              placeholder="Search communities by name..."
-              totalCount={totalElements}
-            />
-          </div>
+      {/* Unified Toolbar: Search on left, Toggles + Sort on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex-1 min-w-[180px] max-w-md">
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Search communities by name..."
+            totalCount={totalElements}
+          />
         </div>
 
-        {/* Filter Strip */}
-        <div className="flex flex-wrap items-center gap-2.5 pt-1">
-          {/* Verified Toggle Filter */}
-          <Button
-            type="button"
-            variant={filters.verified ? "secondary" : "outline"}
-            size="sm"
-            onClick={() => setFilter("verified", !filters.verified)}
-            className="h-9 gap-1.5 text-xs font-normal rounded-xl cursor-pointer"
-          >
-            <ShieldCheck
-              className={`size-3.5 ${
-                filters.verified ? "text-emerald-500" : "text-muted-foreground"
-              }`}
-            />
-            <span>Verified Only</span>
-            {filters.verified && (
-              <Check className="size-3 text-emerald-500 ml-0.5" />
-            )}
-          </Button>
-
-          {/* Sort By Filter */}
-          <FilterSelect
-            label="Sort by"
-            value={filters.sort}
-            onChange={(val) => setFilter("sort", val)}
-            options={SORT_FIELD_OPTIONS}
+        <div className="flex flex-wrap items-center gap-2">
+          <FilterToggle
+            label="Verified"
+            icon={ShieldCheck}
+            activeColor="emerald"
+            checked={filters.verified}
+            onCheckedChange={(val) => setFilter("verified", val)}
           />
 
-          {/* Sort Direction Toggle */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              setFilter("dir", filters.dir === "asc" ? "desc" : "asc")
-            }
-            className="h-9 gap-1.5 text-xs font-normal rounded-xl cursor-pointer"
-            title={`Sort Direction: ${filters.dir === "desc" ? "Descending" : "Ascending"}`}
-          >
-            {filters.dir === "desc" ? (
-              <>
-                <ChevronDown className="size-3.5 text-muted-foreground" />
-                <span className="text-xs">
-                  {filters.sort === "name"
-                    ? "Z → A"
-                    : filters.sort === "createdAt"
-                      ? "Newest"
-                      : "High → Low"}
-                </span>
-              </>
-            ) : (
-              <>
-                <ChevronUp className="size-3.5 text-muted-foreground" />
-                <span className="text-xs">
-                  {filters.sort === "name"
-                    ? "A → Z"
-                    : filters.sort === "createdAt"
-                      ? "Oldest"
-                      : "Low → High"}
-                </span>
-              </>
-            )}
-          </Button>
+          <SortSelect
+            field={filters.sort}
+            dir={filters.dir}
+            onSortChange={(sort, dir) => setFilters({ sort, dir })}
+            options={COMMUNITIES_SORT_OPTIONS}
+          />
+
+          {(Boolean(debouncedSearch) ||
+            filters.verified ||
+            filters.sort !== "memberCount" ||
+            filters.dir !== "desc") && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setSearchInput("");
+                setFilters({
+                  search: "",
+                  verified: false,
+                  sort: "memberCount",
+                  dir: "desc",
+                });
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
+            >
+              Reset
+            </Button>
+          )}
         </div>
       </div>
 

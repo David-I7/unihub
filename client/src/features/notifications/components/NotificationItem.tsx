@@ -1,23 +1,18 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Calendar,
   Check,
-  GraduationCap,
   Heart,
   Info,
   MessageSquare,
   Users,
 } from "@/components/ui/icons";
-import {
-  CalendarOff,
-  Megaphone,
-  Wrench,
-} from "lucide-react";
+import { CalendarOff, Megaphone, Wrench } from "lucide-react";
 import type { AppNotification } from "../api/types";
 import { useMarkNotificationAsRead } from "../api/notifications";
 import { useNotificationNavigation } from "../hooks/useNotificationNavigation";
-import { formatPostDate } from "@/lib/dateUtils";
-import { Badge } from "@/components/ui/badge";
+import { formatRelativeTime } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -48,29 +43,21 @@ function getNotificationIcon(notification: AppNotification) {
         className: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
       };
     case "POST_COMMENT":
+    case "COURSE_POST":
+    case "COMMUNITY_POST":
       return {
         icon: MessageSquare,
         className: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
       };
-    case "COURSE_POST":
-      return {
-        icon: GraduationCap,
-        className: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-      };
-    case "COMMUNITY_POST":
-      return {
-        icon: Users,
-        className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-      };
     case "SYSTEM_ANNOUNCEMENT":
       return {
         icon: Megaphone,
-        className: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+        className: "bg-muted text-muted-foreground",
       };
     case "SYSTEM_MAINTENANCE":
       return {
         icon: Wrench,
-        className: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        className: "bg-muted text-muted-foreground",
       };
     case "SYSTEM_GENERAL":
     default:
@@ -85,6 +72,16 @@ export function NotificationItem({ notification }: NotificationItemProps) {
   const { handleNotificationClick } = useNotificationNavigation();
   const { mutate: markRead, isPending: isMarkingRead } =
     useMarkNotificationAsRead();
+
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = messageRef.current;
+    if (!el) return;
+    setIsOverflowing(el.scrollHeight > el.clientHeight);
+  }, [notification.message]);
 
   const { icon: Icon, className: iconClass } =
     getNotificationIcon(notification);
@@ -118,59 +115,56 @@ export function NotificationItem({ notification }: NotificationItemProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <h4
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <div
+              ref={messageRef}
               className={cn(
-                "text-sm truncate",
-                notification.isRead
-                  ? "font-medium text-foreground"
-                  : "font-bold text-foreground",
+                "text-sm leading-relaxed",
+                !isExpanded && "line-clamp-2",
               )}
             >
-              {notification.title}
-            </h4>
-            {!notification.isRead && (
-              <span className="size-2 rounded-full bg-primary shrink-0" />
-            )}
+              {notification.actor && (
+                <span className="text-sm font-semibold leading-none">
+                  {notification.actor.username}{" "}
+                </span>
+              )}
+              {notification.message}
+              {isExpanded && isOverflowing && (
+                <Button
+                  variant="link"
+                  size="link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(false);
+                  }}
+                  className="text-muted-foreground inline text-xs font-semibold h-auto p-0 ml-1 cursor-pointer"
+                >
+                  See less
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {!isExpanded && isOverflowing && (
+                <Button
+                  variant="link"
+                  size="link"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsExpanded(true);
+                  }}
+                  className="text-muted-foreground text-xs font-semibold h-auto p-0 cursor-pointer"
+                >
+                  See more
+                </Button>
+              )}
+              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                {formatRelativeTime(notification.createdAt)} ago
+              </span>
+            </div>
           </div>
-
-          <span className="text-[11px] text-muted-foreground shrink-0 whitespace-nowrap">
-            {formatPostDate(notification.createdAt)}
-          </span>
-        </div>
-
-        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-          {notification.message}
-        </p>
-
-        {/* Metadata Badges */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <Badge
-            variant="secondary"
-            className="text-[10px] px-1.5 py-0 font-medium uppercase tracking-wider"
-          >
-            {notification.category}
-          </Badge>
-
-          {notification.communityName && (
-            <span className="text-[11px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded font-medium">
-              {notification.communityName}
-            </span>
-          )}
-
-          {notification.courseName && (
-            <span className="text-[11px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded font-mono">
-              {notification.courseName}
-            </span>
-          )}
-
-          {notification.actor?.username && (
-            <span className="text-[11px] text-muted-foreground">
-              by @{notification.actor.username}
-            </span>
-          )}
         </div>
       </div>
 

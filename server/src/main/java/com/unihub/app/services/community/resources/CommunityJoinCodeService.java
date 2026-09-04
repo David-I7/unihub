@@ -28,7 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CommunityJoinCodeService {
 
-    private static final String CODE_CHARS = "123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    private static final String CODE_CHARS = "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     private static final int CODE_LENGTH = 8;
     private static final SecureRandom RANDOM = new SecureRandom();
 

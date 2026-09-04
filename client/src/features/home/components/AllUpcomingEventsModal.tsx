@@ -135,7 +135,7 @@ export function AllUpcomingEventsModal({
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               <CalendarEventCardList
                 groupedEvents={groupedEvents}
                 onEventClick={openEventDetails}
@@ -143,7 +143,7 @@ export function AllUpcomingEventsModal({
 
               {/* Load More Button */}
               {hasNextPage && (
-                <div className="pt-2 pb-4 flex justify-center">
+                <div className="pt-2 flex justify-center">
                   <Button
                     variant="ghost"
                     size="sm"

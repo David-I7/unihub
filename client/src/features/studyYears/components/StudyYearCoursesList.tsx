@@ -109,41 +109,57 @@ export function StudyYearCoursesList({
 
   return (
     <div className="space-y-6">
-      {/* 2-tier Search and Filter Toolbar */}
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="flex-1 max-w-xl">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              placeholder="Search courses by name, abbreviation, or instructor..."
-              totalCount={totalCourses}
-              resultLabel="courses"
-            />
-          </div>
+      {/* Unified Toolbar: Search on left, Filter on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div className="flex-1 min-w-[180px] max-w-md">
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Search courses by name, abbreviation, or instructor..."
+            totalCount={totalCourses}
+            resultLabel="courses"
+          />
         </div>
 
-        {/* Filter Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Filter"
             value={filters.filter}
             onChange={(val) => setFilter("filter", val as FilterOption)}
             options={FILTER_OPTIONS}
+            defaultValue="all"
+            icon={BookOpen}
           />
 
-          {canCreateCourse && (
+          {(Boolean(debouncedSearch) || filters.filter !== "all") && (
             <Button
+              type="button"
+              variant="ghost"
               size="sm"
-              onClick={() => setCreateModalOpen(true)}
-              className="gap-1.5 font-bold cursor-pointer"
+              onClick={() => {
+                setSearchInput("");
+                setFilters({ search: "", filter: "all" });
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
             >
-              <Plus className="size-4" />
-              <span>Add Course</span>
+              Reset
             </Button>
           )}
         </div>
       </div>
+
+      {/* Dedicated Action Button Row */}
+      {canCreateCourse && (
+        <div className="flex justify-end">
+          <Button
+            size="sm"
+            onClick={() => setCreateModalOpen(true)}
+          >
+            <Plus />
+            <span>Add Course</span>
+          </Button>
+        </div>
+      )}
 
       {/* Main Content Area */}
       {isLoading ? (

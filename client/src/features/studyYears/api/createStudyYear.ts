@@ -1,7 +1,7 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { StudyYear, StudyYearSlug } from "./types";
-import { communityHomeKeys } from "@/features/communities/api/getCommunityHome";
+import { communityKeys } from "@/features/communities";
 
 export interface CreateStudyYearPayload {
   studyYearName: StudyYearSlug;
@@ -30,7 +30,7 @@ export function useCreateStudyYear() {
     mutationFn: createStudyYear,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: communityHomeKeys.detail(variables.communitySlug),
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
         queryKey: ["communities", variables.communitySlug, "study-years"],

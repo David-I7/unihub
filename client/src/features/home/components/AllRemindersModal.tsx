@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { Bell, Trash2, CheckCircle2 } from "lucide-react";
+import { Bell, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,19 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
   useCalendarStore,
 } from "@/features/calendar";
-import { getEventCategoryConfig } from "@/features/calendar/utils/eventUtils";
-import {
-  formatDateTime24h,
-  formatOffsetLabel,
-  formatEventRelativeStatus,
-} from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
+import ReminderList from "./ReminderList";
 
 interface AllRemindersModalProps {
   open: boolean;
@@ -125,90 +119,17 @@ export function AllRemindersModal({
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {reminders.map((reminder) => {
-                const compactOffset = formatOffsetLabel(
-                  reminder.offsetMinutes,
-                  { compact: true },
-                );
-                const dateLine = formatDateTime24h(
-                  reminder.eventStartTime,
-                  { separator: " • " },
-                );
-                const countdown = formatEventRelativeStatus(
-                  reminder.remindAt,
-                  null,
-                  { verb: "Fires" },
-                );
-                const config = getEventCategoryConfig(reminder.eventType);
-                const TypeIcon = config.icon;
-
-                return (
-                  <div
-                    key={reminder.id}
-                    onClick={() => openEventDetails(reminder.eventId)}
-                    className="group flex items-stretch gap-3 p-3 rounded-xl border bg-card hover:border-primary/60 hover:shadow-xs transition-all cursor-pointer"
-                  >
-                    {/* Left: offset badge */}
-                    <div className="flex flex-col items-center justify-center gap-0.5 min-w-[64px] px-2 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center shrink-0">
-                      <Bell className="size-3.5 text-amber-500" />
-                      <span className="font-mono text-xs font-bold text-amber-600 dark:text-amber-400">
-                        {compactOffset}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        before
-                      </span>
-                    </div>
-
-                    {/* Middle: event info */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center gap-0.5">
-                      <h4 className="font-heading text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                        {reminder.eventTitle}
-                      </h4>
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {dateLine}
-                        {reminder.communityName && (
-                          <span> • {reminder.communityName}</span>
-                        )}
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1 font-bold text-[10px] px-1.5 py-0.5 rounded-md",
-                            config.badge,
-                          )}
-                        >
-                          <TypeIcon className="size-2.5 shrink-0" />
-                          {config.label}
-                        </span>
-                        {countdown.label && (
-                          <span className="text-[10px] text-muted-foreground">
-                            {countdown.label}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: delete */}
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      title="Remove reminder"
-                      onClick={(e) =>
-                        handleDelete(e, reminder.eventId, reminder.eventTitle)
-                      }
-                      disabled={deleteReminderMutation.isPending}
-                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 cursor-pointer self-center"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
-                );
-              })}
+            <div className="space-y-2 pb-4">
+              <ReminderList
+                onDelete={handleDelete}
+                reminders={reminders}
+                isDeleting={deleteReminderMutation.isPending}
+                onOpen={openEventDetails}
+              />
 
               {/* Load More Button */}
               {hasNextPage && (
-                <div className="pt-2 pb-4 flex justify-center">
+                <div className="pt-2 flex justify-center">
                   <Button
                     variant="ghost"
                     size="sm"

@@ -26,7 +26,6 @@ export type NotificationType =
 
 export interface BaseNotification {
   id: string;
-  title: string;
   message: string;
   category: NotificationCategory;
   type: NotificationType;

@@ -13,6 +13,7 @@ import {
   type UseInfiniteQueryOptions,
   type UseQueryOptions,
 } from "@tanstack/react-query";
+import { communityKeys } from "./communityKeys";
 
 export interface CommunityMembersQueryParams {
   search?: string;
@@ -21,14 +22,6 @@ export interface CommunityMembersQueryParams {
   size?: number;
   sort?: string;
 }
-
-export const memberKeys = {
-  all: ["communityMembers"] as const,
-  list: (
-    communitySlug: string,
-    filters?: { search?: string; role?: CommunityMemberRole },
-  ) => [...memberKeys.all, communitySlug, filters] as const,
-};
 
 export async function getCommunityMembers(
   communitySlug: string,
@@ -41,11 +34,9 @@ export async function getCommunityMembers(
       params: {
         page,
         size,
-        ...(search && search.trim().length > 0
-          ? { search: search.trim() }
-          : {}),
-        ...(role ? { role } : {}),
-        ...(sort ? { sort } : {}),
+        search: search ? search.trim() : undefined,
+        role,
+        sort,
       },
     },
   );
@@ -62,7 +53,7 @@ export function useCommunityMembers(
 ) {
   const { search, role } = params;
   return useQuery({
-    queryKey: memberKeys.list(communitySlug, { search, role }),
+    queryKey: communityKeys.membersList(communitySlug, { search, role }),
     queryFn: () => getCommunityMembers(communitySlug, params),
     placeholderData: keepPreviousData,
     enabled: Boolean(communitySlug && communitySlug.trim().length > 0),
@@ -83,7 +74,7 @@ export function useInfiniteCommunityMembers(
       PaginatedResponse<CommunityMember>,
       Error,
       InfiniteData<PaginatedResponse<CommunityMember>>,
-      ReturnType<typeof memberKeys.list>,
+      ReturnType<typeof communityKeys.membersList>,
       number
     >,
     | "queryKey"
@@ -96,7 +87,7 @@ export function useInfiniteCommunityMembers(
   const { size = 20, search = "", role, sort } = params;
 
   return useInfiniteQuery({
-    queryKey: memberKeys.list(communitySlug, {
+    queryKey: communityKeys.membersList(communitySlug, {
       search: search.trim() || undefined,
       role: role || undefined,
     }),
