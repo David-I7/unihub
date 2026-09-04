@@ -16,6 +16,8 @@ export const studyYearCoursesKeys = {
   all: ["study-years", "courses"] as const,
   courses: (communitySlug: string, studyYearName: string) =>
     [...studyYearCoursesKeys.all, communitySlug, studyYearName] as const,
+  byStudyYear: (communitySlug: string, studyYearName: string) =>
+    [...studyYearCoursesKeys.all, communitySlug, studyYearName] as const,
 };
 
 export function useStudyYearCourses(

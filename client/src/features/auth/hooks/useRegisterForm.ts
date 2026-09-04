@@ -35,7 +35,9 @@ export function useRegisterForm(options?: UseRegisterFormOptions) {
         const errors: typeof form.errors = {};
 
         for (const error of formErrors.validation!) {
-          errors[error.field as keyof typeof errors] = error.message;
+          if (error.type === "FIELD") {
+            errors[error.field as keyof typeof errors] = error.message;
+          }
         }
         form.setErrors(errors);
       }

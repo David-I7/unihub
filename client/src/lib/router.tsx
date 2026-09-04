@@ -9,6 +9,7 @@ import StudyYearDetailPage from "../pages/StudyYearDetailPage";
 import CourseDetailPage from "../pages/CourseDetailPage";
 import CalendarPage from "../pages/CalendarPage";
 import NotificationsPage from "../pages/NotificationsPage";
+import PostDetailPage from "../pages/PostDetailPage";
 
 import {
   LoginForm,
@@ -59,6 +60,17 @@ export const router = createBrowserRouter([
       {
         path: "/communities",
         element: <CommunitiesPage />,
+      },
+      {
+        path: "/posts/:postId",
+        element: (
+          <AuthenticatedRoute
+            title="Discussion Post"
+            description="Sign in to view discussion posts and comments."
+          >
+            <PostDetailPage />
+          </AuthenticatedRoute>
+        ),
       },
       {
         path: "/communities/:communitySlug/join",

@@ -3,6 +3,7 @@ package com.unihub.app.services.community.content;
 import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateMaterialRequestDto;
+import com.unihub.app.dto.community.content.response.BreadcrumbDto;
 import com.unihub.app.dto.community.content.response.MaterialResponseDto;
 import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
@@ -21,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,6 +43,32 @@ public class ResourceService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
 
         return contentMapper.toMaterialResponseDto(resource);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BreadcrumbDto> getBreadcrumbs(UUID materialId) {
+        Resource resource = resourceRepository.findById(materialId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
+
+        List<BreadcrumbDto> breadcrumbs = new ArrayList<>();
+        Folder current = resource.getFolder();
+        while (current != null) {
+            breadcrumbs.add(0, BreadcrumbDto.builder()
+                    .id(current.getId())
+                    .name(current.getName())
+                    .type("FOLDER")
+                    .build());
+            current = current.getParentFolder();
+        }
+
+        String type = resource instanceof MaterialFile ? "FILE" : "LINK";
+        breadcrumbs.add(BreadcrumbDto.builder()
+                .id(resource.getId())
+                .name(resource.getTitle())
+                .type(type)
+                .build());
+
+        return breadcrumbs;
     }
 
     @Transactional

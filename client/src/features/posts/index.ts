@@ -1,6 +1,7 @@
 export * from "./api/types";
 export * from "./api/getCommunityPosts";
 export * from "./api/getCoursePosts";
+export * from "./api/getPost";
 export * from "./api/createPost";
 export * from "./api/updatePost";
 export * from "./api/deletePost";

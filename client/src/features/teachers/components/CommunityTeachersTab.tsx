@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router";
 import { Calendar, GraduationCap, Plus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/app/SearchInput";
@@ -21,6 +22,7 @@ import { useInfiniteCommunityTeachers } from "../api/getCommunityTeachers";
 import { TeacherCard } from "./TeacherCard";
 import { TeacherCardSkeleton } from "./TeacherCardSkeleton";
 import { CreateTeacherDialog } from "./CreateTeacherDialog";
+import { TeacherDetailDialog } from "./TeacherDetailDialog";
 import type { CallerMembership } from "../api/types";
 
 const SEMESTER_FILTER_OPTIONS = [
@@ -54,6 +56,9 @@ export function CommunityTeachersTab({
   communitySlug,
   callerMembership,
 }: CommunityTeachersTabProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTeacherId = searchParams.get("teacherId");
+
   const { filters, setFilters, setFilter, resetFilters } = useUrlFilters(
     TEACHERS_FILTER_SCHEMA,
   );
@@ -165,6 +170,7 @@ export function CommunityTeachersTab({
           {/* Study Year Select */}
           <FilterSelect
             label="Year"
+            placeholder="Select Year"
             value={filters.studyYear}
             onChange={(val) => setFilter("studyYear", val)}
             options={studyYearOptions}
@@ -176,6 +182,7 @@ export function CommunityTeachersTab({
           {/* Semester Select */}
           <FilterSelect
             label="Semester"
+            placeholder="Select Semester"
             value={filters.semester}
             onChange={(val) => setFilter("semester", val)}
             options={SEMESTER_FILTER_OPTIONS}
@@ -262,7 +269,6 @@ export function CommunityTeachersTab({
               <TeacherCard
                 key={teacher.id}
                 teacher={teacher}
-                communitySlug={communitySlug}
                 callerMembership={callerMembership}
               />
             ))}
@@ -288,6 +294,26 @@ export function CommunityTeachersTab({
         communitySlug={communitySlug}
         open={createTeacherOpen}
         onOpenChange={setCreateTeacherOpen}
+      />
+
+      {/* Teacher Detail Dialog driven by URL param teacherId */}
+      <TeacherDetailDialog
+        teacherId={selectedTeacherId}
+        communitySlug={communitySlug}
+        open={Boolean(selectedTeacherId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev);
+                next.delete("teacherId");
+                return next;
+              },
+              { replace: true },
+            );
+          }
+        }}
+        callerMembership={callerMembership}
       />
     </div>
   );

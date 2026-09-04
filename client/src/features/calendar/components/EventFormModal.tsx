@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { isAxiosError } from "axios";
 import { AlertCircle, Info } from "lucide-react";
 import { useUserCommunities } from "@/features/users";
 import { useCommunityStudyYears } from "@/features/communities";
@@ -64,7 +63,7 @@ export function EventFormModal() {
 
   // 1. Fetch user's enrolled communities
   const { data: userCommunitiesData, isLoading: isLoadingCommunities } =
-    useUserCommunities();
+    useUserCommunities({}, { enabled: isOpen });
   const communities = userCommunitiesData?.content ?? [];
   const hasCommunities = communities.length > 0;
 

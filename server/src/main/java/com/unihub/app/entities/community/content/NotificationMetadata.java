@@ -8,11 +8,8 @@ import java.util.UUID;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record NotificationMetadata(
-        String communitySlug,
-        String communityName,
-        String studyYearName,
-        String courseSlug,
-        String courseName,
-        UUID eventId
+        UUID eventId,
+        UUID postId,
+        UUID commentId
 ) {
 }

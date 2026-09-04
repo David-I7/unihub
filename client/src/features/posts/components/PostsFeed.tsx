@@ -55,7 +55,7 @@ export function PostsFeed({
           <Button
             size="sm"
             onClick={onOpenComposer}
-            className="gap-1.5 font-bold cursor-pointer"
+            className="gap-1.5 font-semibold cursor-pointer"
           >
             <Plus className="size-4" />
             <span>New Post</span>

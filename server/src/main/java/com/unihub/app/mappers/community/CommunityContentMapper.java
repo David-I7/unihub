@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Component
 public class CommunityContentMapper {
@@ -45,6 +46,54 @@ public class CommunityContentMapper {
                 .updatedAt(post.getUpdatedAt())
                 .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername(), post.getOwner().isActive()))
                 .isLiked(isLiked)
+                .build();
+    }
+
+    public PostDetailResponseDto toPostDetailResponseDto(Post post, Boolean isLiked) {
+        String communitySlug = null;
+        String communityName = null;
+        String studyYearSlug = null;
+        String studyYearName = null;
+        String courseSlug = null;
+        String courseName = null;
+
+        if (post.getCommunityPost() != null && post.getCommunityPost().getCommunity() != null) {
+            communitySlug = post.getCommunityPost().getCommunity().getSlug();
+            communityName = post.getCommunityPost().getCommunity().getName();
+        } else if (post.getCoursePost() != null && post.getCoursePost().getCourse() != null) {
+            var course = post.getCoursePost().getCourse();
+            courseSlug = course.getSlug();
+            courseName = course.getName();
+            if (course.getStudyYear() != null) {
+                if (course.getStudyYear().getStudyYearName() != null) {
+                    studyYearName = course.getStudyYear().getStudyYearName().name();
+                    studyYearSlug = course.getStudyYear().getStudyYearName().name().toLowerCase().replace('_', '-');
+                }
+                if (course.getStudyYear().getCommunity() != null) {
+                    communitySlug = course.getStudyYear().getCommunity().getSlug();
+                    communityName = course.getStudyYear().getCommunity().getName();
+                }
+            }
+        }
+
+        return PostDetailResponseDto.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .description(post.getDescription())
+                .channel(post.getChannel())
+                .pinned(post.isPinned())
+                .likesCount(post.getLikesCount())
+                .commentsCount(post.getCommentsCount())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(post.getUpdatedAt())
+                .owner(new OwnerDto(post.getOwner().getId(), post.getOwner().getUsername(), post.getOwner().isActive()))
+                .isLiked(isLiked)
+                .communitySlug(communitySlug)
+                .communityName(communityName)
+                .studyYearSlug(studyYearSlug)
+                .studyYearName(studyYearName)
+                .courseSlug(courseSlug)
+                .courseName(courseName)
                 .build();
     }
 
@@ -234,28 +283,25 @@ public class CommunityContentMapper {
     }
 
     public Notification toPostNotificationEntity(User user, String message, NotificationType type, Post post, User actor) {
-        NotificationMetadata metadata = toPostNotificationMetadata(post);
-        return toNotificationEntity(user,actor,message, NotificationCategory.POST, type, metadata);
+        return toPostNotificationEntity(user, message, type, post, actor, null);
+    }
+
+    public Notification toPostNotificationEntity(User user, String message, NotificationType type, Post post, User actor, UUID commentId) {
+        NotificationMetadata metadata = toPostNotificationMetadata(post, commentId);
+        return toNotificationEntity(user, actor, message, NotificationCategory.POST, type, metadata);
     }
 
     public NotificationMetadata toPostNotificationMetadata(Post post) {
+        return toPostNotificationMetadata(post, null);
+    }
+
+    public NotificationMetadata toPostNotificationMetadata(Post post, UUID commentId) {
         NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
         if (post != null) {
-            if (post.getCommunityPost() != null && post.getCommunityPost().getCommunity() != null) {
-                builder.communitySlug(post.getCommunityPost().getCommunity().getSlug());
-                builder.communityName(post.getCommunityPost().getCommunity().getName());
-            } else if (post.getCoursePost() != null && post.getCoursePost().getCourse() != null) {
-                var course = post.getCoursePost().getCourse();
-                builder.courseSlug(course.getSlug());
-                builder.courseName(course.getName());
-                if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
-                    builder.studyYearName(course.getStudyYear().getStudyYearName().name());
-                    if (course.getStudyYear().getCommunity() != null) {
-                        builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
-                        builder.communityName(course.getStudyYear().getCommunity().getName());
-                    }
-                }
-            }
+            builder.postId(post.getId());
+        }
+        if (commentId != null) {
+            builder.commentId(commentId);
         }
         return builder.build();
     }
@@ -264,52 +310,7 @@ public class CommunityContentMapper {
         NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
         if (event != null) {
             builder.eventId(event.getId());
-            if (event.getCommunity() != null) {
-                builder.communitySlug(event.getCommunity().getSlug());
-                builder.communityName(event.getCommunity().getName());
-            }
-            if (event.getCourse() != null) {
-                var course = event.getCourse();
-                builder.courseSlug(course.getSlug());
-                builder.courseName(course.getName());
-                if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
-                    builder.studyYearName(course.getStudyYear().getStudyYearName().name());
-                    if (course.getStudyYear().getCommunity() != null) {
-                        builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
-                        builder.communityName(course.getStudyYear().getCommunity().getName());
-                    }
-                }
-            }
         }
         return builder.build();
-    }
-
-    public NotificationMetadata toCommunityPostNotificationMetadata(Community community) {
-        return NotificationMetadata.builder()
-                .communitySlug(community != null ? community.getSlug() : null)
-                .communityName(community != null ? community.getName() : null)
-                .build();
-    }
-
-    public NotificationMetadata toCoursePostNotificationMetadata(Course course) {
-        NotificationMetadata.NotificationMetadataBuilder builder = NotificationMetadata.builder();
-        if (course != null) {
-            builder.courseSlug(course.getSlug());
-            builder.courseName(course.getName());
-            if (course.getStudyYear() != null && course.getStudyYear().getStudyYearName() != null) {
-                builder.studyYearName(course.getStudyYear().getStudyYearName().name());
-                if (course.getStudyYear().getCommunity() != null) {
-                    builder.communitySlug(course.getStudyYear().getCommunity().getSlug());
-                    builder.communityName(course.getStudyYear().getCommunity().getName());
-                }
-            }
-        }
-        return builder.build();
-    }
-
-    public NotificationMetadata toEventCancelledNotificationMetadata(String communitySlug) {
-        return NotificationMetadata.builder()
-                .communitySlug(communitySlug)
-                .build();
     }
 }

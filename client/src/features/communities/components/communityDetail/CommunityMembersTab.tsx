@@ -132,6 +132,7 @@ export function CommunityMembersTab({
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Role"
+            placeholder="Select Role"
             value={filters.role}
             onChange={(val) => setFilter("role", val)}
             options={ROLE_FILTER_OPTIONS}

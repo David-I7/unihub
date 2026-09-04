@@ -1,16 +1,14 @@
 import { useState, useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Calendar as CalendarIcon,
   ArrowRight,
-  Sparkles,
   Check,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   useInfiniteUpcomingEvents,
-  useCalendarStore,
   type CalendarEvent,
 } from "@/features/calendar";
 import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
@@ -18,14 +16,13 @@ import { AllUpcomingEventsModal } from "./AllUpcomingEventsModal";
 import CalendarEventCardList from "@/features/calendar/components/CalendarEventCardList";
 
 export function UpcomingEventsWidget() {
+  const navigate = useNavigate();
   const [isAllModalOpen, setIsAllModalOpen] = useState(false);
 
   const { data, isLoading, isError, refetch } = useInfiniteUpcomingEvents({
     days: 7,
     size: 6,
   });
-
-  const openEventDetails = useCalendarStore((s) => s.openEventDetails);
 
   const events: CalendarEvent[] =
     data?.pages.flatMap((page) => page.content) ?? [];
@@ -68,7 +65,7 @@ export function UpcomingEventsWidget() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-secondary text-foreground/80">
                 <CalendarIcon className="size-4" />
               </div>
               <div>
@@ -134,7 +131,7 @@ export function UpcomingEventsWidget() {
             <div className="space-y-3">
               <CalendarEventCardList
                 groupedEvents={groupedEvents}
-                onEventClick={openEventDetails}
+                onEventClick={(id) => navigate(`/calendar?eventId=${id}`)}
               />
             </div>
           )}

@@ -133,6 +133,8 @@ export default function CommunitiesPage() {
           <SortSelect
             field={filters.sort}
             dir={filters.dir}
+            defaultField="memberCount"
+            defaultDir="desc"
             onSortChange={(sort, dir) => setFilters({ sort, dir })}
             options={COMMUNITIES_SORT_OPTIONS}
           />
@@ -179,7 +181,7 @@ export default function CommunitiesPage() {
           }}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="@container space-y-6">
           <CommunityGrid communities={allCommunities} />
 
           {/* Infinite Scroll Sentinel */}

@@ -5,6 +5,7 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
+import com.unihub.app.dto.community.content.response.PostDetailResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Post;
@@ -47,12 +48,12 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostResponseDto getPostById(UUID postId, UserDto caller) {
+    public PostDetailResponseDto getPostById(UUID postId, UserDto caller) {
         Post post = postRepository.findByIdWithOwner(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         Boolean isLiked = caller != null ? postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id()) : null;
-        return contentMapper.toPostResponseDto(post, isLiked);
+        return contentMapper.toPostDetailResponseDto(post, isLiked);
     }
 
     @Transactional

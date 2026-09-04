@@ -33,18 +33,26 @@ export function useUpdateCourse() {
     mutationFn: updateCourse,
     onSuccess: (updatedCourse, variables) => {
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.all,
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.all,
+        queryKey: studyYearCoursesKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
-      queryClient.invalidateQueries({
-        queryKey: courseHomeKeys.byCourse(
+      queryClient.setQueryData(
+        courseHomeKeys.byCourse(
           variables.communitySlug,
           variables.studyYearSlug,
           variables.courseSlug,
         ),
-      });
+        (old: { course: Course; teachers: unknown[] } | undefined) =>
+          old ? { ...old, course: updatedCourse } : old,
+      );
       if (updatedCourse.slug && updatedCourse.slug !== variables.courseSlug) {
         queryClient.invalidateQueries({
           queryKey: courseHomeKeys.byCourse(

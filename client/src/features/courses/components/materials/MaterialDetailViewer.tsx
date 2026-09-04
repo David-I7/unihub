@@ -241,13 +241,10 @@ export function MaterialDetailViewer({
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <UserAvatar
-                      username={material.data.owner.username}
-                      className="size-4 rounded text-[9px]"
-                      fallbackClassName="rounded"
+                      size="xxs"
+                      username={material.data.owner?.username}
                     />
-                    <span className="font-medium text-foreground">
-                      {material.data.owner.username}
-                    </span>
+                    <span>{material.data.owner.username}</span>
                   </div>
                   <span>•</span>
                   <span>

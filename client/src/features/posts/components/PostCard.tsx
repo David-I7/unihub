@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
 import {
@@ -233,10 +234,15 @@ export function PostCard({
         </div>
 
         {/* Post Content */}
-        <div>
-          <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
-            {post.title}
-          </h3>
+        <div className="space-y-1">
+          <Link
+            to={`/posts/${post.id}`}
+            className="hover:underline hover:text-primary transition-colors block"
+          >
+            <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
+              {post.title}
+            </h3>
+          </Link>
           <MarkdownRenderer content={post.description} />
         </div>
 

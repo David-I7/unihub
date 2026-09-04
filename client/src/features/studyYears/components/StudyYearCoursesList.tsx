@@ -124,6 +124,7 @@ export function StudyYearCoursesList({
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Filter"
+            placeholder="Filter courses"
             value={filters.filter}
             onChange={(val) => setFilter("filter", val as FilterOption)}
             options={FILTER_OPTIONS}

@@ -29,6 +29,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,11 +67,6 @@ public class NotificationServiceTests {
 
         NotificationMetadata metadata = NotificationMetadata.builder()
                 .eventId(eventId)
-                .communitySlug("fmi-info")
-                .communityName("FMI Info")
-                .studyYearName("YEAR_1")
-                .courseName("Algorithms")
-                .courseSlug("algorithms")
                 .build();
 
         User actor = User.builder().id(actorId).username("prof_smith").deletedAt(null).build();
@@ -102,8 +98,7 @@ public class NotificationServiceTests {
         assertNotNull(result);
         assertEquals(1, result.totalElements());
         NotificationResponseDto dto = result.content().get(0);
-        assertEquals("fmi-info", dto.communitySlug());
-        assertEquals("FMI Info", dto.communityName());
+        assertEquals(eventId, dto.eventId());
         assertEquals(NotificationType.EVENT_REMINDER, dto.type());
         assertNotNull(dto.actor());
         assertEquals("prof_smith", dto.actor().username());
@@ -166,8 +161,8 @@ public class NotificationServiceTests {
 
         notificationService.processDueReminders();
 
-        verify(notificationRepository).save(any(Notification.class));
-        verify(reminderRepository).save(reminder);
+        verify(notificationRepository).saveAll(anyList());
+        verify(reminderRepository).saveAll(anyList());
         assertEquals(ReminderStatus.SENT, reminder.getStatus());
         verify(eventPublisher).publishEvent(any(EventReminderNotificationEvent.class));
     }

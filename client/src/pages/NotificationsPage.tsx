@@ -91,6 +91,7 @@ export default function NotificationsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Type"
+            placeholder="Select Type"
             value={filters.category}
             onChange={(val) => setFilter("category", val as CategoryTab)}
             options={NOTIFICATION_TYPE_OPTIONS}

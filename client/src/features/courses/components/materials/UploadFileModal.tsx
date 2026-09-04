@@ -1,12 +1,6 @@
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import {
-  UploadCloud,
-  FileText,
-  X,
-  AlertCircle,
-  Folder,
-} from "lucide-react";
+import { UploadCloud, FileText, X, AlertCircle, Folder } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -261,7 +255,7 @@ export function UploadFileModal({
                   }
                 }}
               />
-              <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary mb-3">
+              <div className="flex size-12 items-center justify-center rounded-xl bg-secondary text-foreground/80 mb-3">
                 <UploadCloud className="size-6" />
               </div>
               <p className="text-xs font-bold text-foreground">
@@ -275,7 +269,7 @@ export function UploadFileModal({
             /* Selected File Card */
             <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/30 p-3.5">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground/80">
                   <FileText className="size-5" />
                 </div>
                 <div className="space-y-0.5 min-w-0">
@@ -346,7 +340,7 @@ export function UploadFileModal({
               maxLength={2000}
               className="text-xs"
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground flex justify-end">
               {description.length} / 2000 characters
             </FieldDescription>
           </Field>
@@ -356,10 +350,10 @@ export function UploadFileModal({
             <div className="space-y-2 rounded-xl border bg-muted/40 p-3.5">
               <div className="flex items-center justify-between text-xs font-semibold text-foreground">
                 <span className="flex items-center gap-1.5">
-                  <UploadCloud className="size-4 text-primary animate-bounce" />
+                  <UploadCloud className="size-4 text-foreground animate-bounce" />
                   Uploading file to storage...
                 </span>
-                <span className="font-mono text-primary">
+                <span className="font-mono text-foreground">
                   {uploadProgress}%
                 </span>
               </div>

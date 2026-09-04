@@ -4,6 +4,7 @@ import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateFolderRequestDto;
+import com.unihub.app.dto.community.content.response.BreadcrumbDto;
 import com.unihub.app.dto.community.content.response.FolderSummaryDto;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.AuthorizationService;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +29,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -88,5 +91,22 @@ public class FolderControllerTests extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/folders/" + folderId))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/folders/{folderId}/breadcrumbs returns breadcrumbs list")
+    public void testGetBreadcrumbs_Success() throws Exception {
+        UUID folderId = UUID.randomUUID();
+        List<BreadcrumbDto> responseDtos = List.of(
+                BreadcrumbDto.builder().id(folderId).name("Examene").type("FOLDER").build()
+        );
+
+        when(folderService.getBreadcrumbs(folderId)).thenReturn(responseDtos);
+
+        mockMvc.perform(get("/api/v1/folders/" + folderId + "/breadcrumbs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(folderId.toString()))
+                .andExpect(jsonPath("$[0].name").value("Examene"))
+                .andExpect(jsonPath("$[0].type").value("FOLDER"));
     }
 }

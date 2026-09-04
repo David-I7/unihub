@@ -56,7 +56,7 @@ public class NotificationEventListener {
         String message = String.format("posted in %s: \"%s\"",
                 event.community().getName(),
                 truncate(event.post().getTitle(), MAX_NOTIFICATION_MESSAGE_LENGTH));
-        NotificationMetadata metadata = contentMapper.toCommunityPostNotificationMetadata(event.community());
+        NotificationMetadata metadata = contentMapper.toPostNotificationMetadata(event.post());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
@@ -91,7 +91,7 @@ public class NotificationEventListener {
         String message = String.format("posted in %s: \"%s\"",
                 event.course().getName(),
                 truncate(event.post().getTitle(), MAX_NOTIFICATION_MESSAGE_LENGTH));
-        NotificationMetadata metadata = contentMapper.toCoursePostNotificationMetadata(event.course());
+        NotificationMetadata metadata = contentMapper.toPostNotificationMetadata(event.post());
 
         List<Notification> notifications = new ArrayList<>(members.size());
         for (User member : members) {
@@ -127,7 +127,8 @@ public class NotificationEventListener {
                 message,
                 NotificationType.POST_COMMENT,
                 event.post(),
-                event.commentAuthor()
+                event.commentAuthor(),
+                event.comment().getId()
         );
 
         notificationRepository.save(notification);
@@ -199,8 +200,7 @@ public class NotificationEventListener {
         }
 
         List<User> recipients = userRepository.findAllById(event.recipientUserIds());
-        String message = String.format("cancelled the event \"%s\"", truncate(event.eventTitle(),MAX_NOTIFICATION_MESSAGE_LENGTH));
-        NotificationMetadata metadata = contentMapper.toEventCancelledNotificationMetadata(event.communitySlug());
+        String message = String.format("cancelled the event \"%s\"", truncate(event.eventTitle(), MAX_NOTIFICATION_MESSAGE_LENGTH));
 
         List<Notification> notifications = new ArrayList<>();
         for (User recipient : recipients) {
@@ -213,7 +213,7 @@ public class NotificationEventListener {
                     message,
                     NotificationCategory.EVENT,
                     NotificationType.EVENT_CANCELLED,
-                    metadata
+                    null
             ));
         }
 

@@ -303,6 +303,7 @@ export function CalendarFilters({
                   {/* Study Year */}
                   <FilterSelect
                     label="Year"
+                    placeholder="Select Year"
                     value={studyYear ?? "All"}
                     onChange={(val) => {
                       const nextYear =
@@ -323,6 +324,7 @@ export function CalendarFilters({
                   {/* Course */}
                   <FilterSelect
                     label="Course"
+                    placeholder="Select Course"
                     value={courseSlug ?? "All"}
                     onChange={(val) => {
                       const nextCourse = val === "All" ? "" : val;
@@ -339,6 +341,7 @@ export function CalendarFilters({
                   {/* Event Type */}
                   <FilterSelect
                     label="Type"
+                    placeholder="Select Type"
                     value={selectedType}
                     onChange={(val) => {
                       setFilters({

@@ -4,6 +4,7 @@ import com.unihub.app.domain.Permissions;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
@@ -91,7 +92,7 @@ public class CommunityServiceTests {
         UUID communityId = UUID.randomUUID();
         OffsetDateTime createdAt = OffsetDateTime.now();
 
-        Community community = Community.builder()
+        CommunityResponseDto expectedDto = CommunityResponseDto.builder()
                 .id(communityId)
                 .name("FMI - Informatica ID")
                 .slug("fmi-info-id")
@@ -100,12 +101,13 @@ public class CommunityServiceTests {
                 .backgroundColor("#2563eb")
                 .verified(true)
                 .createdAt(createdAt)
-                .owner(owner)
+                .owner(new OwnerDto(ownerId, "david", false))
+                .isJoined(false)
                 .build();
 
         PageRequest pageRequest = PageRequest.of(0, 10);
         when(communityRepository.findAllWithFilters(isNull(), isNull(), isNull(), eq(pageRequest)))
-                .thenReturn(new PageImpl<>(List.of(community), pageRequest, 1));
+                .thenReturn(new PageImpl<>(List.of(expectedDto), pageRequest, 1));
 
         PageDto<CommunityResponseDto> result = communityService.findAll(null, null, null, null, pageRequest);
 
@@ -114,18 +116,18 @@ public class CommunityServiceTests {
         assertEquals(1, result.content().size());
 
         CommunityResponseDto dto = result.content().get(0);
-        assertNotNull(dto.id());
-        assertEquals(communityId, dto.id());
-        assertEquals("FMI - Informatica ID", dto.name());
-        assertEquals("fmi-info-id", dto.slug());
-        assertEquals("Desc", dto.description());
-        assertEquals(10, dto.memberCount());
-        assertEquals("#2563eb", dto.backgroundColor());
-        assertTrue(dto.verified());
-        assertEquals(createdAt, dto.createdAt());
-        assertNotNull(dto.owner());
-        assertEquals(ownerId, dto.owner().id());
-        assertEquals("david", dto.owner().username());
+        assertNotNull(dto.getId());
+        assertEquals(communityId, dto.getId());
+        assertEquals("FMI - Informatica ID", dto.getName());
+        assertEquals("fmi-info-id", dto.getSlug());
+        assertEquals("Desc", dto.getDescription());
+        assertEquals(10, dto.getMemberCount());
+        assertEquals("#2563eb", dto.getBackgroundColor());
+        assertTrue(dto.isVerified());
+        assertEquals(createdAt, dto.getCreatedAt());
+        assertNotNull(dto.getOwner());
+        assertEquals(ownerId, dto.getOwner().id());
+        assertEquals("david", dto.getOwner().username());
     }
 
     @Test
@@ -153,17 +155,17 @@ public class CommunityServiceTests {
         CommunityResponseDto result = communityService.findBySlug("fmi-info-id", null);
 
         assertNotNull(result);
-        assertEquals(communityId, result.id());
-        assertEquals("FMI - Informatica ID", result.name());
-        assertEquals("fmi-info-id", result.slug());
-        assertEquals("Desc", result.description());
-        assertEquals(10, result.memberCount());
-        assertEquals("#2563eb", result.backgroundColor());
-        assertTrue(result.verified());
-        assertEquals(createdAt, result.createdAt());
-        assertNotNull(result.owner());
-        assertEquals(ownerId, result.owner().id());
-        assertEquals("david", result.owner().username());
+        assertEquals(communityId, result.getId());
+        assertEquals("FMI - Informatica ID", result.getName());
+        assertEquals("fmi-info-id", result.getSlug());
+        assertEquals("Desc", result.getDescription());
+        assertEquals(10, result.getMemberCount());
+        assertEquals("#2563eb", result.getBackgroundColor());
+        assertTrue(result.isVerified());
+        assertEquals(createdAt, result.getCreatedAt());
+        assertNotNull(result.getOwner());
+        assertEquals(ownerId, result.getOwner().id());
+        assertEquals("david", result.getOwner().username());
 
         verify(communityRepository).findBySlugWithOwner("fmi-info-id");
     }
@@ -207,7 +209,7 @@ public class CommunityServiceTests {
         CommunityHomeResponseDto result = communityService.getCommunityHome("fmi-info-id", null);
 
         assertNotNull(result);
-        assertEquals("fmi-info-id", result.community().slug());
+        assertEquals("fmi-info-id", result.community().getSlug());
         assertEquals(2, result.studyYears().size());
         assertEquals(1, result.studyYears().get(0).id());
 
@@ -252,8 +254,8 @@ public class CommunityServiceTests {
         CommunityResponseDto result = communityService.createCommunity(userDto, dto);
 
         assertNotNull(result);
-        assertEquals("FMI", result.name());
-        assertEquals("fmi", result.slug());
+        assertEquals("FMI", result.getName());
+        assertEquals("fmi", result.getSlug());
         verify(communityRepository).save(any(Community.class));
         verify(communityMemberRepository).save(any(CommunityMember.class));
     }

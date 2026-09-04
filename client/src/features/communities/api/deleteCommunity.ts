@@ -13,10 +13,22 @@ export function useDeleteCommunity() {
 
   return useMutation({
     mutationFn: deleteCommunity,
-    onSuccess: (_res) => {
-      queryClient.resetQueries({ queryKey: communityKeys.all });
-      queryClient.resetQueries({ queryKey: userKeys.communities() });
-      queryClient.resetQueries({ queryKey: joinCodeKeys.all });
+    onSuccess: (_res, communitySlug) => {
+      queryClient.removeQueries({
+        queryKey: communityKeys.homeDetail(communitySlug),
+      });
+      queryClient.removeQueries({
+        queryKey: communityKeys.membershipDetail(communitySlug),
+      });
+      queryClient.removeQueries({
+        queryKey: joinCodeKeys.list(communitySlug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.communityInfinities(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: userKeys.communities(),
+      });
     },
   });
 }

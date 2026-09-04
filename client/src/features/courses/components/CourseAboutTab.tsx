@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  Star,
-  FileText,
-  Edit2 as Edit3,
-  Plus,
-} from "@/components/ui/icons";
+import { Star, FileText, Edit2 as Edit3, Plus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { Card } from "@/components/ui/card";
@@ -63,7 +58,7 @@ export function CourseAboutTab({
                 communitySlug &&
                 studyYearSlug && (
                   <Button
-                    size="xs"
+                    size="sm"
                     variant="outline"
                     onClick={() => setReadmeModalOpen(true)}
                     className="gap-1 text-xs font-semibold cursor-pointer"

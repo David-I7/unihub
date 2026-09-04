@@ -5,6 +5,7 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
+import com.unihub.app.dto.community.content.response.PostDetailResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.CommunicationChannel;
@@ -88,7 +89,7 @@ public class PostServiceTests {
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
-        PostResponseDto result = postService.getPostById(postId, userDto);
+        PostDetailResponseDto result = postService.getPostById(postId, userDto);
 
         assertNotNull(result);
         assertEquals(postId, result.id());
