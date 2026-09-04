@@ -21,7 +21,7 @@ export type Community = {
   verified: boolean;
   slug: string;
   owner: ResourceOwner;
-  isJoined: boolean;
+  joined: boolean;
 };
 
 export type CreateCommunityDto = {

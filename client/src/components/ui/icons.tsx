@@ -212,7 +212,7 @@ export const Icons = {
   Calendar,
   Notifications: Bell,
   PanelLeft,
-  
+
   // Actions
   Plus,
   Search,

@@ -1,8 +1,7 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AddCommunityMemberDto } from "./types";
-import { memberKeys } from "./getCommunityMembers";
-import { communityHomeKeys } from "./getCommunityHome";
+import { communityKeys } from "./communityKeys";
 
 export interface AddCommunityMemberVariables {
   communitySlug: string;
@@ -22,11 +21,16 @@ export function useAddCommunityMember() {
   return useMutation({
     mutationFn: addCommunityMember,
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: memberKeys.list(variables.communitySlug),
+      // Must invalidate: members list, home detail, infinite communities (to get the new member count).
+
+      queryClient.resetQueries({
+        queryKey: communityKeys.communityInfinities(),
+      });
+      queryClient.resetQueries({
+        queryKey: communityKeys.membersList(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: communityHomeKeys.detail(variables.communitySlug),
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
     },
   });

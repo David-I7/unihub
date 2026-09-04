@@ -79,7 +79,6 @@ public class NotificationServiceTests {
                 .id(UUID.randomUUID())
                 .user(User.builder().id(userId).build())
                 .actor(actor)
-                .title("Reminder: Algorithms Exam")
                 .message("Exam starts soon")
                 .category(NotificationCategory.EVENT)
                 .type(NotificationType.EVENT_REMINDER)
@@ -103,7 +102,6 @@ public class NotificationServiceTests {
         assertNotNull(result);
         assertEquals(1, result.totalElements());
         NotificationResponseDto dto = result.content().get(0);
-        assertEquals("Reminder: Algorithms Exam", dto.title());
         assertEquals("fmi-info", dto.communitySlug());
         assertEquals("FMI Info", dto.communityName());
         assertEquals(NotificationType.EVENT_REMINDER, dto.type());

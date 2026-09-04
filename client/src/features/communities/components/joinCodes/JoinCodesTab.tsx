@@ -61,7 +61,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
 
   const handleCopyLink = async (code: string) => {
     try {
-      const url = `${window.location.origin}/join/${code}`;
+      const url = `${window.location.origin}/communities/${communitySlug}/join?code=${code}`;
       await navigator.clipboard.writeText(url);
       toast.success("Copied invite link to clipboard!");
     } catch {

@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseHomeKeys } from "./getCourseHome";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 import { studyYearCoursesKeys } from "@/features/studyYears/api/getStudyYearCourses";
-import { communityHomeKeys } from "@/features/communities/api/getCommunityHome";
+import { communityKeys } from "@/features/communities";
 
 export interface DeleteCourseVariables {
   communitySlug: string;
@@ -37,7 +37,7 @@ export function useDeleteCourse() {
         queryKey: courseHomeKeys.all,
       });
       queryClient.invalidateQueries({
-        queryKey: communityHomeKeys.detail(variables.communitySlug),
+        queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
         queryKey: ["communities", variables.communitySlug, "study-years"],

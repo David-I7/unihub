@@ -1,8 +1,8 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Community, CreateCommunityDto } from "./types";
-import { communityKeys } from "./getCommunities";
-import { userKeys } from "@/features/users/api/getUserProfile";
+import { communityKeys } from "./communityKeys";
+import { userKeys } from "@/features/users";
 
 export async function createCommunity(
   payload: CreateCommunityDto,
@@ -17,8 +17,10 @@ export function useCreateCommunity() {
   return useMutation({
     mutationFn: createCommunity,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: communityKeys.all });
-      queryClient.invalidateQueries({ queryKey: userKeys.communities() });
+      queryClient.resetQueries({
+        queryKey: communityKeys.communityInfinities(),
+      });
+      queryClient.resetQueries({ queryKey: userKeys.communities() });
     },
   });
 }

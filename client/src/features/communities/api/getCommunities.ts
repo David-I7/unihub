@@ -8,11 +8,10 @@ import {
 import type { Community } from "./types";
 import {
   useInfiniteQuery,
-  useQuery,
-  keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
+import { communityKeys } from "./communityKeys";
 
 export interface CommunitiesQueryParams {
   size?: number;
@@ -36,22 +35,6 @@ export async function getCommunities(
     { params: request },
   );
   return response.data;
-}
-
-export const communityKeys = {
-  all: ["communities"] as const,
-  list: (params: CommunitiesPaginatedRequest) =>
-    [...communityKeys.all, "list", params] as const,
-  infinite: (params: CommunitiesQueryParams) =>
-    [...communityKeys.all, "infinite", params] as const,
-};
-
-export function useCommunities(params: CommunitiesPaginatedRequest) {
-  return useQuery({
-    queryKey: communityKeys.list(params),
-    queryFn: () => getCommunities(params),
-    placeholderData: keepPreviousData,
-  });
 }
 
 export function useInfiniteCommunities(
@@ -79,10 +62,10 @@ export function useInfiniteCommunities(
       getCommunities({
         page: pageParam,
         size,
-        ...(sort ? { sort } : {}),
-        ...(search ? { search } : {}),
-        ...(verified !== undefined ? { verified } : {}),
-        ...(joined !== undefined ? { joined } : {}),
+        sort,
+        search,
+        verified,
+        joined,
       }),
     initialPageParam: 0,
     getNextPageParam: getPaginatedNextPageParam,

@@ -88,7 +88,7 @@ export function useUnreadNotificationCount(category?: NotificationCategory) {
       const newCount = await getUnreadCount(category);
 
       if (newCount !== prevCount) {
-        queryClient.removeQueries({ queryKey: notificationKeys.infinites() });
+        queryClient.resetQueries({ queryKey: notificationKeys.infinites() });
       }
       return newCount;
     },

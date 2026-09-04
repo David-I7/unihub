@@ -1,7 +1,7 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CommunityMember, UpdateMemberRoleDto } from "./types";
-import { memberKeys } from "./getCommunityMembers";
+import { communityKeys } from "./communityKeys";
 
 export interface UpdateCommunityMemberRoleVariables {
   communitySlug: string;
@@ -28,7 +28,7 @@ export function useUpdateCommunityMemberRole() {
     mutationFn: updateCommunityMemberRole,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: memberKeys.list(variables.communitySlug),
+        queryKey: communityKeys.membersList(variables.communitySlug),
       });
     },
   });

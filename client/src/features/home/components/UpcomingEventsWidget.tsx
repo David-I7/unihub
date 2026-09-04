@@ -1,18 +1,20 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router";
-import { Calendar as CalendarIcon, ArrowRight, Sparkles } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  ArrowRight,
+  Sparkles,
+  Check,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   useInfiniteUpcomingEvents,
   useCalendarStore,
-  CalendarEventCard,
   type CalendarEvent,
 } from "@/features/calendar";
 import { formatDayHeader, getLocalDateKey } from "@/lib/dateUtils";
 import { AllUpcomingEventsModal } from "./AllUpcomingEventsModal";
-import Ca from "zod/v4/locales/ca.cjs";
 import CalendarEventCardList from "@/features/calendar/components/CalendarEventCardList";
 
 export function UpcomingEventsWidget() {
@@ -62,7 +64,7 @@ export function UpcomingEventsWidget() {
   return (
     <>
       <Card className="rounded-2xl border bg-card p-5 space-y-4 shadow-xs flex flex-col justify-between h-full min-h-[380px]">
-        <div className="space-y-4">
+        <div className="flex-1 space-y-4 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
@@ -89,7 +91,7 @@ export function UpcomingEventsWidget() {
           {/* Body */}
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 2 }).map((_, dayIdx) => (
+              {Array.from({ length: 3 }).map((_, dayIdx) => (
                 <div key={dayIdx} className="space-y-2">
                   <div className="h-3.5 w-24 bg-muted rounded-md animate-pulse" />
                   <div className="p-3 rounded-xl border bg-card animate-pulse space-y-2">
@@ -103,7 +105,7 @@ export function UpcomingEventsWidget() {
               ))}
             </div>
           ) : isError ? (
-            <div className="py-8 text-center space-y-2">
+            <div className="flex-1 flex flex-col items-center justify-center py-8 text-center space-y-2">
               <p className="text-xs text-destructive font-medium">
                 Failed to load upcoming events.
               </p>
@@ -117,9 +119,9 @@ export function UpcomingEventsWidget() {
               </Button>
             </div>
           ) : displayedEvents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 space-y-2">
+            <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 space-y-2">
               <div className="size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <Sparkles className="size-4" />
+                <Check className="size-4" />
               </div>
               <p className="text-xs font-medium text-foreground">
                 No events in the next 7 days

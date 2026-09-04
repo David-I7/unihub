@@ -47,7 +47,7 @@ export function CalendarEventPill({
 
       {/* Subscription Bell */}
       {hasActiveReminder && (
-        <Bell className="size-2.5 shrink-0 fill-current opacity-90 ml-1 text-primary" />
+        <Bell className="size-2.5 shrink-0 fill-current opacity-90 ml-1 text-amber-600 dark:text-amber-400" />
       )}
     </button>
   );

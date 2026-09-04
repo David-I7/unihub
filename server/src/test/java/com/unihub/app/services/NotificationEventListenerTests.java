@@ -70,7 +70,6 @@ public class NotificationEventListenerTests {
         List<Notification> savedList = captor.getValue();
         assertEquals(2, savedList.size());
         assertEquals(NotificationType.COMMUNITY_POST, savedList.get(0).getType());
-        assertEquals("New post in FMI Community", savedList.get(0).getTitle());
         assertEquals("fmi", savedList.get(0).getMetadata().communitySlug());
         assertEquals("FMI Community", savedList.get(0).getMetadata().communityName());
         assertEquals("author", savedList.get(0).getActor().getUsername());
@@ -93,7 +92,6 @@ public class NotificationEventListenerTests {
         Notification saved = captor.getValue();
         assertEquals(postOwner, saved.getUser());
         assertEquals(NotificationType.POST_COMMENT, saved.getType());
-        assertEquals("New comment on your post", saved.getTitle());
     }
 
     @Test
@@ -125,7 +123,6 @@ public class NotificationEventListenerTests {
         Notification saved = captor.getValue();
         assertEquals(postOwner, saved.getUser());
         assertEquals(NotificationType.POST_LIKE, saved.getType());
-        assertEquals("New like on your post", saved.getTitle());
     }
 
     @Test
@@ -147,7 +144,6 @@ public class NotificationEventListenerTests {
         List<Notification> saved = captor.getValue();
         assertEquals(1, saved.size());
         assertEquals(NotificationType.EVENT_UPDATED, saved.get(0).getType());
-        assertEquals("Event Updated: Calculus Exam", saved.get(0).getTitle());
     }
 
     @Test
@@ -167,6 +163,5 @@ public class NotificationEventListenerTests {
         List<Notification> saved = captor.getValue();
         assertEquals(1, saved.size());
         assertEquals(NotificationType.EVENT_CANCELLED, saved.get(0).getType());
-        assertEquals("Event Cancelled: Calculus Exam", saved.get(0).getTitle());
     }
 }

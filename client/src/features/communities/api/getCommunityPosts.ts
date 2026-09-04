@@ -10,6 +10,7 @@ import {
   type InfiniteData,
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
+import { communityKeys } from "./communityKeys";
 
 export interface CommunityPostsQueryParams {
   page?: number;
@@ -28,14 +29,6 @@ export async function getCommunityPosts(
   return response.data;
 }
 
-export const communityPostKeys = {
-  all: ["communities", "posts"] as const,
-  list: (slug: string, params: CommunityPostsQueryParams) =>
-    [...communityPostKeys.all, slug, "list", params] as const,
-  infinite: (slug: string, params: { size?: number }) =>
-    [...communityPostKeys.all, slug, "infinite", params] as const,
-};
-
 export function useInfiniteCommunityPosts(
   communitySlug: string,
   params: { size?: number } = {},
@@ -44,7 +37,7 @@ export function useInfiniteCommunityPosts(
       PaginatedResponse<Post>,
       Error,
       InfiniteData<PaginatedResponse<Post>>,
-      ReturnType<typeof communityPostKeys.infinite>,
+      ReturnType<typeof communityKeys.communityPostinfinite>,
       number
     >,
     | "queryKey"
@@ -57,7 +50,7 @@ export function useInfiniteCommunityPosts(
   const { size = 10 } = params;
 
   return useInfiniteQuery({
-    queryKey: communityPostKeys.infinite(communitySlug, { size }),
+    queryKey: communityKeys.communityPostinfinite(communitySlug, { size }),
     queryFn: ({ pageParam }) =>
       getCommunityPosts(communitySlug, {
         page: pageParam,

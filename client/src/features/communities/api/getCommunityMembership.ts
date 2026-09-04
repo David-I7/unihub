@@ -1,6 +1,7 @@
 import client from "@/api/client";
 import type { CallerMembership } from "./types";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { communityKeys } from "./communityKeys";
 
 export async function getCommunityMembership(
   communitySlug: string,
@@ -11,17 +12,12 @@ export async function getCommunityMembership(
   return response.data;
 }
 
-export const communityMembershipKeys = {
-  all: ["communities", "membership"] as const,
-  detail: (slug: string) => [...communityMembershipKeys.all, slug] as const,
-};
-
 export function useCommunityMembership(
   communitySlug: string,
   options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: communityMembershipKeys.detail(communitySlug),
+    queryKey: communityKeys.membershipDetail(communitySlug),
     queryFn: () => getCommunityMembership(communitySlug),
     placeholderData: keepPreviousData,
     enabled: (options?.enabled ?? true) && communitySlug.length > 0,

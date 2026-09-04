@@ -1,21 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Bell, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { Bell, Check, CheckCircle2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import {
   useInfiniteUserReminders,
   useDeleteReminder,
   useCalendarStore,
-  type UserReminder,
 } from "@/features/calendar";
-import {
-  formatDateTime24h,
-  formatOffsetLabel,
-  formatEventRelativeStatus,
-} from "@/lib/dateUtils";
 import { getErrorMessage } from "@/api/types";
 import { AllRemindersModal } from "./AllRemindersModal";
 import ReminderList from "./ReminderList";
@@ -52,7 +45,7 @@ export function MyRemindersWidget() {
   return (
     <>
       <Card className="rounded-2xl border bg-card p-5 space-y-4 shadow-xs flex flex-col justify-between h-full min-h-[380px]">
-        <div className="space-y-4">
+        <div className="space-y-4 flex flex-col flex-1">
           {/* Header */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
@@ -90,15 +83,15 @@ export function MyRemindersWidget() {
                 >
                   <div className="min-w-[64px] h-16 bg-muted rounded-xl shrink-0" />
                   <div className="flex-1 space-y-2 py-1">
-                    <div className="h-3.5 w-3/4 bg-muted rounded-md" />
-                    <div className="h-3 w-1/2 bg-muted rounded-md" />
-                    <div className="h-3 w-1/3 bg-muted rounded-md" />
+                    <div className="h-3.5 w-2/4 bg-muted rounded-md" />
+                    <div className="h-3 w-3/4 bg-muted rounded-md" />
+                    <div className="h-3 w-1/4 bg-muted rounded-md" />
                   </div>
                 </div>
               ))}
             </div>
           ) : isError ? (
-            <div className="py-8 text-center space-y-2">
+            <div className="flex-1 flex flex-col justify-center items-center py-8 text-center space-y-2">
               <p className="text-xs text-destructive font-medium">
                 Failed to load active reminders.
               </p>
@@ -112,9 +105,9 @@ export function MyRemindersWidget() {
               </Button>
             </div>
           ) : displayedReminders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 space-y-2">
+            <div className="flex-1 flex flex-col items-center justify-center py-10 px-4 text-center rounded-xl border border-dashed border-border/70 bg-muted/10 space-y-2">
               <div className="size-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                <CheckCircle2 className="size-4" />
+                <Check className="size-4" />
               </div>
               <p className="text-xs font-medium text-foreground">
                 No active reminders

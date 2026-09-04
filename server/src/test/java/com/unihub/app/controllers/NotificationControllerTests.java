@@ -73,7 +73,6 @@ public class NotificationControllerTests extends BaseIntegrationTest {
 
         NotificationResponseDto eventDto = NotificationResponseDto.builder()
                 .id(eventNotificationId)
-                .title("Reminder: Exam")
                 .message("Exam starts soon")
                 .category(NotificationCategory.EVENT)
                 .type(NotificationType.EVENT_REMINDER)
@@ -86,7 +85,6 @@ public class NotificationControllerTests extends BaseIntegrationTest {
 
         NotificationResponseDto postDto = NotificationResponseDto.builder()
                 .id(postNotificationId)
-                .title("New post in Algorithms")
                 .message("Alice posted: 'Homework 1 discussion'")
                 .category(NotificationCategory.POST)
                 .type(NotificationType.COURSE_POST)
