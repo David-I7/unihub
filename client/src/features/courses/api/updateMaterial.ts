@@ -1,13 +1,15 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CourseMaterialFile, CourseMaterialLink, UpdateMaterialPayload } from "./types";
+import type {
+  CourseMaterialFile,
+  CourseMaterialLink,
+  UpdateMaterialPayload,
+  CourseMaterialsResponse,
+} from "./types";
 import { courseMaterialsKeys } from "./getCourseMaterials";
 
-import {
-  updateCourseMaterialItem,
-  rollbackOptimisticContext,
-  type CourseMaterialsCacheData,
-} from "@/lib/queryCacheUtils";
+import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
+import { updateCourseMaterialItem } from "./courseMaterialsCache";
 
 export interface UpdateMaterialVariables {
   materialId: string;
@@ -32,7 +34,7 @@ export function useUpdateMaterial() {
     mutationFn: updateMaterial,
     onMutate: async ({ materialId, payload }) => {
       await queryClient.cancelQueries({ queryKey: courseMaterialsKeys.all });
-      const previousQueries = queryClient.getQueriesData<CourseMaterialsCacheData>({
+      const previousQueries = queryClient.getQueriesData<CourseMaterialsResponse>({
         queryKey: courseMaterialsKeys.all,
       });
 

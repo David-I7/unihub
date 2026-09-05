@@ -44,6 +44,8 @@ export function CommunityPostsTab({
         onOpenComposer={() => setComposerOpen(true)}
         emptyTitle="No Discussions Yet"
         emptyDescription="Be the first to start an academic discussion or share materials in this community."
+        communitySlug={communitySlug}
+        callerMembership={callerMembership}
       />
 
       <PostComposerModal

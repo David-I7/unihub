@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Bell, CheckCheck } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { FilterSelect } from "@/components/app/FilterSelect";
@@ -69,7 +70,10 @@ export default function NotificationsPage() {
     isRead: isUnreadOnly ? false : undefined,
   });
 
-  const notifications = data?.pages.flatMap((page) => page.content) ?? [];
+  const notifications = useMemo(
+    () => data?.pages.flatMap((page) => page.content) ?? [],
+    [data?.pages],
+  );
 
   const handleUnreadToggle = (checked: boolean) => {
     setFilter("unread", checked);
@@ -78,7 +82,7 @@ export default function NotificationsPage() {
   const hasActiveFilters = filters.category !== "all" || filters.unread;
 
   return (
-    <div className="min-h-full space-y-6 pb-12">
+    <div className="min-h-full space-y-6 pb-6">
       {/* Header */}
       <div>
         <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">

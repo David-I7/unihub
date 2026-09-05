@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { memo } from "react";
 import {
   Bell,
   Calendar,
@@ -13,6 +13,7 @@ import { useMarkNotificationAsRead } from "../api/notifications";
 import { useNotificationNavigation } from "../hooks/useNotificationNavigation";
 import { formatRelativeTime } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
+import { ExpandableText } from "@/components/app/ExpandableText";
 import { cn } from "@/lib/utils";
 
 interface NotificationItemProps {
@@ -67,20 +68,12 @@ function getNotificationIcon(notification: AppNotification) {
   }
 }
 
-export function NotificationItem({ notification }: NotificationItemProps) {
+export const NotificationItem = memo(function NotificationItem({
+  notification,
+}: NotificationItemProps) {
   const { handleNotificationClick } = useNotificationNavigation();
   const { mutate: markRead, isPending: isMarkingRead } =
     useMarkNotificationAsRead();
-
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const messageRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const el = messageRef.current;
-    if (!el) return;
-    setIsOverflowing(el.scrollHeight > el.clientHeight);
-  }, [notification.message]);
 
   const { icon: Icon, className: iconClass } =
     getNotificationIcon(notification);
@@ -117,12 +110,14 @@ export function NotificationItem({ notification }: NotificationItemProps) {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <div
-              ref={messageRef}
-              className={cn(
-                "text-sm leading-relaxed",
-                !isExpanded && "line-clamp-2",
-              )}
+            <ExpandableText
+              clampLines={2}
+              textClassName="text-sm leading-relaxed"
+              footer={
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                  {formatRelativeTime(notification.createdAt)} ago
+                </span>
+              }
             >
               {notification.actor && (
                 <span className="text-sm font-semibold leading-none">
@@ -130,39 +125,7 @@ export function NotificationItem({ notification }: NotificationItemProps) {
                 </span>
               )}
               {notification.message}
-              {isExpanded && isOverflowing && (
-                <Button
-                  variant="link"
-                  size="link"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(false);
-                  }}
-                  className="text-muted-foreground inline text-xs font-semibold h-auto p-0 ml-1 cursor-pointer"
-                >
-                  See less
-                </Button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-1.5 mt-0.5">
-              {!isExpanded && isOverflowing && (
-                <Button
-                  variant="link"
-                  size="link"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsExpanded(true);
-                  }}
-                  className="text-muted-foreground text-xs font-semibold h-auto p-0 cursor-pointer"
-                >
-                  See more
-                </Button>
-              )}
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                {formatRelativeTime(notification.createdAt)} ago
-              </span>
-            </div>
+            </ExpandableText>
           </div>
         </div>
       </div>
@@ -185,4 +148,4 @@ export function NotificationItem({ notification }: NotificationItemProps) {
       )}
     </div>
   );
-}
+});

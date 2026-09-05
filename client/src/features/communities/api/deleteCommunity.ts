@@ -21,7 +21,7 @@ export function useDeleteCommunity() {
         queryKey: communityKeys.membershipDetail(communitySlug),
       });
       queryClient.removeQueries({
-        queryKey: joinCodeKeys.list(communitySlug),
+        queryKey: joinCodeKeys.all,
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),

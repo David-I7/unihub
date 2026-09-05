@@ -129,7 +129,7 @@ export function CalendarEventCard({
           </span>
 
           {event.courseAbbreviation && (
-            <span className="font-mono font-medium text-foreground bg-muted px-1.5 py-0.2 rounded">
+            <span className="font-mono text-sm font-medium text-foreground bg-muted px-1.5 py-0.2 rounded">
               {event.courseAbbreviation}
             </span>
           )}

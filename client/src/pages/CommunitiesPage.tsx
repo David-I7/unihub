@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState } from "react";
 import {
   useInfiniteCommunities,
   CommunityHeader,
@@ -7,7 +7,7 @@ import {
   CommunityEmptyState,
 } from "@/features/communities";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
-import { SearchInput } from "@/components/app/SearchInput";
+import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterToggle } from "@/components/app/FilterToggle";
 import { SortSelect, type SortOption } from "@/components/app/SortSelect";
 import { Button } from "@/components/ui/button";
@@ -65,6 +65,9 @@ export default function CommunitiesPage() {
     handleCommitSearch,
     350,
   );
+  const [isSearchExpanded, setIsSearchExpanded] = useState(
+    Boolean(filters.search),
+  );
 
   const sortBy = useMemo(() => {
     return `${filters.sort},${filters.dir}`;
@@ -111,58 +114,57 @@ export default function CommunitiesPage() {
       <CommunityHeader />
 
       {/* Unified Toolbar: Search on left, Toggles + Sort on right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex-1 min-w-[180px] max-w-md">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search communities by name..."
-            totalCount={totalElements}
-          />
-        </div>
+      <ExpandableSearch
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search communities by name..."
+        totalCount={totalElements}
+        isExpanded={isSearchExpanded}
+        onExpandedChange={setIsSearchExpanded}
+        breakpoint={540}
+        desktopMaxWidth="max-w-md"
+        triggerTitle="Search communities"
+      >
+        <FilterToggle
+          label="Verified"
+          icon={ShieldCheck}
+          checked={filters.verified}
+          onCheckedChange={(val) => setFilter("verified", val)}
+        />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterToggle
-            label="Verified"
-            icon={ShieldCheck}
-            activeColor="emerald"
-            checked={filters.verified}
-            onCheckedChange={(val) => setFilter("verified", val)}
-          />
+        <SortSelect
+          field={filters.sort}
+          dir={filters.dir}
+          defaultField="memberCount"
+          defaultDir="desc"
+          onSortChange={(sort, dir) => setFilters({ sort, dir })}
+          options={COMMUNITIES_SORT_OPTIONS}
+        />
 
-          <SortSelect
-            field={filters.sort}
-            dir={filters.dir}
-            defaultField="memberCount"
-            defaultDir="desc"
-            onSortChange={(sort, dir) => setFilters({ sort, dir })}
-            options={COMMUNITIES_SORT_OPTIONS}
-          />
-
-          {(Boolean(debouncedSearch) ||
-            filters.verified ||
-            filters.sort !== "memberCount" ||
-            filters.dir !== "desc") && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchInput("");
-                setFilters({
-                  search: "",
-                  verified: false,
-                  sort: "memberCount",
-                  dir: "desc",
-                });
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
-            >
-              Reset
-            </Button>
-          )}
-        </div>
-      </div>
+        {(Boolean(debouncedSearch) ||
+          filters.verified ||
+          filters.sort !== "memberCount" ||
+          filters.dir !== "desc") && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchInput("");
+              setIsSearchExpanded(false);
+              setFilters({
+                search: "",
+                verified: false,
+                sort: "memberCount",
+                dir: "desc",
+              });
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
+          >
+            Reset
+          </Button>
+        )}
+      </ExpandableSearch>
 
       {/* Main Content Area */}
       {isLoading ? (
@@ -177,6 +179,7 @@ export default function CommunitiesPage() {
           searchQuery={searchInput}
           onClear={() => {
             setSearchInput("");
+            setIsSearchExpanded(false);
             setFilters({ search: "" });
           }}
         />

@@ -62,7 +62,7 @@ export function AllRemindersModal({
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-4">
         <DialogHeader className="space-y-1 pr-6">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-secondary text-foreground/80">
               <Bell className="size-3.5" />
             </div>
             <DialogTitle className="font-heading text-base font-bold text-foreground">

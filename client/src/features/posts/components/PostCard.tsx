@@ -35,10 +35,12 @@ import { CommentItem } from "@/features/comments/components/CommentItem";
 import { EditPostModal } from "./EditPostModal";
 import { DeletePostDialog } from "./DeletePostDialog";
 import type { Post } from "@/types/domain";
+import type { CallerMembership } from "@/features/communities/api/types";
 
 export interface PostCardProps {
   post: Post;
   communitySlug?: string;
+  callerMembership?: CallerMembership | null;
   isArchived?: boolean;
   className?: string;
 }
@@ -46,6 +48,7 @@ export interface PostCardProps {
 export function PostCard({
   post,
   communitySlug,
+  callerMembership,
   isArchived = false,
   className,
 }: PostCardProps) {
@@ -56,8 +59,9 @@ export function PostCard({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
-  const { canPinPost, canEditPost, canDeletePost } =
-    usePermissions(communitySlug);
+  const { canPinPost, canEditPost, canDeletePost } = usePermissions(
+    callerMembership !== undefined ? callerMembership : communitySlug,
+  );
 
   const likeMutation = useTogglePostLike();
   const pinMutation = usePinPost();

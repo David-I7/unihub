@@ -13,6 +13,7 @@ import {
   keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
+  type QueryKey,
 } from "@tanstack/react-query";
 import type {
   CalendarEvent,
@@ -21,7 +22,15 @@ import type {
   Event,
   UpdateEventPayload,
 } from "./types";
-import queryClient from "@/lib/queryClient";
+import {
+  rollbackOptimisticContext,
+  updateQueryListItem,
+  removeQueryListItem,
+  updateInfiniteQueryItem,
+  removeInfiniteQueryItem,
+  patchDetailQuery,
+  type OptimisticRollbackContext,
+} from "@/lib/queryCacheUtils";
 import { toTimeUnit } from "@/lib/dateUtils";
 
 const UPCOMING_EVENTS_DAYS = 7;
@@ -41,6 +50,7 @@ export const calendarKeys = {
     [...calendarKeys.upcomingList(), params] as const,
   detailList: () => [...calendarKeys.all, "detail"] as const,
   detail: (id: string) => [...calendarKeys.detailList(), id] as const,
+  reminders: () => [...calendarKeys.all, "reminders"] as const,
 };
 
 export async function getEvents(
@@ -107,176 +117,29 @@ export function useCalendarEvent(
   });
 }
 
+function isLessThanSevenDaysAway(startTime: string): boolean {
+  const startMs = new Date(startTime).getTime();
+  const sevenDaysFromNow = Date.now() + UPCOMING_EVENTS_DAYS_MS;
+  return startMs <= sevenDaysFromNow;
+}
+
 export function useCreateEvent() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createEvent,
-    onSuccess: (data, createPayload) => {
-      // Invalidate upcoming events if the new event is within the next 7 days
-      const startMs = new Date(data.startTime).getTime();
-      const sevenDaysFromNow = Date.now() + UPCOMING_EVENTS_DAYS_MS;
-      if (startMs <= sevenDaysFromNow) {
-        if (import.meta.env.DEV) {
-          console.log(
-            "Invalidating upcoming events due to new event within 7 days",
-          );
-        }
-        queryClient.resetQueries({
+    onSuccess: (data) => {
+      if (isLessThanSevenDaysAway(data.startTime)) {
+        queryClient.invalidateQueries({
           queryKey: calendarKeys.upcomingList(),
         });
       }
 
-      // Invalidate only the events list queries whose date range contains the new event
-      const eventsCache = queryClient.getQueriesData<CalendarEvent[]>({
+      queryClient.invalidateQueries({
         queryKey: calendarKeys.eventsList(),
       });
-
-      for (const [key] of eventsCache) {
-        const shouldInvalidate = key.some((k) => {
-          if (typeof k === "object" && k !== null) {
-            if (!("year" in k) || !("month" in k)) {
-              return false;
-            }
-
-            const { year, month, communitySlug } = k as CalendarQueryParams;
-            const eventStart = new Date(data.startTime).getTime();
-            const rangeStart = new Date(year, month - 1, 1).getTime();
-            const rangeEnd = new Date(year, month, 0).getTime();
-            const isInRange =
-              eventStart >= rangeStart && eventStart <= rangeEnd;
-
-            return isInRange && createPayload.communitySlug === communitySlug;
-          }
-          return false;
-        });
-        if (shouldInvalidate) {
-          if (import.meta.env.DEV) {
-            console.log(
-              `Invalidating key: ${JSON.stringify(key)} events list due to new event`,
-            );
-          }
-          queryClient.resetQueries({ queryKey: key });
-          break;
-        }
-      }
     },
   });
 }
-
-interface UpdateContext {
-  previousDetail: Event | undefined;
-  previousEventsQueries: [readonly unknown[], CalendarEvent[] | undefined][];
-  previousUpcomingQueries: [
-    readonly unknown[],
-    InfiniteData<PaginatedResponse<CalendarEvent>> | undefined,
-  ][];
-}
-
-export const getQueryEventCache = (eventId: string) => {
-  const detailKey = calendarKeys.detail(eventId);
-  const detail = queryClient.getQueryData<Event>(detailKey);
-
-  const eventsCache = queryClient.getQueriesData<CalendarEvent[]>({
-    queryKey: calendarKeys.eventsList(),
-  });
-
-  // Snapshot all upcoming paginated queries
-  const upcomingCache = queryClient.getQueriesData<
-    InfiniteData<PaginatedResponse<CalendarEvent>>
-  >({ queryKey: calendarKeys.upcomingList() });
-
-  return {
-    previousDetail: detail,
-    previousEventsQueries: eventsCache,
-    previousUpcomingQueries: upcomingCache,
-  };
-};
-
-const optimisticEventUpdate = async (
-  eventId: string,
-  payload: UpdateEventPayload,
-) => {
-  await queryClient.cancelQueries({ queryKey: calendarKeys.all });
-
-  // Snapshot the current detail query
-  const { previousDetail, previousEventsQueries, previousUpcomingQueries } =
-    getQueryEventCache(eventId);
-
-  if (previousDetail) {
-    // Optimistically update the detail query
-    queryClient.setQueryData<Event>(calendarKeys.detail(eventId), {
-      ...previousDetail,
-      ...payload,
-    });
-  }
-
-  // Optimistically update every events list query
-  for (const [key] of previousEventsQueries) {
-    queryClient.setQueryData<CalendarEvent[]>(key, (old) => {
-      if (!old) return old;
-
-      return old.map((event) =>
-        event.id === eventId ? { ...event, ...payload } : event,
-      );
-    });
-  }
-
-  // Optimistically update every upcoming paginated query
-  for (const [key] of previousUpcomingQueries) {
-    queryClient.setQueryData<InfiniteData<PaginatedResponse<CalendarEvent>>>(
-      key,
-      (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            content: page.content.map((event) =>
-              event.id === eventId && payload
-                ? { ...event, ...payload }
-                : event,
-            ),
-          })),
-        };
-      },
-    );
-  }
-  return { previousDetail, previousEventsQueries, previousUpcomingQueries };
-};
-
-const onDeleteSuccess = async (eventId: string) => {
-  await queryClient.cancelQueries({ queryKey: calendarKeys.all });
-
-  const { previousEventsQueries, previousUpcomingQueries } =
-    getQueryEventCache(eventId);
-
-  // Remove the event from the detail query
-  queryClient.removeQueries({ queryKey: calendarKeys.detail(eventId) });
-
-  // Remove the event from every events list query
-  for (const [key] of previousEventsQueries) {
-    queryClient.setQueryData<CalendarEvent[]>(key, (old) => {
-      if (!old) return old;
-      return old.filter((event) => event.id !== eventId);
-    });
-  }
-  // Remove the event from every upcoming paginated query
-  for (const [key] of previousUpcomingQueries) {
-    queryClient.setQueryData<InfiniteData<PaginatedResponse<CalendarEvent>>>(
-      key,
-      (old) => {
-        if (!old) return old;
-        return {
-          ...old,
-          pages: old.pages.map((page) => ({
-            ...page,
-            content: page.content.filter((event) => event.id !== eventId),
-          })),
-        };
-      },
-    );
-  }
-};
 
 export function useUpdateEvent() {
   const queryClient = useQueryClient();
@@ -289,36 +152,108 @@ export function useUpdateEvent() {
       payload: UpdateEventPayload;
     }) => updateEvent(id, payload),
 
-    onMutate: async ({ id, payload }): Promise<UpdateContext> => {
-      return optimisticEventUpdate(id, payload);
+    onMutate: async ({
+      id,
+      payload,
+    }): Promise<OptimisticRollbackContext<Event, unknown>> => {
+      await queryClient.cancelQueries({ queryKey: calendarKeys.all });
+
+      const detailKey = calendarKeys.detail(id);
+      const previousDetail = queryClient.getQueryData<Event>(detailKey);
+
+      const previousEventsQueries = queryClient.getQueriesData<CalendarEvent[]>(
+        {
+          queryKey: calendarKeys.eventsList(),
+        },
+      );
+      const previousUpcomingQueries = queryClient.getQueriesData<
+        InfiniteData<PaginatedResponse<CalendarEvent>>
+      >({ queryKey: calendarKeys.upcomingList() });
+
+      patchDetailQuery<Event>(queryClient, detailKey, (old) => ({
+        ...old,
+        ...payload,
+      }));
+
+      updateQueryListItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.eventsList(),
+        id,
+        (event) => ({ ...event, ...payload }),
+      );
+
+      updateInfiniteQueryItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.upcomingList(),
+        id,
+        (event) => ({ ...event, ...payload }),
+      );
+
+      return {
+        previousDetail: [detailKey, previousDetail],
+        previousQueries: [
+          ...previousEventsQueries,
+          ...previousUpcomingQueries,
+        ] as [QueryKey, unknown][],
+      };
     },
 
-    onError: (_err, { id }, context) => {
-      if (context) {
-        queryClient.setQueryData(
-          calendarKeys.detail(id),
-          context.previousDetail,
-        );
-
-        // Roll back all events list queries
-        for (const [key, data] of context.previousEventsQueries) {
-          queryClient.setQueryData(key, data);
-        }
-
-        // Roll back all upcoming paginated queries
-        for (const [key, data] of context.previousUpcomingQueries) {
-          queryClient.setQueryData(key, data);
-        }
-      }
+    onError: (_err, _vars, context) => {
+      rollbackOptimisticContext(queryClient, context);
     },
   });
 }
 
 export function useDeleteEvent() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: deleteEvent,
+
+    onMutate: async (
+      eventId,
+    ): Promise<OptimisticRollbackContext<Event, unknown>> => {
+      await queryClient.cancelQueries({ queryKey: calendarKeys.all });
+
+      const detailKey = calendarKeys.detail(eventId);
+      const previousDetail = queryClient.getQueryData<Event>(detailKey);
+
+      const previousEventsQueries = queryClient.getQueriesData<CalendarEvent[]>(
+        {
+          queryKey: calendarKeys.eventsList(),
+        },
+      );
+      const previousUpcomingQueries = queryClient.getQueriesData<
+        InfiniteData<PaginatedResponse<CalendarEvent>>
+      >({ queryKey: calendarKeys.upcomingList() });
+
+      removeQueryListItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.eventsList(),
+        eventId,
+      );
+
+      removeInfiniteQueryItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.upcomingList(),
+        eventId,
+      );
+
+      return {
+        previousDetail: [detailKey, previousDetail],
+        previousQueries: [
+          ...previousEventsQueries,
+          ...previousUpcomingQueries,
+        ] as [QueryKey, unknown][],
+      };
+    },
+
+    onError: (_err, _vars, context) => {
+      rollbackOptimisticContext(queryClient, context);
+    },
+
     onSuccess: (_, eventId) => {
-      onDeleteSuccess(eventId);
+      queryClient.removeQueries({ queryKey: calendarKeys.detail(eventId) });
+      queryClient.invalidateQueries({ queryKey: calendarKeys.reminders() });
     },
   });
 }

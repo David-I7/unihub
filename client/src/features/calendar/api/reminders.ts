@@ -8,21 +8,28 @@ import { useAuthStore } from "@/features/auth";
 import {
   useMutation,
   useInfiniteQuery,
+  useQueryClient,
   keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
 } from "@tanstack/react-query";
-import { calendarKeys, getQueryEventCache } from "./events";
+import { calendarKeys } from "./events";
 import type {
+  CalendarEvent,
+  Event,
   EventReminder,
   CreateReminderPayload,
   UserReminder,
   ReminderStatus,
 } from "./types";
-import queryClient from "@/lib/queryClient";
+import {
+  updateQueryListItem,
+  updateInfiniteQueryItem,
+  patchDetailQuery,
+} from "@/lib/queryCacheUtils";
 
 export const reminderKeys = {
-  all: ["calendar", "reminders"] as const,
+  all: calendarKeys.reminders(),
   lists: () => [...reminderKeys.all, "list"] as const,
   list: (params: { status?: ReminderStatus; size?: number } = {}) =>
     [...reminderKeys.lists(), params] as const,
@@ -52,63 +59,6 @@ export async function getUserReminders(
     { params: { status, page, size } },
   );
   return response.data;
-}
-
-function updateUserRemindersCache(eventId: string) {
-  const { previousEventsQueries, previousUpcomingQueries } =
-    getQueryEventCache(eventId);
-
-  // Invalidate current event detail query to ensure the new reminder is fetched
-  if (import.meta.env.DEV) {
-    console.log(
-      `Invalidating event detail query for eventId=${eventId} due to reminder creation/deletion`,
-    );
-  }
-  queryClient.invalidateQueries({
-    queryKey: calendarKeys.detail(eventId),
-  });
-
-  // Remove cached upcoming events if reminder was created for that event
-  for (const [key, upcomingQuery] of previousUpcomingQueries) {
-    if (!upcomingQuery) continue;
-
-    for (const upcomingEvent of upcomingQuery.pages) {
-      for (const event of upcomingEvent.content) {
-        if (event.id === eventId) {
-          if (import.meta.env.DEV) {
-            console.log(
-              `Invalidating upcoming event query due to it containg the eventId=${eventId} for which a reminder was created/deleted`,
-            );
-          }
-          queryClient.resetQueries({ queryKey: key });
-          break;
-        }
-      }
-    }
-  }
-
-  // Remove cached reminders list to ensure the new reminder is fetched
-  if (import.meta.env.DEV) {
-    console.log(`Invalidating reminders list query`);
-  }
-  queryClient.resetQueries({ queryKey: reminderKeys.all });
-
-  // Remove cached calendar events list that contain the event for which the reminder was created
-  for (const [key, eventList] of previousEventsQueries) {
-    if (!eventList) continue;
-
-    for (const event of eventList) {
-      if (event.id === eventId) {
-        if (import.meta.env.DEV) {
-          console.log(
-            `Invalidating calendar event query due to it containg the eventId=${eventId} for which a reminder was created/deleted`,
-          );
-        }
-        queryClient.resetQueries({ queryKey: key });
-        break;
-      }
-    }
-  }
 }
 
 export function useInfiniteUserReminders(
@@ -149,6 +99,7 @@ export function useInfiniteUserReminders(
 }
 
 export function useCreateReminder() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({
       eventId,
@@ -158,16 +109,63 @@ export function useCreateReminder() {
       payload?: CreateReminderPayload;
     }) => createReminder(eventId, payload),
     onSuccess: (data) => {
-      updateUserRemindersCache(data.eventId);
+      updateQueryListItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.eventsList(),
+        data.eventId,
+        (ev) => ({ ...ev, isSubscribed: true }),
+      );
+
+      updateInfiniteQueryItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.upcomingList(),
+        data.eventId,
+        (ev) => ({ ...ev, isSubscribed: true }),
+      );
+
+      patchDetailQuery<Event>(
+        queryClient,
+        calendarKeys.detail(data.eventId),
+        (old) => ({
+          ...old,
+          reminders: [data],
+        }),
+      );
+
+      queryClient.invalidateQueries({ queryKey: reminderKeys.all });
     },
   });
 }
 
 export function useDeleteReminder() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (eventId: string) => deleteReminder(eventId),
     onSuccess: (_res, eventId) => {
-      updateUserRemindersCache(eventId);
+      updateQueryListItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.eventsList(),
+        eventId,
+        (ev) => ({ ...ev, isSubscribed: false }),
+      );
+
+      updateInfiniteQueryItem<CalendarEvent>(
+        queryClient,
+        calendarKeys.upcomingList(),
+        eventId,
+        (ev) => ({ ...ev, isSubscribed: false }),
+      );
+
+      patchDetailQuery<Event>(
+        queryClient,
+        calendarKeys.detail(eventId),
+        (old) => ({
+          ...old,
+          reminders: [],
+        }),
+      );
+
+      queryClient.invalidateQueries({ queryKey: reminderKeys.all });
     },
   });
 }

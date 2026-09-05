@@ -9,19 +9,13 @@ import type {
 
 import { useCommunityMembership } from "@/features/communities/api/getCommunityMembership";
 
-export function usePermissions(
-  target?: string | CallerMembership | null,
-  targetMembership?: CallerMembership | null,
-) {
+export function usePermissions(target?: string | CallerMembership | null) {
   const user = useAuthStore((state) => state.user);
   const { data: profile } = useUserProfile({ enabled: Boolean(user) });
 
   const communitySlug = typeof target === "string" ? target : "";
   const shouldFetchMembership =
-    typeof target === "string" &&
-    !targetMembership &&
-    Boolean(user) &&
-    communitySlug.length > 0;
+    typeof target === "string" && Boolean(user) && communitySlug.length > 0;
 
   const { data: membershipData } = useCommunityMembership(communitySlug, {
     enabled: shouldFetchMembership,
@@ -30,7 +24,7 @@ export function usePermissions(
   let callerMembership: CallerMembership | null | undefined;
 
   if (typeof target === "string") {
-    callerMembership = targetMembership ?? membershipData ?? null;
+    callerMembership = membershipData ?? null;
   } else {
     callerMembership = target;
   }
@@ -104,7 +98,11 @@ export function usePermissions(
 
   const canEditComment = useCallback(
     (commentOwnerId?: string | number | null) => {
-      if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
+      if (
+        user &&
+        commentOwnerId &&
+        String(user.id) === String(commentOwnerId)
+      ) {
         return true;
       }
       return false;
@@ -114,7 +112,11 @@ export function usePermissions(
 
   const canDeleteComment = useCallback(
     (commentOwnerId?: string | number | null) => {
-      if (user && commentOwnerId && String(user.id) === String(commentOwnerId)) {
+      if (
+        user &&
+        commentOwnerId &&
+        String(user.id) === String(commentOwnerId)
+      ) {
         return true;
       }
       return hasPermission(PERMISSIONS.MODERATE_COMMENT);
@@ -147,7 +149,11 @@ export function usePermissions(
 
   const canEditMaterial = useCallback(
     (materialOwnerId?: string | number | null) => {
-      if (user && materialOwnerId && String(user.id) === String(materialOwnerId)) {
+      if (
+        user &&
+        materialOwnerId &&
+        String(user.id) === String(materialOwnerId)
+      ) {
         return true;
       }
       return false;
@@ -157,7 +163,11 @@ export function usePermissions(
 
   const canDeleteMaterial = useCallback(
     (materialOwnerId?: string | number | null) => {
-      if (user && materialOwnerId && String(user.id) === String(materialOwnerId)) {
+      if (
+        user &&
+        materialOwnerId &&
+        String(user.id) === String(materialOwnerId)
+      ) {
         return true;
       }
       return hasPermission(PERMISSIONS.MODERATE_MATERIAL);
@@ -226,4 +236,3 @@ export function usePermissions(
     canDeleteEvent,
   };
 }
-

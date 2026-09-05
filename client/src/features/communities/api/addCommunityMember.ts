@@ -21,8 +21,6 @@ export function useAddCommunityMember() {
   return useMutation({
     mutationFn: addCommunityMember,
     onSuccess: (_, variables) => {
-      // Must invalidate: members list, home detail, infinite communities (to get the new member count).
-
       queryClient.resetQueries({
         queryKey: communityKeys.communityInfinities(),
       });

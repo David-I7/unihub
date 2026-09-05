@@ -9,21 +9,46 @@ import {
 import {
   useCommunityHome,
   CommunityHero,
+  CommunityHeroSkeleton,
   CommunityStudyYearsTab,
+  CommunityStudyYearsTabSkeleton,
   CommunityReadmeTab,
+  CommunityReadmeTabSkeleton,
   CommunityPostsTab,
+  CommunityPostsTabSkeleton,
   CommunityMembersTab,
-  CommunityDetailSkeleton,
+  CommunityMembersTabSkeleton,
 } from "@/features/communities";
-import { CommunityTeachersTab } from "@/features/teachers";
+import {
+  CommunityTeachersTab,
+  CommunityTeachersTabSkeleton,
+} from "@/features/teachers";
 import { AppBreadcrumb } from "@/components/app/AppBreadcrumb";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useUrlTab } from "@/hooks/useUrlTab";
+import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
 
-const VALID_TABS = ["study-years", "teachers", "members", "readme", "posts"] as const;
+const VALID_TABS = [
+  "study-years",
+  "teachers",
+  "members",
+  "readme",
+  "posts",
+] as const;
 type CommunityTab = (typeof VALID_TABS)[number];
 const DEFAULT_TAB: CommunityTab = "study-years";
+
+interface CommunityTabsFilter {
+  tab: CommunityTab;
+}
+
+const TAB_FILTER_SCHEMA: FilterSchema<CommunityTabsFilter> = {
+  tab: {
+    defaultValue: DEFAULT_TAB,
+    allowedValues: VALID_TABS,
+    paramKey: "tab",
+  },
+};
 
 export default function CommunityDetailPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
@@ -35,18 +60,17 @@ export default function CommunityDetailPage() {
     refetch: refetchCommunity,
   } = useCommunityHome(communitySlug);
 
-  const [currentTab, setTab] = useUrlTab<CommunityTab>(DEFAULT_TAB, {
-    validTabs: VALID_TABS,
-  });
+  const { filters, setFilter } = useUrlFilters(TAB_FILTER_SCHEMA);
+  const currentTab = filters.tab;
 
   const community = data?.community;
   const studyYears = data?.studyYears ?? [];
+  const callerMembership = data?.callerMembership;
 
-  if (isCommunityLoading) {
-    return <CommunityDetailSkeleton />;
-  }
+  const isInitialLoading =
+    isCommunityLoading || !community || community.slug !== communitySlug;
 
-  if (isCommunityError || !community) {
+  if (isCommunityError && !community) {
     return (
       <div className="min-h-full space-y-6 pb-12">
         <AppBreadcrumb />
@@ -60,23 +84,25 @@ export default function CommunityDetailPage() {
     );
   }
 
-  const callerMembership = data?.callerMembership;
-
   return (
     <div className="min-h-full pb-12">
       {/* Community Hero Header */}
-      <CommunityHero
-        community={community}
-        studyYears={studyYears}
-        callerMembership={callerMembership}
-      />
+      {isInitialLoading ? (
+        <CommunityHeroSkeleton />
+      ) : (
+        <CommunityHero
+          community={community}
+          studyYears={studyYears}
+          callerMembership={callerMembership}
+        />
+      )}
 
       {/* Main Container for Tabs and Content */}
       <div className="w-full space-y-6 pt-2">
         {/* Main Community Tabs */}
         <Tabs
           value={currentTab}
-          onValueChange={(val) => setTab(val as CommunityTab)}
+          onValueChange={(val) => setFilter("tab", val as CommunityTab)}
           className="w-full space-y-6 min-w-0"
         >
           <div className="w-full overflow-x-auto no-scrollbar">
@@ -112,45 +138,65 @@ export default function CommunityDetailPage() {
             value="study-years"
             className="focus-visible:outline-none"
           >
-            <CommunityStudyYearsTab
-              communitySlug={community.slug}
-              studyYears={studyYears}
-              callerMembership={callerMembership}
-            />
+            {isInitialLoading ? (
+              <CommunityStudyYearsTabSkeleton />
+            ) : (
+              <CommunityStudyYearsTab
+                communitySlug={community.slug}
+                studyYears={studyYears}
+                callerMembership={callerMembership}
+              />
+            )}
           </TabsContent>
 
           <TabsContent
             value="teachers"
             className="focus-visible:outline-none"
           >
-            <CommunityTeachersTab
-              communitySlug={community.slug}
-              callerMembership={callerMembership}
-            />
+            {isInitialLoading ? (
+              <CommunityTeachersTabSkeleton />
+            ) : (
+              <CommunityTeachersTab
+                communitySlug={community.slug}
+                callerMembership={callerMembership}
+              />
+            )}
           </TabsContent>
 
           <TabsContent
             value="members"
             className="focus-visible:outline-none"
           >
-            <CommunityMembersTab
-              communitySlug={community.slug}
-              callerMembership={callerMembership}
-            />
+            {isInitialLoading ? (
+              <CommunityMembersTabSkeleton />
+            ) : (
+              <CommunityMembersTab
+                communitySlug={community.slug}
+                callerMembership={callerMembership}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="readme" className="focus-visible:outline-none">
-            <CommunityReadmeTab
-              community={community}
-              callerMembership={callerMembership}
-            />
+            {isInitialLoading ? (
+              <CommunityReadmeTabSkeleton />
+            ) : (
+              <CommunityReadmeTab
+                community={community}
+                callerMembership={callerMembership}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="posts" className="focus-visible:outline-none">
-            <CommunityPostsTab
-              communitySlug={community.slug}
-              callerMembership={callerMembership}
-            />
+            {isInitialLoading ? (
+              <CommunityPostsTabSkeleton />
+            ) : (
+              <CommunityPostsTab
+                communitySlug={community.slug}
+                callerMembership={callerMembership}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>

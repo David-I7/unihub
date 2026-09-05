@@ -18,7 +18,11 @@ import type {
   NotificationQueryParams,
   UnreadCountResponse,
 } from "./types";
-import queryClient from "@/lib/queryClient";
+import {
+  rollbackOptimisticContext,
+  updateInfiniteQueryItem,
+  patchDetailQuery,
+} from "@/lib/queryCacheUtils";
 
 export const notificationKeys = {
   all: ["notifications"] as const,
@@ -26,8 +30,7 @@ export const notificationKeys = {
   infinite: (params: Omit<NotificationQueryParams, "page"> = {}) =>
     [...notificationKeys.infinites(), params] as const,
   unreadCounts: () => [...notificationKeys.all, "unread-count"] as const,
-  unreadCount: (category?: NotificationCategory) =>
-    [...notificationKeys.unreadCounts(), category ?? "ALL"] as const,
+  unreadCount: () => [...notificationKeys.unreadCounts(), "ALL"] as const,
 };
 
 export async function getNotifications(
@@ -76,22 +79,12 @@ export function useInfiniteNotifications(
   });
 }
 
-export function useUnreadNotificationCount(category?: NotificationCategory) {
+export function useUnreadNotificationCount() {
   const user = useAuthStore((state) => state.user);
 
   return useQuery({
-    queryKey: notificationKeys.unreadCount(category),
-    queryFn: async () => {
-      const prevCount = queryClient.getQueryData<number>(
-        notificationKeys.unreadCount(category),
-      );
-      const newCount = await getUnreadCount(category);
-
-      if (newCount !== prevCount) {
-        queryClient.resetQueries({ queryKey: notificationKeys.infinites() });
-      }
-      return newCount;
-    },
+    queryKey: notificationKeys.unreadCount(),
+    queryFn: () => getUnreadCount(),
     enabled: Boolean(user),
     refetchInterval: 60000,
   });
@@ -111,47 +104,33 @@ export function useMarkNotificationAsRead() {
         queryKey: notificationKeys.infinites(),
       });
 
-      const previousCount =
-        queryClient.getQueryData<number>(notificationKeys.unreadCount()) ?? 0;
+      const previousCount = queryClient.getQueriesData<number>({
+        queryKey: notificationKeys.unreadCount(),
+      })?.[0];
 
       // Optimistically update infinite queries
-      queryClient.setQueriesData<
-        InfiniteData<PaginatedResponse<AppNotification>>
-      >({ queryKey: notificationKeys.infinites() }, (oldData) => {
-        if (!oldData?.pages) return oldData;
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            content: page.content.map((item) =>
-              item.id === notificationId ? { ...item, isRead: true } : item,
-            ),
-          })),
-        };
-      });
+      updateInfiniteQueryItem<AppNotification>(
+        queryClient,
+        notificationKeys.infinites(),
+        notificationId,
+        (item) => ({ ...item, isRead: true }),
+      );
 
       // Optimistically decrement unread count
-      queryClient.setQueriesData<number>(
-        { queryKey: notificationKeys.unreadCount() },
-        (oldCount) => {
-          if (typeof oldCount !== "number") return oldCount;
-          return Math.max(0, oldCount - 1);
-        },
+      patchDetailQuery<number>(
+        queryClient,
+        notificationKeys.unreadCount(),
+        (item) => Math.max(0, item - 1),
       );
 
       return { previousData, previousCount };
     },
     onError: (_err, _variables, context) => {
       if (context) {
-        const { previousData, previousCount } = context;
-
-        for (const [queryKey, data] of previousData ?? []) {
-          queryClient.setQueryData(queryKey, data);
-        }
-        queryClient.setQueriesData<number>(
-          { queryKey: notificationKeys.unreadCount() },
-          () => previousCount,
-        );
+        rollbackOptimisticContext(queryClient, {
+          previousDetail: context.previousCount,
+          previousQueries: context.previousData,
+        });
       }
     },
   });
@@ -171,26 +150,22 @@ export function useMarkAllNotificationsAsRead() {
         queryKey: notificationKeys.infinites(),
       });
 
-      const previousCount =
-        queryClient.getQueryData<number>(notificationKeys.unreadCount()) ?? 0;
+      const previousCount = queryClient.getQueriesData<number>({
+        queryKey: notificationKeys.unreadCount(),
+      })?.[0];
 
       // Optimistically update infinite queries
-      queryClient.setQueriesData<
-        InfiniteData<PaginatedResponse<AppNotification>>
-      >({ queryKey: notificationKeys.infinites() }, (oldData) => {
-        if (!oldData?.pages) return oldData;
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            content: page.content.map((item) => ({ ...item, isRead: true })),
-          })),
-        };
-      });
+      updateInfiniteQueryItem<AppNotification>(
+        queryClient,
+        notificationKeys.infinites(),
+        () => true,
+        (item) => ({ ...item, isRead: true }),
+      );
 
       // Optimistically decrement unread count
-      queryClient.setQueriesData<number>(
-        { queryKey: notificationKeys.unreadCount() },
+      patchDetailQuery<number>(
+        queryClient,
+        notificationKeys.unreadCount(),
         () => 0,
       );
 
@@ -198,15 +173,10 @@ export function useMarkAllNotificationsAsRead() {
     },
     onError: (_err, _variables, context) => {
       if (context) {
-        const { previousData, previousCount } = context;
-
-        for (const [queryKey, data] of previousData) {
-          queryClient.setQueryData(queryKey, data);
-        }
-        queryClient.setQueriesData<number>(
-          { queryKey: notificationKeys.unreadCount() },
-          () => previousCount,
-        );
+        rollbackOptimisticContext(queryClient, {
+          previousDetail: context.previousCount,
+          previousQueries: context.previousData,
+        });
       }
     },
   });

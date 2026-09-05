@@ -504,7 +504,15 @@ export function EventDetailSheet() {
                   Course
                 </div>
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  {activeEvent.communityName}
+                  <div>
+                    {activeEvent.communityName}
+                    {activeEvent.studyYear && (
+                      <span className="text-muted-foreground">
+                        {" "}
+                        • {activeEvent.studyYear}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     {abbreviation && (
                       <span className="font-mono text-[11px] font-bold text-foreground bg-muted px-1.5 py-0.5 rounded">
@@ -514,11 +522,6 @@ export function EventDetailSheet() {
                     <span className="font-semibold text-foreground">
                       {activeEvent.courseName}
                     </span>
-                    {activeEvent.studyYear && (
-                      <span className="text-muted-foreground">
-                        • {activeEvent.studyYear}
-                      </span>
-                    )}
                   </div>
                 </div>
 

@@ -11,10 +11,12 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { formatStudyYearName, type StudyYearMetrics } from "../api/types";
 import { DeleteStudyYearDialog } from "./DeleteStudyYearDialog";
+import type { CallerMembership } from "@/features/communities/api/types";
 
 interface StudyYearCardProps {
   studyYear: StudyYearMetrics;
   communitySlug?: string;
+  callerMembership?: CallerMembership | null;
   onClick?: () => void;
   onDeleted?: () => void;
 }
@@ -22,11 +24,14 @@ interface StudyYearCardProps {
 export function StudyYearCard({
   studyYear,
   communitySlug,
+  callerMembership,
   onClick,
   onDeleted,
 }: StudyYearCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { canDeleteStudyYear } = usePermissions(communitySlug);
+  const { canDeleteStudyYear } = usePermissions(
+    callerMembership !== undefined ? callerMembership : communitySlug,
+  );
 
   const displayName = formatStudyYearName(studyYear.studyYearName);
   const yearNumber = displayName.replace(/\D/g, "") || "1";

@@ -13,11 +13,23 @@ import {
   ArchivedCourseBanner,
 } from "@/features/courses";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useUrlTab } from "@/hooks/useUrlTab";
+import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
 
 const VALID_TABS = ["about", "materials", "posts"] as const;
 type CourseTab = (typeof VALID_TABS)[number];
 const DEFAULT_TAB: CourseTab = "about";
+
+interface CourseTabsFilter {
+  tab: CourseTab;
+}
+
+const TAB_FILTER_SCHEMA: FilterSchema<CourseTabsFilter> = {
+  tab: {
+    defaultValue: DEFAULT_TAB,
+    allowedValues: VALID_TABS,
+    paramKey: "tab",
+  },
+};
 
 export default function CourseDetailPage() {
   const {
@@ -39,9 +51,8 @@ export default function CourseDetailPage() {
     refetch,
   } = useCourseHome(communitySlug, studyYearSlug, courseSlug);
 
-  const [currentTab, setTab] = useUrlTab<CourseTab>(DEFAULT_TAB, {
-    validTabs: VALID_TABS,
-  });
+  const { filters, setFilter } = useUrlFilters(TAB_FILTER_SCHEMA);
+  const currentTab = filters.tab;
 
   if (isLoading) {
     return <CourseSkeleton />;
@@ -101,7 +112,7 @@ export default function CourseDetailPage() {
       {/* Course Tabs (Top Navigation with greyed-out read-only styling when archived) */}
       <Tabs
         value={currentTab}
-        onValueChange={(val) => setTab(val as CourseTab)}
+        onValueChange={(val) => setFilter("tab", val as CourseTab)}
         className={cn(
           "w-full space-y-6 min-w-0 transition-all duration-200",
           isArchived && "opacity-80 grayscale-[30%]",

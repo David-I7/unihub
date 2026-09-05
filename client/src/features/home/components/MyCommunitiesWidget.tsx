@@ -111,13 +111,13 @@ export function MyCommunitiesWidget() {
 
           {/* Load More Button */}
           {hasNextPage && (
-            <div className="pt-2 pb-4 flex justify-center">
+            <div className="pt-2 flex justify-center">
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
-                className="w-full text-xs font-semibold text-muted-foreground hover:text-foreground cursor-pointer gap-1.5"
+                className="w-full text-xs font-semibold text-foreground hover:text-foreground cursor-pointer gap-1.5"
               >
                 {isFetchingNextPage ? (
                   <>

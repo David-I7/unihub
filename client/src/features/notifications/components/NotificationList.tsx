@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { AppNotification, NotificationCategory } from "../api/types";
@@ -17,7 +18,7 @@ interface NotificationListProps {
   isUnreadOnly?: boolean;
 }
 
-export function NotificationList({
+export const NotificationList = memo(function NotificationList({
   notifications,
   isLoading,
   isFetchingNextPage,
@@ -26,6 +27,11 @@ export function NotificationList({
   category,
   isUnreadOnly,
 }: NotificationListProps) {
+  const groups = useMemo(
+    () => groupNotificationsByTime(notifications),
+    [notifications]
+  );
+
   if (isLoading) {
     return <NotificationSkeleton />;
   }
@@ -38,8 +44,6 @@ export function NotificationList({
       />
     );
   }
-
-  const groups = groupNotificationsByTime(notifications);
 
   return (
     <div className="space-y-6">
@@ -86,4 +90,4 @@ export function NotificationList({
       )}
     </div>
   );
-}
+});

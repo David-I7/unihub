@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import type { CalendarEvent } from "../api/types";
 import { CalendarDayCell } from "./CalendarDayCell";
 import { getEventDateKey, getLocalDateKey } from "@/lib/dateUtils";
@@ -10,7 +10,7 @@ interface CalendarMonthGridProps {
 }
 
 const WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
+const EMPTY_EVENTS: CalendarEvent[] = [];
 
 interface GridCell {
   dayNumber: number;
@@ -21,7 +21,7 @@ interface GridCell {
   events: CalendarEvent[];
 }
 
-export function CalendarMonthGrid({
+export const CalendarMonthGrid = memo(function CalendarMonthGrid({
   currentDate,
   events,
   canCreateEvent = true,
@@ -71,88 +71,89 @@ export function CalendarMonthGrid({
       const dayOfWeek = prevDate.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      result.push({
-        dayNumber: dayNum,
-        dateStr,
-        isCurrentMonth: false,
-        isToday: dateStr === todayStr,
-        isWeekend,
-        events: eventsByDate.get(dateStr) ?? [],
-      });
-    }
+        result.push({
+          dayNumber: dayNum,
+          dateStr,
+          isCurrentMonth: false,
+          isToday: dateStr === todayStr,
+          isWeekend,
+          events: eventsByDate.get(dateStr) ?? EMPTY_EVENTS,
+        });
+      }
 
-    // Days in current month
-    for (let day = 1; day <= daysInMonth; day++) {
-      const curDate = new Date(year, month, day);
-      const dateStr = getLocalDateKey(curDate);
-      const dayOfWeek = curDate.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-
-      result.push({
-        dayNumber: day,
-        dateStr,
-        isCurrentMonth: true,
-        isToday: dateStr === todayStr,
-        isWeekend,
-        events: eventsByDate.get(dateStr) ?? [],
-      });
-    }
-
-    // Leading days from next month to complete standard weeks
-    const remainingDays = 7 - (result.length % 7);
-    if (remainingDays < 7) {
-      for (let day = 1; day <= remainingDays; day++) {
-        const nextDate = new Date(year, month + 1, day);
-        const dateStr = getLocalDateKey(nextDate);
-        const dayOfWeek = nextDate.getDay();
+      // Days in current month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const curDate = new Date(year, month, day);
+        const dateStr = getLocalDateKey(curDate);
+        const dayOfWeek = curDate.getDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
         result.push({
           dayNumber: day,
           dateStr,
-          isCurrentMonth: false,
+          isCurrentMonth: true,
           isToday: dateStr === todayStr,
           isWeekend,
-          events: eventsByDate.get(dateStr) ?? [],
+          events: eventsByDate.get(dateStr) ?? EMPTY_EVENTS,
         });
       }
-    }
 
-    return result;
-  }, [year, month, eventsByDate]);
+      // Leading days from next month to complete standard weeks
+      const remainingDays = 7 - (result.length % 7);
+      if (remainingDays < 7) {
+        for (let day = 1; day <= remainingDays; day++) {
+          const nextDate = new Date(year, month + 1, day);
+          const dateStr = getLocalDateKey(nextDate);
+          const dayOfWeek = nextDate.getDay();
+          const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-  return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-xs">
-      {/* Weekday Column Headers */}
-      <div className="grid grid-cols-7 border-b bg-muted/40 text-center text-xs font-semibold text-muted-foreground">
-        {WEEKDAYS.map((dayName, idx) => (
-          <div
-            key={dayName}
-            className={`py-2.5 ${idx < 6 ? "border-r" : ""} ${
-              idx >= 5 ? "bg-muted/60 text-muted-foreground/80" : ""
-            }`}
-          >
-            {dayName}
-          </div>
-        ))}
+          result.push({
+            dayNumber: day,
+            dateStr,
+            isCurrentMonth: false,
+            isToday: dateStr === todayStr,
+            isWeekend,
+            events: eventsByDate.get(dateStr) ?? EMPTY_EVENTS,
+          });
+        }
+      }
+
+      return result;
+    }, [year, month, eventsByDate]);
+
+    return (
+      <div className="overflow-hidden rounded-2xl border bg-card shadow-xs">
+        {/* Weekday Column Headers */}
+        <div className="grid grid-cols-7 border-b bg-muted/40 text-center text-xs font-semibold text-muted-foreground">
+          {WEEKDAYS.map((dayName, idx) => (
+            <div
+              key={dayName}
+              className={`py-2.5 ${idx < 6 ? "border-r" : ""} ${
+                idx >= 5 ? "bg-muted/60 text-muted-foreground/80" : ""
+              }`}
+            >
+              {dayName}
+            </div>
+          ))}
+        </div>
+
+        {/* Month Days Grid */}
+        <div className="grid grid-cols-7 auto-rows-fr divide-y divide-border bg-border/40">
+          {cells.map((cell, cellIdx) => (
+            <CalendarDayCell
+              key={cell.dateStr + "-" + cellIdx}
+              dayNumber={cell.dayNumber}
+              dateStr={cell.dateStr}
+              isCurrentMonth={cell.isCurrentMonth}
+              isToday={cell.isToday}
+              isWeekend={cell.isWeekend}
+              events={cell.events}
+              borderRight={cellIdx % 7 !== 6}
+              canCreateEvent={canCreateEvent}
+            />
+          ))}
+        </div>
       </div>
-
-      {/* Month Days Grid */}
-      <div className="grid grid-cols-7 auto-rows-fr divide-y divide-border bg-border/40">
-        {cells.map((cell, cellIdx) => (
-          <CalendarDayCell
-            key={cell.dateStr + "-" + cellIdx}
-            dayNumber={cell.dayNumber}
-            dateStr={cell.dateStr}
-            isCurrentMonth={cell.isCurrentMonth}
-            isToday={cell.isToday}
-            isWeekend={cell.isWeekend}
-            events={cell.events}
-            borderRight={cellIdx % 7 !== 6}
-            canCreateEvent={canCreateEvent}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
+    );
+  }
+);

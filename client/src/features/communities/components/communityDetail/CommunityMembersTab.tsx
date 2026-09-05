@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { User, UserPlus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/app/SearchInput";
+import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
@@ -60,6 +60,7 @@ export function CommunityMembersTab({
     handleCommitSearch,
     350,
   );
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
@@ -74,9 +75,7 @@ export function CommunityMembersTab({
     user?.role === "ROOT";
 
   const roleParam =
-    filters.role !== "ALL"
-      ? (filters.role as CommunityMemberRole)
-      : undefined;
+    filters.role !== "ALL" ? (filters.role as CommunityMemberRole) : undefined;
 
   const {
     data,
@@ -112,55 +111,52 @@ export function CommunityMembersTab({
 
   const handleClearFilters = () => {
     setSearchInput("");
+    setIsSearchExpanded(false);
     resetFilters();
   };
 
   return (
     <div className="space-y-6">
-      {/* Unified Toolbar: Search on left, Filters on right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex-1 min-w-[180px] max-w-md">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search members by username..."
-            totalCount={totalMembers}
-            resultLabel="members"
-          />
-        </div>
+      {/* Unified Toolbar: Expandable search on left, filters on right */}
+      <ExpandableSearch
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search members by username..."
+        totalCount={totalMembers}
+        resultLabel="members"
+        isExpanded={isSearchExpanded}
+        onExpandedChange={setIsSearchExpanded}
+        breakpoint={420}
+        desktopMaxWidth="max-w-md"
+        triggerTitle="Search members"
+      >
+        <FilterSelect
+          label="Role"
+          placeholder="Select Role"
+          value={filters.role}
+          onChange={(val) => setFilter("role", val)}
+          options={ROLE_FILTER_OPTIONS}
+          defaultValue="ALL"
+          icon={User}
+        />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            label="Role"
-            placeholder="Select Role"
-            value={filters.role}
-            onChange={(val) => setFilter("role", val)}
-            options={ROLE_FILTER_OPTIONS}
-            defaultValue="ALL"
-            icon={User}
-          />
-
-          {hasActiveFilters && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilters}
-              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
-            >
-              Reset
-            </Button>
-          )}
-        </div>
-      </div>
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
+          >
+            Reset
+          </Button>
+        )}
+      </ExpandableSearch>
 
       {/* Dedicated Action Button Row */}
       {canAddMember && (
         <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={() => setAddMemberOpen(true)}
-          >
+          <Button size="sm" onClick={() => setAddMemberOpen(true)}>
             <UserPlus />
             <span>Add Member</span>
           </Button>

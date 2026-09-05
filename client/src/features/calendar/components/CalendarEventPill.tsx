@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Bell } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ interface CalendarEventPillProps {
   className?: string;
 }
 
-export function CalendarEventPill({
+export const CalendarEventPill = memo(function CalendarEventPill({
   event,
   onClick,
   className,
@@ -51,4 +52,4 @@ export function CalendarEventPill({
       )}
     </button>
   );
-}
+});

@@ -1,13 +1,14 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { CourseMaterialFolder, UpdateFolderPayload } from "./types";
+import type {
+  CourseMaterialFolder,
+  UpdateFolderPayload,
+  CourseMaterialsResponse,
+} from "./types";
 import { courseMaterialsKeys } from "./getCourseMaterials";
 
-import {
-  updateCourseMaterialItem,
-  rollbackOptimisticContext,
-  type CourseMaterialsCacheData,
-} from "@/lib/queryCacheUtils";
+import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
+import { updateCourseMaterialItem } from "./courseMaterialsCache";
 
 export interface UpdateFolderVariables {
   folderId: string;
@@ -32,7 +33,7 @@ export function useUpdateFolder() {
     mutationFn: updateFolder,
     onMutate: async ({ folderId, payload }) => {
       await queryClient.cancelQueries({ queryKey: courseMaterialsKeys.all });
-      const previousQueries = queryClient.getQueriesData<CourseMaterialsCacheData>({
+      const previousQueries = queryClient.getQueriesData<CourseMaterialsResponse>({
         queryKey: courseMaterialsKeys.all,
       });
 
