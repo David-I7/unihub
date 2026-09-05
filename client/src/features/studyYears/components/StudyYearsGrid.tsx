@@ -2,10 +2,12 @@ import { Calendar } from "@/components/ui/icons";
 import { StudyYearCard } from "./StudyYearCard";
 import { studyYearNameToSlug, type StudyYearMetrics } from "../api/types";
 import { useNavigate } from "react-router";
+import type { CallerMembership } from "@/features/communities/api/types";
 
 interface StudyYearsGridProps {
   studyYears: StudyYearMetrics[];
   communitySlug: string;
+  callerMembership?: CallerMembership | null;
   onStudyYearSelect?: (studyYear: StudyYearMetrics) => void;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -14,6 +16,7 @@ interface StudyYearsGridProps {
 export function StudyYearsGrid({
   studyYears,
   communitySlug,
+  callerMembership,
   onStudyYearSelect,
   emptyTitle = "No Study Years Available",
   emptyDescription = "There are no study years registered here yet.",
@@ -48,6 +51,7 @@ export function StudyYearsGrid({
             key={year.id}
             studyYear={year}
             communitySlug={communitySlug}
+            callerMembership={callerMembership}
             onClick={() => {
               if (onStudyYearSelect) {
                 onStudyYearSelect(year);

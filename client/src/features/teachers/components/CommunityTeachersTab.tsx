@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router";
 import { Calendar, GraduationCap, Plus, Users } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/app/SearchInput";
+import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useAuthStore } from "@/features/auth";
@@ -72,6 +72,7 @@ export function CommunityTeachersTab({
     handleCommitSearch,
     350,
   );
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [createTeacherOpen, setCreateTeacherOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
@@ -149,69 +150,63 @@ export function CommunityTeachersTab({
 
   const handleClearFilters = () => {
     setSearchInput("");
+    setIsSearchExpanded(false);
     resetFilters();
   };
 
   return (
     <div className="space-y-6">
-      {/* Unified Toolbar: Search on left, Filters on right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex-1 min-w-[180px] max-w-md">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search teachers by name..."
-            totalCount={totalTeachers}
-            resultLabel="teachers"
-          />
-        </div>
+      {/* Unified Toolbar: Expandable search on left, filters on right */}
+      <ExpandableSearch
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search teachers by name..."
+        totalCount={totalTeachers}
+        resultLabel="teachers"
+        isExpanded={isSearchExpanded}
+        onExpandedChange={setIsSearchExpanded}
+        breakpoint={540}
+        desktopMaxWidth="max-w-md"
+        triggerTitle="Search teachers"
+      >
+        <FilterSelect
+          label="Year"
+          placeholder="Select Year"
+          value={filters.studyYear}
+          onChange={(val) => setFilter("studyYear", val)}
+          options={studyYearOptions}
+          defaultValue="ALL"
+          icon={GraduationCap}
+          disabled={isStudyYearsLoading}
+        />
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Study Year Select */}
-          <FilterSelect
-            label="Year"
-            placeholder="Select Year"
-            value={filters.studyYear}
-            onChange={(val) => setFilter("studyYear", val)}
-            options={studyYearOptions}
-            defaultValue="ALL"
-            icon={GraduationCap}
-            disabled={isStudyYearsLoading}
-          />
+        <FilterSelect
+          label="Semester"
+          placeholder="Select Semester"
+          value={filters.semester}
+          onChange={(val) => setFilter("semester", val)}
+          options={SEMESTER_FILTER_OPTIONS}
+          defaultValue="ALL"
+          icon={Calendar}
+        />
 
-          {/* Semester Select */}
-          <FilterSelect
-            label="Semester"
-            placeholder="Select Semester"
-            value={filters.semester}
-            onChange={(val) => setFilter("semester", val)}
-            options={SEMESTER_FILTER_OPTIONS}
-            defaultValue="ALL"
-            icon={Calendar}
-          />
-
-          {/* Reset Filters Shortcut */}
-          {hasActiveFilters && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleClearFilters}
-              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
-            >
-              Reset
-            </Button>
-          )}
-        </div>
-      </div>
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
+          >
+            Reset
+          </Button>
+        )}
+      </ExpandableSearch>
 
       {/* Dedicated Action Button Row */}
       {canAddTeacher && (
         <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={() => setCreateTeacherOpen(true)}
-          >
+          <Button size="sm" onClick={() => setCreateTeacherOpen(true)}>
             <Plus />
             <span>Add Teacher</span>
           </Button>

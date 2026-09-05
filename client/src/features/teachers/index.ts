@@ -24,3 +24,4 @@ export * from "./components/CreateReviewDialog";
 export * from "./components/UpdateReviewDialog";
 export * from "./components/DeleteReviewAlertDialog";
 export * from "./components/CommunityTeachersTab";
+export * from "./components/CommunityTeachersTabSkeleton";

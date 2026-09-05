@@ -24,13 +24,15 @@ export function useJoinCommunity() {
   return useMutation({
     mutationFn: joinCommunity,
     onSuccess: (data) => {
-      // Must invalidate: members list, gome detail, infinite communities (to get the new member count).
       queryClient.invalidateQueries({ queryKey: userKeys.communities() });
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.membersList(data.slug),
+      });
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.membershipDetail(data.slug),
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(data.slug),

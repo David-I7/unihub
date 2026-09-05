@@ -21,6 +21,5 @@ export function useCommunityMembership(
     queryFn: () => getCommunityMembership(communitySlug),
     placeholderData: keepPreviousData,
     enabled: (options?.enabled ?? true) && communitySlug.length > 0,
-    staleTime: 1000 * 60 * 5,
   });
 }

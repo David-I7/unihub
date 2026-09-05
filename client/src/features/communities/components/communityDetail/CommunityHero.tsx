@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { RoleBadge } from "@/components/app/RoleBadge";
+import { ExpandableText } from "@/components/app/ExpandableText";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -143,13 +144,11 @@ export function CommunityHero({
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <UserAvatar username={community.owner?.username} size="xs" />
-              <span className="truncate">
-                Created by{" "}
-                <strong className="text-foreground font-semibold">
-                  {community.owner?.username ?? "Admin"}
-                </strong>
-              </span>
+              Created by{" "}
+              <UserAvatar username={community.owner?.username} size="xxs" />
+              <strong className="text-foreground font-semibold">
+                {community.owner.username}
+              </strong>
             </div>
           </div>
 
@@ -240,9 +239,13 @@ export function CommunityHero({
 
         {/* Bio / Description */}
         {community.description && (
-          <p className="text-xs @[560px]:text-sm text-muted-foreground leading-relaxed max-w-4xl">
+          <ExpandableText
+            className="max-w-4xl"
+            textClassName="text-xs @[560px]:text-sm text-muted-foreground leading-relaxed"
+            clampLines={3}
+          >
             {community.description}
-          </p>
+          </ExpandableText>
         )}
 
         {/* Stats Row */}

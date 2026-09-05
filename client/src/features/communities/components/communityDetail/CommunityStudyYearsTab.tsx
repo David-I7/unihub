@@ -44,6 +44,7 @@ export function CommunityStudyYearsTab({
       <StudyYearsGrid
         studyYears={propStudyYears}
         communitySlug={communitySlug}
+        callerMembership={callerMembership}
         onStudyYearSelect={onStudyYearSelect}
         emptyTitle="No Study Years Available"
         emptyDescription="This community does not have any study years registered yet."

@@ -2,7 +2,6 @@ import { useCallback, useState, useMemo } from "react";
 import {
   SlidersHorizontal,
   Users,
-  Search,
   GraduationCap,
   BookOpen,
 } from "@/components/ui/icons";
@@ -21,7 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { SearchInput } from "@/components/app/SearchInput";
+import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterSelect, type FilterOption } from "@/components/app/FilterSelect";
 import { useCommunityStudyYears } from "@/features/communities";
 import {
@@ -143,51 +142,19 @@ export function CalendarFilters({
   };
 
   return (
-    <div className="w-full">
-      {/* Mobile / Narrow Container Expanded Search */}
-      {isSearchExpanded && (
-        <div className="flex items-center gap-1.5 w-full @[420px]:hidden">
-          <div className="flex-1 min-w-0">
-            <SearchInput
-              value={searchInput}
-              onChange={setSearchInput}
-              placeholder="Search events by title, course, room..."
-              totalCount={totalCount}
-              resultLabel="events"
-              autoFocus
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsSearchExpanded(false)}
-            className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
-          >
-            Cancel
-          </Button>
-        </div>
-      )}
-
-      {/* Main Row: Desktop search + community dropdown & filter actions */}
-      <div
-        className={cn(
-          "items-center justify-between gap-2.5 w-full",
-          isSearchExpanded ? "hidden @[420px]:flex" : "flex",
-        )}
-      >
-        {/* Desktop Search Input */}
-        <div className="hidden @[420px]:block flex-1 min-w-[180px] max-w-xs md:max-w-sm lg:max-w-md">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search events by title, course, or room..."
-            totalCount={totalCount}
-            resultLabel="events"
-          />
-        </div>
-
-        {/* Controls: Community Dropdown, Mobile Search Trigger, Popover, Reset */}
+    <ExpandableSearch
+      value={searchInput}
+      onChange={setSearchInput}
+      placeholder="Search events by title, course, or room..."
+      totalCount={totalCount}
+      resultLabel="events"
+      breakpoint={420}
+      desktopMaxWidth="max-w-xs md:max-w-sm lg:max-w-md"
+      isExpanded={isSearchExpanded}
+      onExpandedChange={setIsSearchExpanded}
+      triggerTitle="Search events"
+    >
+      {({ trigger }) => (
         <div className="flex items-center gap-2 flex-1 @[420px]:flex-initial justify-between @[420px]:justify-end min-w-0">
           {/* Community Dropdown */}
           <div className="flex-1 @[420px]:flex-initial min-w-0 max-w-[200px] sm:max-w-[240px]">
@@ -232,20 +199,7 @@ export function CalendarFilters({
 
           {/* Action Buttons: Mobile Search Icon + Filters Popover + Reset */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {/* Search trigger icon (mobile only) */}
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setIsSearchExpanded(true)}
-              className="@[420px]:hidden relative size-8 p-0 rounded-xl border-border/80 cursor-pointer"
-              title="Search events"
-            >
-              <Search className="size-3.5 text-muted-foreground" />
-              {Boolean(filters.q) && (
-                <span className="absolute -top-0.5 -right-0.5 size-2 rounded-full bg-primary" />
-              )}
-            </Button>
+            {trigger}
 
             {/* Dedicated Filters Popover */}
             <Popover>
@@ -372,7 +326,7 @@ export function CalendarFilters({
             )}
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </ExpandableSearch>
   );
 }

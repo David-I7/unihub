@@ -3,7 +3,7 @@ import { BookOpen, Plus } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import { SearchInput } from "@/components/app/SearchInput";
+import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
 import { useObserver } from "@/hooks/useObserver";
@@ -48,7 +48,7 @@ export function StudyYearCoursesList({
   communitySlug,
   studyYearSlug,
 }: StudyYearCoursesListProps) {
-  const { filters, setFilters, setFilter } = useUrlFilters(
+  const { filters, setFilters, setFilter, resetFilters } = useUrlFilters(
     COURSES_FILTER_SCHEMA,
   );
 
@@ -61,6 +61,7 @@ export function StudyYearCoursesList({
     handleCommitSearch,
     350,
   );
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const { canCreateCourse } = usePermissions(communitySlug);
@@ -107,55 +108,56 @@ export function StudyYearCoursesList({
     rootMargin: "250px",
   });
 
+  const hasActiveFilters = Boolean(debouncedSearch) || filters.filter !== "all";
+
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setIsSearchExpanded(false);
+    resetFilters();
+  };
+
   return (
     <div className="space-y-6">
-      {/* Unified Toolbar: Search on left, Filter on right */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-        <div className="flex-1 min-w-[180px] max-w-md">
-          <SearchInput
-            value={searchInput}
-            onChange={setSearchInput}
-            placeholder="Search courses by name, abbreviation, or instructor..."
-            totalCount={totalCourses}
-            resultLabel="courses"
-          />
-        </div>
+      {/* Unified Toolbar: Expandable search on left, Filter on right */}
+      <ExpandableSearch
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search courses by name, abbreviation, or instructor..."
+        totalCount={totalCourses}
+        resultLabel="courses"
+        isExpanded={isSearchExpanded}
+        onExpandedChange={setIsSearchExpanded}
+        breakpoint={420}
+        desktopMaxWidth="max-w-md"
+        triggerTitle="Search courses"
+      >
+        <FilterSelect
+          label="Filter"
+          placeholder="Filter courses"
+          value={filters.filter}
+          onChange={(val) => setFilter("filter", val as FilterOption)}
+          options={FILTER_OPTIONS}
+          defaultValue="all"
+          icon={BookOpen}
+        />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterSelect
-            label="Filter"
-            placeholder="Filter courses"
-            value={filters.filter}
-            onChange={(val) => setFilter("filter", val as FilterOption)}
-            options={FILTER_OPTIONS}
-            defaultValue="all"
-            icon={BookOpen}
-          />
-
-          {(Boolean(debouncedSearch) || filters.filter !== "all") && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSearchInput("");
-                setFilters({ search: "", filter: "all" });
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
-            >
-              Reset
-            </Button>
-          )}
-        </div>
-      </div>
+        {hasActiveFilters && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
+          >
+            Reset
+          </Button>
+        )}
+      </ExpandableSearch>
 
       {/* Dedicated Action Button Row */}
       {canCreateCourse && (
         <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={() => setCreateModalOpen(true)}
-          >
+          <Button size="sm" onClick={() => setCreateModalOpen(true)}>
             <Plus />
             <span>Add Course</span>
           </Button>
@@ -214,6 +216,7 @@ export function StudyYearCoursesList({
               type="button"
               onClick={() => {
                 setSearchInput("");
+                setIsSearchExpanded(false);
                 setFilters({ search: "" });
               }}
               className="text-xs font-semibold text-primary hover:underline cursor-pointer"

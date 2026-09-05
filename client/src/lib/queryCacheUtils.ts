@@ -64,7 +64,7 @@ export function updateInfiniteQueryItem<T extends { id: string | number }>(
 export function removeInfiniteQueryItem<T extends { id: string | number }>(
   queryClient: QueryClient,
   queryKey: QueryKey,
-  id: string | number,
+  id: string | number | ((item: T) => boolean),
 ): void {
   queryClient.setQueriesData<InfiniteData<PaginatedResponse<T>>>(
     { queryKey },
@@ -74,7 +74,12 @@ export function removeInfiniteQueryItem<T extends { id: string | number }>(
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          content: page.content.filter((item) => item.id !== id),
+          content: page.content.filter((item) => {
+            if (typeof id === "function") {
+              return id(item) ? false : true;
+            }
+            return item.id === id ? false : true;
+          }),
         })),
       };
     },
@@ -106,6 +111,50 @@ export function prependInfiniteQueryItem<T>(
       };
     },
   );
+}
+
+export function updateQueryListItem<T extends { id: string | number }>(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  id: string | number | ((item: T) => boolean),
+  patchFn: (item: T) => T,
+): void {
+  queryClient.setQueriesData<T[]>({ queryKey }, (old) => {
+    if (!old) return old;
+    return old.map((item) => {
+      if (typeof id === "function") {
+        return id(item) ? patchFn(item) : item;
+      }
+      return item.id === id ? patchFn(item) : item;
+    });
+  });
+}
+
+export function removeQueryListItem<T extends { id: string | number }>(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  id: string | number | ((item: T) => boolean),
+): void {
+  queryClient.setQueriesData<T[]>({ queryKey }, (old) => {
+    if (!old) return old;
+    return old.filter((item) => {
+      if (typeof id === "function") {
+        return id(item) ? false : true;
+      }
+      return item.id === id ? false : true;
+    });
+  });
+}
+
+export function prependQueryListItem<T extends { id: string | number }>(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+  item: T,
+): void {
+  queryClient.setQueriesData<T[]>({ queryKey }, (old) => {
+    if (!old) return old;
+    return [item, ...old];
+  });
 }
 
 /**

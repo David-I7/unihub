@@ -82,7 +82,7 @@ export default function NotificationsPage() {
   const hasActiveFilters = filters.category !== "all" || filters.unread;
 
   return (
-    <div className="min-h-full space-y-6 pb-12">
+    <div className="min-h-full space-y-6 pb-6">
       {/* Header */}
       <div>
         <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
