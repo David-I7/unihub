@@ -276,14 +276,12 @@ export function CreateReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <CreateReviewForm
-            teacherId={teacherId}
-            metrics={metrics}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <CreateReviewForm
+          teacherId={teacherId}
+          metrics={metrics}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

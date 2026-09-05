@@ -96,7 +96,7 @@ function JoinCommunityForm({
         </Field>
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="pt-2 border-t border-border">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
@@ -104,7 +104,6 @@ function JoinCommunityForm({
           type="button"
           onClick={() => handleJoin()}
           disabled={joinMutation.isPending || code.trim().length !== 8}
-          className="font-bold cursor-pointer"
         >
           {joinMutation.isPending ? "Joining..." : "Join Community"}
         </Button>
@@ -128,12 +127,10 @@ export function JoinCommunityModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <JoinCommunityForm
-            onClose={() => onOpenChange(false)}
-            prefilledCode={prefilledCode}
-          />
-        )}
+        <JoinCommunityForm
+          onClose={() => onOpenChange(false)}
+          prefilledCode={prefilledCode}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -10,12 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/api/types";
 import { useDeleteCourse } from "../api/deleteCourse";
-import type { Course, CourseCard } from "../api/types";
+import type { Course, CourseCardInfo } from "../api/types";
 
 interface DeleteCourseDialogProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course | CourseCard | null;
+  course: Course | CourseCardInfo | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: () => void;

@@ -18,13 +18,13 @@ import {
   useAddCourseTeacher,
   useRemoveCourseTeacher,
 } from "../api/manageCourseTeachers";
-import type { Course, CourseCard } from "../api/types";
+import type { Course, CourseCardInfo } from "../api/types";
 import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface ManageCourseTeachersModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course | CourseCard;
+  course: Course | CourseCardInfo;
   currentTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -80,7 +80,7 @@ export function ManageCourseTeachersModal({
     }
   };
 
-  const handleRemove = async (teacher: Teacher) => {
+  const handleRemove = async (teacher: Teacher | TeacherSummary) => {
     try {
       await removeTeacherMutation.mutateAsync({
         communitySlug,

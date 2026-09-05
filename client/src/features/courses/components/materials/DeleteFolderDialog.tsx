@@ -30,14 +30,19 @@ export function DeleteFolderDialog({
 }: DeleteFolderDialogProps) {
   const deleteMutation = useDeleteFolder();
   const [error, setError] = useState<string | null>(null);
+  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(folder);
+  if (folder && folder !== cachedFolder) {
+    setCachedFolder(folder);
+  }
+  const currentFolder = folder ?? cachedFolder;
 
-  if (!folder) return null;
+  if (!currentFolder) return null;
 
   const handleDelete = async () => {
     try {
       setError(null);
-      await deleteMutation.mutateAsync({ folderId: folder.id });
-      toast.success(`Folder "${folder.name}" deleted successfully.`);
+      await deleteMutation.mutateAsync({ folderId: currentFolder.id });
+      toast.success(`Folder "${currentFolder.name}" deleted successfully.`);
       onSuccess?.();
       onOpenChange(false);
     } catch (err: unknown) {
@@ -51,7 +56,7 @@ export function DeleteFolderDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Delete Folder "{folder.name}"</DialogTitle>
+          <DialogTitle>Delete Folder "{currentFolder.name}"</DialogTitle>
           <DialogDescription className="space-y-2 pt-1 text-xs">
             <div className="flex items-center p-2 bg-destructive/10 border border-destructive/20 rounded-lg gap-2 text-destructive font-medium">
               {isModerator ? (

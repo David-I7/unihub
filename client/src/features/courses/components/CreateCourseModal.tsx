@@ -363,14 +363,12 @@ export function CreateCourseModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <CreateCourseForm
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <CreateCourseForm
+          communitySlug={communitySlug}
+          studyYearSlug={studyYearSlug}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

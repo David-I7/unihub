@@ -133,10 +133,10 @@ export function CalendarToolbar({
           </div>
 
           <h2 className="font-heading truncate text-base sm:text-lg md:text-xl font-extrabold text-foreground tracking-tight">
-            <span className="inline @[640px]:hidden">
+            <span className="inline @[540px]:hidden">
               {shortMonthName} {yearNumber}
             </span>
-            <span className="hidden @[640px]:inline">
+            <span className="hidden @[540px]:inline">
               {monthName} {yearNumber}
             </span>
           </h2>
@@ -144,7 +144,7 @@ export function CalendarToolbar({
 
         <div className="shrink-0">
           {/* Dropdown for narrow containers */}
-          <div className="block @[640px]:hidden">
+          <div className="block @[540px]:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -200,7 +200,7 @@ export function CalendarToolbar({
           </div>
 
           {/* Tabs for wider containers */}
-          <div className="hidden @[640px]:block">
+          <div className="hidden @[540px]:block">
             <Tabs
               value={viewMode}
               onValueChange={handleViewModeChange}

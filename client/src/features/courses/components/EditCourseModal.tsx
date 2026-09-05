@@ -21,13 +21,13 @@ import { useForm } from "@/hooks/useForm";
 import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import { useUpdateCourse } from "../api/updateCourse";
 import { updateCourseSchema, type UpdateCourseSchemaValues } from "../schemas/courseSchemas";
-import type { Course, CourseCard, UpdateCoursePayload } from "../api/types";
+import type { Course, CourseCardInfo, UpdateCoursePayload } from "../api/types";
 import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface EditCourseModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course | CourseCard;
+  course: Course | CourseCardInfo;
   initialTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,8 +53,8 @@ function EditCourseForm({
 }: {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  initialTeachers?: Teacher[];
+  course: Course | CourseCardInfo;
+  initialTeachers?: (Teacher | TeacherSummary)[];
   onClose: () => void;
   onSuccess?: (updated: Course) => void;
 }) {
@@ -393,16 +393,14 @@ export function EditCourseModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <EditCourseForm
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            course={course}
-            initialTeachers={initialTeachers}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <EditCourseForm
+          communitySlug={communitySlug}
+          studyYearSlug={studyYearSlug}
+          course={course}
+          initialTeachers={initialTeachers}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

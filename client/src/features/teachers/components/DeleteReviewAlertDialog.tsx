@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -27,12 +28,17 @@ export function DeleteReviewAlertDialog({
   onSuccess,
 }: DeleteReviewAlertDialogProps) {
   const deleteMutation = useDeleteTeacherRating(teacherId);
+  const [cachedRatingId, setCachedRatingId] = useState<number | null>(ratingId);
+  if (ratingId !== null && ratingId !== cachedRatingId) {
+    setCachedRatingId(ratingId);
+  }
+  const currentRatingId = ratingId ?? cachedRatingId;
 
-  if (ratingId === null) return null;
+  if (currentRatingId === null) return null;
 
   const handleDelete = async () => {
     try {
-      await deleteMutation.mutateAsync(ratingId);
+      await deleteMutation.mutateAsync(currentRatingId);
       toast.success("Review deleted successfully.");
       onOpenChange(false);
       onSuccess?.();

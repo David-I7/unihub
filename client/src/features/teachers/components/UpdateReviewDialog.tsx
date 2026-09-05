@@ -262,7 +262,13 @@ export function UpdateReviewDialog({
   onOpenChange,
   onSuccess,
 }: UpdateReviewDialogProps) {
-  if (!rating) return null;
+  const [cachedRating, setCachedRating] = useState<TeacherRating | null>(rating);
+  if (rating && rating !== cachedRating) {
+    setCachedRating(rating);
+  }
+  const currentRating = rating ?? cachedRating;
+
+  if (!currentRating) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -274,16 +280,14 @@ export function UpdateReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <UpdateReviewForm
-            key={rating.id}
-            teacherId={teacherId}
-            rating={rating}
-            metrics={metrics}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <UpdateReviewForm
+          key={currentRating.id}
+          teacherId={teacherId}
+          rating={currentRating}
+          metrics={metrics}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

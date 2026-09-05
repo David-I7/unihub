@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Globe,
@@ -296,9 +297,15 @@ export function EditMaterialModal({
   onOpenChange,
   onSuccess,
 }: EditMaterialModalProps) {
-  if (!material) return null;
+  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<EditMaterialModalProps["material"]> | null>(material);
+  if (material && material !== cachedMaterial) {
+    setCachedMaterial(material);
+  }
+  const currentMaterial = material ?? cachedMaterial;
 
-  const isLink = material.type === "link";
+  if (!currentMaterial) return null;
+
+  const isLink = currentMaterial.type === "link";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -312,14 +319,12 @@ export function EditMaterialModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <EditMaterialForm
-            key={material.data.id}
-            material={material}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <EditMaterialForm
+          key={currentMaterial.data.id}
+          material={currentMaterial}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

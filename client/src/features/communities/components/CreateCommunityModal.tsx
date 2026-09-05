@@ -207,7 +207,6 @@ function CreateCommunityForm({ onClose }: { onClose: () => void }) {
         <Button
           type="submit"
           disabled={form.isSubmitting || createMutation.isPending}
-          className="font-bold cursor-pointer"
         >
           {form.isSubmitting || createMutation.isPending
             ? "Creating Community..."
@@ -232,7 +231,7 @@ export function CreateCommunityModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && <CreateCommunityForm onClose={() => onOpenChange(false)} />}
+        <CreateCommunityForm onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
