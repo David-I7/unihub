@@ -1,6 +1,7 @@
 export * from "./api/types";
 export * from "./api/getCourseHome";
 export * from "./api/getCourseMaterials";
+export * from "./api/courseMaterialsCache";
 export * from "./api/createCourse";
 export * from "./api/updateCourse";
 export * from "./api/deleteCourse";

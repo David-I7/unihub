@@ -76,7 +76,7 @@ export function AllUpcomingEventsModal({
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-4">
         <DialogHeader className="space-y-1 pr-6">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-secondary text-foreground/80">
               <CalendarIcon className="size-3.5" />
             </div>
             <DialogTitle className="font-heading text-base font-bold text-foreground">

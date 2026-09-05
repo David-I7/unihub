@@ -1,4 +1,8 @@
-import type { QueryClient, QueryKey, InfiniteData } from "@tanstack/react-query";
+import type {
+  QueryClient,
+  QueryKey,
+  InfiniteData,
+} from "@tanstack/react-query";
 import type { PaginatedResponse } from "@/api/types";
 
 export interface OptimisticRollbackContext<TDetail = unknown, TList = unknown> {
@@ -31,7 +35,7 @@ export function rollbackOptimisticContext(
 export function updateInfiniteQueryItem<T extends { id: string | number }>(
   queryClient: QueryClient,
   queryKey: QueryKey,
-  id: string | number,
+  id: string | number | ((item: T) => boolean),
   patchFn: (item: T) => T,
 ): void {
   queryClient.setQueriesData<InfiniteData<PaginatedResponse<T>>>(
@@ -42,9 +46,12 @@ export function updateInfiniteQueryItem<T extends { id: string | number }>(
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          content: page.content.map((item) =>
-            item.id === id ? patchFn(item) : item,
-          ),
+          content: page.content.map((item) => {
+            if (typeof id === "function") {
+              return id(item) ? patchFn(item) : item;
+            }
+            return item.id === id ? patchFn(item) : item;
+          }),
         })),
       };
     },
@@ -114,67 +121,3 @@ export function patchDetailQuery<T>(
     return patchFn(old);
   });
 }
-
-export interface CourseMaterialsCacheData {
-  folders: Array<{ id: string; [key: string]: unknown }>;
-  files: Array<{ id: string; [key: string]: unknown }>;
-  links: Array<{ id: string; [key: string]: unknown }>;
-}
-
-/**
- * Removes a folder, file, or link by ID from all matching course materials queries.
- */
-export function removeCourseMaterialItem(
-  queryClient: QueryClient,
-  queryKey: QueryKey,
-  itemId: string,
-): void {
-  queryClient.setQueriesData<CourseMaterialsCacheData>({ queryKey }, (old) => {
-    if (!old) return old;
-    return {
-      ...old,
-      folders: old.folders ? old.folders.filter((f) => f.id !== itemId) : [],
-      files: old.files ? old.files.filter((f) => f.id !== itemId) : [],
-      links: old.links ? old.links.filter((l) => l.id !== itemId) : [],
-    };
-  });
-}
-
-/**
- * Updates a folder, file, or link by ID across all matching course materials queries.
- */
-export function updateCourseMaterialItem<T extends { id: string }>(
-  queryClient: QueryClient,
-  queryKey: QueryKey,
-  itemId: string,
-  patchFn: (item: T) => T,
-): void {
-  queryClient.setQueriesData<CourseMaterialsCacheData>({ queryKey }, (old) => {
-    if (!old) return old;
-    return {
-      ...old,
-      folders: old.folders
-        ? old.folders.map((f) =>
-            f.id === itemId
-              ? (patchFn(f as unknown as T) as unknown as typeof f)
-              : f,
-          )
-        : [],
-      files: old.files
-        ? old.files.map((f) =>
-            f.id === itemId
-              ? (patchFn(f as unknown as T) as unknown as typeof f)
-              : f,
-          )
-        : [],
-      links: old.links
-        ? old.links.map((l) =>
-            l.id === itemId
-              ? (patchFn(l as unknown as T) as unknown as typeof l)
-              : l,
-          )
-        : [],
-    };
-  });
-}
-

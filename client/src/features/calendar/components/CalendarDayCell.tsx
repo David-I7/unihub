@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Plus } from "lucide-react";
 import type { CalendarEvent } from "../api/types";
 import { useCalendarStore } from "../store/useCalendarStore";
@@ -15,7 +16,7 @@ interface CalendarDayCellProps {
   canCreateEvent?: boolean;
 }
 
-export function CalendarDayCell({
+export const CalendarDayCell = memo(function CalendarDayCell({
   dayNumber,
   dateStr,
   isCurrentMonth,
@@ -28,6 +29,13 @@ export function CalendarDayCell({
   const openCreateModal = useCalendarStore((s) => s.openCreateModal);
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
   const openOverflowModal = useCalendarStore((s) => s.openOverflowModal);
+
+  const handlePillClick = useCallback(
+    (ev: CalendarEvent) => {
+      openEventDetails(ev.id);
+    },
+    [openEventDetails],
+  );
 
   const maxVisible = 2;
   const visibleEvents = events.slice(0, maxVisible);
@@ -87,7 +95,7 @@ export function CalendarDayCell({
           <CalendarEventPill
             key={ev.id}
             event={ev}
-            onClick={(e) => openEventDetails(e.id)}
+            onClick={handlePillClick}
           />
         ))}
 
@@ -107,4 +115,4 @@ export function CalendarDayCell({
       </div>
     </div>
   );
-}
+});

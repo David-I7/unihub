@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { memo, useLayoutEffect, useRef, useState } from "react";
 import {
   Bell,
   Calendar,
@@ -67,7 +67,9 @@ function getNotificationIcon(notification: AppNotification) {
   }
 }
 
-export function NotificationItem({ notification }: NotificationItemProps) {
+export const NotificationItem = memo(function NotificationItem({
+  notification,
+}: NotificationItemProps) {
   const { handleNotificationClick } = useNotificationNavigation();
   const { mutate: markRead, isPending: isMarkingRead } =
     useMarkNotificationAsRead();
@@ -185,4 +187,4 @@ export function NotificationItem({ notification }: NotificationItemProps) {
       )}
     </div>
   );
-}
+});

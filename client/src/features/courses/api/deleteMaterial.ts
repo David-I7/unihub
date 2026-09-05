@@ -2,11 +2,9 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseMaterialsKeys } from "./getCourseMaterials";
 
-import {
-  removeCourseMaterialItem,
-  rollbackOptimisticContext,
-  type CourseMaterialsCacheData,
-} from "@/lib/queryCacheUtils";
+import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
+import { removeCourseMaterialItem } from "./courseMaterialsCache";
+import type { CourseMaterialsResponse } from "./types";
 
 export interface DeleteMaterialVariables {
   materialId: string;
@@ -25,7 +23,7 @@ export function useDeleteMaterial() {
     mutationFn: deleteMaterial,
     onMutate: async ({ materialId }) => {
       await queryClient.cancelQueries({ queryKey: courseMaterialsKeys.all });
-      const previousQueries = queryClient.getQueriesData<CourseMaterialsCacheData>({
+      const previousQueries = queryClient.getQueriesData<CourseMaterialsResponse>({
         queryKey: courseMaterialsKeys.all,
       });
 
