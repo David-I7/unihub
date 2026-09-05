@@ -89,11 +89,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
     <div className="space-y-6">
       {/* Header with New Code Action */}
       <div className="flex items-center justify-end gap-4">
-        <Button
-          size="sm"
-          onClick={() => setCreateModalOpen(true)}
-          className="gap-1.5 font-bold cursor-pointer shrink-0"
-        >
+        <Button size="sm" onClick={() => setCreateModalOpen(true)}>
           <Plus className="size-4" />
           <span>New Join Code</span>
         </Button>

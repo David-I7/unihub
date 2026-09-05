@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -84,7 +83,7 @@ export function CreateStudyYearModal({
             for this community.
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <Field>
               <FieldLabel>Select Academic Level</FieldLabel>
               <div className="grid grid-cols-2 gap-2.5 pt-1">
@@ -102,14 +101,11 @@ export function CreateStudyYearModal({
                         alreadyExists
                           ? "opacity-40 bg-muted/30 border-dashed border-border cursor-not-allowed"
                           : isSelected
-                            ? "border-primary bg-primary/10 text-primary ring-2 ring-primary/30"
-                            : "border-border bg-card hover:border-primary/50 text-foreground"
+                            ? "border-border/80 bg-secondary text-secondary-foreground shadow-xs"
+                            : "border-border bg-card hover:bg-muted/50 text-foreground"
                       }`}
                     >
-                      <span className="font-heading text-lg font-extrabold">
-                        {opt.yearNumber}
-                      </span>
-                      <span className="text-xs font-semibold">{opt.label}</span>
+                      <span className="text-md font-semibold">{opt.label}</span>
                       {alreadyExists && (
                         <span className="text-[10px] text-muted-foreground pt-0.5">
                           Already Added
@@ -119,8 +115,8 @@ export function CreateStudyYearModal({
                   );
                 })}
               </div>
-              <FieldDescription>
-                Once added, instructors can begin registering courses and course
+              <FieldDescription className="text-xs text-muted-foreground">
+                Once added, members can begin registering courses and course
                 offerings under this study year.
               </FieldDescription>
             </Field>
@@ -138,9 +134,7 @@ export function CreateStudyYearModal({
                 disabled={
                   createMutation.isPending || availableOptions.length === 0
                 }
-                className="gap-1.5 font-bold cursor-pointer"
               >
-                <Plus className="size-4" />
                 {createMutation.isPending ? "Adding..." : "Add Study Year"}
               </Button>
             </DialogFooter>

@@ -1,10 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router";
-import {
-  Calendar as CalendarIcon,
-  ArrowRight,
-  Check,
-} from "lucide-react";
+import { Calendar as CalendarIcon, ArrowRight, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +61,7 @@ export function UpcomingEventsWidget() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-secondary text-foreground/80">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
                 <CalendarIcon className="size-4" />
               </div>
               <div>

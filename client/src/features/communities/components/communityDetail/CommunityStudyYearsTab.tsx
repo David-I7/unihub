@@ -33,7 +33,7 @@ export function CommunityStudyYearsTab({
           <Button
             size="sm"
             onClick={() => setCreateModalOpen(true)}
-            className="gap-1.5 font-bold cursor-pointer"
+            className="gap-1.5"
           >
             <Plus className="size-4" />
             <span>Add Study Year</span>

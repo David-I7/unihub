@@ -66,9 +66,9 @@ export function RoleBadge({
     <Badge
       variant="secondary"
       size={size}
-      className={cn("font-medium gap-1 text-muted-foreground", className)}
+      className={cn("font-medium gap-1 text-foreground", className)}
     >
-      {showIcon && <User className="size-3 text-muted-foreground" />}
+      {showIcon && <User className="size-3 text-foreground" />}
       Member
     </Badge>
   );

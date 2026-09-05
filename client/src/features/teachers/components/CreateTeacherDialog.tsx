@@ -147,7 +147,9 @@ export function CreateTeacherDialog({
           </div>
 
           <Field>
-            <FieldLabel htmlFor="estimatedAge">Estimated Age (optional)</FieldLabel>
+            <FieldLabel htmlFor="estimatedAge">
+              Estimated Age (optional)
+            </FieldLabel>
             <Input
               id="estimatedAge"
               name="estimatedAge"
@@ -174,7 +176,6 @@ export function CreateTeacherDialog({
             <Button
               type="submit"
               disabled={form.isSubmitting || createMutation.isPending}
-              className="font-bold cursor-pointer"
             >
               {form.isSubmitting || createMutation.isPending
                 ? "Creating..."

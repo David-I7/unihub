@@ -22,16 +22,14 @@ interface TeacherCardProps {
   callerMembership?: CallerMembership | null;
 }
 
-export function TeacherCard({
-  teacher,
-  callerMembership,
-}: TeacherCardProps) {
+export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
   const [, setSearchParams] = useSearchParams();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const user = useAuthStore((state) => state.user);
-  const { isOwner, communityRole, globalPermissions } = usePermissions(callerMembership);
+  const { isOwner, communityRole, globalPermissions } =
+    usePermissions(callerMembership);
 
   const isCommunityAdmin =
     isOwner ||
@@ -56,13 +54,13 @@ export function TeacherCard({
     <>
       <Card
         onClick={handleCardClick}
-        className="group relative rounded-2xl border bg-card p-5 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer flex flex-col justify-between space-y-4"
+        className="group relative rounded-2xl border bg-card p-5 shadow-xs transition-all hover:border-primary/50 hover:shadow-md cursor-pointer flex flex-col justify-between space-y-2"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             <UserAvatar
               username={teacher.lastName || teacher.firstName}
-              size="lg"
+              size="md"
               className="ring-1 ring-primary/20 shrink-0 transition-transform group-hover:scale-105"
             />
             <div className="space-y-1 min-w-0 flex-1">
@@ -80,10 +78,7 @@ export function TeacherCard({
           </div>
 
           {isCommunityAdmin && (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              className="shrink-0"
-            >
+            <div onClick={(e) => e.stopPropagation()} className="shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger
                   render={
@@ -123,7 +118,9 @@ export function TeacherCard({
         <div className="pt-3 border-t border-border/50 flex items-center justify-between text-xs">
           <div className="flex items-center gap-1.5 font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
             <Star className="size-3.5 fill-amber-500 text-amber-500" />
-            <span>{teacher.averageRating ? teacher.averageRating.toFixed(1) : "0.0"}</span>
+            <span>
+              {teacher.averageRating ? teacher.averageRating.toFixed(1) : "0.0"}
+            </span>
           </div>
 
           <span className="text-muted-foreground font-medium">

@@ -195,7 +195,6 @@ function CreateReviewForm({
         />
         <div className="flex justify-between text-[11px] text-muted-foreground">
           <span>Be constructive and respectful.</span>
-          <span>{description.length} / 500</span>
         </div>
       </Field>
 
@@ -244,11 +243,7 @@ function CreateReviewForm({
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={createMutation.isPending}
-          className="font-bold cursor-pointer"
-        >
+        <Button type="submit" disabled={createMutation.isPending}>
           {createMutation.isPending ? "Submitting..." : "Submit Review"}
         </Button>
       </DialogFooter>

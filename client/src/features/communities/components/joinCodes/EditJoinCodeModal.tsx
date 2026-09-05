@@ -239,7 +239,6 @@ export function EditJoinCodeModal({
             <Button
               type="submit"
               disabled={updateMutation.isPending || !isDirty}
-              className="font-bold cursor-pointer"
             >
               {updateMutation.isPending ? "Updating..." : "Save Changes"}
             </Button>

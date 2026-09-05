@@ -194,7 +194,6 @@ export function UpdateTeacherDialog({
               disabled={
                 form.isSubmitting || updateMutation.isPending || !form.isDirty
               }
-              className="font-bold cursor-pointer"
             >
               {form.isSubmitting || updateMutation.isPending
                 ? "Saving Changes..."

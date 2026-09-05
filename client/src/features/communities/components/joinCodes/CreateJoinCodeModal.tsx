@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useCreateJoinCode } from "../../api/joinCodes";
+import { cn } from "@/lib/utils";
 
 interface CreateJoinCodeModalProps {
   communitySlug: string;
@@ -122,7 +123,12 @@ export function CreateJoinCodeModal({
                 type="button"
                 variant={isCustomDuration ? "secondary" : "ghost"}
                 size="xs"
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "text-xs",
+                  isCustomDuration
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
                 onClick={() => setIsCustomDuration(!isCustomDuration)}
               >
                 {isCustomDuration ? "Use presets" : "+ Custom duration (hours)"}
@@ -170,7 +176,12 @@ export function CreateJoinCodeModal({
                 type="button"
                 variant={isCustomUses ? "secondary" : "ghost"}
                 size="xs"
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "text-xs",
+                  isCustomUses
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
                 onClick={() => setIsCustomUses(!isCustomUses)}
               >
                 {isCustomUses ? "Use presets" : "+ Custom max uses"}
@@ -196,11 +207,7 @@ export function CreateJoinCodeModal({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="gap-2 font-bold cursor-pointer"
-            >
+            <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? "Generating..." : "Generate Code"}
             </Button>
           </DialogFooter>

@@ -61,7 +61,6 @@ export function LeaveCommunityDialog({
             variant="destructive"
             onClick={handleLeave}
             disabled={leaveMutation.isPending}
-            className="gap-1.5 font-bold cursor-pointer"
           >
             {leaveMutation.isPending ? "Leaving..." : "Leave Community"}
           </Button>

@@ -31,7 +31,7 @@ export function MobileBottomNav() {
             <div
               className={cn(
                 "relative flex h-7 w-12 items-center justify-center rounded-full transition-all",
-                active && "bg-secondary text-secondary-foreground",
+                active && "bg-nav-active text-nav-active-foreground",
               )}
             >
               <Icon
