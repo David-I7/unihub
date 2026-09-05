@@ -6,15 +6,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Field,
-  FieldLabel,
-  FieldError,
-} from "@/components/ui/field";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import {
   ColorPicker,
   DEFAULT_COMMUNITY_PRESETS,
@@ -61,7 +58,8 @@ export function CommunitySettingsModal({
         if (dirty.slug) payload.slug = values.slug?.trim();
         if (dirty.description) payload.description = values.description?.trim();
         if (dirty.readme) payload.readme = values.readme?.trim() || undefined;
-        if (dirty.backgroundColor) payload.backgroundColor = values.backgroundColor;
+        if (dirty.backgroundColor)
+          payload.backgroundColor = values.backgroundColor;
 
         const updated = await updateMutation.mutateAsync({
           communitySlug: community.slug,
@@ -147,7 +145,6 @@ export function CommunitySettingsModal({
             />
             <div className="flex justify-between text-[11px] text-muted-foreground">
               <span>Summary shown in banners and cards.</span>
-              <span>{(form.values.description ?? "").length} / 1000</span>
             </div>
             <FieldError errors={[{ message: form.errors.description }]} />
           </Field>
@@ -160,7 +157,7 @@ export function CommunitySettingsModal({
             />
           </Field>
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+          <DialogFooter className="pt-2 border-t border-border">
             <Button
               type="button"
               variant="outline"
@@ -173,7 +170,6 @@ export function CommunitySettingsModal({
               disabled={
                 form.isSubmitting || updateMutation.isPending || !form.isDirty
               }
-              className="gap-1.5 font-bold cursor-pointer"
             >
               <span>
                 {form.isSubmitting || updateMutation.isPending
@@ -181,7 +177,7 @@ export function CommunitySettingsModal({
                   : "Save Changes"}
               </span>
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -103,7 +103,7 @@ export function CreateJoinCodeModal({
                   <Button
                     key={preset.label}
                     type="button"
-                    variant={isSelected ? "default" : "outline"}
+                    variant={isSelected ? "secondary" : "outline"}
                     size="sm"
                     className="text-xs font-semibold"
                     onClick={() => {
@@ -151,7 +151,7 @@ export function CreateJoinCodeModal({
                   <Button
                     key={preset.label}
                     type="button"
-                    variant={isSelected ? "default" : "outline"}
+                    variant={isSelected ? "secondary" : "outline"}
                     size="sm"
                     className="text-xs font-semibold px-2"
                     onClick={() => {
