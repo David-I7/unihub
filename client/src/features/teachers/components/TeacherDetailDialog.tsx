@@ -21,7 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
+import { TeacherReviewCard } from "./TeacherReviewCard";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -420,141 +420,16 @@ export function TeacherDetailDialog({
                           String(user.id) === String(review.author.id),
                         );
                         const canManageReview = isAuthor || isCommunityAdmin;
-                        const reviewAverageRating =
-                          review.values.reduce(
-                            (acc, metric) => acc + metric.value,
-                            0,
-                          ) / review.values.length;
 
                         return (
-                          <Card
+                          <TeacherReviewCard
                             key={review.id}
-                            className="rounded-2xl border bg-card p-5 shadow-xs"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <UserAvatar
-                                  username={
-                                    review.isAnonymous
-                                      ? "Anonymous"
-                                      : (review.author?.username ?? "Student")
-                                  }
-                                  size="sm"
-                                  className="size-9 rounded-xl"
-                                  fallbackClassName="rounded-xl"
-                                />
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-xs text-foreground">
-                                      {review.isAnonymous
-                                        ? "Anonymous Student"
-                                        : (review.author?.username ??
-                                          "Student")}
-                                    </span>
-                                    {review.isAnonymous && (
-                                      <Badge
-                                        variant="secondary"
-                                        size="xs"
-                                        className="text-[10px]"
-                                      >
-                                        Anonymous
-                                      </Badge>
-                                    )}
-                                    {isAuthor && (
-                                      <span className="text-[10px] text-muted-foreground">
-                                        (Your Review)
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {formatPostDate(review.createdAt)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-1">
-                                <div className="flex items-center gap-1.5 font-bold text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20">
-                                  <Star className="size-2.5 fill-amber-500 text-amber-500" />
-                                  <span className="text-xs">
-                                    {reviewAverageRating.toFixed(1)}
-                                  </span>
-                                </div>
-
-                                {canManageReview && (
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                      render={
-                                        <Button
-                                          variant="ghost"
-                                          size="icon-xs"
-                                          className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                                        />
-                                      }
-                                    >
-                                      <MoreVertical className="size-3.5" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                      align="end"
-                                      className="w-36"
-                                    >
-                                      {isAuthor && (
-                                        <DropdownMenuItem
-                                          onClick={() =>
-                                            setReviewToEdit(review)
-                                          }
-                                          className="gap-2 cursor-pointer text-xs"
-                                        >
-                                          <Edit2 className="size-3" />
-                                          <span>Edit Review</span>
-                                        </DropdownMenuItem>
-                                      )}
-                                      <DropdownMenuItem
-                                        variant="destructive"
-                                        onClick={() =>
-                                          setReviewToDelete(review.id)
-                                        }
-                                        className="gap-2 cursor-pointer text-xs"
-                                      >
-                                        <Trash2 className="size-3" />
-                                        <span>Delete Review</span>
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Metric score badges */}
-                            {review.values && review.values.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {review.values.map((val) => (
-                                  <span
-                                    key={val.metricId}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium bg-muted/60 px-2 py-0.5 rounded-md border border-border/50"
-                                  >
-                                    <span className="text-muted-foreground">
-                                      {val.metricName}:
-                                    </span>
-                                    <span className="font-bold text-amber-500">
-                                      {val.value}★
-                                    </span>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Review Headline & Body */}
-                            <div className="space-y-1.5 pt-1">
-                              <h4 className="font-heading text-sm font-bold text-foreground">
-                                {review.title}
-                              </h4>
-                              {review.description && (
-                                <MarkdownRenderer
-                                  content={review.description}
-                                />
-                              )}
-                            </div>
-                          </Card>
+                            review={review}
+                            isAuthor={isAuthor}
+                            canManageReview={canManageReview}
+                            onEdit={setReviewToEdit}
+                            onDelete={setReviewToDelete}
+                          />
                         );
                       })}
 

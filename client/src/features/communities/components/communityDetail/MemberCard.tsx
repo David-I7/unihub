@@ -76,7 +76,7 @@ export function MemberCard({
             <div className="space-y-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <h3 className="font-heading text-sm font-bold text-foreground truncate">
-                  @{member.username}
+                  {member.username}
                 </h3>
                 {isSelf && (
                   <span className="text-[10px] text-muted-foreground font-medium shrink-0">

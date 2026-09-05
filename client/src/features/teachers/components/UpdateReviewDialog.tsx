@@ -213,40 +213,35 @@ function UpdateReviewForm({
       </div>
 
       {/* Detailed Ratings Section */}
-      <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
-        <h4 className="text-xs font-bold">Performance Metrics Breakdown</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {activeMetrics.map((metric) => (
-            <div
-              key={metric.metricId}
-              className="rounded-xl border border-border/60 bg-card p-3 space-y-1.5"
-            >
-              <StarRatingInput
-                label={metric.metricName}
-                description={metric.description}
-                value={metricValues[metric.metricId] || 0}
-                onChange={(val) => handleMetricChange(metric.metricId, val)}
-                size="sm"
-              />
-              {errors[`metric_${metric.metricId}`] && (
-                <p className="text-xs text-destructive font-medium">
-                  {errors[`metric_${metric.metricId}`]}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+
+      <h4 className="font-semibold">Performance Metrics Breakdown</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {activeMetrics.map((metric) => (
+          <div
+            key={metric.metricId}
+            className="rounded-xl border border-border/60 bg-card p-3 space-y-1.5"
+          >
+            <StarRatingInput
+              label={metric.metricName}
+              description={metric.description}
+              value={metricValues[metric.metricId] || 0}
+              onChange={(val) => handleMetricChange(metric.metricId, val)}
+              size="sm"
+            />
+            {errors[`metric_${metric.metricId}`] && (
+              <p className="text-xs text-destructive font-medium">
+                {errors[`metric_${metric.metricId}`]}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
 
       <DialogFooter className="pt-2 border-t border-border/60">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={updateMutation.isPending}
-          className="font-bold cursor-pointer"
-        >
+        <Button type="submit" disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </DialogFooter>
@@ -262,7 +257,9 @@ export function UpdateReviewDialog({
   onOpenChange,
   onSuccess,
 }: UpdateReviewDialogProps) {
-  const [cachedRating, setCachedRating] = useState<TeacherRating | null>(rating);
+  const [cachedRating, setCachedRating] = useState<TeacherRating | null>(
+    rating,
+  );
   if (rating && rating !== cachedRating) {
     setCachedRating(rating);
   }

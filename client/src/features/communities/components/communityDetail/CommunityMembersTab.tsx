@@ -221,17 +221,19 @@ export function CommunityMembersTab({
           </div>
 
           {/* Infinite Scroll Sentinel */}
-          <div
-            ref={sentinelRef}
-            className="py-4 text-center text-xs text-muted-foreground"
-          >
-            {isFetchingNextPage && (
-              <div className="flex items-center justify-center gap-2">
-                <div className="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span>Loading more members...</span>
-              </div>
-            )}
-          </div>
+          {hasNextPage && (
+            <div
+              ref={sentinelRef}
+              className="py-4 text-center text-xs text-muted-foreground"
+            >
+              {isFetchingNextPage && (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="size-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Loading more members...</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

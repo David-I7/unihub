@@ -216,7 +216,7 @@ function CreateReviewForm({
       </div>
 
       {/* Detailed Ratings Section */}
-      <h4 className="text-xs font-bold">Performance Metrics Breakdown</h4>
+      <h4 className="font-semibold">Performance Metrics Breakdown</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {activeMetrics.map((metric) => (
           <div

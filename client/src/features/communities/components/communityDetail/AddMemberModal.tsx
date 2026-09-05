@@ -139,7 +139,7 @@ export function AddMemberModal({
               aria-invalid={form.isInvalid("username")}
               autoComplete="off"
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground">
               Enter the exact username of the user you want to add.
             </FieldDescription>
             <FieldError errors={[{ message: form.errors.username }]} />
@@ -174,7 +174,7 @@ export function AddMemberModal({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <FieldDescription>
+              <FieldDescription className="text-xs text-muted-foreground">
                 Community Admins can manage courses, study years, and members.
               </FieldDescription>
             </Field>
@@ -191,7 +191,6 @@ export function AddMemberModal({
             <Button
               type="submit"
               disabled={form.isSubmitting || addMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
             >
               {form.isSubmitting || addMutation.isPending
                 ? "Adding..."

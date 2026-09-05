@@ -71,7 +71,6 @@ export function DeleteReviewAlertDialog({
             variant="destructive"
             onClick={handleDelete}
             disabled={deleteMutation.isPending}
-            className="font-bold cursor-pointer"
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Review"}
           </Button>

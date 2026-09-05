@@ -63,7 +63,6 @@ export function DeleteCommentDialog({
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
-            className="font-bold cursor-pointer"
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Comment"}
           </Button>

@@ -49,7 +49,7 @@ export function RemoveMemberDialog({
           <DialogTitle>Remove Member</DialogTitle>
           <DialogDescription>
             Are you sure you want to remove{" "}
-            <strong className="text-foreground">@{member.username}</strong> from
+            <strong className="text-foreground">{member.username}</strong> from
             this community?
           </DialogDescription>
         </DialogHeader>
@@ -68,7 +68,6 @@ export function RemoveMemberDialog({
             variant="destructive"
             onClick={handleRemove}
             disabled={removeMutation.isPending}
-            className="gap-1.5 font-bold cursor-pointer"
           >
             {removeMutation.isPending ? "Removing..." : "Remove Member"}
           </Button>
