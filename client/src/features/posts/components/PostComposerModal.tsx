@@ -95,7 +95,7 @@ export function PostComposerModal({
               onBlur={form.handleBlur}
               aria-invalid={form.isInvalid("title")}
               name="title"
-              maxLength={150}
+              maxLength={100}
             />
             <FieldError errors={[{ message: form.errors.title }]} />
           </Field>
@@ -114,14 +114,14 @@ export function PostComposerModal({
                 <TabsList className="h-7 p-0.5 bg-muted rounded-lg">
                   <TabsTrigger
                     value="write"
-                    className="text-xs h-6 px-2.5 gap-1"
+                    className="text-xs h-8 px-2.5 gap-1"
                   >
                     <Edit3 className="size-3" />
                     Write
                   </TabsTrigger>
                   <TabsTrigger
                     value="preview"
-                    className="text-xs h-6 px-2.5 gap-1"
+                    className="text-xs h-8 px-2.5 gap-1"
                   >
                     <Eye className="size-3" />
                     Preview
@@ -141,12 +141,12 @@ export function PostComposerModal({
                   onChange={form.handleChange}
                   onBlur={form.handleBlur}
                   aria-invalid={form.isInvalid("description")}
-                  maxLength={20000}
+                  maxLength={10000}
                   className="font-mono text-xs leading-relaxed"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>Markdown formatting is supported.</span>
-                  <span>{form.values.description.length} / 20000</span>
+                  <span>{form.values.description.length} / 10000</span>
                 </div>
               </div>
             ) : (
@@ -174,7 +174,6 @@ export function PostComposerModal({
             <Button
               type="submit"
               disabled={form.isSubmitting || createMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
             >
               {form.isSubmitting || createMutation.isPending
                 ? "Publishing..."

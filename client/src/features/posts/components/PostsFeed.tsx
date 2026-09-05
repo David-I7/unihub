@@ -122,17 +122,19 @@ export function PostsFeed({
           ))}
 
           {/* Infinite Scroll Sentinel */}
-          <div
-            ref={sentinelRef}
-            className="h-4 w-full flex justify-center py-2"
-          >
-            {isFetchingNextPage && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Spinner className="size-4" />
-                <span>Loading more discussions...</span>
-              </div>
-            )}
-          </div>
+          {hasNextPage && (
+            <div
+              ref={sentinelRef}
+              className="h-4 w-full flex justify-center py-2"
+            >
+              {isFetchingNextPage && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Spinner className="size-4" />
+                  <span>Loading more discussions...</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

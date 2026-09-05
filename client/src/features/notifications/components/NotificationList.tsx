@@ -29,7 +29,7 @@ export const NotificationList = memo(function NotificationList({
 }: NotificationListProps) {
   const groups = useMemo(
     () => groupNotificationsByTime(notifications),
-    [notifications]
+    [notifications],
   );
 
   if (isLoading) {
@@ -38,10 +38,7 @@ export const NotificationList = memo(function NotificationList({
 
   if (notifications.length === 0) {
     return (
-      <NotificationEmptyState
-        category={category}
-        isUnreadOnly={isUnreadOnly}
-      />
+      <NotificationEmptyState category={category} isUnreadOnly={isUnreadOnly} />
     );
   }
 

@@ -11,21 +11,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { UserPlus, Trash2, Search, Users } from "@/components/ui/icons";
+import { UserPlus, Trash2, Search } from "@/components/ui/icons";
 import { getErrorMessage } from "@/api/types";
 import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import {
   useAddCourseTeacher,
   useRemoveCourseTeacher,
 } from "../api/manageCourseTeachers";
-import type { Course } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Course, CourseCardInfo } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface ManageCourseTeachersModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  currentTeachers?: Teacher[];
+  course: Course | CourseCardInfo;
+  currentTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -80,7 +80,7 @@ export function ManageCourseTeachersModal({
     }
   };
 
-  const handleRemove = async (teacher: Teacher) => {
+  const handleRemove = async (teacher: Teacher | TeacherSummary) => {
     try {
       await removeTeacherMutation.mutateAsync({
         communitySlug,
@@ -102,7 +102,8 @@ export function ManageCourseTeachersModal({
         <DialogHeader>
           <DialogTitle>Manage Faculty: {course.name}</DialogTitle>
           <DialogDescription>
-            Assign or unassign instructors and teaching assistants for this course.
+            Assign or unassign instructors and teaching assistants for this
+            course.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +111,6 @@ export function ManageCourseTeachersModal({
           {/* Currently Assigned Faculty */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Users className="size-3.5 text-primary" />
               <span>Assigned Instructors ({currentTeachers.length})</span>
             </h4>
 
@@ -135,9 +135,17 @@ export function ManageCourseTeachersModal({
                         <p className="text-xs font-bold text-foreground truncate">
                           Prof. {teacher.firstName} {teacher.lastName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {teacher.ratingsCount ?? 0} reviews
-                        </p>
+                        {"ratingsCount" in teacher &&
+                          typeof (teacher as { ratingsCount?: number })
+                            .ratingsCount === "number" && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {
+                                (teacher as { ratingsCount: number })
+                                  .ratingsCount
+                              }{" "}
+                              reviews
+                            </p>
+                          )}
                       </div>
                     </div>
 
@@ -161,7 +169,6 @@ export function ManageCourseTeachersModal({
           {/* Add More Faculty */}
           <div className="space-y-2 pt-3 border-t border-border/60">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <UserPlus className="size-3.5 text-primary" />
               <span>Assign More Instructors</span>
             </h4>
 

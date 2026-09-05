@@ -7,7 +7,7 @@ import org.openapitools.jackson.nullable.JsonNullable;
 
 @Builder
 public record UpdatePostRequestDto(
-        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 200, message = "Title must not exceed 200 characters") String> title,
+        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 100, message = "Title must not exceed 100 characters") String> title,
         JsonNullable<@Size(max = 10000, message = "Description must not exceed 10000 characters") String> description
 ) {
     public UpdatePostRequestDto(String title, String description) {

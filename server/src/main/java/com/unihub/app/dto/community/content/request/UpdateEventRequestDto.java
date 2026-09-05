@@ -12,9 +12,9 @@ import org.openapitools.jackson.nullable.JsonNullable;
 @Builder
 public record UpdateEventRequestDto(
 
-        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 120, message = "Title must not exceed 120 characters") String> title,
+        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 100, message = "Title must not exceed 100 characters") String> title,
 
-        JsonNullable<@Size(max = 2000, message = "Description must not exceed 2000 characters") String> description,
+        JsonNullable<@Size(max = 500, message = "Description must not exceed 500 characters") String> description,
 
         JsonNullable<@NotNull(message = "Event type cannot be null") EventType> type,
 

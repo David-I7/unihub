@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useCreateJoinCode } from "../../api/joinCodes";
+import { cn } from "@/lib/utils";
 
 interface CreateJoinCodeModalProps {
   communitySlug: string;
@@ -91,7 +92,7 @@ export function CreateJoinCodeModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
           {/* Duration Presets */}
           <Field>
             <FieldLabel>Validity Duration</FieldLabel>
@@ -103,7 +104,7 @@ export function CreateJoinCodeModal({
                   <Button
                     key={preset.label}
                     type="button"
-                    variant={isSelected ? "default" : "outline"}
+                    variant={isSelected ? "secondary" : "outline"}
                     size="sm"
                     className="text-xs font-semibold"
                     onClick={() => {
@@ -122,7 +123,12 @@ export function CreateJoinCodeModal({
                 type="button"
                 variant={isCustomDuration ? "secondary" : "ghost"}
                 size="xs"
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "text-xs",
+                  isCustomDuration
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
                 onClick={() => setIsCustomDuration(!isCustomDuration)}
               >
                 {isCustomDuration ? "Use presets" : "+ Custom duration (hours)"}
@@ -151,7 +157,7 @@ export function CreateJoinCodeModal({
                   <Button
                     key={preset.label}
                     type="button"
-                    variant={isSelected ? "default" : "outline"}
+                    variant={isSelected ? "secondary" : "outline"}
                     size="sm"
                     className="text-xs font-semibold px-2"
                     onClick={() => {
@@ -170,7 +176,12 @@ export function CreateJoinCodeModal({
                 type="button"
                 variant={isCustomUses ? "secondary" : "ghost"}
                 size="xs"
-                className="text-xs text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "text-xs",
+                  isCustomUses
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
                 onClick={() => setIsCustomUses(!isCustomUses)}
               >
                 {isCustomUses ? "Use presets" : "+ Custom max uses"}
@@ -196,11 +207,7 @@ export function CreateJoinCodeModal({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending}
-              className="gap-2 font-bold cursor-pointer"
-            >
+            <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? "Generating..." : "Generate Code"}
             </Button>
           </DialogFooter>

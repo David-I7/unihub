@@ -49,7 +49,7 @@ export function MyRemindersWidget() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3 pb-2 border-b border-border/60">
             <div className="flex items-center gap-2">
-              <div className="flex size-7 items-center justify-center rounded-lg bg-secondary text-foreground/80">
+              <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
                 <Bell className="size-4" />
               </div>
               <div>

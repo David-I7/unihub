@@ -26,7 +26,7 @@ public record UpdateCourseRequestDto(
         JsonNullable<@NotNull(message = "Credit points cannot be null") @Min(value = 1, message = "Credit points must be at least 1")
         @Max(value = 6, message = "Credit points cannot exceed 6") Integer> creditPoints,
 
-        JsonNullable<@Size(max = 1000, message = "Description must not exceed 1000 characters") String> description,
+        JsonNullable<@Size(max = 500, message = "Description must not exceed 500 characters") String> description,
 
         JsonNullable<@Size(max = 50000, message = "Readme must not exceed 50000 characters") String> readme,
 

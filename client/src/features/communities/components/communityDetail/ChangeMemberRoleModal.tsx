@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Shield, User, Check } from "@/components/ui/icons";
+import { Shield, User } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -47,9 +47,7 @@ export function ChangeMemberRoleModal({
 
   useEffect(() => {
     if (member) {
-      setSelectedRole(
-        member.role === "COMMUNITY_ADMIN" ? "Admin" : "Member",
-      );
+      setSelectedRole(member.role === "COMMUNITY_ADMIN" ? "Admin" : "Member");
     }
   }, [member, open]);
 
@@ -74,9 +72,7 @@ export function ChangeMemberRoleModal({
         payload: { role: serverRole },
       });
 
-      toast.success(
-        `Role for @${member.username} updated to ${selectedRole}.`,
-      );
+      toast.success(`Role for @${member.username} updated to ${selectedRole}.`);
       onOpenChange(false);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Failed to update member role."));
@@ -91,7 +87,7 @@ export function ChangeMemberRoleModal({
           <DialogDescription>
             Update permissions and access level for{" "}
             <strong className="text-foreground font-semibold">
-              @{member.username}
+              {member.username}
             </strong>
             .
           </DialogDescription>
@@ -120,13 +116,13 @@ export function ChangeMemberRoleModal({
                 </SelectItem>
                 <SelectItem value="Admin">
                   <div className="flex items-center gap-2 text-xs">
-                    <Shield className="size-3.5 text-primary" />
+                    <Shield className="size-3.5 text-muted-foreground" />
                     <span>Admin (Manage members & courses)</span>
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground">
               Community Admins can add members, manage courses, and update
               settings.
             </FieldDescription>
@@ -146,9 +142,7 @@ export function ChangeMemberRoleModal({
               disabled={
                 updateMutation.isPending || selectedRole === currentRoleUi
               }
-              className="gap-1.5 font-bold cursor-pointer"
             >
-              <Check className="size-4" />
               {updateMutation.isPending ? "Saving..." : "Save Role"}
             </Button>
           </DialogFooter>

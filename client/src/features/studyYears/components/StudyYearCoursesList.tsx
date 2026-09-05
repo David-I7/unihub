@@ -211,36 +211,13 @@ export function StudyYearCoursesList({
                   : "No courses are currently registered in this study year."}
             </p>
           </div>
-          {debouncedSearch && (
-            <button
-              type="button"
-              onClick={() => {
-                setSearchInput("");
-                setIsSearchExpanded(false);
-                setFilters({ search: "" });
-              }}
-              className="text-xs font-semibold text-primary hover:underline cursor-pointer"
-            >
-              Clear search query
-            </button>
-          )}
-          {canCreateCourse && !debouncedSearch && (
-            <Button
-              size="sm"
-              onClick={() => setCreateModalOpen(true)}
-              className="gap-1.5 font-bold cursor-pointer mt-2"
-            >
-              <Plus className="size-4" />
-              <span>Add First Course</span>
-            </Button>
-          )}
         </div>
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {allCourses.map((item) => (
               <CourseCard
-                key={item.course.id}
+                key={item.id}
                 item={item}
                 communitySlug={communitySlug}
                 studyYearSlug={studyYearSlug}

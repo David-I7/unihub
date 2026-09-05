@@ -8,6 +8,7 @@ import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityReadmeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
@@ -262,6 +263,13 @@ public class CommunityService {
 
         Community saved = communityRepository.save(community);
         return communityMapper.toCommunityResponseDto(saved, true);
+    }
+
+    @Transactional(readOnly = true)
+    public CommunityReadmeResponseDto getCommunityReadme(String communitySlug) {
+        Community community = communityRepository.findBySlug(communitySlug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+        return communityMapper.toCommunityReadmeResponseDto(community.getReadme());
     }
 
     @Transactional

@@ -8,14 +8,20 @@ import {
   Edit2,
   Trash2,
   Plus,
+  X,
 } from "@/components/ui/icons";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
+import { TeacherReviewCard } from "./TeacherReviewCard";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -106,7 +112,10 @@ export function TeacherDetailDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto"
+        >
           {isTeacherLoading || !teacher ? (
             <div className="p-12 text-center text-sm text-muted-foreground space-y-3">
               <div className="size-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -118,91 +127,102 @@ export function TeacherDetailDialog({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Teacher Header Profile (Clean transparent background consistent with modals) */}
-              <div className="flex items-start justify-between gap-4 pt-1 pr-6 sm:pr-8">
-                <div className="flex items-center gap-4 min-w-0">
+              {/* Teacher Header Profile */}
+              <div className="flex items-start justify-between gap-3 sm:gap-4 pb-4 border-b border-border/60">
+                <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                   <UserAvatar
                     username={teacher.lastName || teacher.firstName}
-                    size="xl"
-                    className="size-16 rounded-2xl ring-2 ring-primary/20 text-lg font-bold shrink-0"
-                    fallbackClassName="rounded-2xl"
+                    size="lg"
+                    fallbackClassName="rounded-xl sm:rounded-2xl"
                   />
 
-                  <div className="space-y-1.5 min-w-0">
+                  <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <DialogTitle className="text-xl sm:text-2xl font-bold font-heading text-foreground truncate">
+                      <DialogTitle className="text-lg sm:text-2xl font-bold font-heading text-foreground break-words sm:truncate">
                         Prof. {teacher.firstName} {teacher.lastName}
                       </DialogTitle>
-                      {teacher.estimatedAge && (
-                        <Badge
-                          variant="outline"
-                          size="xs"
-                          className="font-mono text-xs"
-                        >
-                          {teacher.estimatedAge} yrs old
-                        </Badge>
-                      )}
                     </div>
 
                     {/* Aggregate Rating and Reviews count */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                      <span className="flex items-center gap-1 font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                      <span className="flex items-center gap-1 font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20 shrink-0">
                         <Star className="size-3.5 fill-amber-500 text-amber-500" />
                         {teacher.averageRating
                           ? teacher.averageRating.toFixed(1)
                           : "0.0"}
                       </span>
-                      <span>•</span>
-                      <span className="font-medium">
-                        {teacher.ratingsCount ?? 0}{" "}
-                        {teacher.ratingsCount === 1
-                          ? "student rating"
-                          : "student ratings"}
-                      </span>
+                      {teacher.estimatedAge && (
+                        <Badge
+                          variant="outline"
+                          size="xs"
+                          className="font-mono text-[11px] shrink-0 block"
+                        >
+                          {teacher.estimatedAge} yrs old
+                        </Badge>
+                      )}
+
                       {teacher.createdAt && (
                         <>
-                          <span>•</span>
-                          <span>Added {formatPostDate(teacher.createdAt)}</span>
+                          <span className="hidden sm:inline">•</span>
+                          <span className="hidden sm:inline">
+                            Added {formatPostDate(teacher.createdAt)}
+                          </span>
                         </>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Header Action Menu for Community Admins */}
-                {isCommunityAdmin && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger
-                      render={
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="size-8 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
-                          title="Teacher options"
-                        />
-                      }
-                    >
-                      <MoreVertical className="size-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem
-                        onClick={() => setEditTeacherOpen(true)}
-                        className="gap-2 cursor-pointer text-xs"
+                {/* Header Actions: 3-dots Menu + Close Button */}
+                <div className="flex items-center gap-1 shrink-0 self-start">
+                  {isCommunityAdmin && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        render={
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                            title="Teacher options"
+                          />
+                        }
                       >
-                        <Edit2 className="size-3.5" />
-                        <span>Edit Profile</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setDeleteTeacherOpen(true)}
-                        className="gap-2 cursor-pointer text-xs"
+                        <MoreVertical className="size-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuItem
+                          onClick={() => setEditTeacherOpen(true)}
+                          className="gap-2 cursor-pointer text-xs"
+                        >
+                          <Edit2 className="size-3.5" />
+                          <span>Edit Profile</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleteTeacherOpen(true)}
+                          className="gap-2 cursor-pointer text-xs"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Delete Teacher</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
+                  <DialogClose
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        className="size-8 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                        title="Close dialog"
                       >
-                        <Trash2 className="size-3.5" />
-                        <span>Delete Teacher</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        <X className="size-4" />
+                        <span className="sr-only">Close</span>
+                      </Button>
+                    }
+                  />
+                </div>
               </div>
 
               {/* 2-Tab Navigation Container (Consistent with page tabs) */}
@@ -293,7 +313,7 @@ export function TeacherDetailDialog({
 
                     {!teacher.coursesTaught ||
                     teacher.coursesTaught.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-8 text-center space-y-2">
+                      <div className="mt-4 flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-8 text-center space-y-2">
                         <BookOpen className="size-8 text-muted-foreground/40" />
                         <h4 className="text-sm font-semibold text-foreground">
                           No Courses Assigned
@@ -304,7 +324,7 @@ export function TeacherDetailDialog({
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {teacher.coursesTaught.map((course) => {
                           const studyYearSlug = `year-${Math.max(
                             1,
@@ -369,7 +389,7 @@ export function TeacherDetailDialog({
 
                     {user && (
                       <Button
-                        size="xs"
+                        size="sm"
                         onClick={() => setCreateReviewOpen(true)}
                         className="gap-1 font-semibold text-xs cursor-pointer"
                       >
@@ -390,16 +410,6 @@ export function TeacherDetailDialog({
                         Be the first student to leave feedback and rating for
                         Prof. {teacher.firstName} {teacher.lastName}!
                       </p>
-                      {user && (
-                        <Button
-                          size="xs"
-                          onClick={() => setCreateReviewOpen(true)}
-                          className="mt-2 font-semibold text-xs cursor-pointer"
-                        >
-                          <Plus className="size-3.5" />
-                          <span>Write First Review</span>
-                        </Button>
-                      )}
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -412,137 +422,26 @@ export function TeacherDetailDialog({
                         const canManageReview = isAuthor || isCommunityAdmin;
 
                         return (
-                          <Card
+                          <TeacherReviewCard
                             key={review.id}
-                            className="rounded-2xl border bg-card p-5 shadow-xs space-y-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                <UserAvatar
-                                  username={
-                                    review.isAnonymous
-                                      ? "Anonymous"
-                                      : (review.author?.username ?? "Student")
-                                  }
-                                  size="sm"
-                                  className="size-9 rounded-xl"
-                                  fallbackClassName="rounded-xl"
-                                />
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-xs text-foreground">
-                                      {review.isAnonymous
-                                        ? "Anonymous Student"
-                                        : (review.author?.username ??
-                                          "Student")}
-                                    </span>
-                                    {review.isAnonymous && (
-                                      <Badge
-                                        variant="secondary"
-                                        size="xs"
-                                        className="text-[10px]"
-                                      >
-                                        Anonymous
-                                      </Badge>
-                                    )}
-                                    {isAuthor && (
-                                      <Badge
-                                        variant="info"
-                                        size="xs"
-                                        className="text-[10px] font-bold"
-                                      >
-                                        Your Review
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <span className="text-[11px] text-muted-foreground">
-                                    {formatPostDate(review.createdAt)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {canManageReview && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger
-                                    render={
-                                      <Button
-                                        variant="ghost"
-                                        size="icon-xs"
-                                        className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                                      />
-                                    }
-                                  >
-                                    <MoreVertical className="size-3.5" />
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    align="end"
-                                    className="w-36"
-                                  >
-                                    {isAuthor && (
-                                      <DropdownMenuItem
-                                        onClick={() => setReviewToEdit(review)}
-                                        className="gap-2 cursor-pointer text-xs"
-                                      >
-                                        <Edit2 className="size-3" />
-                                        <span>Edit Review</span>
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem
-                                      variant="destructive"
-                                      onClick={() =>
-                                        setReviewToDelete(review.id)
-                                      }
-                                      className="gap-2 cursor-pointer text-xs"
-                                    >
-                                      <Trash2 className="size-3" />
-                                      <span>Delete Review</span>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-
-                            {/* Metric score badges */}
-                            {review.values && review.values.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {review.values.map((val) => (
-                                  <span
-                                    key={val.metricId}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium bg-muted/60 px-2 py-0.5 rounded-md border border-border/50"
-                                  >
-                                    <span className="text-muted-foreground">
-                                      {val.metricName}:
-                                    </span>
-                                    <span className="font-bold text-amber-500">
-                                      {val.value}★
-                                    </span>
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Review Headline & Body */}
-                            <div className="space-y-1.5 pt-1">
-                              <h4 className="font-heading text-sm font-bold text-foreground">
-                                {review.title}
-                              </h4>
-                              {review.description && (
-                                <MarkdownRenderer
-                                  content={review.description}
-                                />
-                              )}
-                            </div>
-                          </Card>
+                            review={review}
+                            isAuthor={isAuthor}
+                            canManageReview={canManageReview}
+                            onEdit={setReviewToEdit}
+                            onDelete={setReviewToDelete}
+                          />
                         );
                       })}
 
                       {/* Infinite Scroll Sentinel */}
-                      <div
-                        ref={observerRef}
-                        className="py-2 text-center text-xs text-muted-foreground"
-                      >
-                        {isFetchingNextPage && "Loading more reviews..."}
-                      </div>
+                      {hasNextPage && (
+                        <div
+                          ref={observerRef}
+                          className="py-2 text-center text-xs text-muted-foreground"
+                        >
+                          {isFetchingNextPage && "Loading more reviews..."}
+                        </div>
+                      )}
                     </div>
                   )}
                 </TabsContent>

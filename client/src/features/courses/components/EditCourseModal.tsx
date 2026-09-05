@@ -12,23 +12,31 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
+import {
+  Field,
+  FieldLabel,
+  FieldError,
+  FieldDescription,
+} from "@/components/ui/field";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { Check, X, User } from "@/components/ui/icons";
+import { Check, X, Search } from "@/components/ui/icons";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
 import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import { useUpdateCourse } from "../api/updateCourse";
-import { updateCourseSchema, type UpdateCourseSchemaValues } from "../schemas/courseSchemas";
-import type { Course, UpdateCoursePayload } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import {
+  updateCourseSchema,
+  type UpdateCourseSchemaValues,
+} from "../schemas/courseSchemas";
+import type { Course, CourseCardInfo, UpdateCoursePayload } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface EditCourseModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  initialTeachers?: Teacher[];
+  course: Course | CourseCardInfo;
+  initialTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (updated: Course) => void;
@@ -53,21 +61,34 @@ function EditCourseForm({
 }: {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  initialTeachers?: Teacher[];
+  course: Course | CourseCardInfo;
+  initialTeachers?: (Teacher | TeacherSummary)[];
   onClose: () => void;
   onSuccess?: (updated: Course) => void;
 }) {
   const navigate = useNavigate();
   const updateMutation = useUpdateCourse();
-  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>(
-    () => initialTeachers.map((t) => t.id),
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>(() =>
+    initialTeachers.map((t) => t.id),
   );
+  const [teacherSearch, setTeacherSearch] = useState("");
 
   const { data: teachersData } = useCommunityTeachers(communitySlug, {
     size: 100,
   });
-  const allTeachers = useMemo(() => teachersData?.content ?? [], [teachersData]);
+  const allTeachers = useMemo(
+    () => teachersData?.content ?? [],
+    [teachersData],
+  );
+
+  const filteredTeachers = useMemo(() => {
+    if (!teacherSearch.trim()) return allTeachers;
+    const query = teacherSearch.trim().toLowerCase();
+    return allTeachers.filter((t) => {
+      const fullName = `${t.firstName} ${t.lastName}`.toLowerCase();
+      return fullName.includes(query);
+    });
+  }, [allTeachers, teacherSearch]);
 
   const form = useForm<UpdateCourseSchemaValues>({
     initialValues: {
@@ -187,8 +208,25 @@ function EditCourseForm({
         </Field>
       </div>
 
-      {/* Abbreviation, Semester, Credits */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Description */}
+      <Field>
+        <FieldLabel htmlFor="description">Description (Optional)</FieldLabel>
+        <Textarea
+          id="description"
+          name="description"
+          placeholder="A brief overview of topics covered in this course..."
+          rows={3}
+          value={form.values.description ?? ""}
+          onChange={(e) => form.setValue("description", e.target.value)}
+          onBlur={form.handleBlur}
+          aria-invalid={form.isInvalid("description")}
+          maxLength={1000}
+        />
+        <FieldError errors={[{ message: form.errors.description }]} />
+      </Field>
+
+      {/* Abbreviation, Credits, Semester */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Field>
           <FieldLabel htmlFor="abbreviation">Code / Abbr. *</FieldLabel>
           <Input
@@ -206,35 +244,6 @@ function EditCourseForm({
           />
           <FieldDescription>2 to 4 characters</FieldDescription>
           <FieldError errors={[{ message: form.errors.abbreviation }]} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="semester">Semester *</FieldLabel>
-          <div className="grid grid-cols-2 gap-2 h-9">
-            <button
-              type="button"
-              onClick={() => form.setValue("semester", 1)}
-              className={`rounded-lg border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
-                form.values.semester === 1
-                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                  : "bg-card hover:bg-muted border-input text-muted-foreground"
-              }`}
-            >
-              Sem 1
-            </button>
-            <button
-              type="button"
-              onClick={() => form.setValue("semester", 2)}
-              className={`rounded-lg border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
-                form.values.semester === 2
-                  ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                  : "bg-card hover:bg-muted border-input text-muted-foreground"
-              }`}
-            >
-              Sem 2
-            </button>
-          </div>
-          <FieldError errors={[{ message: form.errors.semester }]} />
         </Field>
 
         <Field>
@@ -258,24 +267,36 @@ function EditCourseForm({
           <FieldDescription>1 to 6 ECTS</FieldDescription>
           <FieldError errors={[{ message: form.errors.creditPoints }]} />
         </Field>
-      </div>
 
-      {/* Description */}
-      <Field>
-        <FieldLabel htmlFor="description">Description (Optional)</FieldLabel>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="A brief overview of topics covered in this course..."
-          rows={3}
-          value={form.values.description ?? ""}
-          onChange={(e) => form.setValue("description", e.target.value)}
-          onBlur={form.handleBlur}
-          aria-invalid={form.isInvalid("description")}
-          maxLength={1000}
-        />
-        <FieldError errors={[{ message: form.errors.description }]} />
-      </Field>
+        <Field className="col-span-2 sm:col-span-1">
+          <FieldLabel htmlFor="semester">Semester *</FieldLabel>
+          <div className="grid grid-cols-2 gap-2 h-9">
+            <button
+              type="button"
+              onClick={() => form.setValue("semester", 1)}
+              className={`rounded-lg border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
+                form.values.semester === 1
+                  ? "bg-secondary text-secondary-foreground border-border/80 shadow-xs"
+                  : "bg-card hover:bg-muted border-input text-muted-foreground"
+              }`}
+            >
+              Sem 1
+            </button>
+            <button
+              type="button"
+              onClick={() => form.setValue("semester", 2)}
+              className={`rounded-lg border text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
+                form.values.semester === 2
+                  ? "bg-secondary text-secondary-foreground border-border/80 shadow-xs"
+                  : "bg-card hover:bg-muted border-input text-muted-foreground"
+              }`}
+            >
+              Sem 2
+            </button>
+          </div>
+          <FieldError errors={[{ message: form.errors.semester }]} />
+        </Field>
+      </div>
 
       {/* Teachers Multi-select */}
       <div className="space-y-2">
@@ -286,40 +307,55 @@ function EditCourseForm({
           </div>
         ) : (
           <div className="space-y-2">
+            <div className="relative">
+              <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Search instructors by name..."
+                value={teacherSearch}
+                onChange={(e) => setTeacherSearch(e.target.value)}
+                className="pl-8 text-xs h-8"
+              />
+            </div>
+
             <div className="max-h-36 overflow-y-auto rounded-xl border border-border/80 p-2 space-y-1 bg-muted/20">
-              {allTeachers.map((teacher) => {
-                const isSelected = selectedTeacherIds.includes(teacher.id);
-                return (
-                  <div
-                    key={teacher.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleTeacher(teacher.id);
-                    }}
-                    className={`flex items-center justify-between gap-2 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
-                      isSelected
-                        ? "bg-primary/10 border border-primary/30 text-primary font-medium"
-                        : "hover:bg-muted text-foreground"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <UserAvatar
-                        username={teacher.lastName || teacher.firstName}
-                        size="xs"
-                        className="size-5 rounded-md"
-                      />
-                      <span className="truncate">
-                        Prof. {teacher.firstName} {teacher.lastName}
-                      </span>
+              {filteredTeachers.length === 0 ? (
+                <div className="py-4 text-center text-xs text-muted-foreground">
+                  No instructors found matching &ldquo;{teacherSearch}&rdquo;
+                </div>
+              ) : (
+                filteredTeachers.map((teacher) => {
+                  const isSelected = selectedTeacherIds.includes(teacher.id);
+                  return (
+                    <div
+                      key={teacher.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleTeacher(teacher.id);
+                      }}
+                      className={`flex items-center justify-between gap-2 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-primary/10 border border-primary/30 text-primary font-medium"
+                          : "hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <UserAvatar
+                          username={teacher.lastName || teacher.firstName}
+                          size="xs"
+                          className="size-5 rounded-md"
+                        />
+                        <span className="truncate">
+                          Prof. {teacher.firstName} {teacher.lastName}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <Check className="size-3.5 text-primary shrink-0" />
+                      )}
                     </div>
-                    {isSelected ? (
-                      <Check className="size-3.5 text-primary shrink-0" />
-                    ) : (
-                      <User className="size-3.5 text-muted-foreground/50 shrink-0" />
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {selectedTeacherIds.length > 0 && (
@@ -363,7 +399,6 @@ function EditCourseForm({
           disabled={
             form.isSubmitting || updateMutation.isPending || !form.isDirty
           }
-          className="font-bold cursor-pointer"
         >
           {form.isSubmitting || updateMutation.isPending
             ? "Saving Changes..."
@@ -393,16 +428,14 @@ export function EditCourseModal({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <EditCourseForm
-            communitySlug={communitySlug}
-            studyYearSlug={studyYearSlug}
-            course={course}
-            initialTeachers={initialTeachers}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <EditCourseForm
+          communitySlug={communitySlug}
+          studyYearSlug={studyYearSlug}
+          course={course}
+          initialTeachers={initialTeachers}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

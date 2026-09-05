@@ -89,11 +89,7 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
     <div className="space-y-6">
       {/* Header with New Code Action */}
       <div className="flex items-center justify-end gap-4">
-        <Button
-          size="sm"
-          onClick={() => setCreateModalOpen(true)}
-          className="gap-1.5 font-bold cursor-pointer shrink-0"
-        >
+        <Button size="sm" onClick={() => setCreateModalOpen(true)}>
           <Plus className="size-4" />
           <span>New Join Code</span>
         </Button>
@@ -146,11 +142,11 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
             return (
               <div
                 key={code.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 gap-3 hover:bg-muted/10 transition-colors"
+                className="flex items-start sm:items-center justify-between p-4 gap-3 hover:bg-muted/10 transition-colors"
               >
                 {/* Code & Badges */}
-                <div className="space-y-1.5 min-w-[180px]">
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-mono text-sm font-bold tracking-widest text-secondary-foreground bg-secondary border border-border/60 px-2 py-0.5 rounded-md">
                       {code.code}
                     </span>
@@ -192,14 +188,14 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                   </div>
                 </div>
 
-                {/* Actions: Copy Quick Button + 3-dots Dropdown Menu */}
-                <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                {/* Actions: Copy Quick Button (large screens) + 3-dots Dropdown Menu */}
+                <div className="flex items-center gap-1.5 shrink-0">
                   <Button
                     variant="ghost"
                     size="xs"
                     onClick={() => handleCopyCode(code.code)}
                     title="Copy code"
-                    className="h-8 px-2 text-xs font-semibold gap-1"
+                    className="hidden sm:inline-flex h-8 px-2 text-xs font-semibold gap-1 cursor-pointer"
                   >
                     {copiedCode === code.code ? (
                       <Check className="size-3.5 text-emerald-500" />
@@ -223,6 +219,17 @@ export function JoinCodesTab({ communitySlug }: JoinCodesTabProps) {
                       }
                     />
                     <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem
+                        onClick={() => handleCopyCode(code.code)}
+                        className="sm:hidden gap-2 cursor-pointer text-xs"
+                      >
+                        {copiedCode === code.code ? (
+                          <Check className="size-3.5 text-emerald-500" />
+                        ) : (
+                          <Copy className="size-3.5" />
+                        )}
+                        <span>Copy Code</span>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => handleCopyLink(code.code)}
                         className="gap-2 cursor-pointer text-xs"

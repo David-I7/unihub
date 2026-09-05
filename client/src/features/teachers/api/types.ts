@@ -12,6 +12,12 @@ export interface Teacher {
   createdAt: string;
 }
 
+export interface TeacherSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export interface TeacherMetricRating {
   metricId: number;
   metricName: string;

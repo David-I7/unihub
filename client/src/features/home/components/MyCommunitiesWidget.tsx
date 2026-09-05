@@ -29,7 +29,7 @@ export function MyCommunitiesWidget() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-1 border-b border-border/60">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-secondary text-foreground/80">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
             <Users className="size-4" />
           </div>
           <div>

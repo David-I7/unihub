@@ -19,9 +19,9 @@ public class UsernameValidator implements ConstraintValidator<Username,String>{
             return true;
         }
 
-        // 2. Check length requirement (Under 3 characters not allowed)
-        if (username.length() < 3) {
-            setCustomMessage(context, "Username must be at least 3 characters long.");
+        // 2. Check length requirement (Between 3 and 30 characters allowed)
+        if (username.length() < 3 || username.length() > 30) {
+            setCustomMessage(context, "Username must be between 3 and 30 characters long.");
             return false;
         }
 

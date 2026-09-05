@@ -102,7 +102,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className={cn(
                         "transition-colors",
                         active &&
-                          "bg-secondary text-secondary-foreground font-semibold data-active:bg-secondary data-active:text-secondary-foreground hover:bg-secondary/90 hover:text-secondary-foreground",
+                          "bg-nav-active text-nav-active-foreground font-semibold data-active:bg-nav-active data-active:text-nav-active-foreground hover:bg-nav-active/90 hover:text-nav-active-foreground",
                       )}
                     >
                       <div className="relative flex items-center justify-center">

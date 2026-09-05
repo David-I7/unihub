@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
-import { Eye, Edit2 as Edit3, Code } from "@/components/ui/icons";
+import { Eye, Edit2 as Edit3, Code, X } from "@/components/ui/icons";
 import { Heading1, Bold, Italic, List, Table as TableIcon } from "lucide-react";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,16 +22,18 @@ import type { Community } from "../../api/types";
 
 interface EditCommunityReadmeModalProps {
   community: Community;
+  currentReadme?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function EditCommunityReadmeModal({
   community,
+  currentReadme,
   open,
   onOpenChange,
 }: EditCommunityReadmeModalProps) {
-  const [readme, setReadme] = useState(community.readme ?? "");
+  const [readme, setReadme] = useState(currentReadme ?? "");
   const [activeMobileView, setActiveMobileView] = useState<"edit" | "preview">(
     "edit",
   );
@@ -38,15 +41,13 @@ export function EditCommunityReadmeModal({
 
   useEffect(() => {
     if (open) {
-      setReadme(community.readme ?? "");
+      setReadme(currentReadme ?? "");
     }
-  }, [open, community.readme]);
+  }, [open, currentReadme]);
 
-  const isEditing = Boolean(
-    community.readme && community.readme.trim().length > 0,
-  );
+  const isEditing = Boolean(currentReadme && currentReadme.trim().length > 0);
 
-  const isDirty = !isFieldValueEqual(readme, community.readme ?? "");
+  const isDirty = !isFieldValueEqual(readme, currentReadme ?? "");
 
   const handleInsertSnippet = (before: string, after: string = "") => {
     setReadme((prev) => `${prev}\n${before}${after}`);
@@ -62,7 +63,7 @@ export function EditCommunityReadmeModal({
       await updateMutation.mutateAsync({
         communitySlug: community.slug,
         payload: {
-          readme: readme.trim() || undefined,
+          readme: readme.trim(),
         },
       });
 
@@ -80,11 +81,12 @@ export function EditCommunityReadmeModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        showCloseButton={false}
         className="w-full max-w-5xl h-[85vh] p-0 overflow-hidden flex flex-col rounded-2xl border shadow-2xl"
         contentClassName="p-0 gap-0 h-full flex-1 flex flex-col min-h-0 overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 sm:p-0 pb-3 border-b border-border/70 pr-10 sm:pr-12 shrink-0">
+        <div className="p-4 sm:p-5 sm:pb-3 pb-3 border-b border-border/70 shrink-0">
           <DialogHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -100,40 +102,60 @@ export function EditCommunityReadmeModal({
                 </DialogDescription>
               </div>
 
-              {/* Mobile View Toggle (Tab-like design) */}
-              <div className="flex sm:hidden items-center shrink-0 rounded-xl bg-muted/60 p-1 border border-border/40 gap-1">
-                <button
-                  type="button"
-                  onClick={() => setActiveMobileView("edit")}
-                  className={cn(
-                    "inline-flex h-7.5 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all duration-150 cursor-pointer",
-                    activeMobileView === "edit"
-                      ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/40",
-                  )}
-                >
-                  <Edit3 className="size-3.5" />
-                  <span>Edit</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveMobileView("preview")}
-                  className={cn(
-                    "inline-flex h-7.5 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all duration-150 cursor-pointer",
-                    activeMobileView === "preview"
-                      ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
-                      : "text-muted-foreground hover:text-foreground hover:bg-background/40",
-                  )}
-                >
-                  <Eye className="size-3.5" />
-                  <span>Preview</span>
-                </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Mobile View Toggle (Tab-like design) */}
+                <div className="flex sm:hidden items-center rounded-xl bg-muted/60 p-1 border border-border/40 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setActiveMobileView("edit")}
+                    title="Edit"
+                    aria-label="Edit"
+                    className={cn(
+                      "inline-flex size-7.5 items-center justify-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer",
+                      activeMobileView === "edit"
+                        ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                    )}
+                  >
+                    <Edit3 className="size-3.5" />
+                    <span className="sr-only">Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveMobileView("preview")}
+                    title="Preview"
+                    aria-label="Preview"
+                    className={cn(
+                      "inline-flex size-7.5 items-center justify-center rounded-lg text-xs font-semibold transition-all duration-150 cursor-pointer",
+                      activeMobileView === "preview"
+                        ? "bg-background text-foreground shadow-xs dark:bg-card dark:border dark:border-border/60"
+                        : "text-muted-foreground hover:text-foreground hover:bg-background/40",
+                    )}
+                  >
+                    <Eye className="size-3.5" />
+                    <span className="sr-only">Preview</span>
+                  </button>
+                </div>
+
+                <DialogClose
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="size-7.5 text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                      title="Close dialog"
+                    >
+                      <X className="size-4" />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  }
+                />
               </div>
             </div>
           </DialogHeader>
 
           {/* Quick Markdown Toolbar */}
-          <div className="flex items-center gap-1.5 pt-3 overflow-x-auto pb-1 max-w-full">
+          <div className="flex items-center gap-1.5 pt-3 overflow-x-auto sm:pb-5 pb-3 max-w-full">
             <Button
               type="button"
               variant="outline"
@@ -271,7 +293,6 @@ export function EditCommunityReadmeModal({
             type="button"
             onClick={handleSave}
             disabled={updateMutation.isPending || !isDirty}
-            className="gap-1.5 font-bold cursor-pointer"
           >
             {updateMutation.isPending
               ? "Saving..."

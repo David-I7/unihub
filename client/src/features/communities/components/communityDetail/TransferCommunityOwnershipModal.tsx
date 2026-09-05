@@ -137,7 +137,7 @@ export function TransferCommunityOwnershipModal({
               className="text-xs"
               autoFocus
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground">
               The user must already be an active member of this community.
             </FieldDescription>
             <FieldError errors={error ? [{ message: error }] : []} />

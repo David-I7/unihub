@@ -5,11 +5,10 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import org.springframework.data.domain.Pageable;
 import com.unihub.app.dto.community.resources.request.CreateStudyYearRequestDto;
-import com.unihub.app.dto.community.resources.response.CourseHomeResponseDto;
-import com.unihub.app.dto.community.resources.response.CourseResponseDto;
+import com.unihub.app.dto.community.resources.response.CourseCardResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
-import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
+import com.unihub.app.dto.community.resources.response.TeacherSummaryResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.AuthorizationService;
@@ -109,16 +108,13 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
     public void testGetStudyYearCourses_Success() throws Exception {
         UUID teacherId = UUID.randomUUID();
 
-        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
-                .id(teacherId)
-                .firstName("Daniel")
-                .lastName("Dragulici")
-                .averageRating(4.5f)
-                .ratingsCount(10)
-                .createdAt(OffsetDateTime.now())
-                .build();
+        TeacherSummaryResponseDto teacherDto = new TeacherSummaryResponseDto(
+                teacherId,
+                "Daniel",
+                "Dragulici"
+        );
 
-        CourseResponseDto courseDto = CourseResponseDto.builder()
+        CourseCardResponseDto courseCardDto = CourseCardResponseDto.builder()
                 .id(1L)
                 .name("Arhitectura sistemelor de calcul")
                 .slug("asc")
@@ -127,15 +123,11 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
                 .creditPoints(5)
                 .archived(false)
                 .description("Course description")
-                .build();
-
-        CourseHomeResponseDto courseTeachersDto = CourseHomeResponseDto.builder()
-                .course(courseDto)
                 .teachers(List.of(teacherDto))
                 .build();
 
-        PageDto<CourseHomeResponseDto> coursePageDto = PageDto.<CourseHomeResponseDto>builder()
-                .content(List.of(courseTeachersDto))
+        PageDto<CourseCardResponseDto> coursePageDto = PageDto.<CourseCardResponseDto>builder()
+                .content(List.of(courseCardDto))
                 .number(0)
                 .size(12)
                 .totalElements(1)
@@ -158,20 +150,18 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.studyYear.id").value(1))
                 .andExpect(jsonPath("$.studyYear.name").value("Year 1"))
                 .andExpect(jsonPath("$.courses.content").isArray())
-                .andExpect(jsonPath("$.courses.content[0].course.id").value(1))
-                .andExpect(jsonPath("$.courses.content[0].course.name").value("Arhitectura sistemelor de calcul"))
-                .andExpect(jsonPath("$.courses.content[0].course.slug").value("asc"))
-                .andExpect(jsonPath("$.courses.content[0].course.abbreviation").value("ASC"))
-                .andExpect(jsonPath("$.courses.content[0].course.semester").value(1))
-                .andExpect(jsonPath("$.courses.content[0].course.creditPoints").value(5))
-                .andExpect(jsonPath("$.courses.content[0].course.archived").value(false))
-                .andExpect(jsonPath("$.courses.content[0].course.description").value("Course description"))
+                .andExpect(jsonPath("$.courses.content[0].id").value(1))
+                .andExpect(jsonPath("$.courses.content[0].name").value("Arhitectura sistemelor de calcul"))
+                .andExpect(jsonPath("$.courses.content[0].slug").value("asc"))
+                .andExpect(jsonPath("$.courses.content[0].abbreviation").value("ASC"))
+                .andExpect(jsonPath("$.courses.content[0].semester").value(1))
+                .andExpect(jsonPath("$.courses.content[0].creditPoints").value(5))
+                .andExpect(jsonPath("$.courses.content[0].archived").value(false))
+                .andExpect(jsonPath("$.courses.content[0].description").value("Course description"))
                 .andExpect(jsonPath("$.courses.content[0].teachers").isArray())
                 .andExpect(jsonPath("$.courses.content[0].teachers[0].id").value(teacherId.toString()))
                 .andExpect(jsonPath("$.courses.content[0].teachers[0].firstName").value("Daniel"))
-                .andExpect(jsonPath("$.courses.content[0].teachers[0].lastName").value("Dragulici"))
-                .andExpect(jsonPath("$.courses.content[0].teachers[0].averageRating").value(4.5))
-                .andExpect(jsonPath("$.courses.content[0].teachers[0].ratingsCount").value(10));
+                .andExpect(jsonPath("$.courses.content[0].teachers[0].lastName").value("Dragulici"));
     }
 
     @Test

@@ -10,6 +10,7 @@ import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinPreviewResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityReadmeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
@@ -125,6 +126,14 @@ public class CommunityController {
     ) {
         CommunityResponseDto updated = communityService.updateCommunity(communitySlug, user.id(), requestDto);
         return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/{communitySlug}/readme")
+    public ResponseEntity<CommunityReadmeResponseDto> getCommunityReadme(
+            @PathVariable String communitySlug
+    ) {
+        CommunityReadmeResponseDto readme = communityService.getCommunityReadme(communitySlug);
+        return ResponseEntity.ok(readme);
     }
 
     @DeleteMapping("/{communitySlug}")

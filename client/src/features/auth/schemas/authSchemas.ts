@@ -1,10 +1,13 @@
 import { z } from "zod";
 
-export const emailSchema = z.email("Please enter a valid email address");
+export const emailSchema = z
+  .email("Please enter a valid email address")
+  .max(255, "Email cannot exceed 255 characters");
 
 export const usernameSchema = z
   .string()
   .min(3, "Username must be at least 3 characters long.")
+  .max(30, "Username cannot exceed 30 characters.")
   .regex(
     /^[a-zA-Z0-9_-]+$/,
     "Username can only contain letters, numbers, underscores (_), and hyphens (-)."
@@ -52,7 +55,10 @@ export type LoginFormData = z.infer<typeof loginSchema>;
 export const registerSchema = z.object({
   email: emailSchema,
   username: usernameSchema,
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .max(64, "Password cannot exceed 64 characters"),
 });
 
 export type RegisterFormData = z.infer<typeof registerSchema>;

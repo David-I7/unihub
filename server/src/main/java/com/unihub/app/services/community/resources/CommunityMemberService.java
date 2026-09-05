@@ -155,10 +155,6 @@ public class CommunityMemberService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
         if (community.getOwner().getId().equals(userId)) {
-            if (community.getMemberCount() == 1) {
-                communityRepository.delete(community);
-                return;
-            }
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Community owner cannot leave a community. You must delete the community, or transfer ownership if you want to leave."

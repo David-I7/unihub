@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -44,22 +44,23 @@ export function EditJoinCodeModal({
 
   const updateMutation = useUpdateJoinCode();
 
-  useEffect(() => {
-    if (joinCode && open) {
-      setMaxUses(
-        joinCode.maxUses !== null && joinCode.maxUses !== undefined
-          ? String(joinCode.maxUses)
-          : "",
-      );
-      setValidForHours("");
-      setIsUnlimitedUses(
-        joinCode.maxUses === null || joinCode.maxUses === undefined,
-      );
-      setIsUnlimitedDuration(
-        joinCode.expiresAt === null || joinCode.expiresAt === undefined,
-      );
-    }
-  }, [joinCode, open]);
+  const [prevCodeId, setPrevCodeId] = useState(joinCode?.id);
+
+  if (joinCode && joinCode.id !== prevCodeId) {
+    setPrevCodeId(joinCode.id);
+    setMaxUses(
+      joinCode.maxUses !== null && joinCode.maxUses !== undefined
+        ? String(joinCode.maxUses)
+        : "",
+    );
+    setValidForHours("");
+    setIsUnlimitedUses(
+      joinCode.maxUses === null || joinCode.maxUses === undefined,
+    );
+    setIsUnlimitedDuration(
+      joinCode.expiresAt === null || joinCode.expiresAt === undefined,
+    );
+  }
 
   if (!joinCode) return null;
 
@@ -169,7 +170,7 @@ export function EditJoinCodeModal({
               />
               <Button
                 type="button"
-                variant={isUnlimitedUses ? "default" : "outline"}
+                variant={isUnlimitedUses ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => {
                   setIsUnlimitedUses(!isUnlimitedUses);
@@ -207,7 +208,7 @@ export function EditJoinCodeModal({
               />
               <Button
                 type="button"
-                variant={isUnlimitedDuration ? "default" : "outline"}
+                variant={isUnlimitedDuration ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => {
                   setIsUnlimitedDuration(!isUnlimitedDuration);
@@ -238,7 +239,6 @@ export function EditJoinCodeModal({
             <Button
               type="submit"
               disabled={updateMutation.isPending || !isDirty}
-              className="font-bold cursor-pointer"
             >
               {updateMutation.isPending ? "Updating..." : "Save Changes"}
             </Button>

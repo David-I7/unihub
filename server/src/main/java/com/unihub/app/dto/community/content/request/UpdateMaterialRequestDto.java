@@ -10,11 +10,11 @@ import java.util.UUID;
 
 @Builder
 public record UpdateMaterialRequestDto(
-        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 200, message = "Title must be between 1 and 200 characters") String> title,
-        JsonNullable<@Size(max = 2000, message = "Description must not exceed 2000 characters") String> description,
+        JsonNullable<@NotNull(message = "Title cannot be null") @Size(min = 1, max = 100, message = "Title must be between 1 and 100 characters") String> title,
+        JsonNullable<@Size(max = 500, message = "Description must not exceed 500 characters") String> description,
         JsonNullable<UUID> folderId,
         JsonNullable<Boolean> moveToRoot,
-        JsonNullable<String> url,
+        JsonNullable<@Size(max = 2048, message = "URL must not exceed 2048 characters") String> url,
         JsonNullable<MaterialLinkType> linkType
 ) {
         public UpdateMaterialRequestDto(String title, String description, UUID folderId, Boolean moveToRoot, String url, MaterialLinkType linkType) {

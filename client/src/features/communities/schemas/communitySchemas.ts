@@ -16,11 +16,7 @@ export const createCommunitySchema = z.object({
   description: z
     .string()
     .min(1, "Description is required")
-    .max(1000, "Description must not exceed 1000 characters"),
-  readme: z
-    .string()
-    .max(50000, "Readme markdown must not exceed 50,000 characters")
-    .optional(),
+    .max(500, "Description must not exceed 500 characters"),
   backgroundColor: z
     .string()
     .regex(/^#([A-Fa-f0-9]{6})$/, "Must be a valid 6-character hex color (e.g. #3b82f6)"),
@@ -45,7 +41,7 @@ export const updateCommunitySchema = z.object({
     .optional(),
   description: z
     .string()
-    .max(1000, "Description must not exceed 1000 characters")
+    .max(500, "Description must not exceed 500 characters")
     .optional(),
   readme: z
     .string()

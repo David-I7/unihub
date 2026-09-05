@@ -32,18 +32,23 @@ export function DeleteMaterialDialog({
 }: DeleteMaterialDialogProps) {
   const deleteMutation = useDeleteMaterial();
   const [error, setError] = useState<string | null>(null);
+  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<DeleteMaterialDialogProps["material"]> | null>(material);
+  if (material && material !== cachedMaterial) {
+    setCachedMaterial(material);
+  }
+  const currentMaterial = material ?? cachedMaterial;
 
-  if (!material) return null;
+  if (!currentMaterial) return null;
 
-  const isFile = material.type === "file";
+  const isFile = currentMaterial.type === "file";
   const itemTypeLabel = isFile ? "file" : "resource link";
 
   const handleDelete = async () => {
     try {
       setError(null);
-      await deleteMutation.mutateAsync({ materialId: material.data.id });
+      await deleteMutation.mutateAsync({ materialId: currentMaterial.data.id });
       toast.success(
-        `${isFile ? "File" : "Link"} "${material.data.title}" deleted successfully.`,
+        `${isFile ? "File" : "Link"} "${currentMaterial.data.title}" deleted successfully.`,
       );
       onSuccess?.();
       onOpenChange(false);
@@ -62,7 +67,7 @@ export function DeleteMaterialDialog({
             <AlertTriangle className="size-5" />
           </div>
           <DialogTitle>
-            Delete {isFile ? "File" : "Link"} "{material.data.title}"
+            Delete {isFile ? "File" : "Link"} "{currentMaterial.data.title}"
           </DialogTitle>
           <DialogDescription className="space-y-2 pt-1 text-xs">
             <span className="block text-foreground/80">

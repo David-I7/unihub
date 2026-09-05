@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -114,7 +115,13 @@ export function EditFolderModal({
   onOpenChange,
   onSuccess,
 }: EditFolderModalProps) {
-  if (!folder) return null;
+  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(folder);
+  if (folder && folder !== cachedFolder) {
+    setCachedFolder(folder);
+  }
+  const currentFolder = folder ?? cachedFolder;
+
+  if (!currentFolder) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -124,14 +131,12 @@ export function EditFolderModal({
           <DialogDescription>Change the folder display name.</DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <EditFolderForm
-            key={folder.id}
-            folder={folder}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <EditFolderForm
+          key={currentFolder.id}
+          folder={currentFolder}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

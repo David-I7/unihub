@@ -1,4 +1,4 @@
-import { type CourseIndentifiers, type CourseHome } from "@/features/courses";
+import { type CourseIndentifiers, type CourseCardInfo } from "@/features/courses";
 import { type PaginatedResponse } from "@/api/types";
 
 export type StudyYearNameEnum = "YEAR_1" | "YEAR_2" | "YEAR_3" | "YEAR_4";
@@ -78,7 +78,7 @@ export type StudyYearIdentifiers = {
 
 export interface StudyYearHome {
   studyYear: StudyYear;
-  courses: PaginatedResponse<CourseHome>;
+  courses: PaginatedResponse<CourseCardInfo>;
 }
 
 export type StudyYearDetail = StudyYearHome;

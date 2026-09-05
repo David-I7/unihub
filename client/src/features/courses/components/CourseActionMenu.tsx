@@ -22,14 +22,14 @@ import { useArchiveCourse } from "../api/archiveCourse";
 import { EditCourseModal } from "./EditCourseModal";
 import { ManageCourseTeachersModal } from "./ManageCourseTeachersModal";
 import { DeleteCourseDialog } from "./DeleteCourseDialog";
-import type { Course } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Course, CourseCardInfo } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface CourseActionMenuProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  teachers?: Teacher[];
+  course: Course | CourseCardInfo;
+  teachers?: (Teacher | TeacherSummary)[];
   onDeleted?: () => void;
   triggerClassName?: string;
   align?: "start" | "end";
@@ -170,38 +170,32 @@ export function CourseActionMenu({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {editOpen && (
-        <EditCourseModal
-          communitySlug={communitySlug}
-          studyYearSlug={studyYearSlug}
-          course={course}
-          initialTeachers={teachers}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-        />
-      )}
+      <EditCourseModal
+        communitySlug={communitySlug}
+        studyYearSlug={studyYearSlug}
+        course={course}
+        initialTeachers={teachers}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
 
-      {teachersOpen && (
-        <ManageCourseTeachersModal
-          communitySlug={communitySlug}
-          studyYearSlug={studyYearSlug}
-          course={course}
-          currentTeachers={teachers}
-          open={teachersOpen}
-          onOpenChange={setTeachersOpen}
-        />
-      )}
+      <ManageCourseTeachersModal
+        communitySlug={communitySlug}
+        studyYearSlug={studyYearSlug}
+        course={course}
+        currentTeachers={teachers}
+        open={teachersOpen}
+        onOpenChange={setTeachersOpen}
+      />
 
-      {deleteOpen && (
-        <DeleteCourseDialog
-          communitySlug={communitySlug}
-          studyYearSlug={studyYearSlug}
-          course={course}
-          open={deleteOpen}
-          onOpenChange={setDeleteOpen}
-          onDeleted={onDeleted}
-        />
-      )}
+      <DeleteCourseDialog
+        communitySlug={communitySlug}
+        studyYearSlug={studyYearSlug}
+        course={course}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onDeleted={onDeleted}
+      />
     </>
   );
 }

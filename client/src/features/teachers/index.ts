@@ -17,6 +17,7 @@ export * from "./components/StarRatingInput";
 export * from "./components/TeacherCardSkeleton";
 export * from "./components/TeacherCard";
 export * from "./components/TeacherDetailDialog";
+export * from "./components/TeacherReviewCard";
 export * from "./components/CreateTeacherDialog";
 export * from "./components/UpdateTeacherDialog";
 export * from "./components/DeleteTeacherAlertDialog";

@@ -110,17 +110,16 @@ public class StudyYearServiceTests {
         assertEquals(StudyYearName.YEAR_1, result.studyYear().name());
         assertEquals(1, result.courses().content().size());
 
-        var courseTeacherDto = result.courses().content().get(0);
-        var courseDto = courseTeacherDto.course();
-        assertEquals(1L, courseDto.id());
-        assertEquals("Arhitectura sistemelor de calcul", courseDto.name());
-        assertEquals("asc", courseDto.slug());
-        assertEquals("ASC", courseDto.abbreviation());
-        assertEquals(1, courseDto.semester());
-        assertEquals(5, courseDto.creditPoints());
-        assertFalse(courseDto.archived());
-        assertEquals(1, courseTeacherDto.teachers().size());
-        assertEquals("Daniel", courseTeacherDto.teachers().get(0).firstName());
+        var courseCardDto = result.courses().content().get(0);
+        assertEquals(1L, courseCardDto.id());
+        assertEquals("Arhitectura sistemelor de calcul", courseCardDto.name());
+        assertEquals("asc", courseCardDto.slug());
+        assertEquals("ASC", courseCardDto.abbreviation());
+        assertEquals(1, courseCardDto.semester());
+        assertEquals(5, courseCardDto.creditPoints());
+        assertFalse(courseCardDto.archived());
+        assertEquals(1, courseCardDto.teachers().size());
+        assertEquals("Daniel", courseCardDto.teachers().get(0).firstName());
 
         verify(studyYearRepository).findByCommunitySlugAndStudyYearName("fmi-info-id", StudyYearName.YEAR_1);
         verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(false), isNull(), any(Pageable.class));
@@ -159,7 +158,7 @@ public class StudyYearServiceTests {
 
         assertNotNull(result);
         assertEquals(1, result.courses().content().size());
-        assertTrue(result.courses().content().get(0).course().archived());
+        assertTrue(result.courses().content().get(0).archived());
 
         verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), isNull(), eq(true), isNull(), any(Pageable.class));
     }
@@ -296,7 +295,7 @@ public class StudyYearServiceTests {
 
         assertNotNull(result);
         assertEquals(1, result.courses().content().size());
-        assertEquals("Algoritmi", result.courses().content().get(0).course().name());
+        assertEquals("Algoritmi", result.courses().content().get(0).name());
 
         verify(courseRepository).findAllByStudyYearIdWithFilters(eq(1), eq(1), eq(false), eq("algo"), any(Pageable.class));
     }

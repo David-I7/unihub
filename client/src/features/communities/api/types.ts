@@ -28,7 +28,6 @@ export type CreateCommunityDto = {
   name: string;
   slug: string;
   description: string;
-  readme?: string;
   backgroundColor: string;
 };
 
@@ -40,6 +39,10 @@ export type UpdateCommunityDto = {
   backgroundColor?: string;
   verified?: boolean;
   newOwnerUsername?: string;
+};
+
+export type CommunityReadmeResponse = {
+  readme: string | null;
 };
 
 export type CallerMembership = {

@@ -1,4 +1,4 @@
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 import type { ResourceOwner } from "@/types/domain";
 
 export interface CourseMaterialFolder {
@@ -49,6 +49,18 @@ export interface Course {
   createdAt: string;
 }
 
+export interface CourseCardInfo {
+  id: number;
+  name: string;
+  slug: string;
+  abbreviation: string;
+  semester: number;
+  creditPoints: number;
+  archived: boolean;
+  description?: string;
+  teachers: TeacherSummary[];
+}
+
 export interface CourseHome {
   course: Course;
   teachers: Teacher[];
@@ -56,7 +68,13 @@ export interface CourseHome {
 
 export type CourseTeachers = CourseHome;
 
-export type MaterialLinkType = "VIDEO" | "DRIVE" | "GITHUB" | "DOCS" | "DOCX" | "OTHER";
+export type MaterialLinkType =
+  | "VIDEO"
+  | "DRIVE"
+  | "GITHUB"
+  | "DOCS"
+  | "DOCX"
+  | "OTHER";
 
 export interface CreateFolderPayload {
   name: string;
@@ -127,7 +145,6 @@ export interface CreateCoursePayload {
   semester: number;
   creditPoints?: number;
   description?: string;
-  readme?: string;
   teacherIds?: string[];
 }
 
@@ -146,4 +163,3 @@ export interface UpdateCoursePayload {
 export interface EditCourseReadmePayload {
   readme: string;
 }
-

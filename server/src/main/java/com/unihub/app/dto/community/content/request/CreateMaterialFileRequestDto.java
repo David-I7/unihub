@@ -9,10 +9,10 @@ import java.util.UUID;
 
 public record CreateMaterialFileRequestDto(
         @NotBlank(message = "Title is required")
-        @Size(max = 200, message = "Title must not exceed 200 characters")
+        @Size(max = 100, message = "Title must not exceed 100 characters")
         String title,
 
-        @Size(max = 2000, message = "Description must not exceed 2000 characters")
+        @Size(max = 500, message = "Description must not exceed 500 characters")
         String description,
 
         UUID folderId,

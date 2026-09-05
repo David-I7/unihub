@@ -107,8 +107,12 @@ function UpdateReviewForm({
       nextErrors.title = "Review headline is required";
     } else if (title.trim().length < 3) {
       nextErrors.title = "Headline must be at least 3 characters";
-    } else if (title.trim().length > 120) {
-      nextErrors.title = "Headline must be under 120 characters";
+    } else if (title.trim().length > 100) {
+      nextErrors.title = "Headline must be under 100 characters";
+    }
+
+    if (description.trim().length > 500) {
+      nextErrors.description = "Review details must be under 500 characters";
     }
 
     activeMetrics.forEach((m) => {
@@ -169,7 +173,7 @@ function UpdateReviewForm({
             setErrors((prev) => ({ ...prev, title: "" }));
           }}
           aria-invalid={Boolean(errors.title)}
-          maxLength={120}
+          maxLength={100}
         />
         {errors.title && <FieldError errors={[{ message: errors.title }]} />}
       </Field>
@@ -183,11 +187,11 @@ function UpdateReviewForm({
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          maxLength={2000}
+          maxLength={500}
         />
         <div className="flex justify-between text-[11px] text-muted-foreground">
           <span>Be constructive and respectful.</span>
-          <span>{description.length} / 2000</span>
+          <span>{description.length} / 500</span>
         </div>
       </Field>
 
@@ -209,40 +213,35 @@ function UpdateReviewForm({
       </div>
 
       {/* Detailed Ratings Section */}
-      <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
-        <h4 className="text-xs font-bold">Performance Metrics Breakdown</h4>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {activeMetrics.map((metric) => (
-            <div
-              key={metric.metricId}
-              className="rounded-xl border border-border/60 bg-card p-3 space-y-1.5"
-            >
-              <StarRatingInput
-                label={metric.metricName}
-                description={metric.description}
-                value={metricValues[metric.metricId] || 0}
-                onChange={(val) => handleMetricChange(metric.metricId, val)}
-                size="sm"
-              />
-              {errors[`metric_${metric.metricId}`] && (
-                <p className="text-xs text-destructive font-medium">
-                  {errors[`metric_${metric.metricId}`]}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+
+      <h4 className="font-semibold">Performance Metrics Breakdown</h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {activeMetrics.map((metric) => (
+          <div
+            key={metric.metricId}
+            className="rounded-xl border border-border/60 bg-card p-3 space-y-1.5"
+          >
+            <StarRatingInput
+              label={metric.metricName}
+              description={metric.description}
+              value={metricValues[metric.metricId] || 0}
+              onChange={(val) => handleMetricChange(metric.metricId, val)}
+              size="sm"
+            />
+            {errors[`metric_${metric.metricId}`] && (
+              <p className="text-xs text-destructive font-medium">
+                {errors[`metric_${metric.metricId}`]}
+              </p>
+            )}
+          </div>
+        ))}
       </div>
 
       <DialogFooter className="pt-2 border-t border-border/60">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={updateMutation.isPending}
-          className="font-bold cursor-pointer"
-        >
+        <Button type="submit" disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
       </DialogFooter>
@@ -258,7 +257,15 @@ export function UpdateReviewDialog({
   onOpenChange,
   onSuccess,
 }: UpdateReviewDialogProps) {
-  if (!rating) return null;
+  const [cachedRating, setCachedRating] = useState<TeacherRating | null>(
+    rating,
+  );
+  if (rating && rating !== cachedRating) {
+    setCachedRating(rating);
+  }
+  const currentRating = rating ?? cachedRating;
+
+  if (!currentRating) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -270,16 +277,14 @@ export function UpdateReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <UpdateReviewForm
-            key={rating.id}
-            teacherId={teacherId}
-            rating={rating}
-            metrics={metrics}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <UpdateReviewForm
+          key={currentRating.id}
+          teacherId={teacherId}
+          rating={currentRating}
+          metrics={metrics}
+          onClose={() => onOpenChange(false)}
+          onSuccess={onSuccess}
+        />
       </DialogContent>
     </Dialog>
   );

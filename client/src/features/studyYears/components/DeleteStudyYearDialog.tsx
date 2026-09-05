@@ -85,7 +85,6 @@ export function DeleteStudyYearDialog({
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
-            className="font-bold cursor-pointer"
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Study Year"}
           </Button>

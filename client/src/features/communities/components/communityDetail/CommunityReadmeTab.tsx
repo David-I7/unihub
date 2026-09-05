@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
+import { useCommunityReadme } from "../../api/getCommunityReadme";
+import { CommunityReadmeTabSkeleton } from "./CommunityReadmeTabSkeleton";
 import { EditCommunityReadmeModal } from "./EditCommunityReadmeModal";
 import type { CallerMembership, Community } from "../../api/types";
 
@@ -18,10 +20,14 @@ export function CommunityReadmeTab({
 }: CommunityReadmeTabProps) {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const { canEditCommunity } = usePermissions(callerMembership);
+  const { data, isLoading } = useCommunityReadme(community.slug);
 
-  const hasReadme = Boolean(
-    community.readme && community.readme.trim().length > 0,
-  );
+  if (isLoading) {
+    return <CommunityReadmeTabSkeleton />;
+  }
+
+  const readme = data?.readme ?? null;
+  const hasReadme = Boolean(readme && readme.trim().length > 0);
 
   return (
     <div className="w-full space-y-4">
@@ -49,9 +55,9 @@ export function CommunityReadmeTab({
       )}
 
       {/* Main Markdown Readme Content */}
-      {hasReadme ? (
+      {hasReadme && readme ? (
         <Card className="rounded-2xl border bg-card p-6 md:p-8 shadow-xs">
-          <MarkdownRenderer content={community.readme} />
+          <MarkdownRenderer content={readme} />
         </Card>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card p-12 text-center space-y-3">
@@ -72,6 +78,7 @@ export function CommunityReadmeTab({
 
       <EditCommunityReadmeModal
         community={community}
+        currentReadme={readme}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
       />

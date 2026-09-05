@@ -148,184 +148,172 @@ export function CalendarFilters({
       placeholder="Search events by title, course, or room..."
       totalCount={totalCount}
       resultLabel="events"
-      breakpoint={420}
+      breakpoint={540}
       desktopMaxWidth="max-w-xs md:max-w-sm lg:max-w-md"
       isExpanded={isSearchExpanded}
       onExpandedChange={setIsSearchExpanded}
       triggerTitle="Search events"
     >
-      {({ trigger }) => (
-        <div className="flex items-center gap-2 flex-1 @[420px]:flex-initial justify-between @[420px]:justify-end min-w-0">
-          {/* Community Dropdown */}
-          <div className="flex-1 @[420px]:flex-initial min-w-0 max-w-[200px] sm:max-w-[240px]">
-            <Select
-              value={communitySlug ?? null}
-              onValueChange={(val: string | null) => {
-                if (!val || val === "NO_COMMUNITIES") return;
-                setFilters({
-                  community: val,
-                  studyYear: "",
-                  course: "",
-                });
-              }}
+      {/* Community Dropdown */}
+      <div className="w-[140px] sm:w-[180px] md:w-[220px] shrink-0">
+        <Select
+          value={communitySlug ?? null}
+          onValueChange={(val: string | null) => {
+            if (!val || val === "NO_COMMUNITIES") return;
+            setFilters({
+              community: val,
+              studyYear: "",
+              course: "",
+            });
+          }}
+        >
+          <SelectTrigger
+            size="sm"
+            className="rounded-xl text-xs w-full cursor-pointer border-border/80"
+          >
+            <SelectValue placeholder="Select Community">
+              <span className="flex items-center gap-1.5 truncate">
+                <Users className="size-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">
+                  {selectedCommunityName ?? "Select Community"}
+                </span>
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {userCommunitiesData?.content?.length === 0 && (
+              <SelectItem value="NO_COMMUNITIES" disabled>
+                No communities found
+              </SelectItem>
+            )}
+            {userCommunitiesData?.content?.map((c) => (
+              <SelectItem key={c.id} value={c.slug}>
+                <span className="truncate">{c.name}</span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Dedicated Filters Popover */}
+      <Popover>
+        <PopoverTrigger
+          render={
+            <Button
+              type="button"
+              variant={activeSecondaryFilterCount > 0 ? "secondary" : "outline"}
+              size="sm"
+              className={cn(
+                "h-8 rounded-xl px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer border-border/80 shrink-0",
+                activeSecondaryFilterCount > 0 && "border-border",
+              )}
             >
-              <SelectTrigger
-                size="sm"
-                className="rounded-xl text-xs w-full cursor-pointer border-border/80"
-              >
-                <SelectValue placeholder="Select Community">
-                  <span className="flex items-center gap-1.5 truncate">
-                    <Users className="size-3.5 text-muted-foreground shrink-0" />
-                    <span className="truncate">
-                      {selectedCommunityName ?? "Select Community"}
-                    </span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {userCommunitiesData?.content?.length === 0 && (
-                  <SelectItem value="NO_COMMUNITIES" disabled>
-                    No communities found
-                  </SelectItem>
-                )}
-                {userCommunitiesData?.content?.map((c) => (
-                  <SelectItem key={c.id} value={c.slug}>
-                    <span className="truncate">{c.name}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Action Buttons: Mobile Search Icon + Filters Popover + Reset */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {trigger}
-
-            {/* Dedicated Filters Popover */}
-            <Popover>
-              <PopoverTrigger
-                render={
-                  <Button
-                    type="button"
-                    variant={
-                      activeSecondaryFilterCount > 0 ? "secondary" : "outline"
-                    }
-                    size="sm"
-                    className={cn(
-                      "h-8 rounded-xl px-2 sm:px-2.5 gap-1.5 text-xs font-medium cursor-pointer border-border/80 shrink-0",
-                      activeSecondaryFilterCount > 0 && "border-border",
-                    )}
-                  >
-                    <SlidersHorizontal className="size-3.5 shrink-0" />
-                    <span className="hidden @[420px]:inline">Filters</span>
-                    {activeSecondaryFilterCount > 0 && (
-                      <span className="size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                        {activeSecondaryFilterCount}
-                      </span>
-                    )}
-                  </Button>
-                }
-              />
-              <PopoverContent
-                align="end"
-                className="w-64 sm:w-72 p-2.5 space-y-2 rounded-2xl shadow-lg border bg-card"
-              >
-                <div className="flex items-center justify-between border-b pb-1.5 border-border/60">
-                  <div className="flex items-center gap-1.5 font-semibold text-xs text-foreground">
-                    <SlidersHorizontal className="size-3.5 text-muted-foreground" />
-                    <span>Filters</span>
-                    {activeSecondaryFilterCount > 0 && (
-                      <span className="size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                        {activeSecondaryFilterCount}
-                      </span>
-                    )}
-                  </div>
-                  {activeSecondaryFilterCount > 0 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={handleClearSecondaryFilters}
-                      className="text-[11px] text-muted-foreground hover:text-foreground h-5 px-1.5 rounded-md cursor-pointer"
-                    >
-                      Clear filters
-                    </Button>
-                  )}
-                </div>
-
-                <div className="space-y-1.5 pt-0.5">
-                  {/* Study Year */}
-                  <FilterSelect
-                    label="Year"
-                    placeholder="Select Year"
-                    value={studyYear ?? "All"}
-                    onChange={(val) => {
-                      const nextYear =
-                        val === "All" ? "" : (val as StudyYearNameDto);
-                      setFilters({
-                        studyYear: nextYear,
-                        course: "",
-                      });
-                    }}
-                    options={studyYearOptions}
-                    defaultValue="All"
-                    icon={GraduationCap}
-                    disabled={!communitySlug}
-                    className="w-full"
-                    triggerClassName="w-full max-w-none justify-between border-border/80"
-                  />
-
-                  {/* Course */}
-                  <FilterSelect
-                    label="Course"
-                    placeholder="Select Course"
-                    value={courseSlug ?? "All"}
-                    onChange={(val) => {
-                      const nextCourse = val === "All" ? "" : val;
-                      setFilters({ course: nextCourse });
-                    }}
-                    options={courseOptions}
-                    defaultValue="All"
-                    icon={BookOpen}
-                    disabled={!studyYear}
-                    className="w-full"
-                    triggerClassName="w-full max-w-none justify-between border-border/80"
-                  />
-
-                  {/* Event Type */}
-                  <FilterSelect
-                    label="Type"
-                    placeholder="Select Type"
-                    value={selectedType}
-                    onChange={(val) => {
-                      setFilters({
-                        type: (val as EventType | "All") || "All",
-                      });
-                    }}
-                    options={typeOptions}
-                    defaultValue="All"
-                    icon={SlidersHorizontal}
-                    className="w-full"
-                    triggerClassName="w-full max-w-none justify-between border-border/80"
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Global Reset */}
-            {hasAnyActiveFilters && (
+              <SlidersHorizontal className="size-3.5 shrink-0" />
+              <span className="hidden @[540px]:inline">Filters</span>
+              {activeSecondaryFilterCount > 0 && (
+                <span className="size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  {activeSecondaryFilterCount}
+                </span>
+              )}
+            </Button>
+          }
+        />
+        <PopoverContent
+          align="end"
+          className="w-64 sm:w-72 p-2.5 space-y-2 rounded-2xl shadow-lg border bg-card"
+        >
+          <div className="flex items-center justify-between border-b pb-1.5 border-border/60">
+            <div className="flex items-center gap-1.5 font-semibold text-xs text-foreground">
+              <SlidersHorizontal className="size-3.5 text-muted-foreground" />
+              <span>Filters</span>
+              {activeSecondaryFilterCount > 0 && (
+                <span className="size-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  {activeSecondaryFilterCount}
+                </span>
+              )}
+            </div>
+            {activeSecondaryFilterCount > 0 && (
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
-                onClick={handleResetAll}
-                className="text-xs text-muted-foreground hover:text-foreground rounded-xl"
+                size="xs"
+                onClick={handleClearSecondaryFilters}
+                className="text-[11px] text-muted-foreground hover:text-foreground h-5 px-1.5 rounded-md cursor-pointer"
               >
-                Reset
+                Clear filters
               </Button>
             )}
           </div>
-        </div>
+
+          <div className="space-y-1.5 pt-0.5">
+            {/* Study Year */}
+            <FilterSelect
+              label="Year"
+              placeholder="Select Year"
+              value={studyYear ?? "All"}
+              onChange={(val) => {
+                const nextYear = val === "All" ? "" : (val as StudyYearNameDto);
+                setFilters({
+                  studyYear: nextYear,
+                  course: "",
+                });
+              }}
+              options={studyYearOptions}
+              defaultValue="All"
+              icon={GraduationCap}
+              disabled={!communitySlug}
+              className="w-full"
+              triggerClassName="w-full max-w-none justify-between border-border/80"
+            />
+
+            {/* Course */}
+            <FilterSelect
+              label="Course"
+              placeholder="Select Course"
+              value={courseSlug ?? "All"}
+              onChange={(val) => {
+                const nextCourse = val === "All" ? "" : val;
+                setFilters({ course: nextCourse });
+              }}
+              options={courseOptions}
+              defaultValue="All"
+              icon={BookOpen}
+              disabled={!studyYear}
+              className="w-full"
+              triggerClassName="w-full max-w-none justify-between border-border/80"
+            />
+
+            {/* Event Type */}
+            <FilterSelect
+              label="Type"
+              placeholder="Select Type"
+              value={selectedType}
+              onChange={(val) => {
+                setFilters({
+                  type: (val as EventType | "All") || "All",
+                });
+              }}
+              options={typeOptions}
+              defaultValue="All"
+              icon={SlidersHorizontal}
+              className="w-full"
+              triggerClassName="w-full max-w-none justify-between border-border/80"
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Global Reset */}
+      {hasAnyActiveFilters && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handleResetAll}
+          className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0"
+        >
+          Reset
+        </Button>
       )}
     </ExpandableSearch>
   );

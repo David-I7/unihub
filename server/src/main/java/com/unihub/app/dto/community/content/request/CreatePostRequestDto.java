@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record CreatePostRequestDto(
         @NotBlank(message = "Title is required")
-        @Size(max = 200, message = "Title must not exceed 200 characters")
+        @Size(max = 100, message = "Title must not exceed 100 characters")
         String title,
 
         @NotBlank(message = "Description is required")

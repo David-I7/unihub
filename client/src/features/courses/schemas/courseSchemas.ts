@@ -34,13 +34,7 @@ export const createCourseSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(1000, "Description cannot exceed 1000 characters")
-    .optional()
-    .or(z.literal("")),
-  readme: z
-    .string()
-    .trim()
-    .max(50000, "Readme cannot exceed 50000 characters")
+    .max(500, "Description cannot exceed 500 characters")
     .optional()
     .or(z.literal("")),
   teacherIds: z.array(z.string()).optional(),
@@ -86,7 +80,7 @@ export const updateCourseSchema = z.object({
   description: z
     .string()
     .trim()
-    .max(1000, "Description cannot exceed 1000 characters")
+    .max(500, "Description cannot exceed 500 characters")
     .optional()
     .or(z.literal("")),
   readme: z
