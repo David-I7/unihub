@@ -167,10 +167,10 @@ export const uploadFileSchema = z.object({
     .string()
     .trim()
     .min(1, "Title is required")
-    .max(200, "Title must not exceed 200 characters"),
+    .max(100, "Title must not exceed 100 characters"),
   description: z
     .string()
-    .max(2000, "Description must not exceed 2000 characters")
+    .max(500, "Description must not exceed 500 characters")
     .optional(),
   file: z.custom<File>(
     (val) => typeof File !== "undefined" && val instanceof File,
@@ -186,15 +186,16 @@ export const createLinkSchema = z
       .string()
       .trim()
       .min(1, "Title is required")
-      .max(200, "Title must not exceed 200 characters"),
+      .max(100, "Title must not exceed 100 characters"),
     description: z
       .string()
-      .max(2000, "Description must not exceed 2000 characters")
+      .max(500, "Description must not exceed 500 characters")
       .optional(),
     url: z
       .string()
       .trim()
       .min(1, "URL is required")
+      .max(2048, "URL must not exceed 2048 characters")
       .url("Must be a valid URL")
       .refine((val) => val.startsWith("https://"), {
         message: "Only HTTPS URLs are allowed",
@@ -214,15 +215,16 @@ export const updateMaterialSchema = z
       .string()
       .trim()
       .min(1, "Title is required")
-      .max(200, "Title must not exceed 200 characters")
+      .max(100, "Title must not exceed 100 characters")
       .optional(),
     description: z
       .string()
-      .max(2000, "Description must not exceed 2000 characters")
+      .max(500, "Description must not exceed 500 characters")
       .optional(),
     url: z
       .string()
       .trim()
+      .max(2048, "URL must not exceed 2048 characters")
       .url("Must be a valid URL")
       .refine((val) => val.startsWith("https://"), {
         message: "Only HTTPS URLs are allowed",

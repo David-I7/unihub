@@ -9,9 +9,11 @@ import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateCommunityReadmeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityReadmeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
@@ -581,5 +583,50 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.isMember").value(false))
                 .andExpect(jsonPath("$.role").doesNotExist())
                 .andExpect(jsonPath("$.permissions").isEmpty());
+    }
+
+    // =========================================================================
+    // GET /api/v1/communities/{communitySlug}/readme
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid community slug
+            When: GET /api/v1/communities/{communitySlug}/readme is called
+            Then: 200 OK is returned with CommunityReadmeResponseDto
+            """)
+    public void testGetCommunityReadme_Success() throws Exception {
+        CommunityReadmeResponseDto responseDto = new CommunityReadmeResponseDto("# Welcome to FMI");
+
+        when(communityService.getCommunityReadme(eq("fmi-info-id"))).thenReturn(responseDto);
+
+        mockMvc.perform(get(BASE_URL + "/fmi-info-id/readme")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.readme").value("# Welcome to FMI"));
+    }
+
+    // =========================================================================
+    // PATCH /api/v1/communities/{communitySlug}/readme
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid readme payload and authorized user
+            When: PATCH /api/v1/communities/{communitySlug}/readme is called
+            Then: 200 OK is returned with updated CommunityReadmeResponseDto
+            """)
+    public void testUpdateCommunityReadme_Success() throws Exception {
+        UpdateCommunityReadmeRequestDto requestDto = new UpdateCommunityReadmeRequestDto("# Updated Readme");
+        CommunityReadmeResponseDto responseDto = new CommunityReadmeResponseDto("# Updated Readme");
+
+        when(communityService.updateCommunityReadme(eq("fmi-info-id"), eq(userId), any(UpdateCommunityReadmeRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(BASE_URL + "/fmi-info-id/readme")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.readme").value("# Updated Readme"));
     }
 }

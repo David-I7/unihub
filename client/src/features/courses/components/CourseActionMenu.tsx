@@ -22,14 +22,14 @@ import { useArchiveCourse } from "../api/archiveCourse";
 import { EditCourseModal } from "./EditCourseModal";
 import { ManageCourseTeachersModal } from "./ManageCourseTeachersModal";
 import { DeleteCourseDialog } from "./DeleteCourseDialog";
-import type { Course } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Course, CourseCard } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface CourseActionMenuProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  teachers?: Teacher[];
+  course: Course | CourseCard;
+  teachers?: (Teacher | TeacherSummary)[];
   onDeleted?: () => void;
   triggerClassName?: string;
   align?: "start" | "end";

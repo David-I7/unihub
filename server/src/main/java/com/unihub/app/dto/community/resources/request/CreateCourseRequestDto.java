@@ -35,7 +35,7 @@ public record CreateCourseRequestDto(
         @Max(value = 6, message = "Credit points cannot exceed 6")
         Integer creditPoints,
 
-        @Size(max = 1000, message = "Description must not exceed 1000 characters")
+        @Size(max = 500, message = "Description must not exceed 500 characters")
         String description,
 
         @Size(max = 50000, message = "Readme must not exceed 50000 characters")

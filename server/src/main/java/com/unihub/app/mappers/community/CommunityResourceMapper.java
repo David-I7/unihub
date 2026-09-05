@@ -183,7 +183,36 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public StudyYearHomeResponseDto toStudyYearHomeResponseDto(StudyYear studyYear, PageDto<CourseHomeResponseDto> courses) {
+    public TeacherSummaryResponseDto toTeacherSummaryResponseDto(Teacher teacher) {
+        if (teacher == null) return null;
+        return TeacherSummaryResponseDto.builder()
+                .id(teacher.getId())
+                .firstName(teacher.getFirstName())
+                .lastName(teacher.getLastName())
+                .build();
+    }
+
+    public List<TeacherSummaryResponseDto> toTeacherSummaryResponseDto(List<Teacher> teachers) {
+        if (teachers == null) return Collections.emptyList();
+        return teachers.stream().map(this::toTeacherSummaryResponseDto).toList();
+    }
+
+    public CourseCardResponseDto toCourseCardResponseDto(Course course) {
+        List<Teacher> teachers = course.getTeachers() != null ? course.getTeachers() : Collections.emptyList();
+        return CourseCardResponseDto.builder()
+                .id(course.getId())
+                .name(course.getName())
+                .slug(course.getSlug())
+                .abbreviation(course.getAbbreviation())
+                .semester(course.getSemester())
+                .creditPoints(course.getCreditPoints())
+                .archived(course.isArchived())
+                .description(course.getDescription())
+                .teachers(toTeacherSummaryResponseDto(teachers))
+                .build();
+    }
+
+    public StudyYearHomeResponseDto toStudyYearHomeResponseDto(StudyYear studyYear, PageDto<CourseCardResponseDto> courses) {
         return StudyYearHomeResponseDto.builder()
                 .studyYear(toStudyYearResponseDto(studyYear))
                 .courses(courses)
@@ -268,6 +297,12 @@ public class CommunityResourceMapper {
                 .memberCount(community.getMemberCount())
                 .verified(community.isVerified())
                 .isMember(isMember)
+                .build();
+    }
+
+    public CommunityReadmeResponseDto toCommunityReadmeResponseDto(String readme) {
+        return CommunityReadmeResponseDto.builder()
+                .readme(readme)
                 .build();
     }
 

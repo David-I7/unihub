@@ -18,14 +18,14 @@ import {
   useAddCourseTeacher,
   useRemoveCourseTeacher,
 } from "../api/manageCourseTeachers";
-import type { Course } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Course, CourseCard } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface ManageCourseTeachersModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  currentTeachers?: Teacher[];
+  course: Course | CourseCard;
+  currentTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -135,9 +135,12 @@ export function ManageCourseTeachersModal({
                         <p className="text-xs font-bold text-foreground truncate">
                           Prof. {teacher.firstName} {teacher.lastName}
                         </p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {teacher.ratingsCount ?? 0} reviews
-                        </p>
+                        {"ratingsCount" in teacher &&
+                          typeof (teacher as { ratingsCount?: number }).ratingsCount === "number" && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {(teacher as { ratingsCount: number }).ratingsCount} reviews
+                            </p>
+                          )}
                       </div>
                     </div>
 

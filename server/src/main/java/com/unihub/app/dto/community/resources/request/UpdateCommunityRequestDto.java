@@ -15,7 +15,7 @@ public record UpdateCommunityRequestDto(
         JsonNullable<@NotNull(message = "Slug cannot be null") @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$", message = "Slug must contain only lowercase alphanumeric characters and hyphens")
         @Size(min = 3, max = 100, message = "Slug must be between 3 and 100 characters") String> slug,
 
-        JsonNullable<@Size(max = 1000, message = "Description must not exceed 1000 characters") String> description,
+        JsonNullable<@Size(max = 500, message = "Description must not exceed 500 characters") String> description,
 
         JsonNullable<@Size(max = 50000, message = "Readme must not exceed 50000 characters") String> readme,
 

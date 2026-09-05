@@ -54,8 +54,8 @@ public class StudyYearService {
                 pageable
         );
 
-        PageDto<CourseHomeResponseDto> coursePageDto = pageMapper.toPageDto(
-                coursesPage.map(communityMapper::toCourseHomeResponseDto)
+        PageDto<CourseCardResponseDto> coursePageDto = pageMapper.toPageDto(
+                coursesPage.map(communityMapper::toCourseCardResponseDto)
         );
 
         return communityMapper.toStudyYearHomeResponseDto(studyYear, coursePageDto);

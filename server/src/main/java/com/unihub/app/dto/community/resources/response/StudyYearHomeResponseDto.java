@@ -6,7 +6,7 @@ import lombok.Builder;
 @Builder
 public record StudyYearHomeResponseDto(
         StudyYearResponseDto studyYear,
-        PageDto<CourseHomeResponseDto> courses
+        PageDto<CourseCardResponseDto> courses
 ) {
 }
 

@@ -12,13 +12,14 @@ import lombok.*;
 public record LocalUsernameOrEmailLoginRequestDto(
 
     @Email
+    @Size(max = 255, message = "Email must not exceed 255 characters")
     String email,
 
     @Username
     String username,
 
     @NotBlank
-    @Size(min = 8, max = 100)
+    @Size(min = 8, max = 64)
     String password
     ){
 

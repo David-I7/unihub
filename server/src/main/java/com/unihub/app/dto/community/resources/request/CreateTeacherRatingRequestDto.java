@@ -11,9 +11,10 @@ import java.util.List;
 @Builder
 public record CreateTeacherRatingRequestDto(
         @NotBlank(message = "Review title is required")
-        @Size(max = 255, message = "Review title cannot exceed 255 characters")
+        @Size(max = 100, message = "Review title cannot exceed 100 characters")
         String title,
 
+        @Size(max = 500, message = "Review description cannot exceed 500 characters")
         String description,
 
         boolean isAnonymous,

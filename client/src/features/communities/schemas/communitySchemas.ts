@@ -16,7 +16,7 @@ export const createCommunitySchema = z.object({
   description: z
     .string()
     .min(1, "Description is required")
-    .max(1000, "Description must not exceed 1000 characters"),
+    .max(500, "Description must not exceed 500 characters"),
   readme: z
     .string()
     .max(50000, "Readme markdown must not exceed 50,000 characters")
@@ -45,7 +45,7 @@ export const updateCommunitySchema = z.object({
     .optional(),
   description: z
     .string()
-    .max(1000, "Description must not exceed 1000 characters")
+    .max(500, "Description must not exceed 500 characters")
     .optional(),
   readme: z
     .string()

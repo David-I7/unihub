@@ -16,37 +16,39 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/api/types";
 import { isFieldValueEqual } from "@/hooks/useForm";
-import { useUpdateCommunity } from "../../api/updateCommunity";
+import { useUpdateCommunityReadme } from "../../api/updateCommunityReadme";
 import type { Community } from "../../api/types";
 
 interface EditCommunityReadmeModalProps {
   community: Community;
+  currentReadme?: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function EditCommunityReadmeModal({
   community,
+  currentReadme,
   open,
   onOpenChange,
 }: EditCommunityReadmeModalProps) {
-  const [readme, setReadme] = useState(community.readme ?? "");
+  const [readme, setReadme] = useState(currentReadme ?? "");
   const [activeMobileView, setActiveMobileView] = useState<"edit" | "preview">(
     "edit",
   );
-  const updateMutation = useUpdateCommunity();
+  const updateMutation = useUpdateCommunityReadme();
 
   useEffect(() => {
     if (open) {
-      setReadme(community.readme ?? "");
+      setReadme(currentReadme ?? "");
     }
-  }, [open, community.readme]);
+  }, [open, currentReadme]);
 
   const isEditing = Boolean(
-    community.readme && community.readme.trim().length > 0,
+    currentReadme && currentReadme.trim().length > 0,
   );
 
-  const isDirty = !isFieldValueEqual(readme, community.readme ?? "");
+  const isDirty = !isFieldValueEqual(readme, currentReadme ?? "");
 
   const handleInsertSnippet = (before: string, after: string = "") => {
     setReadme((prev) => `${prev}\n${before}${after}`);
@@ -62,7 +64,7 @@ export function EditCommunityReadmeModal({
       await updateMutation.mutateAsync({
         communitySlug: community.slug,
         payload: {
-          readme: readme.trim() || undefined,
+          readme: readme.trim(),
         },
       });
 

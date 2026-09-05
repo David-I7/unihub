@@ -42,6 +42,14 @@ export type UpdateCommunityDto = {
   newOwnerUsername?: string;
 };
 
+export type CommunityReadmeResponse = {
+  readme: string | null;
+};
+
+export type UpdateCommunityReadmeDto = {
+  readme: string;
+};
+
 export type CallerMembership = {
   isMember: boolean;
   role: CommunityMemberRole | null;

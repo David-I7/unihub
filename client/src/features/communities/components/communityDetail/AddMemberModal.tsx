@@ -48,7 +48,7 @@ const addMemberSchema: z.ZodType<AddMemberFormValues> = z.object({
     .trim()
     .min(1, "Username is required")
     .min(3, "Username must be at least 3 characters")
-    .max(50, "Username must be under 50 characters")
+    .max(30, "Username cannot exceed 30 characters")
     .regex(
       /^[a-zA-Z0-9_.-]+$/,
       "Username can only contain letters, numbers, underscores, dots, and hyphens",

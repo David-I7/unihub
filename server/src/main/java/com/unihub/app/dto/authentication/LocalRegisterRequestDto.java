@@ -18,6 +18,7 @@ public class LocalRegisterRequestDto {
 
     @Email
     @NotBlank
+    @Size(max = 255, message = "Email must not exceed 255 characters")
     private String email;
 
     @NotBlank
@@ -25,7 +26,7 @@ public class LocalRegisterRequestDto {
     private String username;
 
     @NotBlank
-    @Size(min = 8, max = 100)
+    @Size(min = 8, max = 64)
     private String password;
 
 }

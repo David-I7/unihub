@@ -107,8 +107,12 @@ function UpdateReviewForm({
       nextErrors.title = "Review headline is required";
     } else if (title.trim().length < 3) {
       nextErrors.title = "Headline must be at least 3 characters";
-    } else if (title.trim().length > 120) {
-      nextErrors.title = "Headline must be under 120 characters";
+    } else if (title.trim().length > 100) {
+      nextErrors.title = "Headline must be under 100 characters";
+    }
+
+    if (description.trim().length > 500) {
+      nextErrors.description = "Review details must be under 500 characters";
     }
 
     activeMetrics.forEach((m) => {
@@ -169,7 +173,7 @@ function UpdateReviewForm({
             setErrors((prev) => ({ ...prev, title: "" }));
           }}
           aria-invalid={Boolean(errors.title)}
-          maxLength={120}
+          maxLength={100}
         />
         {errors.title && <FieldError errors={[{ message: errors.title }]} />}
       </Field>
@@ -183,11 +187,11 @@ function UpdateReviewForm({
           rows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          maxLength={2000}
+          maxLength={500}
         />
         <div className="flex justify-between text-[11px] text-muted-foreground">
           <span>Be constructive and respectful.</span>
-          <span>{description.length} / 2000</span>
+          <span>{description.length} / 500</span>
         </div>
       </Field>
 

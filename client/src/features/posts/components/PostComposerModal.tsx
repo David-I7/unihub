@@ -95,7 +95,7 @@ export function PostComposerModal({
               onBlur={form.handleBlur}
               aria-invalid={form.isInvalid("title")}
               name="title"
-              maxLength={150}
+              maxLength={100}
             />
             <FieldError errors={[{ message: form.errors.title }]} />
           </Field>
@@ -141,7 +141,7 @@ export function PostComposerModal({
                   onChange={form.handleChange}
                   onBlur={form.handleBlur}
                   aria-invalid={form.isInvalid("description")}
-                  maxLength={20000}
+                  maxLength={10000}
                   className="font-mono text-xs leading-relaxed"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">

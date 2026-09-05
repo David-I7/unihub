@@ -21,14 +21,14 @@ import { useForm } from "@/hooks/useForm";
 import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import { useUpdateCourse } from "../api/updateCourse";
 import { updateCourseSchema, type UpdateCourseSchemaValues } from "../schemas/courseSchemas";
-import type { Course, UpdateCoursePayload } from "../api/types";
-import type { Teacher } from "@/features/teachers/api/types";
+import type { Course, CourseCard, UpdateCoursePayload } from "../api/types";
+import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
 
 interface EditCourseModalProps {
   communitySlug: string;
   studyYearSlug: string;
-  course: Course;
-  initialTeachers?: Teacher[];
+  course: Course | CourseCard;
+  initialTeachers?: (Teacher | TeacherSummary)[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (updated: Course) => void;

@@ -12,6 +12,8 @@ export * from "./api/getCommunityMembers";
 export * from "./api/addCommunityMember";
 export * from "./api/removeCommunityMember";
 export * from "./api/updateCommunityMemberRole";
+export * from "./api/getCommunityReadme";
+export * from "./api/updateCommunityReadme";
 export * from "./api/types";
 export * from "./api/communityKeys";
 export * from "./components/CommunityHeader";

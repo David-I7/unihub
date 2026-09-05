@@ -10,10 +10,10 @@ import java.time.OffsetDateTime;
 @Builder
 public record CreateEventRequestDto(
         @NotBlank(message = "Title is required")
-        @Size(min=1,max = 120, message = "Title must not exceed 120 characters")
+        @Size(min = 1, max = 100, message = "Title must not exceed 100 characters")
         String title,
 
-        @Size(max = 2000, message = "Description must not exceed 2000 characters")
+        @Size(max = 500, message = "Description must not exceed 500 characters")
         String description,
 
         @NotNull(message = "Event type is required")

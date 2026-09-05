@@ -4,10 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { CourseActionMenu } from "./CourseActionMenu";
-import type { CourseHome } from "../api/types";
+import type { CourseCardInfo } from "../api/types";
 
 interface CourseCardProps {
-  item: CourseHome;
+  item: CourseCardInfo;
   communitySlug: string;
   studyYearSlug: string;
 }
@@ -18,8 +18,8 @@ export function CourseCard({
   studyYearSlug,
 }: CourseCardProps) {
   const navigate = useNavigate();
-  const { course, teachers = [] } = item;
-  const isArchived = Boolean(course.archived);
+  const teachers = item.teachers ?? [];
+  const isArchived = Boolean(item.archived);
   const primaryTeacher = teachers[0];
   const hasMultipleTeachers = teachers.length > 1;
 
@@ -39,7 +39,7 @@ export function CourseCard({
     }
 
     navigate(
-      `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${course.slug}`,
+      `/communities/${communitySlug}/study-years/${studyYearSlug}/courses/${item.slug}`,
     );
   };
 
@@ -51,7 +51,7 @@ export function CourseCard({
       {/* Top Row: Course Code + Semester & Credits Badges + 3-dots Menu */}
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono font-bold text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20 tracking-wider uppercase group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-200">
-          {course.abbreviation || course.name.substring(0, 3).toUpperCase()}
+          {item.abbreviation || item.name.substring(0, 3).toUpperCase()}
         </span>
 
         <div className="flex items-center gap-1.5 shrink-0">
@@ -62,7 +62,7 @@ export function CourseCard({
             </Badge>
           ) : (
             <Badge variant="secondary" size="xs" className="font-medium">
-              Sem {course.semester}
+              Sem {item.semester}
             </Badge>
           )}
 
@@ -71,14 +71,14 @@ export function CourseCard({
             size="xs"
             className="font-medium text-muted-foreground"
           >
-            {course.creditPoints} ECTS
+            {item.creditPoints} ECTS
           </Badge>
 
           <div onClick={(e) => e.stopPropagation()}>
             <CourseActionMenu
               communitySlug={communitySlug}
               studyYearSlug={studyYearSlug}
-              course={course}
+              course={item}
               teachers={teachers}
             />
           </div>
@@ -88,10 +88,10 @@ export function CourseCard({
       {/* Middle Body: Title and Description */}
       <div className="space-y-1.5 flex-1 min-w-0">
         <h3 className="font-heading text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
-          {course.name}
+          {item.name}
         </h3>
         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed min-h-[2rem]">
-          {course.description || "No course description provided."}
+          {item.description || "No course description provided."}
         </p>
       </div>
 

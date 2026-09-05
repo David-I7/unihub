@@ -6,8 +6,10 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
+import com.unihub.app.dto.community.resources.request.UpdateCommunityReadmeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
+import com.unihub.app.dto.community.resources.response.CommunityReadmeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
@@ -271,5 +273,56 @@ public class CommunityServiceTests {
         communityService.deleteCommunity("fmi", userId);
 
         verify(communityRepository).delete(community);
+    }
+
+    @Test
+    @DisplayName("getCommunityReadme returns readme response dto when community exists")
+    public void testGetCommunityReadme_Success() {
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi").readme("# Welcome").build();
+
+        when(communityRepository.findBySlug("fmi")).thenReturn(Optional.of(community));
+
+        CommunityReadmeResponseDto result = communityService.getCommunityReadme("fmi");
+
+        assertNotNull(result);
+        assertEquals("# Welcome", result.readme());
+        verify(communityRepository).findBySlug("fmi");
+    }
+
+    @Test
+    @DisplayName("getCommunityReadme throws 404 when community does not exist")
+    public void testGetCommunityReadme_NotFound() {
+        when(communityRepository.findBySlug("unknown")).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> communityService.getCommunityReadme("unknown"));
+    }
+
+    @Test
+    @DisplayName("updateCommunityReadme updates readme when community exists")
+    public void testUpdateCommunityReadme_Success() {
+        UUID userId = UUID.randomUUID();
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi").readme("# Old").build();
+        UpdateCommunityReadmeRequestDto dto = new UpdateCommunityReadmeRequestDto("# New");
+
+        when(communityRepository.findBySlug("fmi")).thenReturn(Optional.of(community));
+        when(communityRepository.save(any(Community.class))).thenAnswer(i -> i.getArgument(0));
+
+        CommunityReadmeResponseDto result = communityService.updateCommunityReadme("fmi", userId, dto);
+
+        assertNotNull(result);
+        assertEquals("# New", result.readme());
+        verify(communityRepository).save(community);
+    }
+
+    @Test
+    @DisplayName("updateCommunityReadme throws 404 when community does not exist")
+    public void testUpdateCommunityReadme_NotFound() {
+        UUID userId = UUID.randomUUID();
+        UpdateCommunityReadmeRequestDto dto = new UpdateCommunityReadmeRequestDto("# New");
+
+        when(communityRepository.findBySlug("unknown")).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () ->
+                communityService.updateCommunityReadme("unknown", userId, dto));
     }
 }

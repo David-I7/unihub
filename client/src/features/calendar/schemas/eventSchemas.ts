@@ -9,10 +9,10 @@ export const eventFormSchema = z
       .string()
       .trim()
       .min(1, "Event title is required")
-      .max(120, "Title must be 120 characters or less"),
+      .max(100, "Title must be 100 characters or less"),
     description: z
       .string()
-      .max(2000, "Description must be 2000 characters or less")
+      .max(500, "Description must be 500 characters or less")
       .optional()
       .or(z.literal("")),
     type: eventTypeSchema,
@@ -28,7 +28,7 @@ export const eventFormSchema = z
     location: eventLocationSchema,
     locationDetails: z
       .string()
-      .max(255, "Location details must be 255 characters or less")
+      .max(500, "Location details must be 500 characters or less")
       .optional()
       .or(z.literal("")),
     communitySlug: z.string().optional().or(z.literal("")),
