@@ -58,12 +58,13 @@ export function DeleteCourseDialog({
             <p>
               Are you sure you want to delete{" "}
               <strong className="text-foreground">{course.name}</strong> (
-              <span className="font-mono">{course.abbreviation}</span>) from this
-              curriculum?
+              <span className="font-mono">{course.abbreviation}</span>) from
+              this curriculum?
             </p>
             <p className="text-xs text-destructive font-medium bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
-              Warning: All folders, study materials, files, links, and discussions
-              associated with this course will be permanently removed.
+              Warning: All folders, study materials, files, links, and
+              discussions associated with this course will be permanently
+              removed.
             </p>
           </DialogDescription>
         </DialogHeader>
@@ -81,7 +82,6 @@ export function DeleteCourseDialog({
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
-            className="font-bold cursor-pointer"
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Course"}
           </Button>

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/app/UserAvatar";
-import { UserPlus, Trash2, Search, Users } from "@/components/ui/icons";
+import { UserPlus, Trash2, Search } from "@/components/ui/icons";
 import { getErrorMessage } from "@/api/types";
 import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import {
@@ -102,7 +102,8 @@ export function ManageCourseTeachersModal({
         <DialogHeader>
           <DialogTitle>Manage Faculty: {course.name}</DialogTitle>
           <DialogDescription>
-            Assign or unassign instructors and teaching assistants for this course.
+            Assign or unassign instructors and teaching assistants for this
+            course.
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +111,6 @@ export function ManageCourseTeachersModal({
           {/* Currently Assigned Faculty */}
           <div className="space-y-2">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <Users className="size-3.5 text-primary" />
               <span>Assigned Instructors ({currentTeachers.length})</span>
             </h4>
 
@@ -136,9 +136,14 @@ export function ManageCourseTeachersModal({
                           Prof. {teacher.firstName} {teacher.lastName}
                         </p>
                         {"ratingsCount" in teacher &&
-                          typeof (teacher as { ratingsCount?: number }).ratingsCount === "number" && (
+                          typeof (teacher as { ratingsCount?: number })
+                            .ratingsCount === "number" && (
                             <p className="text-[11px] text-muted-foreground">
-                              {(teacher as { ratingsCount: number }).ratingsCount} reviews
+                              {
+                                (teacher as { ratingsCount: number })
+                                  .ratingsCount
+                              }{" "}
+                              reviews
                             </p>
                           )}
                       </div>
@@ -164,7 +169,6 @@ export function ManageCourseTeachersModal({
           {/* Add More Faculty */}
           <div className="space-y-2 pt-3 border-t border-border/60">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <UserPlus className="size-3.5 text-primary" />
               <span>Assign More Instructors</span>
             </h4>
 
