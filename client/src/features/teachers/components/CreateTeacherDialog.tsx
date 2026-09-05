@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
@@ -47,15 +48,12 @@ interface CreateTeacherDialogProps {
   onSuccess?: (created: Teacher) => void;
 }
 
-function CreateTeacherForm({
+export function CreateTeacherDialog({
   communitySlug,
-  onClose,
+  open,
+  onOpenChange,
   onSuccess,
-}: {
-  communitySlug: string;
-  onClose: () => void;
-  onSuccess?: (created: Teacher) => void;
-}) {
+}: CreateTeacherDialogProps) {
   const createMutation = useCreateTeacher(communitySlug);
 
   const form = useForm<CreateTeacherFormValues>({
@@ -82,7 +80,7 @@ function CreateTeacherForm({
           `Prof. ${created.firstName} ${created.lastName} created!`,
         );
         onSuccess?.(created);
-        onClose();
+        onOpenChange(false);
       } catch (err: unknown) {
         const message = getErrorMessage(err, "Failed to create teacher.");
         toast.error(message);
@@ -91,85 +89,16 @@ function CreateTeacherForm({
     },
   });
 
-  return (
-    <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
-      {form.serverError && (
-        <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-          {form.serverError}
-        </div>
-      )}
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        firstName: "",
+        lastName: "",
+        estimatedAge: "",
+      });
+    }
+  }, [open]);
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Field>
-          <FieldLabel htmlFor="firstName">First Name *</FieldLabel>
-          <Input
-            id="firstName"
-            name="firstName"
-            placeholder="e.g. John"
-            value={form.values.firstName}
-            onChange={form.handleChange}
-            onBlur={form.handleBlur}
-            aria-invalid={form.isInvalid("firstName")}
-          />
-          <FieldError errors={[{ message: form.errors.firstName }]} />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="lastName">Last Name *</FieldLabel>
-          <Input
-            id="lastName"
-            name="lastName"
-            placeholder="e.g. Doe"
-            value={form.values.lastName}
-            onChange={form.handleChange}
-            onBlur={form.handleBlur}
-            aria-invalid={form.isInvalid("lastName")}
-          />
-          <FieldError errors={[{ message: form.errors.lastName }]} />
-        </Field>
-      </div>
-
-      <Field>
-        <FieldLabel htmlFor="estimatedAge">Estimated Age (optional)</FieldLabel>
-        <Input
-          id="estimatedAge"
-          name="estimatedAge"
-          type="number"
-          min={18}
-          max={120}
-          placeholder="e.g. 45"
-          value={form.values.estimatedAge}
-          onChange={form.handleChange}
-          onBlur={form.handleBlur}
-          aria-invalid={form.isInvalid("estimatedAge")}
-        />
-        <FieldError errors={[{ message: form.errors.estimatedAge }]} />
-      </Field>
-
-      <DialogFooter className="pt-3 border-t border-border/60">
-        <Button type="button" variant="outline" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={form.isSubmitting || createMutation.isPending}
-          className="font-bold cursor-pointer"
-        >
-          {form.isSubmitting || createMutation.isPending
-            ? "Creating..."
-            : "Add Teacher"}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-export function CreateTeacherDialog({
-  communitySlug,
-  open,
-  onOpenChange,
-  onSuccess,
-}: CreateTeacherDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -180,13 +109,79 @@ export function CreateTeacherDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {open && (
-          <CreateTeacherForm
-            communitySlug={communitySlug}
-            onClose={() => onOpenChange(false)}
-            onSuccess={onSuccess}
-          />
-        )}
+        <form onSubmit={form.handleSubmit} className="space-y-4 pt-2">
+          {form.serverError && (
+            <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
+              {form.serverError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel htmlFor="firstName">First Name *</FieldLabel>
+              <Input
+                id="firstName"
+                name="firstName"
+                placeholder="e.g. John"
+                value={form.values.firstName}
+                onChange={form.handleChange}
+                onBlur={form.handleBlur}
+                aria-invalid={form.isInvalid("firstName")}
+              />
+              <FieldError errors={[{ message: form.errors.firstName }]} />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="lastName">Last Name *</FieldLabel>
+              <Input
+                id="lastName"
+                name="lastName"
+                placeholder="e.g. Doe"
+                value={form.values.lastName}
+                onChange={form.handleChange}
+                onBlur={form.handleBlur}
+                aria-invalid={form.isInvalid("lastName")}
+              />
+              <FieldError errors={[{ message: form.errors.lastName }]} />
+            </Field>
+          </div>
+
+          <Field>
+            <FieldLabel htmlFor="estimatedAge">Estimated Age (optional)</FieldLabel>
+            <Input
+              id="estimatedAge"
+              name="estimatedAge"
+              type="number"
+              min={18}
+              max={120}
+              placeholder="e.g. 45"
+              value={form.values.estimatedAge}
+              onChange={form.handleChange}
+              onBlur={form.handleBlur}
+              aria-invalid={form.isInvalid("estimatedAge")}
+            />
+            <FieldError errors={[{ message: form.errors.estimatedAge }]} />
+          </Field>
+
+          <DialogFooter className="pt-3 border-t border-border/60">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={form.isSubmitting || createMutation.isPending}
+              className="font-bold cursor-pointer"
+            >
+              {form.isSubmitting || createMutation.isPending
+                ? "Creating..."
+                : "Add Teacher"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

@@ -145,7 +145,6 @@ export interface CreateCoursePayload {
   semester: number;
   creditPoints?: number;
   description?: string;
-  readme?: string;
   teacherIds?: string[];
 }
 

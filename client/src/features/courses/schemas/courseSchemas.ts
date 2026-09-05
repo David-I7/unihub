@@ -37,12 +37,6 @@ export const createCourseSchema = z.object({
     .max(500, "Description cannot exceed 500 characters")
     .optional()
     .or(z.literal("")),
-  readme: z
-    .string()
-    .trim()
-    .max(50000, "Readme cannot exceed 50000 characters")
-    .optional()
-    .or(z.literal("")),
   teacherIds: z.array(z.string()).optional(),
 });
 

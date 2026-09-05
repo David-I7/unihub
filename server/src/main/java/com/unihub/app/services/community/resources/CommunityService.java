@@ -5,7 +5,6 @@ import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
-import com.unihub.app.dto.community.resources.request.UpdateCommunityReadmeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
@@ -271,15 +270,6 @@ public class CommunityService {
         Community community = communityRepository.findBySlug(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
         return communityMapper.toCommunityReadmeResponseDto(community.getReadme());
-    }
-
-    @Transactional
-    public CommunityReadmeResponseDto updateCommunityReadme(String communitySlug, UUID callerUserId, UpdateCommunityReadmeRequestDto dto) {
-        Community community = communityRepository.findBySlug(communitySlug)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-        community.setReadme(dto.readme());
-        Community saved = communityRepository.save(community);
-        return communityMapper.toCommunityReadmeResponseDto(saved.getReadme());
     }
 
     @Transactional

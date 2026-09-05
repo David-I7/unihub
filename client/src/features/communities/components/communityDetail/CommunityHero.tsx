@@ -11,6 +11,7 @@ import {
   BookOpen,
   Award,
   Crown,
+  LogOut,
 } from "@/components/ui/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import { CommunityJoinCodesModal } from "../joinCodes/CommunityJoinCodesModal";
 import { TransferCommunityOwnershipModal } from "./TransferCommunityOwnershipModal";
 import { VerifyCommunityModal } from "./VerifyCommunityModal";
 import { DeleteCommunityDialog } from "../DeleteCommunityDialog";
+import { LeaveCommunityDialog } from "./LeaveCommunityDialog";
 import { JoinCommunityModal } from "../JoinCommunityModal";
 import type { CallerMembership, Community } from "../../api/types";
 import type { StudyYearMetrics } from "@/features/studyYears";
@@ -53,6 +55,7 @@ export function CommunityHero({
   const [transferOwnershipOpen, setTransferOwnershipOpen] = useState(false);
   const [verifyModalOpen, setVerifyModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
 
   const theme = useThemeStore((state) => state.theme);
@@ -65,6 +68,8 @@ export function CommunityHero({
     canVerifyCommunity,
     canManageJoinCodes,
   } = usePermissions(callerMembership);
+
+  const canLeaveCommunity = isMember && !isOwner;
 
   const totalCourses = studyYears.reduce(
     (acc, year) => acc + (year.coursesCount ?? 0),
@@ -92,6 +97,8 @@ export function CommunityHero({
     canManageJoinCodes ||
     canVerifyCommunity ||
     isOwner;
+
+  const hasActionMenu = hasAdminMenu || canLeaveCommunity;
 
   return (
     <section className="relative w-full pb-2">
@@ -153,7 +160,7 @@ export function CommunityHero({
           </div>
 
           {/* Right Action Menu */}
-          {hasAdminMenu && (
+          {hasActionMenu && (
             <div className="shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -162,7 +169,7 @@ export function CommunityHero({
                       variant="ghost"
                       size="icon-xs"
                       className="size-9 rounded-xl hover:bg-muted cursor-pointer"
-                      title="Community settings"
+                      title="Community options"
                     />
                   }
                 >
@@ -218,17 +225,34 @@ export function CommunityHero({
                     </DropdownMenuItem>
                   )}
 
-                  {canDeleteCommunity && (
+                  {(canLeaveCommunity || canDeleteCommunity) && (
                     <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        variant="destructive"
-                        onClick={() => setDeleteOpen(true)}
-                        className="gap-2 cursor-pointer text-xs"
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span>Delete Community</span>
-                      </DropdownMenuItem>
+                      {(canEditCommunity ||
+                        canManageJoinCodes ||
+                        canVerifyCommunity ||
+                        isOwner) && <DropdownMenuSeparator />}
+
+                      {canLeaveCommunity && (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setLeaveDialogOpen(true)}
+                          className="gap-2 cursor-pointer text-xs"
+                        >
+                          <LogOut className="size-3.5" />
+                          <span>Leave Community</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {canDeleteCommunity && (
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => setDeleteOpen(true)}
+                          className="gap-2 cursor-pointer text-xs"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Delete Community</span>
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
                 </DropdownMenuContent>
@@ -346,6 +370,14 @@ export function CommunityHero({
           community={community}
           open={deleteOpen}
           onOpenChange={setDeleteOpen}
+        />
+      )}
+
+      {canLeaveCommunity && (
+        <LeaveCommunityDialog
+          community={community}
+          open={leaveDialogOpen}
+          onOpenChange={setLeaveDialogOpen}
         />
       )}
 

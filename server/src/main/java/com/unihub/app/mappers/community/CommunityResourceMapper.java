@@ -94,7 +94,6 @@ public class CommunityResourceMapper {
                 .name(dto.name())
                 .slug(dto.slug())
                 .description(dto.description())
-                .readme(dto.readme())
                 .backgroundColor(dto.backgroundColor())
                 .verified(verified)
                 .memberCount(1)
@@ -255,7 +254,6 @@ public class CommunityResourceMapper {
                 .creditPoints(dto.creditPoints() != null ? dto.creditPoints() : 5)
                 .archived(false)
                 .description(dto.description())
-                .readme(dto.readme())
                 .teachers(teachers != null ? teachers : Collections.emptyList())
                 .createdAt(OffsetDateTime.now())
                 .build();

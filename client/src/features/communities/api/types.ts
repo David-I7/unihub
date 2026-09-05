@@ -28,7 +28,6 @@ export type CreateCommunityDto = {
   name: string;
   slug: string;
   description: string;
-  readme?: string;
   backgroundColor: string;
 };
 
@@ -44,10 +43,6 @@ export type UpdateCommunityDto = {
 
 export type CommunityReadmeResponse = {
   readme: string | null;
-};
-
-export type UpdateCommunityReadmeDto = {
-  readme: string;
 };
 
 export type CallerMembership = {

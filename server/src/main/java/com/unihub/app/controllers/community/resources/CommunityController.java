@@ -6,7 +6,6 @@ import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
 import com.unihub.app.dto.community.resources.request.CreateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.request.JoinCommunityRequestDto;
-import com.unihub.app.dto.community.resources.request.UpdateCommunityReadmeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateCommunityRequestDto;
 import com.unihub.app.dto.community.resources.response.CallerMembershipDto;
 import com.unihub.app.dto.community.resources.response.CommunityHomeResponseDto;
@@ -135,17 +134,6 @@ public class CommunityController {
     ) {
         CommunityReadmeResponseDto readme = communityService.getCommunityReadme(communitySlug);
         return ResponseEntity.ok(readme);
-    }
-
-    @PatchMapping("/{communitySlug}/readme")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:community')")
-    public ResponseEntity<CommunityReadmeResponseDto> updateCommunityReadme(
-            @PathVariable String communitySlug,
-            @AuthenticationPrincipal UserDto user,
-            @Valid @RequestBody UpdateCommunityReadmeRequestDto requestDto
-    ) {
-        CommunityReadmeResponseDto updated = communityService.updateCommunityReadme(communitySlug, user.id(), requestDto);
-        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{communitySlug}")

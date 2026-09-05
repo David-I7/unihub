@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getErrorMessage } from "@/api/types";
 import { isFieldValueEqual } from "@/hooks/useForm";
-import { useUpdateCommunityReadme } from "../../api/updateCommunityReadme";
+import { useUpdateCommunity } from "../../api/updateCommunity";
 import type { Community } from "../../api/types";
 
 interface EditCommunityReadmeModalProps {
@@ -36,7 +36,7 @@ export function EditCommunityReadmeModal({
   const [activeMobileView, setActiveMobileView] = useState<"edit" | "preview">(
     "edit",
   );
-  const updateMutation = useUpdateCommunityReadme();
+  const updateMutation = useUpdateCommunity();
 
   useEffect(() => {
     if (open) {

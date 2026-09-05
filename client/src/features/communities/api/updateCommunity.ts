@@ -30,9 +30,15 @@ export function useUpdateCommunity() {
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
+      queryClient.invalidateQueries({
+        queryKey: communityKeys.readmeDetail(variables.communitySlug),
+      });
       if (data.slug && data.slug !== variables.communitySlug) {
         queryClient.invalidateQueries({
           queryKey: communityKeys.homeDetail(data.slug),
+        });
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.readmeDetail(data.slug),
         });
       }
       queryClient.invalidateQueries({

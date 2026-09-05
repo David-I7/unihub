@@ -38,9 +38,6 @@ public record CreateCourseRequestDto(
         @Size(max = 500, message = "Description must not exceed 500 characters")
         String description,
 
-        @Size(max = 50000, message = "Readme must not exceed 50000 characters")
-        String readme,
-
         List<UUID> teacherIds
 ) {
     public CreateCourseRequestDto {
@@ -48,7 +45,6 @@ public record CreateCourseRequestDto(
         slug = slug != null ? slug.trim() : slug;
         abbreviation = abbreviation != null ? abbreviation.trim() : abbreviation;
         description = description != null ? description.trim() : description;
-        readme = readme != null ? readme.trim() : readme;
         if (creditPoints == null) {
             creditPoints = 5;
         }

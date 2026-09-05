@@ -91,7 +91,7 @@ export function CreateJoinCodeModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-5 py-2">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
           {/* Duration Presets */}
           <Field>
             <FieldLabel>Validity Duration</FieldLabel>

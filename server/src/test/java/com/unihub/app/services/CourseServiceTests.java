@@ -280,7 +280,6 @@ public class CourseServiceTests {
                 .semester(1)
                 .creditPoints(5)
                 .description("Database course")
-                .readme(null)
                 .teacherIds(null)
                 .build();
 
