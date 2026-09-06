@@ -224,7 +224,7 @@
             
             <table class="event-details-table" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td class="detail-label">Start Time:</td>
+                    <td class="detail-label" th:text="${eventType == 'ASSIGNMENT' ? 'Due at:' : 'Start Time:'}">Start Time:</td>
                     <td class="detail-value" th:text="${startTime}">Saturday, 29 August, 10:00</td>
                 </tr>
                 <tr>
