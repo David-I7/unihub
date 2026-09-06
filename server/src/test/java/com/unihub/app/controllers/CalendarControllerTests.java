@@ -3,8 +3,11 @@ package com.unihub.app.controllers;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.BatchCreateEventsRequestDto;
+import com.unihub.app.dto.community.content.request.BatchEventItemDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
+import com.unihub.app.dto.community.content.response.BatchEventResponseDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import org.openapitools.jackson.nullable.JsonNullable;
@@ -447,5 +450,83 @@ public class CalendarControllerTests extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].id").value(reminderId.toString()))
                 .andExpect(jsonPath("$.content[0].eventTitle").value("Upcoming Exam"));
+    }
+
+    // =========================================================================
+    // POST /api/v1/calendar/events/batch
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: valid batch events payload
+            When: POST /api/v1/calendar/events/batch is called
+            Then: 201 Created is returned with summary and events
+            """)
+    public void testBatchUpsertEvents_Success() throws Exception {
+        UUID eventId = UUID.randomUUID();
+        OffsetDateTime startTime = OffsetDateTime.now().plusDays(3);
+
+        BatchEventItemDto itemDto = BatchEventItemDto.builder()
+                .courseId(10L)
+                .title("Curs: Geometrie si algebra liniara")
+                .description("Cadru didactic: Asist univ. dr. Halanay Andrei")
+                .type(EventType.LECTURE)
+                .startTime(startTime)
+                .durationHours(5.0f)
+                .location(EventLocation.ONLINE)
+                .locationDetails(null)
+                .build();
+
+        BatchCreateEventsRequestDto requestDto = new BatchCreateEventsRequestDto(
+                "fmi-info-id",
+                List.of(itemDto)
+        );
+
+        CalendarEventResponseDto eventResponseDto = CalendarEventResponseDto.builder()
+                .id(eventId)
+                .title("Curs: Geometrie si algebra liniara")
+                .type(EventType.LECTURE)
+                .startTime(startTime)
+                .durationHours(5.0f)
+                .location(EventLocation.ONLINE)
+                .courseAbbreviation("GAL")
+                .communityName("FMI - Informatica ID")
+                .isSubscribed(false)
+                .build();
+
+        BatchEventResponseDto responseDto = BatchEventResponseDto.builder()
+                .createdCount(1)
+                .updatedCount(0)
+                .events(List.of(eventResponseDto))
+                .build();
+
+        when(calendarService.batchUpsertEvents(any(), any())).thenReturn(responseDto);
+
+        mockMvc.perform(post(BASE_URL + "/events/batch")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.createdCount").value(1))
+                .andExpect(jsonPath("$.updatedCount").value(0))
+                .andExpect(jsonPath("$.events[0].id").value(eventId.toString()))
+                .andExpect(jsonPath("$.events[0].title").value("Curs: Geometrie si algebra liniara"));
+    }
+
+    @Test
+    @DisplayName("""
+            Given: invalid batch request with empty events
+            When: POST /api/v1/calendar/events/batch is called
+            Then: 400 Bad Request is returned
+            """)
+    public void testBatchUpsertEvents_EmptyEvents_BadRequest() throws Exception {
+        BatchCreateEventsRequestDto requestDto = new BatchCreateEventsRequestDto(
+                "fmi-info-id",
+                List.of()
+        );
+
+        mockMvc.perform(post(BASE_URL + "/events/batch")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
     }
 }

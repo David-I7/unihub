@@ -3,10 +3,12 @@ import { Link, useSearchParams } from "react-router";
 import {
   Calendar as CalendarIcon,
   Compass,
+  Download,
   Plus,
   Users,
 } from "@/components/ui/icons";
 import {
+  BatchImportEventsModal,
   CALENDAR_FILTER_SCHEMA,
   CalendarAgendaList,
   CalendarMonthGrid,
@@ -30,6 +32,7 @@ export default function CalendarPage() {
   const { filters } = useUrlFilters(CALENDAR_FILTER_SCHEMA);
   const openEventDetails = useCalendarStore((s) => s.openEventDetails);
   const openCreateModal = useCalendarStore((s) => s.openCreateModal);
+  const openBatchModal = useCalendarStore((s) => s.openBatchModal);
 
   // Derive all filter state directly from URL params
   const currentDate = useMemo(() => {
@@ -193,9 +196,18 @@ export default function CalendarPage() {
       ) : (
         /* Active Calendar Grid / Agenda View */
         <div className="@container w-full space-y-4">
-          {/* Add Event Button */}
+          {/* Add Event & Batch Import Buttons */}
           {canCreateEvent && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openBatchModal()}
+                className="gap-1.5 font-semibold cursor-pointer shrink-0"
+              >
+                <Download className="size-3.5" />
+                <span>Batch Import</span>
+              </Button>
               <Button
                 size="sm"
                 onClick={() => openCreateModal()}
@@ -248,6 +260,7 @@ export default function CalendarPage() {
       {/* Modals & sheets subscribing directly to useCalendarStore */}
       <EventDetailSheet />
       <EventFormModal />
+      <BatchImportEventsModal />
       <DayOverflowModal
         events={filteredEvents}
         canCreateEvent={canCreateEvent}

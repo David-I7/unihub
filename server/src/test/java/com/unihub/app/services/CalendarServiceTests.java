@@ -3,8 +3,11 @@ package com.unihub.app.services;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.BatchCreateEventsRequestDto;
+import com.unihub.app.dto.community.content.request.BatchEventItemDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
+import com.unihub.app.dto.community.content.response.BatchEventResponseDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
@@ -42,6 +45,7 @@ import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -545,5 +549,159 @@ public class CalendarServiceTests {
         assertEquals(1, result.content().size());
         assertEquals(reminderId, result.content().get(0).id());
         assertEquals("Examen ASC", result.content().get(0).eventTitle());
+    }
+
+    // =========================================================================
+    // batchUpsertEvents
+    // =========================================================================
+
+    @Test
+    @DisplayName("batchUpsertEvents creates new events successfully")
+    public void testBatchUpsertEvents_CreateNewEvents_Success() {
+        UUID communityId = UUID.randomUUID();
+        String communitySlug = "fmi-info-id";
+        Community community = createTestCommunity(communityId, communitySlug);
+        Course course = createTestCourse(community);
+
+        UserDto userDto = new UserDto(UUID.randomUUID(), "john@example.com", "john_doe", true, RoleType.COMMUNITY_MEMBER);
+        User owner = User.builder().id(userDto.id()).username(userDto.username()).build();
+
+        OffsetDateTime futureTime = OffsetDateTime.now().plusDays(5);
+        BatchEventItemDto item1 = BatchEventItemDto.builder()
+                .courseId(course.getId())
+                .title("Examen: Data Structures")
+                .description("Cadru didactic: Conf. dr. Claudia Muresan")
+                .type(EventType.EXAM)
+                .startTime(futureTime)
+                .durationHours(2.0f)
+                .location(EventLocation.IN_PERSON)
+                .locationDetails("Sala 102")
+                .build();
+
+        BatchCreateEventsRequestDto requestDto = new BatchCreateEventsRequestDto(
+                communitySlug,
+                List.of(item1)
+        );
+
+        when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
+        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+                .thenReturn(true);
+        when(userMapper.toEntity(userDto)).thenReturn(owner);
+        when(courseRepository.findAllByIdInWithStudyYearAndCommunity(Set.of(course.getId())))
+                .thenReturn(List.of(course));
+        when(eventRepository.findExistingEventsByCourseIdsAndWindow(eq(Set.of(course.getId())), any(), any(), any()))
+                .thenReturn(Collections.emptyList());
+        when(eventRepository.saveAll(any())).thenAnswer(invocation -> {
+            List<Event> list = invocation.getArgument(0);
+            list.forEach(e -> {
+                if (e.getId() == null) {
+                    e.setId(UUID.randomUUID());
+                }
+            });
+            return list;
+        });
+
+        BatchEventResponseDto response = calendarService.batchUpsertEvents(userDto, requestDto);
+
+        assertNotNull(response);
+        assertEquals(1, response.createdCount());
+        assertEquals(0, response.updatedCount());
+        assertEquals(1, response.events().size());
+        assertEquals("Examen: Data Structures", response.events().get(0).title());
+    }
+
+    @Test
+    @DisplayName("batchUpsertEvents updates existing event when natural key matches")
+    public void testBatchUpsertEvents_UpdateExistingEvent_Success() {
+        UUID communityId = UUID.randomUUID();
+        String communitySlug = "fmi-info-id";
+        Community community = createTestCommunity(communityId, communitySlug);
+        Course course = createTestCourse(community);
+
+        UserDto userDto = new UserDto(UUID.randomUUID(), "john@example.com", "john_doe", true, RoleType.COMMUNITY_MEMBER);
+        User owner = User.builder().id(userDto.id()).username(userDto.username()).build();
+
+        OffsetDateTime futureTime = OffsetDateTime.now().plusDays(5);
+        Event existingEvent = Event.builder()
+                .id(UUID.randomUUID())
+                .title("Old Title")
+                .type(EventType.EXAM)
+                .startTime(futureTime)
+                .durationHours(1.0f)
+                .location(EventLocation.ONLINE)
+                .course(course)
+                .community(community)
+                .owner(owner)
+                .build();
+
+        BatchEventItemDto item1 = BatchEventItemDto.builder()
+                .courseId(course.getId())
+                .title("Updated Examen: Data Structures")
+                .description("Cadru didactic: Conf. dr. Claudia Muresan")
+                .type(EventType.EXAM)
+                .startTime(futureTime)
+                .durationHours(2.0f)
+                .location(EventLocation.IN_PERSON)
+                .locationDetails("Sala 102")
+                .build();
+
+        BatchCreateEventsRequestDto requestDto = new BatchCreateEventsRequestDto(
+                communitySlug,
+                List.of(item1)
+        );
+
+        when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
+        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+                .thenReturn(true);
+        when(userMapper.toEntity(userDto)).thenReturn(owner);
+        when(courseRepository.findAllByIdInWithStudyYearAndCommunity(Set.of(course.getId())))
+                .thenReturn(List.of(course));
+        when(eventRepository.findExistingEventsByCourseIdsAndWindow(eq(Set.of(course.getId())), any(), any(), any()))
+                .thenReturn(List.of(existingEvent));
+        when(eventRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        BatchEventResponseDto response = calendarService.batchUpsertEvents(userDto, requestDto);
+
+        assertNotNull(response);
+        assertEquals(0, response.createdCount());
+        assertEquals(1, response.updatedCount());
+        assertEquals("Updated Examen: Data Structures", response.events().get(0).title());
+        assertEquals("Updated Examen: Data Structures", existingEvent.getTitle());
+        assertEquals(EventLocation.IN_PERSON, existingEvent.getLocation());
+    }
+
+    @Test
+    @DisplayName("batchUpsertEvents throws BAD_REQUEST if start time is in the past")
+    public void testBatchUpsertEvents_PastDate_ThrowsBadRequest() {
+        UUID communityId = UUID.randomUUID();
+        String communitySlug = "fmi-info-id";
+        Community community = createTestCommunity(communityId, communitySlug);
+
+        UserDto userDto = new UserDto(UUID.randomUUID(), "john@example.com", "john_doe", true, RoleType.COMMUNITY_MEMBER);
+        OffsetDateTime pastTime = OffsetDateTime.now().minusDays(1);
+
+        BatchEventItemDto item = BatchEventItemDto.builder()
+                .courseId(10L)
+                .title("Past Event")
+                .type(EventType.LECTURE)
+                .startTime(pastTime)
+                .durationHours(2.0f)
+                .location(EventLocation.ONLINE)
+                .build();
+
+        BatchCreateEventsRequestDto requestDto = new BatchCreateEventsRequestDto(
+                communitySlug,
+                List.of(item)
+        );
+
+        when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
+        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+                .thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                calendarService.batchUpsertEvents(userDto, requestDto)
+        );
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        assertTrue(ex.getReason().contains("Event start time cannot be in the past"));
     }
 }

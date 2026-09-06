@@ -86,3 +86,26 @@ export interface UpdateEventPayload {
 export interface CreateReminderPayload {
   offsetMinutes?: number; // default 15
 }
+
+export interface BatchEventItem {
+  courseId: number;
+  title: string;
+  description?: string;
+  type: "EXAM" | "LECTURE";
+  startTime: string;
+  durationHours?: number;
+  location: EventLocation;
+  locationDetails?: string;
+}
+
+export interface BatchEventsPayload {
+  communitySlug: string;
+  events: BatchEventItem[];
+}
+
+export interface BatchEventResponse {
+  createdCount: number;
+  updatedCount: number;
+  events: CalendarEvent[];
+}
+

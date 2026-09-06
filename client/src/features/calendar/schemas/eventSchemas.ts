@@ -78,3 +78,41 @@ export const eventFormSchema = z
   });
 
 export type EventFormData = z.infer<typeof eventFormSchema>;
+
+export const batchEventTypeSchema = z.enum(["EXAM", "LECTURE"]);
+
+export const batchEventItemSchema = z.object({
+  courseId: z.number().int().positive("Course ID must be a positive integer"),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Event title is required")
+    .max(100, "Title must be 100 characters or less"),
+  description: z
+    .string()
+    .max(500, "Description must be 500 characters or less")
+    .optional()
+    .nullable(),
+  type: batchEventTypeSchema,
+  startTime: z.string().min(1, "Start time is required"),
+  durationHours: z
+    .number()
+    .positive("Duration must be positive")
+    .max(168, "Duration cannot exceed 168 hours")
+    .optional()
+    .nullable(),
+  location: eventLocationSchema,
+  locationDetails: z
+    .string()
+    .max(500, "Location details must be 500 characters or less")
+    .optional()
+    .nullable(),
+});
+
+export const batchEventsArraySchema = z
+  .array(batchEventItemSchema)
+  .min(1, "At least one event is required")
+  .max(200, "Cannot import more than 200 events at once");
+
+export type BatchEventItemParsed = z.infer<typeof batchEventItemSchema>;
+
