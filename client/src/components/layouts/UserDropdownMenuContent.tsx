@@ -7,7 +7,6 @@ import {
   KeyRound,
   AlertTriangle,
   MailCheck,
-  ShieldCheck,
   Trash2,
 } from "@/components/ui/icons";
 import { UserAvatar } from "@/components/app/UserAvatar";
@@ -37,8 +36,9 @@ import { useDeleteAccount } from "@/features/users/api/deleteAccount";
 import { ThemeSubMenu } from "./ThemeMenu";
 import type { User } from "@/types/domain";
 
-export interface UserDropdownMenuContentProps
-  extends React.ComponentProps<typeof DropdownMenuContent> {
+export interface UserDropdownMenuContentProps extends React.ComponentProps<
+  typeof DropdownMenuContent
+> {
   user: User;
 }
 
@@ -109,8 +109,7 @@ export function UserDropdownMenuContent({
                       size="xs"
                       className="font-medium gap-1 text-[10px]"
                     >
-                      <ShieldCheck className="size-3 text-emerald-500" />
-                      Verified
+                      Email Verified
                     </Badge>
                   ) : (
                     <Badge
@@ -118,8 +117,7 @@ export function UserDropdownMenuContent({
                       size="xs"
                       className="font-medium gap-1 text-[10px]"
                     >
-                      <AlertTriangle className="size-3" />
-                      Unverified
+                      Email Unverified
                     </Badge>
                   )}
                 </div>
@@ -178,7 +176,7 @@ export function UserDropdownMenuContent({
         </DropdownMenuGroup>
       </DropdownMenuContent>
 
-      {/* Verify Email Modal (autoSend = false) */}
+      {/* Verify Email Modal */}
       <VerifyEmailModal
         open={isVerifyEmailOpen}
         onOpenChange={setIsVerifyEmailOpen}
@@ -187,11 +185,11 @@ export function UserDropdownMenuContent({
         autoSend={false}
       />
 
-      {/* Reset Password Modal (autoSend = false) */}
+      {/* Reset Password Modal */}
       <ForgotPasswordModal
         open={isForgotPasswordOpen}
         onOpenChange={setIsForgotPasswordOpen}
-        initialEmail={user.email}
+        email={user.email}
         autoSend={false}
       />
 

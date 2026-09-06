@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Mail, CheckCircle2 } from "@/components/ui/icons";
+import { Mail, Check } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -8,13 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldError } from "@/components/ui/field";
 import { emailSchema } from "../schemas/authSchemas";
 import { useForgotPassword } from "../api/forgotPassword";
 import useCountdownTimer from "@/hooks/useCountdownTimer";
@@ -23,46 +17,54 @@ import { getErrorMessage } from "@/api/types";
 export interface ForgotPasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  initialEmail?: string;
+  email: string;
   autoSend?: boolean;
 }
 
 export function ForgotPasswordModal({
   open,
   onOpenChange,
-  initialEmail = "",
+  email,
   autoSend = false,
 }: ForgotPasswordModalProps) {
-  const [email, setEmail] = React.useState(initialEmail);
   const [error, setError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const hasAutoSentRef = React.useRef(false);
+
+  const storageKey = email
+    ? `auth_forgot_password_${email.trim().toLowerCase()}`
+    : undefined;
 
   const {
     isActive: isTimerActive,
     timerTextRef,
     startTimer,
     resetTimer,
-  } = useCountdownTimer({ defaultSeconds: 60 });
+  } = useCountdownTimer({ defaultSeconds: 60, storageKey });
+
+  const showSuccess = isSuccess || isTimerActive;
 
   const { mutateAsync: sendReset, isPending } = useForgotPassword();
 
   const handleOpenChange = React.useCallback(
     (isOpen: boolean) => {
       if (!isOpen) {
-        setEmail(initialEmail);
         setError(null);
-        setIsSuccess(false);
-        resetTimer();
+        if (!isTimerActive) {
+          setIsSuccess(false);
+          resetTimer();
+        }
+        hasAutoSentRef.current = false;
       }
       onOpenChange(isOpen);
     },
-    [initialEmail, onOpenChange, resetTimer],
+    [isTimerActive, onOpenChange, resetTimer],
   );
 
   const handleSendResetEmail = React.useCallback(
-    async (emailToSend: string) => {
+    async (targetEmail: string) => {
       setError(null);
-      const parseResult = emailSchema.safeParse(emailToSend);
+      const parseResult = emailSchema.safeParse(targetEmail);
       if (!parseResult.success) {
         setError(
           parseResult.error.issues[0]?.message ||
@@ -72,7 +74,7 @@ export function ForgotPasswordModal({
       }
 
       try {
-        await sendReset({ email: emailToSend.trim() });
+        await sendReset({ email: targetEmail.trim() });
         setIsSuccess(true);
         startTimer(60);
       } catch (err) {
@@ -83,51 +85,44 @@ export function ForgotPasswordModal({
   );
 
   React.useEffect(() => {
-    if (!open) return;
-
-    if (autoSend && initialEmail) {
-      sendReset({ email: initialEmail.trim() })
-        .then(() => {
-          setIsSuccess(true);
-          startTimer(60);
-        })
-        .catch((err) => {
-          setError(getErrorMessage(err, "Failed to send reset email."));
-        });
+    if (!open) {
+      hasAutoSentRef.current = false;
+      return;
     }
-  }, [open, autoSend, initialEmail, sendReset, startTimer]);
 
-  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await handleSendResetEmail(email || initialEmail);
-  };
+    if (isTimerActive) {
+      return;
+    }
+
+    if (autoSend && email && !hasAutoSentRef.current) {
+      hasAutoSentRef.current = true;
+      handleSendResetEmail(email);
+    }
+  }, [open, autoSend, email, isTimerActive, handleSendResetEmail]);
 
   const handleResend = async () => {
-    const targetEmail = email || initialEmail;
-    if (isTimerActive || !targetEmail) return;
-    await handleSendResetEmail(targetEmail);
+    if (isTimerActive || !email || isPending) return;
+    await handleSendResetEmail(email);
   };
-
-  const currentEmail = email || initialEmail;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            {isSuccess ? (
-              <CheckCircle2 className="size-6 text-emerald-600" />
+            {showSuccess ? (
+              <Check className="size-6 text-emerald-600" />
             ) : (
               <Mail className="size-6" />
             )}
           </div>
           <DialogTitle className="text-center text-xl font-bold font-heading">
-            {isSuccess ? "Check your inbox" : "Reset your password"}
+            {showSuccess ? "Check your inbox" : "Reset your password"}
           </DialogTitle>
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
-            {isSuccess
-              ? `If an account exists for ${currentEmail}, a password reset link has been sent with 15-minute validity.`
-              : "Enter the email associated with your account, and we will send you a password reset link."}
+            {showSuccess
+              ? `If an account exists for ${email}, a password reset link has been sent with 15-minute validity.`
+              : "We will send a password reset link to the email address associated with your account."}
           </DialogDescription>
         </DialogHeader>
 
@@ -137,7 +132,7 @@ export function ForgotPasswordModal({
           </FieldError>
         )}
 
-        {isSuccess ? (
+        {showSuccess ? (
           <div className="flex flex-col gap-3 pt-2">
             <Button
               type="button"
@@ -165,38 +160,28 @@ export function ForgotPasswordModal({
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4 pt-2">
-            <FieldGroup>
-              <Field data-invalid={Boolean(error)}>
-                <FieldLabel
-                  htmlFor="reset-email"
-                  className="text-xs font-semibold"
-                >
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2.5 text-xs">
+              <Mail className="size-4 text-muted-foreground shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-muted-foreground">
                   Email address
-                </FieldLabel>
-                <Input
-                  id="reset-email"
-                  type="email"
-                  value={currentEmail}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="john@example.com"
-                  autoComplete="email"
-                  className="h-9 text-xs"
-                  autoFocus
-                />
-              </Field>
+                </span>
+                <span className="font-semibold text-foreground truncate">
+                  {email}
+                </span>
+              </div>
+            </div>
 
-              <Field>
-                <Button
-                  type="submit"
-                  disabled={isPending || !currentEmail.trim()}
-                  className="w-full h-9 text-xs font-semibold cursor-pointer"
-                >
-                  {isPending ? "Sending..." : "Send reset link"}
-                </Button>
-              </Field>
-            </FieldGroup>
-          </form>
+            <Button
+              type="button"
+              disabled={isPending || !email.trim()}
+              onClick={() => handleSendResetEmail(email)}
+              className="w-full h-9 text-xs font-semibold cursor-pointer"
+            >
+              {isPending ? "Sending..." : "Send reset link"}
+            </Button>
+          </div>
         )}
       </DialogContent>
     </Dialog>

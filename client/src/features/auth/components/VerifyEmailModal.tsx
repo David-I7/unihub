@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { Mail, CheckCircle2, ArrowLeft } from "@/components/ui/icons";
+import { Mail, Check, ArrowLeft } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -42,15 +42,23 @@ export function VerifyEmailModal({
   const [otpCode, setOtpCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
+  const [codeSent, setCodeSent] = React.useState(false);
+  const hasAutoSentRef = React.useRef(false);
 
   const setEmailVerified = useAuthStore((state) => state.setEmailVerified);
+
+  const storageKey = email
+    ? `auth_verify_email_${email.trim().toLowerCase()}`
+    : undefined;
 
   const {
     isActive: isTimerActive,
     timerTextRef,
     startTimer,
     resetTimer,
-  } = useCountdownTimer({ defaultSeconds: 60 });
+  } = useCountdownTimer({ defaultSeconds: 60, storageKey });
+
+  const isCodeSent = mode === "register" || isTimerActive || codeSent;
 
   const { mutateAsync: sendVerifyCode, isPending: isSendingCode } =
     useVerifyEmail();
@@ -69,11 +77,15 @@ export function VerifyEmailModal({
         setOtpCode("");
         setError(null);
         setIsSuccess(false);
-        resetTimer();
+        if (!isTimerActive) {
+          setCodeSent(false);
+          resetTimer();
+        }
+        hasAutoSentRef.current = false;
       }
       onOpenChange(isOpen);
     },
-    [onOpenChange, resetTimer],
+    [isTimerActive, onOpenChange, resetTimer],
   );
 
   const handleSendCode = React.useCallback(async () => {
@@ -81,25 +93,41 @@ export function VerifyEmailModal({
     setError(null);
     try {
       await sendVerifyCode({ email });
+      setCodeSent(true);
       startTimer(60);
     } catch (err) {
-      getErrorMessage(err, "Failed to send verification code.");
+      setError(getErrorMessage(err, "Failed to send verification code."));
     }
   }, [email, sendVerifyCode, startTimer]);
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      hasAutoSentRef.current = false;
+      return;
+    }
 
-    if (autoSend && email) {
+    if (isTimerActive) {
+      return;
+    }
+
+    if (mode === "register" && !hasAutoSentRef.current) {
+      hasAutoSentRef.current = true;
+      startTimer(60);
+      return;
+    }
+
+    if (autoSend && email && !hasAutoSentRef.current) {
+      hasAutoSentRef.current = true;
       sendVerifyCode({ email })
         .then(() => {
+          setCodeSent(true);
           startTimer(60);
         })
         .catch((err) => {
           setError(getErrorMessage(err, "Failed to send verification code."));
         });
     }
-  }, [open, autoSend, email, sendVerifyCode, startTimer]);
+  }, [open, autoSend, email, mode, isTimerActive, sendVerifyCode, startTimer]);
 
   const handleConfirm = async (codeToVerify?: string) => {
     const code = codeToVerify ?? otpCode;
@@ -110,11 +138,13 @@ export function VerifyEmailModal({
     try {
       if (mode === "register") {
         await confirmRegisterMutation({ email, code });
+        resetTimer();
         onSuccess?.();
         handleOpenChange(false);
         navigate("/");
       } else {
         await confirmEmailMutation({ email, code });
+        resetTimer();
         setEmailVerified(true);
         queryClient.invalidateQueries({ queryKey: ["users", "me"] });
         setIsSuccess(true);
@@ -133,7 +163,7 @@ export function VerifyEmailModal({
         <DialogHeader>
           <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             {isSuccess ? (
-              <CheckCircle2 className="size-6 text-emerald-600" />
+              <Check className="size-6 text-emerald-600" />
             ) : (
               <Mail className="size-6" />
             )}
@@ -148,11 +178,19 @@ export function VerifyEmailModal({
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
             {isSuccess ? (
               "Your email address has been successfully verified. You now have full access to notifications and reminders."
+            ) : !isCodeSent ? (
+              "We will send a 6-digit verification code to the email address associated with your account."
             ) : isRegister ? (
               <>
                 We sent a 6-digit verification code to{" "}
                 <span className="font-semibold text-foreground">{email}</span>.
                 Enter the code below to complete your registration.
+              </>
+            ) : isSendingCode ? (
+              <>
+                Sending verification code to{" "}
+                <span className="font-semibold text-foreground">{email}</span>
+                ...
               </>
             ) : (
               <>
@@ -180,6 +218,29 @@ export function VerifyEmailModal({
               Done
             </Button>
           </div>
+        ) : !isCodeSent ? (
+          <div className="flex flex-col gap-4 pt-2">
+            <div className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2.5 text-xs">
+              <Mail className="size-4 text-muted-foreground shrink-0" />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Email address
+                </span>
+                <span className="font-semibold text-foreground truncate">
+                  {email}
+                </span>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              disabled={isSendingCode || !email.trim()}
+              onClick={handleSendCode}
+              className="w-full h-9 font-semibold text-xs cursor-pointer"
+            >
+              {isSendingCode ? "Sending code..." : "Send verification code"}
+            </Button>
+          </div>
         ) : (
           <div className="flex flex-col gap-4 pt-2">
             <div className="flex justify-center py-1">
@@ -188,7 +249,7 @@ export function VerifyEmailModal({
                 onChange={setOtpCode}
                 onComplete={handleConfirm}
                 hasError={Boolean(error)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isSendingCode}
               />
             </div>
 
@@ -196,14 +257,16 @@ export function VerifyEmailModal({
               <Button
                 type="button"
                 onClick={() => handleConfirm()}
-                disabled={isSubmitting || otpCode.length !== 6}
+                disabled={isSubmitting || isSendingCode || otpCode.length !== 6}
                 className="w-full h-9 font-semibold text-xs cursor-pointer"
               >
                 {isSubmitting
                   ? "Verifying..."
-                  : isRegister
-                    ? "Complete registration"
-                    : "Confirm code"}
+                  : isSendingCode
+                    ? "Sending code..."
+                    : isRegister
+                      ? "Complete registration"
+                      : "Confirm code"}
               </Button>
 
               <div className="flex items-center justify-between text-xs pt-1">
