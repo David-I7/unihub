@@ -2,9 +2,11 @@ package com.unihub.app.controllers;
 
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.BatchCreateEventsRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
+import com.unihub.app.dto.community.content.response.BatchEventResponseDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
@@ -78,6 +80,15 @@ public class CalendarController {
     ) {
         CalendarEventResponseDto event = calendarService.createEvent(user, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(event);
+    }
+
+    @PostMapping("/events/batch")
+    public ResponseEntity<BatchEventResponseDto> batchUpsertEvents(
+            @AuthenticationPrincipal UserDto user,
+            @RequestBody @Valid BatchCreateEventsRequestDto requestDto
+    ) {
+        BatchEventResponseDto response = calendarService.batchUpsertEvents(user, requestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/events/{eventId}")

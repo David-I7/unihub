@@ -91,7 +91,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* Toolbar: Filter by Type + Filter by Unread + Reset */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="flex items-center justify-end gap-2.5">
         <div className="flex flex-wrap items-center gap-2">
           <FilterSelect
             label="Type"

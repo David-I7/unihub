@@ -608,10 +608,8 @@ export function EventFormModal() {
                         (t) => t.value === form.values.type,
                       );
                       if (!opt) return null;
-                      const Icon = opt.icon;
                       return (
                         <div className="flex items-center gap-2">
-                          <Icon className={cn("size-3.5", opt.colorClass)} />
                           <span>{opt.label}</span>
                         </div>
                       );
@@ -620,11 +618,9 @@ export function EventFormModal() {
                 </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPE_OPTIONS.map((t) => {
-                    const Icon = t.icon;
                     return (
                       <SelectItem key={t.value} value={t.value}>
                         <div className="flex items-center gap-2 text-xs">
-                          <Icon className={cn("size-3.5", t.colorClass)} />
                           <span>{t.label}</span>
                         </div>
                       </SelectItem>
@@ -761,24 +757,16 @@ export function EventFormModal() {
 
           {/* Modal Footer */}
           <DialogFooter className="gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="h-8 text-xs cursor-pointer"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button
               type="submit"
-              size="sm"
               disabled={
                 isSubmitting ||
                 (!isEditing && !canCreateInCommunity) ||
                 (isEditing && !form.isDirty)
               }
-              className="h-8 text-xs font-semibold cursor-pointer"
             >
               {isSubmitting
                 ? isEditing

@@ -35,8 +35,8 @@ export const CalendarEventPill = memo(function CalendarEventPill({
       <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
         {/* Course Code Abbreviation (if present) */}
         {abbreviation && (
-          <span className="font-mono text-[10px] font-bold opacity-90 shrink-0">
-            [{abbreviation}]
+          <span className="font-mono text-[10px] font-bold shrink-0">
+            ({abbreviation})
           </span>
         )}
 

@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -101,6 +102,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
         WHERE c.id = :courseId
     """)
     Optional<Course> findByIdWithStudyYearAndCommunity(@Param("courseId") Long courseId);
+
+    @Query("""
+        SELECT c FROM Course c
+        JOIN FETCH c.studyYear sy
+        JOIN FETCH sy.community comm
+        WHERE c.id IN :courseIds
+    """)
+    List<Course> findAllByIdInWithStudyYearAndCommunity(@Param("courseIds") Set<Long> courseIds);
 
     boolean existsByStudyYearIdAndNameIgnoreCase(int studyYearId, String name);
 

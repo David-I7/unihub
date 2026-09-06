@@ -19,20 +19,36 @@
             background: #ffffff;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         .header {
-            background: linear-gradient(135deg, #3f6f6b 0%, #2f5451 100%);
-            padding: 32px 24px;
-            text-align: center;
+            background-color: #ffffff;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .header h1 {
+        .brand-badge {
+            width: 38px;
+            height: 38px;
+            background-color: #3f6f6b;
+            border-radius: 8px;
+            text-align: center;
+            vertical-align: middle;
+            display: inline-block;
+            line-height: 38px;
             color: #ffffff;
-            font-size: 26px;
-            margin: 0;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: 0.5px;
+        }
+        .brand-text {
+            font-size: 19px;
+            font-weight: 700;
+            color: #0f172a;
+            vertical-align: middle;
+            display: inline-block;
+            margin-left: 10px;
+            letter-spacing: -0.3px;
         }
         .content {
             padding: 36px 32px;
@@ -40,9 +56,11 @@
         }
         .content h2 {
             font-size: 20px;
+            font-weight: 600;
             margin-top: 0;
             margin-bottom: 16px;
             color: #0f172a;
+            letter-spacing: -0.2px;
         }
         .content p {
             margin: 0 0 20px 0;
@@ -51,18 +69,18 @@
         }
         .code-box {
             text-align: center;
-            margin: 32px 0;
-            padding: 20px;
-            background-color: #f0fdfa;
-            border: 2px dashed #3f6f6b;
-            border-radius: 12px;
+            margin: 28px 0;
+            padding: 24px 20px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
         }
         .code-number {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 36px;
+            font-family: Consolas, Menlo, Monaco, monospace;
+            font-size: 32px;
             font-weight: 700;
-            letter-spacing: 8px;
-            color: #2f5451;
+            letter-spacing: 6px;
+            color: #0f172a;
         }
         .code-hint {
             margin-top: 8px;
@@ -75,10 +93,18 @@
             text-align: center;
             font-size: 13px;
             color: #94a3b8;
-            background-color: #fcfdfe;
+            background-color: #f8fafc;
+            line-height: 1.5;
+        }
+        .footer p {
+            margin: 4px 0;
         }
         .footer a {
-            color: #64748b;
+            color: #3f6f6b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer a:hover {
             text-decoration: underline;
         }
     </style>
@@ -86,12 +112,21 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>UniHub</h1>
+        <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: middle;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    <div class="brand-badge">UH</div>
+                </td>
+                <td style="vertical-align: middle; padding-left: 10px;">
+                    <span class="brand-text">UniHub</span>
+                </td>
+            </tr>
+        </table>
     </div>
     <div class="content">
         <h2>Confirm your registration</h2>
         <p>Hello <strong th:text="${username}">Student</strong>,</p>
-        <p>Thank you for signing up for UniHub! Enter the 6-digit verification code below in your registration window to activate your account:</p>
+        <p>Thank you for signing up for UniHub. Enter the 6-digit verification code below in your registration window to activate your account:</p>
         
         <div class="code-box">
             <div class="code-number" th:text="${verificationCode}">123456</div>
@@ -101,10 +136,9 @@
         <p>If you did not initiate this registration on UniHub, you can safely ignore this email.</p>
     </div>
     <div class="footer">
-        <p>Need help? Contact our support team at <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@unihub.app</a>.</p>
+        <p>Need help? Contact support at <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@unihub.app</a>.</p>
         <p>&copy; <span th:text="${year}">2026</span> UniHub. All rights reserved.</p>
     </div>
 </div>
 </body>
 </html>
-

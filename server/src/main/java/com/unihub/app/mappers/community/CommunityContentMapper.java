@@ -1,6 +1,7 @@
 package com.unihub.app.mappers.community;
 
 import com.unihub.app.dto.community.OwnerDto;
+import com.unihub.app.dto.community.content.request.BatchEventItemDto;
 import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
@@ -205,6 +206,21 @@ public class CommunityContentMapper {
     }
 
     public Event toEventEntity(CreateEventRequestDto requestDto, Course course, Community community, User owner) {
+        return Event.builder()
+                .title(requestDto.title())
+                .description(requestDto.description())
+                .type(requestDto.type())
+                .startTime(requestDto.startTime())
+                .durationHours(requestDto.durationHours())
+                .location(requestDto.location())
+                .locationDetails(requestDto.locationDetails())
+                .course(course)
+                .community(community)
+                .owner(owner)
+                .build();
+    }
+
+    public Event toEventEntity(BatchEventItemDto requestDto, Course course, Community community, User owner) {
         return Event.builder()
                 .title(requestDto.title())
                 .description(requestDto.description())

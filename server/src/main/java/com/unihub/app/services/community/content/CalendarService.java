@@ -3,13 +3,17 @@ package com.unihub.app.services.community.content;
 import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import com.unihub.app.dto.community.content.request.BatchCreateEventsRequestDto;
+import com.unihub.app.dto.community.content.request.BatchEventItemDto;
 import com.unihub.app.dto.community.content.request.CreateEventReminderRequestDto;
 import com.unihub.app.dto.community.content.request.CreateEventRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateEventRequestDto;
+import com.unihub.app.dto.community.content.response.BatchEventResponseDto;
 import com.unihub.app.dto.community.content.response.CalendarEventResponseDto;
 import com.unihub.app.dto.community.content.response.EventReminderResponseDto;
 import com.unihub.app.dto.community.content.response.EventResponseDto;
 import com.unihub.app.dto.community.content.response.UserReminderResponseDto;
+import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.Event;
 import com.unihub.app.entities.community.content.EventReminder;
@@ -40,9 +44,15 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -147,6 +157,137 @@ public class CalendarService {
         Event event = contentMapper.toEventEntity(requestDto, course, community, owner);
         Event saved = eventRepository.save(event);
         return contentMapper.toCalendarEventResponseDto(saved, false);
+    }
+
+    @Transactional
+    public BatchEventResponseDto batchUpsertEvents(UserDto user, BatchCreateEventsRequestDto requestDto) {
+        Community community = communityRepository.findBySlug(requestDto.communitySlug())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
+
+        if (!authorizationService.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create event");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now(ZoneOffset.UTC);
+        User owner = userMapper.toEntity(user);
+
+        // 1. Validate inputs upfront
+        for (BatchEventItemDto item : requestDto.events()) {
+            if (item.startTime().isBefore(now)) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Event start time cannot be in the past: " + item.title() + " at " + item.startTime()
+                );
+            }
+
+            if (item.type() != EventType.LECTURE && item.type() != EventType.EXAM) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Batch events only support LECTURE and EXAM types: " + item.title()
+                );
+            }
+        }
+
+        // 2. Bulk fetch and validate all unique courses in a single query
+        Set<Long> courseIds = requestDto.events().stream()
+                .map(BatchEventItemDto::courseId)
+                .collect(Collectors.toSet());
+
+        Map<Long, Course> courseMap = courseRepository.findAllByIdInWithStudyYearAndCommunity(courseIds)
+                .stream()
+                .collect(Collectors.toMap(Course::getId, c -> c));
+
+        for (Long courseId : courseIds) {
+            Course course = courseMap.get(courseId);
+            if (course == null) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Course not found with ID: " + courseId
+                );
+            }
+            if (!course.getStudyYear().getCommunity().getId().equals(community.getId())) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST,
+                        "Course does not belong to the specified community: " + course.getName()
+                );
+            }
+        }
+
+        // 3. Bulk fetch candidate existing events in the date window in a single query
+        OffsetDateTime minStartTime = requestDto.events().stream()
+                .map(BatchEventItemDto::startTime)
+                .min(OffsetDateTime::compareTo)
+                .orElse(now);
+        OffsetDateTime maxStartTime = requestDto.events().stream()
+                .map(BatchEventItemDto::startTime)
+                .max(OffsetDateTime::compareTo)
+                .orElse(now);
+        List<EventType> distinctTypes = requestDto.events().stream()
+                .map(BatchEventItemDto::type)
+                .distinct()
+                .toList();
+
+        List<Event> existingCandidates = eventRepository.findExistingEventsByCourseIdsAndWindow(
+                courseIds, minStartTime, maxStartTime, distinctTypes
+        );
+
+        Map<String, Event> candidateMap = new HashMap<>();
+        StringBuilder builder = new StringBuilder();
+        for (Event candidate : existingCandidates) {
+            builder.append(candidate.getCourse().getId()).append("_").append(candidate.getStartTime()).append("_").append(candidate.getType());
+            String key = builder.toString();
+            candidateMap.put(key, candidate);
+            builder.delete(0, builder.length());
+        }
+
+        // 4. Process events in memory
+        int createdCount = 0;
+        int updatedCount = 0;
+        List<Event> eventsToSave = new ArrayList<>();
+        Map<String, Event> processedEvents = new HashMap<>();
+
+        for (BatchEventItemDto item : requestDto.events()) {
+            builder.append(item.courseId()).append("_").append(item.startTime()).append("_").append(item.type());
+            String naturalKey = builder.toString();
+            builder.delete(0, builder.length());
+
+            if (processedEvents.containsKey(naturalKey)) {
+                Event existingInBatch = processedEvents.get(naturalKey);
+                existingInBatch.setTitle(item.title());
+                existingInBatch.setDescription(item.description());
+                existingInBatch.setDurationHours(item.durationHours());
+                existingInBatch.setLocation(item.location());
+                existingInBatch.setLocationDetails(item.locationDetails());
+            } else if (candidateMap.containsKey(naturalKey)) {
+                Event existingInDb = candidateMap.get(naturalKey);
+                existingInDb.setTitle(item.title());
+                existingInDb.setDescription(item.description());
+                existingInDb.setDurationHours(item.durationHours());
+                existingInDb.setLocation(item.location());
+                existingInDb.setLocationDetails(item.locationDetails());
+                updatedCount++;
+                processedEvents.put(naturalKey, existingInDb);
+                eventsToSave.add(existingInDb);
+            } else {
+                Course course = courseMap.get(item.courseId());
+                Event newEvent = contentMapper.toEventEntity(item, course, community, owner);
+                createdCount++;
+                processedEvents.put(naturalKey, newEvent);
+                eventsToSave.add(newEvent);
+            }
+        }
+
+        // 5. Batch persist with saveAll
+        List<Event> savedEvents = eventRepository.saveAll(eventsToSave);
+        List<CalendarEventResponseDto> resultDtos = savedEvents.stream()
+                .map(e -> contentMapper.toCalendarEventResponseDto(e, false))
+                .toList();
+
+        return BatchEventResponseDto.builder()
+                .createdCount(createdCount)
+                .updatedCount(updatedCount)
+                .events(resultDtos)
+                .build();
     }
 
     @Transactional

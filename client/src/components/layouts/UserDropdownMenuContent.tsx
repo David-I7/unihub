@@ -4,10 +4,11 @@ import { toast } from "sonner";
 import { isAxiosError } from "axios";
 import {
   LogOut,
-  KeyRound,
+  Lock,
   AlertTriangle,
   MailCheck,
   Trash2,
+  Edit2,
 } from "@/components/ui/icons";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { RoleBadge } from "@/components/app/RoleBadge";
@@ -33,6 +34,7 @@ import { useLogout } from "@/features/auth/api/logout";
 import { VerifyEmailModal } from "@/features/auth/components/VerifyEmailModal";
 import { ForgotPasswordModal } from "@/features/auth/components/ForgotPasswordModal";
 import { useDeleteAccount } from "@/features/users/api/deleteAccount";
+import { UpdateUsernameModal } from "@/features/users/components/UpdateUsernameModal";
 import { ThemeSubMenu } from "./ThemeMenu";
 import type { User } from "@/types/domain";
 
@@ -50,6 +52,7 @@ export function UserDropdownMenuContent({
   const navigate = useNavigate();
   const [isVerifyEmailOpen, setIsVerifyEmailOpen] = React.useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
+  const [isUpdateUsernameOpen, setIsUpdateUsernameOpen] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
@@ -130,6 +133,14 @@ export function UserDropdownMenuContent({
 
         {/* Action Group */}
         <DropdownMenuGroup>
+          <DropdownMenuItem
+            onClick={() => setIsUpdateUsernameOpen(true)}
+            className="cursor-pointer"
+          >
+            <Edit2 className="mr-2 size-4" />
+            <span>Update Username</span>
+          </DropdownMenuItem>
+
           {!isEmailVerified && (
             <DropdownMenuItem
               onClick={() => setIsVerifyEmailOpen(true)}
@@ -144,7 +155,7 @@ export function UserDropdownMenuContent({
             onClick={() => setIsForgotPasswordOpen(true)}
             className="cursor-pointer"
           >
-            <KeyRound className="mr-2 size-4" />
+            <Lock className="mr-2 size-4" />
             <span>Reset Password</span>
           </DropdownMenuItem>
 
@@ -191,6 +202,13 @@ export function UserDropdownMenuContent({
         onOpenChange={setIsForgotPasswordOpen}
         email={user.email}
         autoSend={false}
+      />
+
+      {/* Update Username Modal */}
+      <UpdateUsernameModal
+        open={isUpdateUsernameOpen}
+        onOpenChange={setIsUpdateUsernameOpen}
+        currentUsername={user.username}
       />
 
       {/* Delete Account Confirmation Dialog */}

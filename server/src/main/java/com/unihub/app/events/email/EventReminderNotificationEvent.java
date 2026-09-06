@@ -8,8 +8,10 @@ public record EventReminderNotificationEvent(
         String eventTitle,
         String eventType,
         String courseName,
+        String courseAbbreviation,
         OffsetDateTime startTime,
         String location,
-        String locationDetails
+        String locationDetails,
+        String eventUrl
 ) {
 }

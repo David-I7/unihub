@@ -13,18 +13,24 @@ import {
 } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
-interface CalendarEventCardProps {
+export interface CalendarEventCardProps {
   event: CalendarEvent;
   onClick?: (event: CalendarEvent) => void;
   className?: string;
   formattedDate: string;
+  actions?: React.ReactNode;
+  locationDetails?: string | null;
+  description?: string | null;
 }
 
 function getStartAndEndTimeStr(
-  event: CalendarEvent,
+  event: { startTime: string; durationHours?: number | null; type?: string },
   formattedDate: string,
 ): { startTimeStr: string; endTimeStr?: string } {
   const startDate = new Date(event.startTime);
+  if (isNaN(startDate.getTime())) {
+    return { startTimeStr: event.startTime };
+  }
   const shouldShowEndTime =
     event.type !== "ASSIGNMENT" &&
     event.durationHours &&
@@ -57,6 +63,9 @@ export function CalendarEventCard({
   onClick,
   className,
   formattedDate,
+  actions,
+  locationDetails,
+  description,
 }: CalendarEventCardProps) {
   const config = getEventCategoryConfig(event.type);
   const Icon = config.icon;
@@ -93,22 +102,24 @@ export function CalendarEventCard({
 
       {/* Right Column: Event Content */}
       <div className="flex-1 min-w-0 flex flex-col justify-between gap-1.5">
-        {/* Top Row: Type Badge + Location on left; Bell on right */}
+        {/* Top Row: Type Badge + Location on left; Bell / Actions on right */}
         <div className="flex items-center justify-between gap-2">
           {event.communityName && (
             <span className="text-[11px] text-muted-foreground font-medium text-ellipsis line-clamp-1">
               {event.communityName}
             </span>
           )}
-          {/* Active Reminder Bell */}
-          {event.isSubscribed && (
-            <span
-              title="Reminder active"
-              className="flex items-center text-amber-500 shrink-0"
-            >
-              <Bell className="size-3.5 fill-amber-500/20 text-amber-500" />
-            </span>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {event.isSubscribed && (
+              <span
+                title="Reminder active"
+                className="flex items-center text-amber-500 shrink-0"
+              >
+                <Bell className="size-3.5 fill-amber-500/20 text-amber-500" />
+              </span>
+            )}
+            {actions}
+          </div>
         </div>
         <div className="flex items-center justify-between text-xs">
           {/* Title */}
@@ -145,7 +156,19 @@ export function CalendarEventCard({
               </span>
             </span>
           )}
+
+          {locationDetails && (
+            <span className="text-[11px] text-muted-foreground truncate">
+              ({locationDetails})
+            </span>
+          )}
         </div>
+
+        {description && (
+          <p className="text-[11px] text-muted-foreground/90 italic line-clamp-2 mt-0.5">
+            {description}
+          </p>
+        )}
       </div>
     </div>
   );

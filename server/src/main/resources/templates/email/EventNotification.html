@@ -19,20 +19,36 @@
             background: #ffffff;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
             border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         }
         .header {
-            background: linear-gradient(135deg, #3f6f6b 0%, #2f5451 100%);
-            padding: 32px 24px;
-            text-align: center;
+            background-color: #ffffff;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
         }
-        .header h1 {
+        .brand-badge {
+            width: 38px;
+            height: 38px;
+            background-color: #3f6f6b;
+            border-radius: 8px;
+            text-align: center;
+            vertical-align: middle;
+            display: inline-block;
+            line-height: 38px;
             color: #ffffff;
-            font-size: 26px;
-            margin: 0;
+            font-size: 16px;
             font-weight: 700;
-            letter-spacing: -0.5px;
+            letter-spacing: 0.5px;
+        }
+        .brand-text {
+            font-size: 19px;
+            font-weight: 700;
+            color: #0f172a;
+            vertical-align: middle;
+            display: inline-block;
+            margin-left: 10px;
+            letter-spacing: -0.3px;
         }
         .content {
             padding: 36px 32px;
@@ -40,9 +56,11 @@
         }
         .content h2 {
             font-size: 20px;
+            font-weight: 600;
             margin-top: 0;
             margin-bottom: 16px;
             color: #0f172a;
+            letter-spacing: -0.2px;
         }
         .content p {
             margin: 0 0 20px 0;
@@ -50,17 +68,103 @@
             color: #334155;
         }
         .event-card {
-            background-color: #f0fdfa;
-            border: 1px solid #ccfbf1;
-            border-left: 4px solid #3f6f6b;
-            border-radius: 8px;
-            padding: 20px;
             margin: 24px 0;
+            padding: 24px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
         }
-        .event-card h3 {
-            margin: 0 0 12px 0;
-            font-size: 18px;
-            color: #134e4a;
+        .type-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        .badge-exam {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #d8b4fe;
+        }
+        .badge-assignment {
+            background-color: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+        .badge-lecture {
+            background-color: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #93c5fd;
+        }
+        .badge-default {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+        }
+        .event-title {
+            margin: 0 0 4px 0;
+            font-size: 19px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.2px;
+        }
+        .event-course {
+            margin: 0 0 16px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .course-badge {
+            display: inline-block;
+            margin-left: 6px;
+            padding: 2px 7px;
+            background-color: #e2e8f0;
+            color: #334155;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 4px;
+            vertical-align: middle;
+            letter-spacing: 0.3px;
+        }
+        .event-details-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-top: 1px solid #e2e8f0;
+            margin-top: 16px;
+            padding-top: 12px;
+        }
+        .detail-label {
+            padding: 8px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: #64748b;
+            width: 120px;
+            vertical-align: top;
+        }
+        .detail-value {
+            padding: 8px 0;
+            font-size: 14px;
+            color: #0f172a;
+            font-weight: 500;
+            vertical-align: top;
+        }
+        .button-wrapper {
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3f6f6b;
+            color: #ffffff !important;
+            padding: 10px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+        .btn:hover {
+            background-color: #355f5c;
         }
         .footer {
             border-top: 1px solid #e2e8f0;
@@ -68,10 +172,18 @@
             text-align: center;
             font-size: 13px;
             color: #94a3b8;
-            background-color: #fcfdfe;
+            background-color: #f8fafc;
+            line-height: 1.5;
+        }
+        .footer p {
+            margin: 4px 0;
         }
         .footer a {
-            color: #64748b;
+            color: #3f6f6b;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .footer a:hover {
             text-decoration: underline;
         }
     </style>
@@ -79,40 +191,69 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>UniHub</h1>
+        <table cellpadding="0" cellspacing="0" border="0" style="vertical-align: middle;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    <div class="brand-badge">UH</div>
+                </td>
+                <td style="vertical-align: middle; padding-left: 10px;">
+                    <span class="brand-text">UniHub</span>
+                </td>
+            </tr>
+        </table>
     </div>
     <div class="content">
-        <h2>Upcoming Event Reminder</h2>
+        <h2>Upcoming event reminder</h2>
         <p>Hello <strong th:text="${username}">Student</strong>,</p>
         <p>This is a reminder for an upcoming academic event on your schedule:</p>
         
         <div class="event-card">
-            <h3 th:text="${eventTitle}">Event Title</h3>
-            <table style="width: 100%; border-collapse: collapse;">
+            <div>
+                <span th:if="${eventType == 'EXAM'}" class="type-badge badge-exam">Exam</span>
+                <span th:if="${eventType == 'ASSIGNMENT'}" class="type-badge badge-assignment">Assignment</span>
+                <span th:if="${eventType == 'LECTURE'}" class="type-badge badge-lecture">Lecture</span>
+                <span th:if="${eventType != 'EXAM' and eventType != 'ASSIGNMENT' and eventType != 'LECTURE'}" class="type-badge badge-default" th:text="${eventType}">Event</span>
+            </div>
+            <h3 class="event-title" th:text="${eventTitle}">Event Title</h3>
+            <div class="event-course">
+                <span th:text="${courseName}">Course Name</span>
+                <span th:if="${courseAbbreviation != null and !courseAbbreviation.isEmpty()}"
+                      class="course-badge"
+                      th:text="${courseAbbreviation}">CS101</span>
+            </div>
+            
+            <table class="event-details-table" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                    <td style="padding: 4px 0; font-weight: 600; color: #475569; width: 110px;">Course:</td>
-                    <td style="padding: 4px 0; color: #0f172a;" th:text="${courseName}">Course Name</td>
+                    <td class="detail-label" th:text="${eventType == 'ASSIGNMENT' ? 'Due at:' : 'Start Time:'}">Start Time:</td>
+                    <td class="detail-value" th:text="${startTime}">Saturday, 29 August, 10:00</td>
                 </tr>
                 <tr>
-                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Event Type:</td>
-                    <td style="padding: 4px 0; color: #0f172a;" th:text="${eventType}">LECTURE</td>
+                    <td class="detail-label">Location:</td>
+                    <td class="detail-value" th:switch="${location}">
+                        <span th:case="'IN_PERSON'">In-Person</span>
+                        <span th:case="'ONLINE'">Online</span>
+                        <span th:case="'HYBRID'">Hybrid</span>
+                        <span th:case="*" th:text="${location}">In-Person</span>
+                    </td>
                 </tr>
-                <tr>
-                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Start Time:</td>
-                    <td style="padding: 4px 0; color: #0f172a;" th:text="${startTime}">2026-08-29 10:00</td>
-                </tr>
-                <tr>
-                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Location:</td>
-                    <td style="padding: 4px 0; color: #0f172a;" th:text="${location}">CAMPUS</td>
-                </tr>
-                <tr th:if="${locationDetails != null and !locationDetails.isEmpty()}">
-                    <td style="padding: 4px 0; font-weight: 600; color: #475569;">Details:</td>
-                    <td style="padding: 4px 0; color: #0f172a;" th:text="${locationDetails}">Hall B, Room 102</td>
+                <tr th:if="${eventType != 'ASSIGNMENT' and locationDetails != null and !locationDetails.isEmpty()}">
+                    <td class="detail-label">Location Details:</td>
+                    <td class="detail-value" th:text="${locationDetails}">Hall B, Room 102</td>
                 </tr>
             </table>
+
+            <div class="button-wrapper" th:if="${eventUrl != null and !eventUrl.isEmpty()}">
+                <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                        <td style="border-radius: 8px; background-color: #3f6f6b;">
+                            <a th:href="${eventUrl}" class="btn" target="_blank">View in calendar</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
-        <p>Make sure to check your UniHub calendar for any additional updates or study materials linked to this event.</p>
+        <p>Check your UniHub calendar for attached study materials, syllabus links, or schedule changes.</p>
     </div>
     <div class="footer">
         <p>Need assistance? Contact support at <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@unihub.app</a>.</p>

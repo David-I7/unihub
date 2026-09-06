@@ -55,6 +55,9 @@ public class NotificationServiceTests {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private com.unihub.app.utils.AppUtils appUtils;
+
     @InjectMocks
     private NotificationService notificationService;
 
@@ -136,7 +139,7 @@ public class NotificationServiceTests {
         UUID userId = UUID.randomUUID();
         User user = User.builder().id(userId).email("david@example.com").username("david").build();
 
-        Course course = Course.builder().name("Algorithms").build();
+        Course course = Course.builder().name("Algorithms").abbreviation("ALGO").build();
         Event event = Event.builder()
                 .id(UUID.randomUUID())
                 .title("Midterm Exam")
@@ -158,6 +161,7 @@ public class NotificationServiceTests {
 
         when(reminderRepository.findPendingDueReminders(eq(ReminderStatus.PENDING), any(OffsetDateTime.class)))
                 .thenReturn(List.of(reminder));
+        when(appUtils.getOrigin()).thenReturn("http://localhost:5173");
 
         notificationService.processDueReminders();
 

@@ -120,18 +120,22 @@ public class EmailService {
             String eventTitle,
             String eventType,
             String courseName,
+            String courseAbbreviation,
             String startTime,
             String location,
-            String locationDetails
+            String locationDetails,
+            String eventUrl
     ) {
         Map<String, Object> variables = Map.of(
                 "username", username,
                 "eventTitle", eventTitle,
                 "eventType", eventType,
                 "courseName", courseName,
+                "courseAbbreviation", courseAbbreviation != null ? courseAbbreviation : "",
                 "startTime", startTime,
                 "location", location,
                 "locationDetails", locationDetails != null ? locationDetails : "",
+                "eventUrl", eventUrl != null ? eventUrl : "",
                 "supportEmail", emailProperties.supportEmail()
         );
         sendHtmlEmail(

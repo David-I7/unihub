@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public interface EventRepository extends JpaRepository<Event, UUID> {
@@ -145,4 +146,27 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @Query("SELECT e FROM Event e JOIN FETCH e.owner JOIN FETCH e.community WHERE e.id = :id")
     Optional<Event> findByIdWithOwnerAndCommunity(UUID id);
+
+    @Query("SELECT e FROM Event e JOIN FETCH e.course c JOIN FETCH e.community comm WHERE e.course.id = :courseId AND e.startTime = :startTime AND e.type = :type")
+    Optional<Event> findByCourseIdAndStartTimeAndType(
+            @Param("courseId") Long courseId,
+            @Param("startTime") OffsetDateTime startTime,
+            @Param("type") EventType type
+    );
+
+    @Query("""
+        SELECT e FROM Event e
+        JOIN FETCH e.course c
+        JOIN FETCH e.community comm
+        WHERE c.id IN :courseIds
+          AND e.startTime >= :minStartTime
+          AND e.startTime <= :maxStartTime
+          AND e.type IN :types
+    """)
+    List<Event> findExistingEventsByCourseIdsAndWindow(
+            @Param("courseIds") Set<Long> courseIds,
+            @Param("minStartTime") OffsetDateTime minStartTime,
+            @Param("maxStartTime") OffsetDateTime maxStartTime,
+            @Param("types") List<EventType> types
+    );
 }

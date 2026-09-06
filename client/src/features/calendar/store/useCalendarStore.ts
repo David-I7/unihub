@@ -4,6 +4,7 @@ import type { Event } from "../api/types";
 interface CalendarState {
   selectedEventId: string | null;
   isFormModalOpen: boolean;
+  isBatchModalOpen: boolean;
   formDefaultDate: string | undefined;
   editingEvent: Event | null;
   overflowDate: string | null;
@@ -13,6 +14,8 @@ interface CalendarActions {
   openCreateModal: (defaultDate?: string) => void;
   openEditModal: (event: Event) => void;
   closeFormModal: () => void;
+  openBatchModal: () => void;
+  closeBatchModal: () => void;
   openEventDetails: (eventId: string) => void;
   closeEventDetails: () => void;
   openOverflowModal: (dateStr: string) => void;
@@ -25,6 +28,7 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
   // Initial state
   selectedEventId: null,
   isFormModalOpen: false,
+  isBatchModalOpen: false,
   formDefaultDate: undefined,
   editingEvent: null,
   overflowDate: null,
@@ -46,6 +50,14 @@ export const useCalendarStore = create<CalendarStore>((set) => ({
       isFormModalOpen: false,
       editingEvent: null,
       formDefaultDate: undefined,
+    }),
+  openBatchModal: () =>
+    set({
+      isBatchModalOpen: true,
+    }),
+  closeBatchModal: () =>
+    set({
+      isBatchModalOpen: false,
     }),
   openEventDetails: (eventId) => set({ selectedEventId: eventId }),
   closeEventDetails: () => set({ selectedEventId: null }),

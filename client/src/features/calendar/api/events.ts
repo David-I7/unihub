@@ -16,6 +16,8 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import type {
+  BatchEventsPayload,
+  BatchEventResponse,
   CalendarEvent,
   CalendarQueryParams,
   CreateEventPayload,
@@ -88,6 +90,27 @@ export async function updateEvent(
 
 export async function deleteEvent(eventId: string): Promise<void> {
   await client.delete(`/calendar/events/${eventId}`);
+}
+
+export async function batchUpsertEvents(
+  payload: BatchEventsPayload,
+): Promise<BatchEventResponse> {
+  const response = await client.post<BatchEventResponse>(
+    "/calendar/events/batch",
+    payload,
+  );
+  return response.data;
+}
+
+export function useBatchUpsertEvents() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: BatchEventsPayload) => batchUpsertEvents(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: calendarKeys.all });
+    },
+  });
 }
 
 export function useCalendarEvents(

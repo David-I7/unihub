@@ -16,11 +16,4 @@ public record UpdateUserProfileRequestDto(
         public UpdateUserProfileRequestDto {
                 username = username == null ? JsonNullable.undefined() : username.map(String::trim);
         }
-
-        public static class UpdateUserProfileRequestDtoBuilder {
-                public UpdateUserProfileRequestDtoBuilder username(String username) {
-                        this.username = username != null ? JsonNullable.of(username) : JsonNullable.of(null);
-                        return this;
-                }
-        }
 }

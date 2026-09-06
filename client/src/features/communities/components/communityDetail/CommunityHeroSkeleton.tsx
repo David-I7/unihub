@@ -6,7 +6,9 @@ export function CommunityHeroSkeleton() {
       {/* Top Banner Skeleton */}
       <div className="h-44 @[560px]:h-56 @[768px]:h-64 w-full rounded-2xl relative overflow-hidden flex flex-col justify-between p-4 @[560px]:p-6 bg-muted/40 shadow-inner">
         <div className="flex items-center justify-between gap-2 z-10">
-          <Skeleton className="h-4 w-40 rounded-md" />
+          <div className="inline-flex items-center px-3 py-1 rounded-full bg-background/85 dark:bg-background/80 backdrop-blur-md border border-border/50 shadow-xs">
+            <Skeleton className="h-4 w-36 rounded-md" />
+          </div>
         </div>
       </div>
 
