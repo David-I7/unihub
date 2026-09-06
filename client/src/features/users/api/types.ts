@@ -18,3 +18,7 @@ export interface UserEnrolledCommunity {
   role: CommunityMemberRole;
   joinedAt: string;
 }
+
+export interface UpdateUserProfilePayload {
+  username?: string;
+}
