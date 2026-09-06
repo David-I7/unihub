@@ -4,12 +4,14 @@ import {
   Download,
   AlertTriangle as AlertCircle,
   Eye,
+  X,
 } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +94,7 @@ export function MaterialFilePreviewDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        showCloseButton={false}
         className="w-[96vw] max-w-7xl h-[92vh] max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-card shadow-2xl"
         contentClassName="p-0 gap-0 h-full flex flex-col overflow-hidden"
       >
@@ -117,39 +120,56 @@ export function MaterialFilePreviewDialog({
             </div>
           </div>
 
-          {/* Quick Actions */}
-          {downloadUrl && !isLoading && (
-            <div className="flex items-center gap-2 shrink-0 pr-8">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-8 gap-1.5 text-xs cursor-pointer"
-                onClick={() => window.open(blobUrl || downloadUrl, "_blank")}
-                title="Open original file in new tab"
-              >
-                <ExternalLink className="size-3.5" />
-                <span className="hidden sm:inline">Open in Tab</span>
-              </Button>
+          {/* Quick Actions & Inline Close Button */}
+          <div className="flex items-center gap-2 shrink-0">
+            {downloadUrl && !isLoading && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 gap-1.5 text-xs cursor-pointer"
+                  onClick={() => window.open(blobUrl || downloadUrl, "_blank")}
+                  title="Open original file in new tab"
+                >
+                  <ExternalLink className="size-3.5" />
+                  <span className="hidden sm:inline">Open in Tab</span>
+                </Button>
 
-              <Button
-                size="sm"
-                className="h-8 gap-1.5 text-xs font-bold cursor-pointer"
-                onClick={() => {
-                  const a = document.createElement("a");
-                  a.href = blobUrl || downloadUrl;
-                  a.download = file.title;
-                  a.target = "_blank";
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                }}
-                title="Download File"
-              >
-                <Download className="size-3.5" />
-                <span className="hidden sm:inline">Download</span>
-              </Button>
-            </div>
-          )}
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs font-bold cursor-pointer"
+                  onClick={() => {
+                    const a = document.createElement("a");
+                    a.href = blobUrl || downloadUrl;
+                    a.download = file.title;
+                    a.target = "_blank";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                  }}
+                  title="Download File"
+                >
+                  <Download className="size-3.5" />
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+              </>
+            )}
+
+            <DialogClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+                  aria-label="Close"
+                  title="Close"
+                />
+              }
+            >
+              <X className="size-4" />
+              <span className="sr-only">Close</span>
+            </DialogClose>
+          </div>
         </DialogHeader>
 
         {/* Full Modal Responsive Preview Content Area */}
