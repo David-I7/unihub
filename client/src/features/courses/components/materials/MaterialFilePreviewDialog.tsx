@@ -9,16 +9,13 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { useQuery } from "@tanstack/react-query";
 import { getMaterialDownloadUrl } from "../../api/getMaterialDownloadUrl";
-import { getFileCategory, formatBytes, getFileIcon } from "./materialsUtils";
 import { getErrorMessage } from "@/api/types";
 import type { CourseMaterialFile } from "../../api/types";
 
@@ -95,85 +92,68 @@ export function MaterialFilePreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="w-[96vw] max-w-7xl h-[92vh] max-h-[92vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-card shadow-2xl"
-        contentClassName="p-0 gap-0 h-full flex flex-col overflow-hidden"
+        className="w-[98vw] max-w-[1600px] h-[96vh] max-h-[96vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-background shadow-2xl relative"
+        contentClassName="p-0 gap-0 h-full w-full overflow-hidden"
       >
-        {/* Header with Title & Action Controls */}
-        <DialogHeader className="@container h-14 px-4 sm:px-6 flex flex-row items-center justify-between border-b bg-muted/30 shrink-0 gap-3">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
-              {getFileIcon(file.mediaType)}
-            </div>
-            <div className="min-w-0 flex-1 flex items-center gap-2">
-              <DialogTitle className="text-sm sm:text-base font-bold truncate">
-                {file.title}
-              </DialogTitle>
-              <Badge
-                variant="secondary"
-                className="text-[10px] font-mono py-0 px-1.5 shrink-0 hidden xs:inline-flex"
+        {/* Screen reader accessible title */}
+        <DialogTitle className="sr-only">{file.title}</DialogTitle>
+
+        {/* Floating Action Controls */}
+        <div className="absolute top-3.5 right-3.5 z-50 flex items-center gap-2">
+          {downloadUrl && !isLoading && (
+            <>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="size-9 rounded-full bg-background/80 hover:bg-background backdrop-blur-md shadow-md border border-border/60 text-foreground cursor-pointer transition-transform hover:scale-105"
+                onClick={() => window.open(blobUrl || downloadUrl, "_blank")}
+                title="Open in new tab"
+                aria-label="Open in new tab"
               >
-                {getFileCategory(file.mediaType)}
-              </Badge>
-              <span className="text-xs text-muted-foreground shrink-0 hidden @[440px]:inline">
-                • {formatBytes(file.size)}
-              </span>
-            </div>
-          </div>
+                <ExternalLink className="size-4" />
+                <span className="sr-only">Open in new tab</span>
+              </Button>
 
-          {/* Quick Actions & Inline Close Button */}
-          <div className="flex items-center gap-2 shrink-0">
-            {downloadUrl && !isLoading && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1.5 text-xs cursor-pointer"
-                  onClick={() => window.open(blobUrl || downloadUrl, "_blank")}
-                  title="Open original file in new tab"
-                >
-                  <ExternalLink className="size-3.5" />
-                  <span className="hidden @[520px]:inline">Open in Tab</span>
-                </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="size-9 rounded-full bg-background/80 hover:bg-background backdrop-blur-md shadow-md border border-border/60 text-foreground cursor-pointer transition-transform hover:scale-105"
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = blobUrl || downloadUrl;
+                  a.download = file.title;
+                  a.target = "_blank";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }}
+                title="Download"
+                aria-label="Download"
+              >
+                <Download className="size-4" />
+                <span className="sr-only">Download</span>
+              </Button>
+            </>
+          )}
 
-                <Button
-                  size="sm"
-                  className="h-8 gap-1.5 text-xs font-bold cursor-pointer"
-                  onClick={() => {
-                    const a = document.createElement("a");
-                    a.href = blobUrl || downloadUrl;
-                    a.download = file.title;
-                    a.target = "_blank";
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                  }}
-                  title="Download File"
-                >
-                  <Download className="size-3.5" />
-                  <span className="hidden @[440px]:inline">Download</span>
-                </Button>
-              </>
-            )}
+          <DialogClose
+            render={
+              <Button
+                variant="outline"
+                size="icon-sm"
+                className="size-9 rounded-full bg-background/80 hover:bg-background backdrop-blur-md shadow-md border border-border/60 text-foreground cursor-pointer transition-transform hover:scale-105"
+                aria-label="Close"
+                title="Close"
+              />
+            }
+          >
+            <X className="size-4" />
+            <span className="sr-only">Close</span>
+          </DialogClose>
+        </div>
 
-            <DialogClose
-              render={
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                  aria-label="Close"
-                  title="Close"
-                />
-              }
-            >
-              <X className="size-4" />
-              <span className="sr-only">Close</span>
-            </DialogClose>
-          </div>
-        </DialogHeader>
-
-        {/* Full Modal Responsive Preview Content Area */}
-        <div className="flex-1 w-full h-full min-h-0 flex items-center justify-center overflow-hidden bg-muted/10">
+        {/* Full Screen Edge-to-Edge Content */}
+        <div className="w-full h-full flex items-center justify-center overflow-hidden bg-background">
           {isLoading && (
             <div className="flex flex-col items-center justify-center space-y-3 py-16 text-muted-foreground">
               <Spinner className="size-8 animate-spin text-primary" />
@@ -198,11 +178,11 @@ export function MaterialFilePreviewDialog({
           {!isLoading && !hasError && (
             <>
               {isImage && blobUrl && (
-                <div className="flex items-center justify-center w-full h-full p-2 sm:p-4 overflow-auto">
+                <div className="w-full h-full flex items-center justify-center p-2 sm:p-6 overflow-auto bg-black/5 dark:bg-black/30">
                   <img
                     src={blobUrl}
                     alt={file.title}
-                    className="max-h-full max-w-full object-contain rounded-lg shadow-sm"
+                    className="max-h-full max-w-full object-contain select-none"
                   />
                 </div>
               )}
