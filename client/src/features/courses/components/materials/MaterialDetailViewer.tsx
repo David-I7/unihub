@@ -11,7 +11,6 @@ import {
   Info,
   Edit2,
   Trash2,
-  Loader2,
   Eye,
   MoreVertical,
   Layers,
@@ -123,7 +122,7 @@ export function MaterialDetailViewer({
       <Card className="@container rounded-2xl border bg-card overflow-hidden shadow-xs py-0 gap-1">
         {/* Unified Hero Header Bar */}
         <div className="p-5 border-b bg-muted/20">
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             {/* Left: Icon, Title, and Single Type Badge */}
             <div className="flex items-start gap-3.5 min-w-0 flex-1">
               <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-muted/60 border">
@@ -153,152 +152,96 @@ export function MaterialDetailViewer({
               </div>
             </div>
 
-            {/* Right: Quick Actions */}
-            <div className="flex items-center gap-2 shrink-0">
-              {isFile && fileData && (
-                <>
+            {/* 3-Dot Options Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
                   <Button
                     size="sm"
-                    variant="outline"
-                    className="gap-1.5 text-xs font-semibold cursor-pointer hidden @[360px]:inline-flex"
-                    onClick={() => setPreviewOpen(true)}
-                    title="Preview"
-                    aria-label="Preview"
-                  >
-                    <Eye className="size-3.5" />
-                    <span className="hidden @[480px]:inline">Preview</span>
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    className="gap-1.5 text-xs cursor-pointer"
-                    disabled={isDownloading}
-                    onClick={() => handleDownloadFile(fileData.id)}
-                    title="Download"
-                    aria-label="Download"
-                  >
-                    {isDownloading ? (
-                      <>
-                        <Loader2 className="size-3.5 animate-spin" />
-                        <span className="hidden @[480px]:inline">
-                          Downloading...
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <Download className="size-3.5" />
-                        <span className="hidden @[480px]:inline">
-                          Download
-                        </span>
-                      </>
-                    )}
-                  </Button>
-                </>
-              )}
-
-              {!isFile && linkData && (
-                <Button
-                  size="sm"
-                  className="gap-1.5 text-xs font-bold cursor-pointer"
-                  onClick={() => window.open(linkData.url, "_blank")}
-                  title="Open Resource"
-                  aria-label="Open Resource"
-                >
-                  <ExternalLink className="size-3.5" />
-                  <span className="hidden @[480px]:inline">Open Resource</span>
-                </Button>
-              )}
-
-              {/* Secondary Options Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="size-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground"
-                    />
-                  }
-                >
-                  <MoreVertical className="size-4" />
-                  <span className="sr-only">More options</span>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {isFile && fileData && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => setPreviewOpen(true)}
-                        className="gap-2 text-xs cursor-pointer"
-                      >
-                        <Eye className="size-3.5 text-muted-foreground" />
-                        <span>Preview</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDownloadFile(fileData.id)}
-                        className="gap-2 text-xs cursor-pointer"
-                      >
-                        <Download className="size-3.5 text-muted-foreground" />
-                        <span>Download</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-
-                  {!isFile && linkData && (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => window.open(linkData.url, "_blank")}
-                        className="gap-2 text-xs cursor-pointer"
-                      >
-                        <ExternalLink className="size-3.5 text-muted-foreground" />
-                        <span>Open Resource</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-
-                  <DropdownMenuItem
-                    onClick={() =>
-                      handleCopy(
-                        isFile ? material.data.title : (linkData?.url ?? ""),
-                        isFile ? "File name copied" : "Destination URL copied",
-                      )
-                    }
-                    className="gap-2 text-xs cursor-pointer"
-                  >
-                    {copied ? (
-                      <Check className="size-3.5 text-emerald-500" />
-                    ) : (
-                      <Copy className="size-3.5 text-muted-foreground" />
-                    )}
-                    <span>{isFile ? "Copy Name" : "Copy URL"}</span>
-                  </DropdownMenuItem>
-
-                  {userCanEdit && (
+                    variant="ghost"
+                    className="size-8 p-0 cursor-pointer text-muted-foreground hover:text-foreground shrink-0"
+                  />
+                }
+              >
+                <MoreVertical className="size-4" />
+                <span className="sr-only">More options</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {isFile && fileData && (
+                  <>
                     <DropdownMenuItem
-                      onClick={() => setEditMaterialOpen(true)}
+                      onClick={() => setPreviewOpen(true)}
                       className="gap-2 text-xs cursor-pointer"
                     >
-                      <Edit2 className="size-3.5 text-muted-foreground" />
-                      <span>Edit Details</span>
+                      <Eye className="size-3.5 text-muted-foreground" />
+                      <span>Preview</span>
                     </DropdownMenuItem>
-                  )}
+                    <DropdownMenuItem
+                      disabled={isDownloading}
+                      onClick={() => handleDownloadFile(fileData.id)}
+                      className="gap-2 text-xs cursor-pointer"
+                    >
+                      <Download className="size-3.5 text-muted-foreground" />
+                      <span>{isDownloading ? "Downloading..." : "Download"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
 
-                  {userCanDelete && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setDeleteMaterialOpen(true)}
-                        className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
-                      >
-                        <Trash2 className="size-3.5" />
-                        <span>{isFile ? "Delete File" : "Delete Link"}</span>
-                      </DropdownMenuItem>
-                    </>
+                {!isFile && linkData && (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => window.open(linkData.url, "_blank")}
+                      className="gap-2 text-xs cursor-pointer"
+                    >
+                      <ExternalLink className="size-3.5 text-muted-foreground" />
+                      <span>Open Resource</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleCopy(
+                      isFile ? material.data.title : (linkData?.url ?? ""),
+                      isFile ? "File name copied" : "Destination URL copied",
+                    )
+                  }
+                  className="gap-2 text-xs cursor-pointer"
+                >
+                  {copied ? (
+                    <Check className="size-3.5 text-emerald-500" />
+                  ) : (
+                    <Copy className="size-3.5 text-muted-foreground" />
                   )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                  <span>{isFile ? "Copy Name" : "Copy URL"}</span>
+                </DropdownMenuItem>
+
+                {userCanEdit && (
+                  <DropdownMenuItem
+                    onClick={() => setEditMaterialOpen(true)}
+                    className="gap-2 text-xs cursor-pointer"
+                  >
+                    <Edit2 className="size-3.5 text-muted-foreground" />
+                    <span>Edit Details</span>
+                  </DropdownMenuItem>
+                )}
+
+                {userCanDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => setDeleteMaterialOpen(true)}
+                      className="gap-2 text-xs text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>{isFile ? "Delete File" : "Delete Link"}</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
