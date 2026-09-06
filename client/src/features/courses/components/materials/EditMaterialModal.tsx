@@ -29,7 +29,6 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
@@ -188,7 +187,7 @@ function EditMaterialForm({
           onChange={form.handleChange}
           onBlur={form.handleBlur}
           aria-invalid={form.isInvalid("title")}
-          maxLength={200}
+          maxLength={100}
           autoFocus
         />
         <FieldError errors={[{ message: form.errors.title }]} />
@@ -264,12 +263,10 @@ function EditMaterialForm({
           rows={4}
           value={form.values.description ?? ""}
           onChange={form.handleChange}
-          maxLength={2000}
+          maxLength={500}
           className="text-xs"
         />
-        <FieldDescription>
-          {(form.values.description ?? "").length} / 2000 characters
-        </FieldDescription>
+
         <FieldError errors={[{ message: form.errors.description }]} />
       </Field>
 
@@ -282,7 +279,6 @@ function EditMaterialForm({
           disabled={
             form.isSubmitting || updateMutation.isPending || !form.isDirty
           }
-          className="gap-1.5 font-bold cursor-pointer"
         >
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
@@ -297,7 +293,9 @@ export function EditMaterialModal({
   onOpenChange,
   onSuccess,
 }: EditMaterialModalProps) {
-  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<EditMaterialModalProps["material"]> | null>(material);
+  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<
+    EditMaterialModalProps["material"]
+  > | null>(material);
   if (material && material !== cachedMaterial) {
     setCachedMaterial(material);
   }

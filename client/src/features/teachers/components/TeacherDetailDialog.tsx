@@ -133,7 +133,6 @@ export function TeacherDetailDialog({
                   <UserAvatar
                     username={teacher.lastName || teacher.firstName}
                     size="lg"
-                    fallbackClassName="rounded-xl sm:rounded-2xl"
                   />
 
                   <div className="space-y-1.5 min-w-0 flex-1">
@@ -154,8 +153,8 @@ export function TeacherDetailDialog({
                       {teacher.estimatedAge && (
                         <Badge
                           variant="outline"
-                          size="xs"
-                          className="font-mono text-[11px] shrink-0 block"
+                          size="sm"
+                          className="font-medium h-6 text-muted-foreground"
                         >
                           {teacher.estimatedAge} yrs old
                         </Badge>

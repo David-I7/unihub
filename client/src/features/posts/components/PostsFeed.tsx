@@ -55,11 +55,7 @@ export function PostsFeed({
       {/* Top Action Row: New Post button if authorized */}
       {canCreatePost && (
         <div className="flex justify-end">
-          <Button
-            size="sm"
-            onClick={onOpenComposer}
-            className="gap-1.5 font-semibold cursor-pointer"
-          >
+          <Button size="sm" onClick={onOpenComposer}>
             <Plus className="size-4" />
             <span>New Post</span>
           </Button>

@@ -88,11 +88,7 @@ function EditFolderForm({
       </Field>
 
       <DialogFooter className="pt-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onClose}
-        >
+        <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -100,7 +96,6 @@ function EditFolderForm({
           disabled={
             form.isSubmitting || updateMutation.isPending || !form.isDirty
           }
-          className="gap-1.5 font-bold cursor-pointer"
         >
           {updateMutation.isPending ? "Saving..." : "Save Changes"}
         </Button>
@@ -115,7 +110,9 @@ export function EditFolderModal({
   onOpenChange,
   onSuccess,
 }: EditFolderModalProps) {
-  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(folder);
+  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(
+    folder,
+  );
   if (folder && folder !== cachedFolder) {
     setCachedFolder(folder);
   }

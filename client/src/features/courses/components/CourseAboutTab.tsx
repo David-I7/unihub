@@ -36,7 +36,7 @@ export function CourseAboutTab({
         <div className="lg:col-span-2 space-y-6">
           {/* Course Overview */}
           {course.description && (
-            <Card className="rounded-2xl border bg-card px-6 shadow-xs space-y-1">
+            <Card className="rounded-2xl border bg-card px-6 shadow-xs">
               <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b pb-3">
                 <span>Overview</span>
               </h2>
@@ -104,7 +104,7 @@ export function CourseAboutTab({
         {/* Sidebar Column (Right 1/3): Quick Specifications + Faculty Roster */}
         <div className="space-y-6">
           {/* Quick Course Specifications */}
-          <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <Card className="rounded-2xl border bg-card p-5 shadow-xs">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b pb-3">
               <span>Course Specifications</span>
             </h3>
@@ -149,7 +149,7 @@ export function CourseAboutTab({
           </Card>
 
           {/* Teaching Faculty Card */}
-          <Card className="rounded-2xl border bg-card p-5 shadow-xs space-y-4">
+          <Card className="rounded-2xl border bg-card p-5 shadow-xs ">
             <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 border-b pb-3">
               <span>Teaching Staff ({teachers.length})</span>
             </h3>

@@ -37,7 +37,6 @@ public class FolderService {
     private final FolderRepository folderRepository;
     private final CourseRepository courseRepository;
     private final ResourceRepository resourceRepository;
-    private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
     private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
@@ -209,19 +208,9 @@ public class FolderService {
 
     @Transactional(readOnly = true)
     public List<BreadcrumbDto> getBreadcrumbs(UUID folderId) {
-        Folder folder = folderRepository.findById(folderId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
-
-        List<BreadcrumbDto> breadcrumbs = new ArrayList<>();
-        Folder current = folder;
-        while (current != null) {
-            breadcrumbs.add(0, BreadcrumbDto.builder()
-                    .id(current.getId())
-                    .name(current.getName())
-                    .type("FOLDER")
-                    .build());
-            current = current.getParentFolder();
+        if (!folderRepository.existsById(folderId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
         }
-        return breadcrumbs;
+        return folderRepository.findBreadcrumbsById(folderId);
     }
 }

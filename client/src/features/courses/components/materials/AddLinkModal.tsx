@@ -39,6 +39,7 @@ import {
 } from "../../schemas/materialSchemas";
 import { useCreateMaterialLink } from "../../api/createMaterialLink";
 import type { MaterialLinkType } from "../../api/types";
+import { getLinkTypeLabel } from "./materialsUtils";
 
 interface AddLinkModalProps {
   communitySlug: string;
@@ -49,7 +50,6 @@ interface AddLinkModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
 const LINK_TYPE_OPTIONS: Array<{
   value: MaterialLinkType;
   label: string;
@@ -59,42 +59,42 @@ const LINK_TYPE_OPTIONS: Array<{
 }> = [
   {
     value: "VIDEO",
-    label: "External video",
+    label: getLinkTypeLabel("VIDEO"),
     hint: "YouTube, Vimeo, Loom, Twitch",
     icon: Video,
     iconColor: "text-rose-500",
   },
   {
     value: "GITHUB",
-    label: "Github repository",
+    label: getLinkTypeLabel("GITHUB"),
     hint: "GitHub, GitLab, Bitbucket",
     icon: GitBranch,
     iconColor: "text-foreground",
   },
   {
     value: "DOCS",
-    label: "Google docs",
-    hint: "docs.google.com",
+    label: getLinkTypeLabel("DOCS"),
+    hint: "Google Docs",
     icon: FileText,
     iconColor: "text-blue-500",
   },
   {
     value: "DOCX",
-    label: "Word",
-    hint: "Microsoft Word, Office 365, docx",
+    label: getLinkTypeLabel("DOCX"),
+    hint: "Microsoft Word",
     icon: FileText,
     iconColor: "text-sky-500",
   },
   {
     value: "DRIVE",
-    label: "Google Drive or Microsoft OneDrive",
-    hint: "Google Drive, OneDrive, SharePoint",
+    label: getLinkTypeLabel("DRIVE"),
+    hint: "Google Drive or Microsoft OneDrive",
     icon: Folder,
     iconColor: "text-amber-500",
   },
   {
     value: "OTHER",
-    label: "Https",
+    label: getLinkTypeLabel("OTHER"),
     hint: "Any valid HTTPS URL",
     icon: Globe,
     iconColor: "text-emerald-500",
@@ -205,7 +205,7 @@ export function AddLinkModal({
               aria-invalid={form.isInvalid("url")}
               autoFocus
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground">
               Link type is automatically detected from the entered domain.
             </FieldDescription>
             <FieldError errors={[{ message: form.errors.url }]} />
@@ -267,7 +267,7 @@ export function AddLinkModal({
               onChange={form.handleChange}
               onBlur={form.handleBlur}
               aria-invalid={form.isInvalid("title")}
-              maxLength={200}
+              maxLength={100}
             />
             <FieldError errors={[{ message: form.errors.title }]} />
           </Field>
@@ -287,12 +287,10 @@ export function AddLinkModal({
               placeholder="Add extra guidance, repo branch info, or access instructions..."
               value={form.values.description ?? ""}
               onChange={form.handleChange}
-              maxLength={2000}
+              maxLength={500}
               className="text-xs"
             />
-            <FieldDescription className="text-xs text-muted-foreground flex justify-end">
-              {(form.values.description ?? "").length} / 2000 characters
-            </FieldDescription>
+
             <FieldError errors={[{ message: form.errors.description }]} />
           </Field>
 
@@ -307,7 +305,6 @@ export function AddLinkModal({
             <Button
               type="submit"
               disabled={form.isSubmitting || createMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
             >
               {createMutation.isPending ? "Adding..." : "Add Link"}
             </Button>

@@ -1,3 +1,4 @@
+import type { DragEvent } from "react";
 import {
   FileText,
   Globe,
@@ -8,6 +9,27 @@ import {
   Video,
   Folder,
 } from "@/components/ui/icons";
+
+export interface DraggedItemData {
+  itemType: "folder" | "file" | "link";
+  id: string;
+  title: string;
+}
+
+export function setDragItem(e: DragEvent, item: DraggedItemData): void {
+  e.dataTransfer.setData("application/json", JSON.stringify(item));
+  e.dataTransfer.effectAllowed = "move";
+}
+
+export function getDraggedItem(e: DragEvent): DraggedItemData | null {
+  const raw = e.dataTransfer.getData("application/json");
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as DraggedItemData;
+  } catch {
+    return null;
+  }
+}
 
 export function formatBytes(bytes: number, decimals = 1): string {
   if (bytes === 0) return "0 B";
@@ -104,13 +126,13 @@ export function getLinkIcon(linkType: string, className = "size-4 shrink-0") {
 export function getLinkTypeLabel(linkType: string): string {
   switch (linkType.toUpperCase()) {
     case "VIDEO":
-      return "External video";
+      return "Video";
     case "GITHUB":
-      return "Github repository";
+      return "Repository";
     case "DOCS":
-      return "Google docs";
+      return "Google Docs";
     case "DOCX":
-      return "Word";
+      return "Microsoft Word";
     case "DRIVE":
       return "Google Drive or Microsoft OneDrive";
     case "OTHER":

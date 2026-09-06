@@ -9,11 +9,9 @@ import type { Teacher } from "./types";
 import { teacherKeys } from "./keys";
 import {
   useInfiniteQuery,
-  useQuery,
   keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
-  type UseQueryOptions,
 } from "@tanstack/react-query";
 
 export interface CommunityTeachersQueryParams {
@@ -52,23 +50,6 @@ export async function getCommunityTeachers(
   return response.data;
 }
 
-export function useCommunityTeachers(
-  communitySlug: string,
-  params: CommunityTeachersQueryParams = {},
-  options?: Omit<
-    UseQueryOptions<PaginatedResponse<Teacher>>,
-    "queryKey" | "queryFn"
-  >,
-) {
-  const { search, studyYear, semester } = params;
-  return useQuery({
-    queryKey: teacherKeys.list(communitySlug, { search, studyYear, semester }),
-    queryFn: () => getCommunityTeachers(communitySlug, params),
-    placeholderData: keepPreviousData,
-    enabled: Boolean(communitySlug && communitySlug.trim().length > 0),
-    ...options,
-  });
-}
 
 export function useInfiniteCommunityTeachers(
   communitySlug: string,

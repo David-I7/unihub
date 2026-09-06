@@ -193,7 +193,7 @@ function CreateReviewForm({
           onChange={(e) => setDescription(e.target.value)}
           maxLength={500}
         />
-        <div className="flex justify-between text-[11px] text-muted-foreground">
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>Be constructive and respectful.</span>
         </div>
       </Field>
@@ -204,7 +204,7 @@ function CreateReviewForm({
           <FieldLabel htmlFor="anonymousSwitch" className="cursor-pointer">
             Post Anonymously
           </FieldLabel>
-          <FieldDescription>
+          <FieldDescription className="text-xs text-muted-foreground">
             Hide your username and avatar from other students on this review.
           </FieldDescription>
         </div>

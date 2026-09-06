@@ -17,7 +17,6 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import {
@@ -153,8 +152,8 @@ export function UploadFileModal({
       return;
     }
 
-    if (title.trim().length > 200) {
-      setTitleError("Title must not exceed 200 characters.");
+    if (title.trim().length > 100) {
+      setTitleError("Title must not exceed 100 characters.");
       return;
     }
 
@@ -317,7 +316,7 @@ export function UploadFileModal({
                 if (titleError) setTitleError(null);
               }}
               disabled={isUploading}
-              maxLength={200}
+              maxLength={100}
             />
             {titleError && <FieldError errors={[{ message: titleError }]} />}
           </Field>
@@ -337,12 +336,9 @@ export function UploadFileModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={isUploading}
-              maxLength={2000}
+              maxLength={500}
               className="text-xs"
             />
-            <FieldDescription className="text-xs text-muted-foreground flex justify-end">
-              {description.length} / 2000 characters
-            </FieldDescription>
           </Field>
 
           {/* Upload Progress Bar */}
@@ -385,11 +381,7 @@ export function UploadFileModal({
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={!selectedFile || isUploading}
-                  className="gap-1.5 font-bold cursor-pointer"
-                >
+                <Button type="submit" disabled={!selectedFile || isUploading}>
                   Upload File
                 </Button>
               </>

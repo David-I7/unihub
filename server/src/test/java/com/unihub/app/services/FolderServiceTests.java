@@ -248,35 +248,28 @@ public class FolderServiceTests {
     @DisplayName("getBreadcrumbs returns ordered breadcrumb chain from root ancestor to current folder")
     public void testGetBreadcrumbs_Success() {
         UUID rootFolderId = UUID.randomUUID();
-        Folder rootFolder = Folder.builder()
-                .id(rootFolderId)
-                .name("Root Folder")
-                .parentFolder(null)
-                .build();
-
         UUID childFolderId = UUID.randomUUID();
-        Folder childFolder = Folder.builder()
-                .id(childFolderId)
-                .name("Child Folder")
-                .parentFolder(rootFolder)
-                .build();
 
-        when(folderRepository.findById(childFolderId)).thenReturn(Optional.of(childFolder));
+        List<BreadcrumbDto> expectedBreadcrumbs = List.of(
+                BreadcrumbDto.builder().id(rootFolderId).name("Root Folder").build(),
+                BreadcrumbDto.builder().id(childFolderId).name("Child Folder").build()
+        );
+
+        when(folderRepository.existsById(childFolderId)).thenReturn(true);
+        when(folderRepository.findBreadcrumbsById(childFolderId)).thenReturn(expectedBreadcrumbs);
 
         List<BreadcrumbDto> breadcrumbs = folderService.getBreadcrumbs(childFolderId);
 
         assertEquals(2, breadcrumbs.size());
         assertEquals("Root Folder", breadcrumbs.get(0).name());
-        assertEquals("FOLDER", breadcrumbs.get(0).type());
         assertEquals("Child Folder", breadcrumbs.get(1).name());
-        assertEquals("FOLDER", breadcrumbs.get(1).type());
     }
 
     @Test
     @DisplayName("getBreadcrumbs throws 404 when folder not found")
     public void testGetBreadcrumbs_NotFound() {
         UUID nonExistentId = UUID.randomUUID();
-        when(folderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
+        when(folderRepository.existsById(nonExistentId)).thenReturn(false);
 
         assertThrows(ResponseStatusException.class, () -> folderService.getBreadcrumbs(nonExistentId));
     }

@@ -86,7 +86,7 @@ export function EditCommunityReadmeModal({
         contentClassName="p-0 gap-0 h-full flex-1 flex flex-col min-h-0 overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 sm:pb-3 pb-3 border-b border-border/70 shrink-0">
+        <div className="p-4 sm:p-0 border-b border-border/70 shrink-0">
           <DialogHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -155,7 +155,7 @@ export function EditCommunityReadmeModal({
           </DialogHeader>
 
           {/* Quick Markdown Toolbar */}
-          <div className="flex items-center gap-1.5 pt-3 overflow-x-auto sm:pb-5 pb-3 max-w-full">
+          <div className="flex items-center gap-1.5 pt-3 overflow-x-auto sm:pb-5 max-w-full">
             <Button
               type="button"
               variant="outline"

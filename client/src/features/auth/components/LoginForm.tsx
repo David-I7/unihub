@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { SocialAuthSection } from "./SocialAuthSection";
 import { ForgotPasswordModal } from "./ForgotPasswordModal";
+import { emailSchema } from "../schemas/authSchemas";
 import { useLoginForm } from "../hooks/useLoginForm";
 import useProviderForm from "../hooks/useProviderForm";
 
@@ -18,6 +19,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"form">) {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = React.useState("");
 
   const {
     handleSuccess: handleProviderSuccess,
@@ -29,6 +31,7 @@ export function LoginForm({
   } = useProviderForm();
 
   const {
+    values,
     errors,
     touched,
     getFieldProps,
@@ -36,7 +39,25 @@ export function LoginForm({
     isLoading,
     serverError,
     isInvalid,
+    setFieldError,
+    setTouched,
   } = useLoginForm();
+
+  const handleForgotPasswordClick = () => {
+    const rawIdentifier = (values.identifier ?? "").trim();
+    const parseResult = emailSchema.safeParse(rawIdentifier);
+    if (!parseResult.success) {
+      setFieldError(
+        "identifier",
+        "Enter your email address above to reset your password",
+      );
+      setTouched((prev) => ({ ...prev, identifier: true }));
+      document.getElementById("identifier")?.focus();
+      return;
+    }
+    setForgotPasswordEmail(rawIdentifier);
+    setIsForgotPasswordOpen(true);
+  };
 
   return (
     <div className="flex flex-1 min-h-full w-full flex-col items-center justify-center p-4 my-auto animate-in fade-in duration-200">
@@ -88,7 +109,7 @@ export function LoginForm({
               </FieldLabel>
               <button
                 type="button"
-                onClick={() => setIsForgotPasswordOpen(true)}
+                onClick={handleForgotPasswordClick}
                 className="ml-auto text-xs text-muted-foreground underline-offset-4 hover:underline hover:text-foreground cursor-pointer"
               >
                 Forgot your password?
@@ -137,6 +158,8 @@ export function LoginForm({
       <ForgotPasswordModal
         open={isForgotPasswordOpen}
         onOpenChange={setIsForgotPasswordOpen}
+        email={forgotPasswordEmail}
+        autoSend={false}
       />
     </div>
   );

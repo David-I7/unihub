@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +31,9 @@ export function DeleteMaterialDialog({
 }: DeleteMaterialDialogProps) {
   const deleteMutation = useDeleteMaterial();
   const [error, setError] = useState<string | null>(null);
-  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<DeleteMaterialDialogProps["material"]> | null>(material);
+  const [cachedMaterial, setCachedMaterial] = useState<NonNullable<
+    DeleteMaterialDialogProps["material"]
+  > | null>(material);
   if (material && material !== cachedMaterial) {
     setCachedMaterial(material);
   }
@@ -53,7 +54,10 @@ export function DeleteMaterialDialog({
       onSuccess?.();
       onOpenChange(false);
     } catch (err: unknown) {
-      const message = getErrorMessage(err, `Failed to delete ${itemTypeLabel}.`);
+      const message = getErrorMessage(
+        err,
+        `Failed to delete ${itemTypeLabel}.`,
+      );
       setError(message);
       toast.error(message);
     }
@@ -63,9 +67,6 @@ export function DeleteMaterialDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive mb-2">
-            <AlertTriangle className="size-5" />
-          </div>
           <DialogTitle>
             Delete {isFile ? "File" : "Link"} "{currentMaterial.data.title}"
           </DialogTitle>
@@ -99,9 +100,7 @@ export function DeleteMaterialDialog({
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
-            className="gap-1.5 font-bold cursor-pointer"
           >
-            <Trash2 className="size-4" />
             {deleteMutation.isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
