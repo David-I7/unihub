@@ -99,7 +99,7 @@ export function MaterialFilePreviewDialog({
         contentClassName="p-0 gap-0 h-full flex flex-col overflow-hidden"
       >
         {/* Header with Title & Action Controls */}
-        <DialogHeader className="h-14 px-4 sm:px-6 flex flex-row items-center justify-between border-b bg-muted/30 shrink-0 gap-3">
+        <DialogHeader className="@container h-14 px-4 sm:px-6 flex flex-row items-center justify-between border-b bg-muted/30 shrink-0 gap-3">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted">
               {getFileIcon(file.mediaType)}
@@ -114,7 +114,7 @@ export function MaterialFilePreviewDialog({
               >
                 {getFileCategory(file.mediaType)}
               </Badge>
-              <span className="text-xs text-muted-foreground shrink-0 hidden sm:inline">
+              <span className="text-xs text-muted-foreground shrink-0 hidden @[440px]:inline">
                 • {formatBytes(file.size)}
               </span>
             </div>
@@ -132,7 +132,7 @@ export function MaterialFilePreviewDialog({
                   title="Open original file in new tab"
                 >
                   <ExternalLink className="size-3.5" />
-                  <span className="hidden sm:inline">Open in Tab</span>
+                  <span className="hidden @[520px]:inline">Open in Tab</span>
                 </Button>
 
                 <Button
@@ -150,7 +150,7 @@ export function MaterialFilePreviewDialog({
                   title="Download File"
                 >
                   <Download className="size-3.5" />
-                  <span className="hidden sm:inline">Download</span>
+                  <span className="hidden @[440px]:inline">Download</span>
                 </Button>
               </>
             )}
