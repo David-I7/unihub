@@ -17,5 +17,9 @@ export * from "./components/DayOverflowModal";
 export * from "./components/CalendarEventCard";
 export * from "./components/CalendarEventCardList";
 export * from "./components/BatchImportEventsModal";
+export * from "./components/BatchEditEventModal";
+export * from "./components/BatchPromptStep";
+export * from "./components/BatchPasteStep";
+export * from "./components/BatchPreviewStep";
 export * from "./utils/schedulePromptGenerator";
 

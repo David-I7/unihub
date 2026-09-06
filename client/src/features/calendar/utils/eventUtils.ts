@@ -1,5 +1,13 @@
 import { createElement } from "react";
-import { FileText, Globe, Layers, MapPin, Pen, Video, type LucideIcon } from "lucide-react";
+import {
+  FileText,
+  Globe,
+  Layers,
+  MapPin,
+  Edit,
+  Video,
+  type LucideIcon,
+} from "lucide-react";
 import type { EventLocation, EventType } from "../api/types";
 
 export interface EventCategoryConfig {
@@ -14,26 +22,18 @@ export interface EventCategoryConfig {
 export const EVENT_TYPE_OPTIONS: {
   value: EventType;
   label: string;
-  icon: LucideIcon;
-  colorClass: string;
 }[] = [
   {
     value: "EXAM",
     label: "Exam",
-    icon: Pen,
-    colorClass: "text-purple-600 dark:text-purple-400",
   },
   {
     value: "ASSIGNMENT",
     label: "Assignment",
-    icon: FileText,
-    colorClass: "text-amber-600 dark:text-amber-400",
   },
   {
     value: "LECTURE",
     label: "Lecture",
-    icon: Video,
-    colorClass: "text-blue-600 dark:text-blue-400",
   },
 ];
 
@@ -98,7 +98,7 @@ export function getEventCategoryConfig(type: EventType): EventCategoryConfig {
           "bg-purple-500/15 text-purple-950 dark:text-purple-200 border-purple-500/30 hover:bg-purple-500/25 hover:border-purple-500/50",
         badge:
           "bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30",
-        icon: Pen,
+        icon: Edit,
         label: "Exam",
         dotColor: "bg-purple-500",
       };

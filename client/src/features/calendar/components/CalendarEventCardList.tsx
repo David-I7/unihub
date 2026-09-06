@@ -2,21 +2,25 @@ import { Badge } from "@/components/ui/badge";
 import type { CalendarEvent } from "../api/types";
 import { CalendarEventCard } from "./CalendarEventCard";
 
-interface CalendarEventCardListProps {
-  groupedEvents: {
-    dateStr: string;
-    events: CalendarEvent[];
-    weekday: string;
-    formattedDate: string;
-    isToday: boolean;
-  }[];
-  onEventClick: (eventId: string) => void;
+export interface CalendarEventGroup<T = CalendarEvent> {
+  dateStr: string;
+  events: T[];
+  weekday: string;
+  formattedDate: string;
+  isToday: boolean;
 }
 
-export default function CalendarEventCardList({
+export interface CalendarEventCardListProps<T = CalendarEvent> {
+  groupedEvents: CalendarEventGroup<T>[];
+  onEventClick?: (eventId: string, event: T) => void;
+  renderCard?: (event: T, formattedDate: string) => React.ReactNode;
+}
+
+export default function CalendarEventCardList<T = CalendarEvent>({
   groupedEvents,
   onEventClick,
-}: CalendarEventCardListProps) {
+  renderCard,
+}: CalendarEventCardListProps<T>) {
   return groupedEvents.map((group) => (
     <div key={group.dateStr} className="space-y-3">
       {/* Day Header with Sticky-friendly style */}
@@ -43,14 +47,20 @@ export default function CalendarEventCardList({
 
       {/* Events List for this Day */}
       <div className="space-y-3">
-        {group.events.map((event) => (
-          <CalendarEventCard
-            key={event.id}
-            event={event}
-            onClick={() => onEventClick(event.id)}
-            formattedDate={group.formattedDate}
-          />
-        ))}
+        {group.events.map((event) => {
+          if (renderCard) {
+            return renderCard(event, group.formattedDate);
+          }
+          const calEv = event as unknown as CalendarEvent;
+          return (
+            <CalendarEventCard
+              key={calEv.id}
+              event={calEv}
+              onClick={() => onEventClick?.(calEv.id, event)}
+              formattedDate={group.formattedDate}
+            />
+          );
+        })}
       </div>
     </div>
   ));

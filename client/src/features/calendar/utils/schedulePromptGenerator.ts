@@ -45,6 +45,8 @@ EVENT EXTRACTION & CONVENTIONAL NAMING RULES:
 1. Supported Types:
    - Only "LECTURE" and "EXAM" types are supported. Do not output assignments or any other type.
 2. Title Conventions:
+   - Use the course name from the course catalog for the title, not the one from the document.
+   - Don't use diacritics or special characters in the title. For example, "Geometrie și algebră liniară" should be output as "Geometrie si algebra liniara".
    - If the document or section is for exams ("examene", "sesiune examene"):
      * type: "EXAM"
      * title: "Examen - [Disciplina]" (e.g. "Examen - Baze de date")
@@ -75,6 +77,7 @@ EVENT EXTRACTION & CONVENTIONAL NAMING RULES:
 6. Empty or Cancelled Entries:
    - If a course row has a dash ("-") or no scheduled dates (e.g. Educație fizică), omit it.
    - If a course has not been provided to you, but it exists in the document, omit it. Do not invent new course IDs or titles.
+   - If a start time is in the past, omit it. Do not output events that have already occurred.
 
 OUTPUT FORMAT:
 Output ONLY a valid JSON array of objects. Do not include markdown code blocks, backticks, or any explanatory text.
