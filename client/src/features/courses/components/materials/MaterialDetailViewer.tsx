@@ -182,7 +182,9 @@ export function MaterialDetailViewer({
                       className="gap-2 text-xs cursor-pointer"
                     >
                       <Download className="size-3.5 text-muted-foreground" />
-                      <span>{isDownloading ? "Downloading..." : "Download"}</span>
+                      <span>
+                        {isDownloading ? "Downloading..." : "Download"}
+                      </span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
@@ -304,7 +306,7 @@ export function MaterialDetailViewer({
                     <Layers className="size-3.5 text-muted-foreground" />
                     Format
                   </span>
-                  <span className="font-mono text-xs text-foreground truncate">
+                  <span className="font-medium text-xs text-foreground truncate">
                     {fileData.mediaType}
                   </span>
                 </div>
@@ -334,7 +336,7 @@ export function MaterialDetailViewer({
                       href={linkData.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary hover:underline font-mono text-xs truncate"
+                      className="text-primary hover:underline font-medium text-xs truncate"
                     >
                       {linkData.url}
                     </a>
