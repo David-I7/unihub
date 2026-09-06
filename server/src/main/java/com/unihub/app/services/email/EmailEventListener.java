@@ -76,7 +76,7 @@ public class EmailEventListener {
     public void handleEventReminderNotification(EventReminderNotificationEvent event) {
         log.info("Handling EventReminderNotificationEvent for {}", event.email());
         String formattedStartTime = event.startTime() != null
-                ? event.startTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm (O)"))
+                ? event.startTime().format(DateTimeFormatter.ofPattern("EEEE, d MMMM, HH:mm", java.util.Locale.ENGLISH))
                 : "Scheduled time";
 
         emailService.sendEventNotificationEmail(
@@ -85,9 +85,11 @@ public class EmailEventListener {
                 event.eventTitle(),
                 event.eventType(),
                 event.courseName(),
+                event.courseAbbreviation(),
                 formattedStartTime,
                 event.location(),
-                event.locationDetails()
+                event.locationDetails(),
+                event.eventUrl()
         );
     }
 }

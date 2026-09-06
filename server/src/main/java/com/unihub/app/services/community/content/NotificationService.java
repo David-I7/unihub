@@ -10,6 +10,7 @@ import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.content.EventReminderRepository;
 import com.unihub.app.repositories.community.content.NotificationRepository;
+import com.unihub.app.utils.AppUtils;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class NotificationService {
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final CommunityResourceMapper communityResourceMapper;
+    private final AppUtils appUtils;
 
     @Transactional(readOnly = true)
     public PageDto<NotificationResponseDto> getUserNotifications(
@@ -142,15 +144,19 @@ public class NotificationService {
             reminder.setStatus(ReminderStatus.SENT);
             sentReminders.add(reminder);
 
+            String eventUrl = appUtils.getOrigin() + "/calendar?eventId=" + reminder.getEvent().getId();
+
             eventPublisher.publishEvent(new EventReminderNotificationEvent(
                     reminder.getUser().getEmail(),
                     reminder.getUser().getUsername(),
                     reminder.getEvent().getTitle(),
                     reminder.getEvent().getType().name(),
                     reminder.getEvent().getCourse().getName(),
+                    reminder.getEvent().getCourse().getAbbreviation(),
                     reminder.getEvent().getStartTime(),
                     reminder.getEvent().getLocation().name(),
-                    reminder.getEvent().getLocationDetails()
+                    reminder.getEvent().getLocationDetails(),
+                    eventUrl
             ));
         }
         notificationRepository.saveAll(notifications);
