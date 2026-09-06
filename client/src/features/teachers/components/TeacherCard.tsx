@@ -70,7 +70,11 @@ export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
                 </h3>
               </div>
               {teacher.estimatedAge && (
-                <Badge variant="outline" size="xs" className="font-mono">
+                <Badge
+                  variant="outline"
+                  size="xs"
+                  className="font-medium text-muted-foreground"
+                >
                   {teacher.estimatedAge} yrs old
                 </Badge>
               )}

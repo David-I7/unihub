@@ -104,7 +104,7 @@ export function TeacherReviewCard({
               align="end"
               side="bottom"
               sideOffset={6}
-              className="w-64 p-3 rounded-xl shadow-lg border border-border bg-card text-card-foreground space-y-2.5"
+              className="w-64 p-3 rounded-xl shadow-lg border border-border bg-card text-card-foreground"
             >
               <div className="flex items-center justify-between border-b pb-1.5 border-border/60">
                 <span className="text-xs font-semibold text-foreground">

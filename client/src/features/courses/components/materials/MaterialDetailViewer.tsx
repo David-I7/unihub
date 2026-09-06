@@ -230,7 +230,7 @@ export function MaterialDetailViewer({
 
             {/* Title & Creator Hero */}
             <div className="flex items-start gap-4 pt-1">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-background border shadow-2xs">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted/50 ">
                 {getFileIcon(material.data.mediaType, "size-6")}
               </div>
 
@@ -406,7 +406,7 @@ export function MaterialDetailViewer({
 
             {/* Title & Creator Hero */}
             <div className="flex items-start gap-4 pt-1">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-background border shadow-2xs">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-muted/50">
                 {getLinkIcon(material.data.linkType, "size-6")}
               </div>
 

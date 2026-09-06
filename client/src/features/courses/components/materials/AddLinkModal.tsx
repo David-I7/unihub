@@ -205,7 +205,7 @@ export function AddLinkModal({
               aria-invalid={form.isInvalid("url")}
               autoFocus
             />
-            <FieldDescription>
+            <FieldDescription className="text-xs text-muted-foreground">
               Link type is automatically detected from the entered domain.
             </FieldDescription>
             <FieldError errors={[{ message: form.errors.url }]} />
@@ -267,7 +267,7 @@ export function AddLinkModal({
               onChange={form.handleChange}
               onBlur={form.handleBlur}
               aria-invalid={form.isInvalid("title")}
-              maxLength={200}
+              maxLength={100}
             />
             <FieldError errors={[{ message: form.errors.title }]} />
           </Field>
@@ -287,12 +287,10 @@ export function AddLinkModal({
               placeholder="Add extra guidance, repo branch info, or access instructions..."
               value={form.values.description ?? ""}
               onChange={form.handleChange}
-              maxLength={2000}
+              maxLength={500}
               className="text-xs"
             />
-            <FieldDescription className="text-xs text-muted-foreground flex justify-end">
-              {(form.values.description ?? "").length} / 2000 characters
-            </FieldDescription>
+
             <FieldError errors={[{ message: form.errors.description }]} />
           </Field>
 
@@ -307,7 +305,6 @@ export function AddLinkModal({
             <Button
               type="submit"
               disabled={form.isSubmitting || createMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
             >
               {createMutation.isPending ? "Adding..." : "Add Link"}
             </Button>

@@ -130,7 +130,6 @@ export function CreateFolderModal({
             <Button
               type="submit"
               disabled={form.isSubmitting || createMutation.isPending}
-              className="gap-1.5 font-bold cursor-pointer"
             >
               {createMutation.isPending ? "Creating..." : "Create Folder"}
             </Button>

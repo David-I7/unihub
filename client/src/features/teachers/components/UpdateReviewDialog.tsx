@@ -189,9 +189,8 @@ function UpdateReviewForm({
           onChange={(e) => setDescription(e.target.value)}
           maxLength={500}
         />
-        <div className="flex justify-between text-[11px] text-muted-foreground">
+        <div className="flex justify-between text-xs text-muted-foreground">
           <span>Be constructive and respectful.</span>
-          <span>{description.length} / 500</span>
         </div>
       </Field>
 
@@ -201,7 +200,7 @@ function UpdateReviewForm({
           <FieldLabel htmlFor="editAnonymousSwitch" className="cursor-pointer">
             Post Anonymously
           </FieldLabel>
-          <FieldDescription>
+          <FieldDescription className="text-xs text-muted-foreground">
             Hide your username and avatar from other students on this review.
           </FieldDescription>
         </div>

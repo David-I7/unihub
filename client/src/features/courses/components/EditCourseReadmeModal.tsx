@@ -90,7 +90,7 @@ export function EditCourseReadmeModal({
         contentClassName="p-0 gap-0 h-full flex-1 flex flex-col min-h-0 overflow-hidden"
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 sm:pb-3 pb-3 border-b border-border/70 shrink-0">
+        <div className="p-4 sm:p-0 border-b border-border/70 shrink-0">
           <DialogHeader>
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
@@ -159,7 +159,7 @@ export function EditCourseReadmeModal({
           </DialogHeader>
 
           {/* Quick Markdown Toolbar */}
-          <div className="flex items-start gap-1.5 pt-3 overflow-x-auto pb-1 max-w-full space-y-2">
+          <div className="flex items-start gap-1.5 pt-3 overflow-x-auto max-w-full sm:pb-4">
             <Button
               type="button"
               variant="outline"
@@ -299,7 +299,6 @@ export function EditCourseReadmeModal({
             type="button"
             onClick={handleSave}
             disabled={updateMutation.isPending || !isDirty}
-            className="gap-1.5 font-bold cursor-pointer"
           >
             {updateMutation.isPending
               ? "Saving..."

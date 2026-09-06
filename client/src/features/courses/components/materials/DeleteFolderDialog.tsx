@@ -30,7 +30,9 @@ export function DeleteFolderDialog({
 }: DeleteFolderDialogProps) {
   const deleteMutation = useDeleteFolder();
   const [error, setError] = useState<string | null>(null);
-  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(folder);
+  const [cachedFolder, setCachedFolder] = useState<CourseMaterialFolder | null>(
+    folder,
+  );
   if (folder && folder !== cachedFolder) {
     setCachedFolder(folder);
   }
@@ -97,7 +99,6 @@ export function DeleteFolderDialog({
             variant="destructive"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}
-            className="gap-1.5 font-bold cursor-pointer"
           >
             {deleteMutation.isPending ? "Deleting..." : "Delete Folder"}
           </Button>
