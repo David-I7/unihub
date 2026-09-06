@@ -1,7 +1,6 @@
 import * as React from "react";
 import axios from "axios";
 import { toast } from "sonner";
-import { User } from "@/components/ui/icons";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +16,7 @@ import { FieldError } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { usernameSchema } from "@/features/auth/schemas/authSchemas";
 import { useUpdateProfile } from "../api/updateProfile";
+import { Pencil } from "lucide-react";
 
 export interface UpdateUsernameModalProps {
   open: boolean;
@@ -99,27 +99,27 @@ function UpdateUsernameForm({
           disabled={isPending}
           aria-invalid={Boolean(fieldError)}
         />
-        {fieldError && <FieldError className="text-xs">{fieldError}</FieldError>}
+        {fieldError && (
+          <FieldError className="text-xs">{fieldError}</FieldError>
+        )}
         <p className="text-[11px] text-muted-foreground">
           Must be 3-30 characters with letters, numbers, underscores, or
           hyphens.
         </p>
       </div>
 
-      <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">
+      <DialogFooter className="flex-col-reverse sm:flex-row gap-2 pt-2">
         <Button
           type="button"
           variant="outline"
           disabled={isPending}
           onClick={onClose}
-          className="w-full sm:w-auto text-xs h-9 cursor-pointer"
         >
           Cancel
         </Button>
         <Button
           type="submit"
           disabled={isPending || isUnchanged || !username.trim()}
-          className="w-full sm:w-auto text-xs h-9 cursor-pointer font-semibold"
         >
           {isPending ? "Saving..." : "Save changes"}
         </Button>
@@ -138,14 +138,14 @@ export function UpdateUsernameModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <User className="size-6" />
+            <Pencil className="size-6" />
           </div>
           <DialogTitle className="text-center text-xl font-bold font-heading">
             Update username
           </DialogTitle>
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
-            Choose a new username for your account. This will update your profile
-            across UniHub.
+            Choose a new username for your account. This will update your
+            profile across UniHub.
           </DialogDescription>
         </DialogHeader>
 

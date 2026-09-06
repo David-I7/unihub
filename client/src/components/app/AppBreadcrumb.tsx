@@ -30,9 +30,13 @@ interface Crumb {
 
 export interface AppBreadcrumbProps {
   className?: string;
+  variant?: "default" | "capsule";
 }
 
-export function AppBreadcrumb({ className }: AppBreadcrumbProps) {
+export function AppBreadcrumb({
+  className,
+  variant = "default",
+}: AppBreadcrumbProps) {
   const location = useLocation();
   const segments = location.pathname.split("/").filter(Boolean);
 
@@ -73,7 +77,14 @@ export function AppBreadcrumb({ className }: AppBreadcrumbProps) {
   }
 
   return (
-    <Breadcrumb className={cn("text-sm", className)}>
+    <Breadcrumb
+      className={cn(
+        "text-sm",
+        variant === "capsule" &&
+          "inline-flex items-center px-3 py-1 rounded-full bg-background/85 dark:bg-background/80 backdrop-blur-md border border-border/50 shadow-xs max-w-full",
+        className,
+      )}
+    >
       <BreadcrumbList>
         {crumbs.map((crumb, index) => {
           const isLast = index === crumbs.length - 1;

@@ -108,7 +108,7 @@ export function CommunityHero({
         className="h-44 @[560px]:h-56 @[768px]:h-64 w-full rounded-2xl relative overflow-hidden flex flex-col justify-between p-4 @[560px]:p-6 transition-all duration-300 shadow-inner"
       >
         <div className="flex items-center justify-between gap-2 z-10">
-          <AppBreadcrumb />
+          <AppBreadcrumb variant="capsule" />
         </div>
 
         {/* Decorative Overlay Pattern */}
