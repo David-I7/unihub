@@ -29,7 +29,6 @@ import {
   Field,
   FieldLabel,
   FieldError,
-  FieldDescription,
 } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";

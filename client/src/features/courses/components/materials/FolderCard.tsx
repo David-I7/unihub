@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Folder } from "lucide-react";
-import { UserAvatar } from "@/components/app/UserAvatar";
 import { MaterialItemActions } from "./MaterialItemActions";
 import { EditFolderModal } from "./EditFolderModal";
 import { DeleteFolderDialog } from "./DeleteFolderDialog";

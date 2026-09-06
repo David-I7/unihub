@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { UserAvatar } from "@/components/app/UserAvatar";
 import { MaterialItemActions } from "./MaterialItemActions";
 import { EditMaterialModal } from "./EditMaterialModal";
 import { DeleteMaterialDialog } from "./DeleteMaterialDialog";
