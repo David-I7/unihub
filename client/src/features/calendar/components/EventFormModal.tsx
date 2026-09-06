@@ -757,24 +757,16 @@ export function EventFormModal() {
 
           {/* Modal Footer */}
           <DialogFooter className="gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={onClose}
-              className="h-8 text-xs cursor-pointer"
-            >
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
             <Button
               type="submit"
-              size="sm"
               disabled={
                 isSubmitting ||
                 (!isEditing && !canCreateInCommunity) ||
                 (isEditing && !form.isDirty)
               }
-              className="h-8 text-xs font-semibold cursor-pointer"
             >
               {isSubmitting
                 ? isEditing

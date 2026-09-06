@@ -451,16 +451,18 @@ export function EventDetailSheet() {
               <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Schedule
               </div>
-              <div className="font-semibold text-foreground">
-                {formatFullDate(activeEvent.startTime)}
-              </div>
-              <div className="text-muted-foreground font-mono text-xs">
-                {timeStr}
-                {activeEvent.durationHours ? (
-                  <span className="text-muted-foreground/80 ml-1 font-sans">
-                    ({formatDurationHours(activeEvent.durationHours)})
-                  </span>
-                ) : null}
+              <div className="flex flex-wrap gap-2">
+                <div className="font-medium text-foreground">
+                  {formatFullDate(activeEvent.startTime)}
+                </div>
+                <div className="text-muted-foreground font-mono text-xs">
+                  {timeStr}
+                  {activeEvent.durationHours ? (
+                    <span className="text-muted-foreground ml-1 font-sans">
+                      ({formatDurationHours(activeEvent.durationHours)})
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -469,32 +471,34 @@ export function EventDetailSheet() {
               <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 Location
               </div>
-              <div>
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-foreground">
-                  <EventLocationIcon
-                    location={activeEvent.location}
-                    className="size-3.5 text-muted-foreground"
-                  />
-                  <span>{formatEventLocation(activeEvent.location)}</span>
-                </span>
-              </div>
-              {activeEvent.locationDetails && (
-                <div className="text-xs text-muted-foreground pt-0.5">
-                  {isUrl(activeEvent.locationDetails) ? (
-                    <a
-                      href={activeEvent.locationDetails}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                    >
+              <div className="flex flex-wrap gap-2">
+                {activeEvent.locationDetails && (
+                  <div className="text-xs font-medium pt-0.5">
+                    {isUrl(activeEvent.locationDetails) ? (
+                      <a
+                        href={activeEvent.locationDetails}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                      >
+                        <span>{activeEvent.locationDetails}</span>
+                        <ExternalLink className="size-3" />
+                      </a>
+                    ) : (
                       <span>{activeEvent.locationDetails}</span>
-                      <ExternalLink className="size-3" />
-                    </a>
-                  ) : (
-                    <span>{activeEvent.locationDetails}</span>
-                  )}
+                    )}
+                  </div>
+                )}
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted text-xs font-medium text-foreground">
+                    <EventLocationIcon
+                      location={activeEvent.location}
+                      className="size-3.5 text-muted-foreground"
+                    />
+                    <span>{formatEventLocation(activeEvent.location)}</span>
+                  </span>
                 </div>
-              )}
+              </div>
             </div>
 
             {/* COURSE */}
@@ -503,30 +507,27 @@ export function EventDetailSheet() {
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Course
                 </div>
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div>
+                <div className="flex flex-col gap-2">
+                  <div className="text-muted-foreground">
                     {activeEvent.communityName}
                     {activeEvent.studyYear && (
-                      <span className="text-muted-foreground">
-                        {" "}
-                        • {activeEvent.studyYear}
-                      </span>
+                      <span> • {activeEvent.studyYear}</span>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">
+                      {activeEvent.courseName}
+                    </span>
                     {abbreviation && (
-                      <span className="font-mono text-[11px] font-bold text-foreground bg-muted px-1.5 py-0.5 rounded">
+                      <span className="font-mono text-[11px] font-semibold text-foreground bg-muted px-1.5 py-0.5 rounded">
                         {abbreviation}
                       </span>
                     )}
-                    <span className="font-semibold text-foreground">
-                      {activeEvent.courseName}
-                    </span>
                   </div>
                 </div>
 
                 <Link
-                  to={`/communities/${activeEvent.communitySlug}/courses/${activeEvent.courseSlug}`}
+                  to={`/communities/${activeEvent.communitySlug}/study-years/${activeEvent.studyYear}/courses/${activeEvent.courseSlug}`}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                 >
                   <span>View Course Page</span>
@@ -541,7 +542,7 @@ export function EventDetailSheet() {
                 <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   Description
                 </div>
-                <p className="text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                <p className="text-xs whitespace-pre-wrap leading-relaxed">
                   {activeEvent.description}
                 </p>
               </div>
@@ -602,7 +603,7 @@ export function EventDetailSheet() {
                         <Button
                           key={preset.value}
                           type="button"
-                          variant={isSelected ? "default" : "outline"}
+                          variant={isSelected ? "secondary" : "outline"}
                           size="xs"
                           onClick={() => setSelectedInterval(preset.value)}
                           className="h-7 text-xs cursor-pointer font-medium"
@@ -614,7 +615,7 @@ export function EventDetailSheet() {
                     <Button
                       type="button"
                       variant={
-                        selectedInterval === "custom" ? "default" : "outline"
+                        selectedInterval === "custom" ? "secondary" : "outline"
                       }
                       size="xs"
                       onClick={() =>

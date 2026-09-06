@@ -330,7 +330,6 @@ export function BatchImportEventsModal() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={handleCloseModal}
                 className="w-full sm:w-auto"
               >
@@ -338,7 +337,6 @@ export function BatchImportEventsModal() {
               </Button>
               <Button
                 type="button"
-                size="sm"
                 onClick={() => setStep(2)}
                 className="gap-1.5 w-full sm:w-auto"
               >
@@ -353,7 +351,6 @@ export function BatchImportEventsModal() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={() => setStep(1)}
                 className="w-full sm:w-auto gap-1.5"
               >
@@ -362,7 +359,6 @@ export function BatchImportEventsModal() {
               </Button>
               <Button
                 type="button"
-                size="sm"
                 onClick={handleValidateJson}
                 className="w-full sm:w-auto gap-1.5"
               >
@@ -377,7 +373,6 @@ export function BatchImportEventsModal() {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onClick={() => setStep(2)}
                 disabled={isSubmitting}
                 className="w-full sm:w-auto gap-1.5"
@@ -387,7 +382,6 @@ export function BatchImportEventsModal() {
               </Button>
               <Button
                 type="button"
-                size="sm"
                 onClick={handleConfirmImport}
                 disabled={
                   isSubmitting ||
