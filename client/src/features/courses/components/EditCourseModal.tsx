@@ -23,7 +23,9 @@ import { UserAvatar } from "@/components/app/UserAvatar";
 import { Check, X, Search } from "@/components/ui/icons";
 import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
-import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Spinner } from "@/components/ui/spinner";
+import { useInfiniteCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import { useUpdateCourse } from "../api/updateCourse";
 import {
   updateCourseSchema,
@@ -58,11 +60,13 @@ function EditCourseForm({
   initialTeachers = [],
   onClose,
   onSuccess,
+  open,
 }: {
   communitySlug: string;
   studyYearSlug: string;
   course: Course | CourseCardInfo;
   initialTeachers?: (Teacher | TeacherSummary)[];
+  open: boolean;
   onClose: () => void;
   onSuccess?: (updated: Course) => void;
 }) {
@@ -71,24 +75,32 @@ function EditCourseForm({
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>(() =>
     initialTeachers.map((t) => t.id),
   );
+  const [selectedTeachersMap, setSelectedTeachersMap] = useState<
+    Map<string, Teacher | TeacherSummary>
+  >(() => new Map(initialTeachers.map((t) => [t.id, t])));
   const [teacherSearch, setTeacherSearch] = useState("");
+  const debouncedTeacherSearch = useDebounce(teacherSearch.trim(), 300);
 
-  const { data: teachersData } = useCommunityTeachers(communitySlug, {
-    size: 100,
-  });
-  const allTeachers = useMemo(
-    () => teachersData?.content ?? [],
-    [teachersData],
+  const {
+    data: teachersData,
+    isLoading: isTeachersLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCommunityTeachers(
+    communitySlug,
+    {
+      search: debouncedTeacherSearch,
+      size: 12,
+    },
+    { enabled: open },
   );
 
-  const filteredTeachers = useMemo(() => {
-    if (!teacherSearch.trim()) return allTeachers;
-    const query = teacherSearch.trim().toLowerCase();
-    return allTeachers.filter((t) => {
-      const fullName = `${t.firstName} ${t.lastName}`.toLowerCase();
-      return fullName.includes(query);
-    });
-  }, [allTeachers, teacherSearch]);
+  const allTeachers = useMemo(
+    () => teachersData?.pages.flatMap((page) => page.content) ?? [],
+    [teachersData],
+  );
+  const totalTeachers = teachersData?.pages[0]?.totalElements ?? 0;
 
   const form = useForm<UpdateCourseSchemaValues>({
     initialValues: {
@@ -158,12 +170,34 @@ function EditCourseForm({
     },
   });
 
-  const toggleTeacher = (teacherId: string) => {
+  const toggleTeacher = (teacher: Teacher | TeacherSummary) => {
     setSelectedTeacherIds((prev) => {
-      const next = prev.includes(teacherId)
-        ? prev.filter((id) => id !== teacherId)
-        : [...prev, teacherId];
+      const next = prev.includes(teacher.id)
+        ? prev.filter((id) => id !== teacher.id)
+        : [...prev, teacher.id];
       form.setValue("teacherIds", next);
+      return next;
+    });
+    setSelectedTeachersMap((prev) => {
+      const next = new Map(prev);
+      if (next.has(teacher.id)) {
+        next.delete(teacher.id);
+      } else {
+        next.set(teacher.id, teacher);
+      }
+      return next;
+    });
+  };
+
+  const removeTeacher = (teacherId: string) => {
+    setSelectedTeacherIds((prev) => {
+      const next = prev.filter((id) => id !== teacherId);
+      form.setValue("teacherIds", next);
+      return next;
+    });
+    setSelectedTeachersMap((prev) => {
+      const next = new Map(prev);
+      next.delete(teacherId);
       return next;
     });
   };
@@ -301,7 +335,10 @@ function EditCourseForm({
       {/* Teachers Multi-select */}
       <div className="space-y-2">
         <FieldLabel>Assigned Instructors (Optional)</FieldLabel>
-        {allTeachers.length === 0 ? (
+        {!debouncedTeacherSearch &&
+        !isTeachersLoading &&
+        totalTeachers === 0 &&
+        allTeachers.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
             No instructors registered in this community yet.
           </div>
@@ -318,51 +355,84 @@ function EditCourseForm({
               />
             </div>
 
-            <div className="max-h-36 overflow-y-auto rounded-xl border border-border/80 p-2 space-y-1 bg-muted/20">
-              {filteredTeachers.length === 0 ? (
+            <div className="max-h-40 overflow-y-auto rounded-xl border border-border/80 p-2 space-y-1 bg-muted/20">
+              {isTeachersLoading ? (
+                <div className="py-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <Spinner className="size-3.5" />
+                  <span>Loading instructors...</span>
+                </div>
+              ) : allTeachers.length === 0 ? (
                 <div className="py-4 text-center text-xs text-muted-foreground">
-                  No instructors found matching &ldquo;{teacherSearch}&rdquo;
+                  {debouncedTeacherSearch
+                    ? `No instructors found matching "${teacherSearch}".`
+                    : "No instructors registered in this community yet."}
                 </div>
               ) : (
-                filteredTeachers.map((teacher) => {
-                  const isSelected = selectedTeacherIds.includes(teacher.id);
-                  return (
-                    <div
-                      key={teacher.id}
+                <>
+                  {allTeachers.map((teacher) => {
+                    const isSelected = selectedTeacherIds.includes(teacher.id);
+                    return (
+                      <div
+                        key={teacher.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleTeacher(teacher);
+                        }}
+                        className={`flex items-center justify-between gap-2 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-primary/10 border border-primary/30 text-primary font-medium"
+                            : "hover:bg-muted text-foreground"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <UserAvatar
+                            username={teacher.lastName || teacher.firstName}
+                            size="xs"
+                            className="size-5 rounded-md"
+                          />
+                          <span className="truncate">
+                            Prof. {teacher.firstName} {teacher.lastName}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <Check className="size-3.5 text-primary shrink-0" />
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {hasNextPage && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
                       onClick={(e) => {
                         e.stopPropagation();
-                        toggleTeacher(teacher.id);
+                        fetchNextPage();
                       }}
-                      className={`flex items-center justify-between gap-2 p-2 rounded-lg text-xs cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-primary/10 border border-primary/30 text-primary font-medium"
-                          : "hover:bg-muted text-foreground"
-                      }`}
+                      disabled={isFetchingNextPage}
+                      className="w-full text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer py-1.5 h-auto mt-1"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <UserAvatar
-                          username={teacher.lastName || teacher.firstName}
-                          size="xs"
-                          className="size-5 rounded-md"
-                        />
-                        <span className="truncate">
-                          Prof. {teacher.firstName} {teacher.lastName}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <Check className="size-3.5 text-primary shrink-0" />
+                      {isFetchingNextPage ? (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Spinner className="size-3" />
+                          <span>Loading more...</span>
+                        </div>
+                      ) : (
+                        <span>Load more instructors</span>
                       )}
-                    </div>
-                  );
-                })
+                    </Button>
+                  )}
+                </>
               )}
             </div>
 
             {selectedTeacherIds.length > 0 && (
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {selectedTeacherIds.map((id) => {
-                  const teacher = allTeachers.find((t) => t.id === id);
-                  if (!teacher) return null;
+                  const teacher =
+                    selectedTeachersMap.get(id) ??
+                    allTeachers.find((t) => t.id === id);
                   return (
                     <Badge
                       key={id}
@@ -370,12 +440,14 @@ function EditCourseForm({
                       size="xs"
                       className="gap-1 text-[11px] font-medium pr-1"
                     >
-                      <span>Prof. {teacher.lastName}</span>
+                      <span>
+                        Prof. {teacher ? teacher.lastName : "Instructor"}
+                      </span>
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toggleTeacher(id);
+                          removeTeacher(id);
                         }}
                         className="hover:text-destructive cursor-pointer"
                       >
@@ -433,6 +505,7 @@ export function EditCourseModal({
           studyYearSlug={studyYearSlug}
           course={course}
           initialTeachers={initialTeachers}
+          open={open}
           onClose={() => onOpenChange(false)}
           onSuccess={onSuccess}
         />

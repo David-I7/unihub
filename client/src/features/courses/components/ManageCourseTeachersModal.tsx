@@ -13,7 +13,9 @@ import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { UserPlus, Trash2, Search } from "@/components/ui/icons";
 import { getErrorMessage } from "@/api/types";
-import { useCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Spinner } from "@/components/ui/spinner";
+import { useInfiniteCommunityTeachers } from "@/features/teachers/api/getCommunityTeachers";
 import {
   useAddCourseTeacher,
   useRemoveCourseTeacher,
@@ -39,14 +41,26 @@ export function ManageCourseTeachersModal({
   onOpenChange,
 }: ManageCourseTeachersModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearch = useDebounce(searchTerm.trim(), 300);
   const addTeacherMutation = useAddCourseTeacher();
   const removeTeacherMutation = useRemoveCourseTeacher();
 
-  const { data: allTeachersData } = useCommunityTeachers(communitySlug, {
-    size: 100,
-  });
+  const {
+    data: allTeachersData,
+    isLoading: isTeachersLoading,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteCommunityTeachers(
+    communitySlug,
+    {
+      search: debouncedSearch,
+      size: 12,
+    },
+    { enabled: open },
+  );
   const allTeachers = useMemo(
-    () => allTeachersData?.content ?? [],
+    () => allTeachersData?.pages.flatMap((page) => page.content) ?? [],
     [allTeachersData],
   );
 
@@ -56,13 +70,8 @@ export function ManageCourseTeachersModal({
   );
 
   const availableTeachers = useMemo(() => {
-    return allTeachers.filter((t) => {
-      if (assignedTeacherIds.has(t.id)) return false;
-      if (!searchTerm.trim()) return true;
-      const fullName = `${t.firstName} ${t.lastName}`.toLowerCase();
-      return fullName.includes(searchTerm.trim().toLowerCase());
-    });
-  }, [allTeachers, assignedTeacherIds, searchTerm]);
+    return allTeachers.filter((t) => !assignedTeacherIds.has(t.id));
+  }, [allTeachers, assignedTeacherIds]);
 
   const handleAdd = async (teacher: Teacher) => {
     try {
@@ -182,11 +191,39 @@ export function ManageCourseTeachersModal({
               />
             </div>
 
-            {availableTeachers.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground">
-                {allTeachers.length === 0
-                  ? "No teachers available in this community."
-                  : "All matching teachers are already assigned."}
+            {isTeachersLoading ? (
+              <div className="py-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Spinner className="size-4" />
+                <span>Loading instructors...</span>
+              </div>
+            ) : availableTeachers.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border p-3 text-center text-xs text-muted-foreground space-y-2">
+                <p>
+                  {debouncedSearch
+                    ? `No teachers found matching "${searchTerm}".`
+                    : allTeachers.length === 0
+                      ? "No teachers available in this community."
+                      : "All matching teachers on this page are already assigned."}
+                </p>
+                {hasNextPage && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="cursor-pointer text-xs"
+                  >
+                    {isFetchingNextPage ? (
+                      <div className="flex items-center gap-1.5">
+                        <Spinner className="size-3" />
+                        <span>Loading more...</span>
+                      </div>
+                    ) : (
+                      <span>Check next page</span>
+                    )}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
@@ -221,6 +258,26 @@ export function ManageCourseTeachersModal({
                     </Button>
                   </div>
                 ))}
+
+                {hasNextPage && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="w-full text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer py-1.5 h-auto mt-1"
+                  >
+                    {isFetchingNextPage ? (
+                      <div className="flex items-center justify-center gap-1.5">
+                        <Spinner className="size-3" />
+                        <span>Loading more...</span>
+                      </div>
+                    ) : (
+                      <span>Load more instructors</span>
+                    )}
+                  </Button>
+                )}
               </div>
             )}
           </div>

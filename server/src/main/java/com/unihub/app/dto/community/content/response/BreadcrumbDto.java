@@ -7,7 +7,6 @@ import java.util.UUID;
 @Builder
 public record BreadcrumbDto(
         UUID id,
-        String name,
-        String type
+        String name
 ) {
 }

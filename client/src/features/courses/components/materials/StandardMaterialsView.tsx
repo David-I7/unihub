@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCourseMaterials } from "../../api/getCourseMaterials";
 import {
   useFolderBreadcrumbs,
-  useMaterialBreadcrumbs,
+  breadcrumbKeys,
 } from "../../api/getBreadcrumbs";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useUrlFilters, type FilterSchema } from "@/hooks/useUrlFilters";
@@ -60,49 +61,25 @@ export function StandardMaterialsView({
   courseSlug,
   isArchived = false,
 }: StandardMaterialsViewProps) {
+  const queryClient = useQueryClient();
   const { filters, setFilters } = useUrlFilters(MATERIALS_FILTER_SCHEMA);
 
-  const [folderBreadcrumbs, setFolderBreadcrumbs] = useState<
-    Array<{ id: string | null; name: string }>
-  >([{ id: null, name: "Root" }]);
-
-  const needsFolderBreadcrumbs = Boolean(
-    filters.folder && folderBreadcrumbs.length <= 1,
-  );
   const { data: serverFolderBreadcrumbs } = useFolderBreadcrumbs(
-    needsFolderBreadcrumbs ? filters.folder : undefined,
+    filters.folder || undefined,
   );
 
-  const activeMaterialId = filters.file || filters.link || undefined;
-  const needsMaterialBreadcrumbs = Boolean(
-    activeMaterialId && folderBreadcrumbs.length <= 1,
-  );
-  const { data: serverMaterialBreadcrumbs } = useMaterialBreadcrumbs(
-    needsMaterialBreadcrumbs ? activeMaterialId : undefined,
-  );
-
-  useEffect(() => {
-    if (serverFolderBreadcrumbs && serverFolderBreadcrumbs.length > 0) {
-      queueMicrotask(() => {
-        setFolderBreadcrumbs([
-          { id: null, name: "Root" },
-          ...serverFolderBreadcrumbs.map((b) => ({ id: b.id, name: b.name })),
-        ]);
-      });
+  const folderBreadcrumbs = useMemo(() => {
+    if (!filters.folder) {
+      return [{ id: null, name: "Root" }];
     }
-  }, [serverFolderBreadcrumbs]);
-
-  useEffect(() => {
-    if (serverMaterialBreadcrumbs && serverMaterialBreadcrumbs.length > 0) {
-      const ancestorFolders = serverMaterialBreadcrumbs.slice(0, -1);
-      queueMicrotask(() => {
-        setFolderBreadcrumbs([
-          { id: null, name: "Root" },
-          ...ancestorFolders.map((b) => ({ id: b.id, name: b.name })),
-        ]);
-      });
-    }
-  }, [serverMaterialBreadcrumbs]);
+    return [
+      { id: null, name: "Root" },
+      ...(serverFolderBreadcrumbs ?? []).map((b) => ({
+        id: b.id,
+        name: b.name,
+      })),
+    ];
+  }, [filters.folder, serverFolderBreadcrumbs]);
 
   const currentFolderId = filters.folder || undefined;
   const lastFolder = folderBreadcrumbs[folderBreadcrumbs.length - 1];
@@ -199,11 +176,15 @@ export function StandardMaterialsView({
   const updateMaterialMutation = useUpdateMaterial();
 
   const handleOpenFolder = (folder: CourseMaterialFolder) => {
-    setFilters({ folder: folder.id, file: "", link: "" });
-    setFolderBreadcrumbs((prev) => [
-      ...prev,
+    const currentAncestors = (serverFolderBreadcrumbs ?? []).map((b) => ({
+      id: b.id,
+      name: b.name,
+    }));
+    queryClient.setQueryData(breadcrumbKeys.folder(folder.id), [
+      ...currentAncestors,
       { id: folder.id, name: folder.name },
     ]);
+    setFilters({ folder: folder.id, file: "", link: "" });
   };
 
   const handleOpenFile = (file: CourseMaterialFile) => {
@@ -217,7 +198,6 @@ export function StandardMaterialsView({
   const handleNavigateBreadcrumb = (index: number) => {
     if (index < folderBreadcrumbs.length) {
       const target = folderBreadcrumbs[index];
-      setFolderBreadcrumbs((prev) => prev.slice(0, index + 1));
       setFilters({ folder: target.id ?? "", file: "", link: "" });
     }
   };

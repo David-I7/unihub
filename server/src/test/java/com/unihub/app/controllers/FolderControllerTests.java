@@ -98,7 +98,7 @@ public class FolderControllerTests extends BaseIntegrationTest {
     public void testGetBreadcrumbs_Success() throws Exception {
         UUID folderId = UUID.randomUUID();
         List<BreadcrumbDto> responseDtos = List.of(
-                BreadcrumbDto.builder().id(folderId).name("Examene").type("FOLDER").build()
+                BreadcrumbDto.builder().id(folderId).name("Examene").build()
         );
 
         when(folderService.getBreadcrumbs(folderId)).thenReturn(responseDtos);
@@ -106,7 +106,6 @@ public class FolderControllerTests extends BaseIntegrationTest {
         mockMvc.perform(get("/api/v1/folders/" + folderId + "/breadcrumbs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(folderId.toString()))
-                .andExpect(jsonPath("$[0].name").value("Examene"))
-                .andExpect(jsonPath("$[0].type").value("FOLDER"));
+                .andExpect(jsonPath("$[0].name").value("Examene"));
     }
 }

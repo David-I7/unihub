@@ -33,7 +33,6 @@ export function MaterialsBreadcrumbs({
 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none rounded-xl border bg-card px-4 py-2.5 text-xs text-muted-foreground">
-      <FolderOpen className="size-4 text-primary shrink-0 mr-1" />
       {breadcrumbs.map((item, index) => {
         const isLast = index === breadcrumbs.length - 1;
         const isBreadcrumbDropTarget =
@@ -71,7 +70,7 @@ export function MaterialsBreadcrumbs({
                   }
                 }
               }}
-              className={`font-semibold transition-all cursor-pointer px-1.5 py-0.5 rounded-md ${
+              className={`inline-flex items-center gap-1 font-semibold transition-all cursor-pointer px-1.5 py-0.5 rounded-md ${
                 isBreadcrumbDropTarget
                   ? "bg-primary/20 text-primary ring-2 ring-primary"
                   : isLast
@@ -80,7 +79,10 @@ export function MaterialsBreadcrumbs({
               }`}
               disabled={isLast}
             >
-              {item.name}
+              {index === 0 && (
+                <FolderOpen className="size-4 text-primary shrink-0" />
+              )}
+              <span>{item.name}</span>
             </button>
           </div>
         );
