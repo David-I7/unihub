@@ -11,17 +11,13 @@ import com.unihub.app.dto.community.resources.response.StudyYearResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherSummaryResponseDto;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.resources.StudyYearService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
@@ -41,7 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class StudyYearControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/communities/fmi-info-id/study-years";
@@ -50,12 +45,6 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private StudyYearService studyYearService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

@@ -48,14 +48,16 @@ export interface GradientResult {
  */
 export function isValidHex(hex: string): boolean {
   if (!hex || typeof hex !== "string") return false;
-  const clean = hex.trim().replace(/^#/, "");
-  return /^([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(clean);
+  return /^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(
+    hex.trim(),
+  );
 }
 
 /**
  * Normalizes any valid hex string into a standard uppercase 6-character '#RRGGBB' format.
  */
 export function normalizeHex(hex: string): string {
+  if (!isValidHex(hex)) return "#3B82F6";
   let clean = hex.trim().replace(/^#/, "");
   if (clean.length === 3 || clean.length === 4) {
     clean = clean
@@ -121,10 +123,10 @@ export function hslToHex(h: number, s: number, l: number): string {
   const f = (n: number) =>
     normalizedL - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
 
-  const toHex = (x: number) => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? `0${hex}` : hex;
-  };
+  const toHex = (x: number) =>
+    Math.round(x * 255)
+      .toString(16)
+      .padStart(2, "0");
 
   return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`.toUpperCase();
 }
@@ -284,7 +286,7 @@ export function generateRandomVibrantColor(): string {
  * Deterministically generates a vibrant start color from a string (e.g. community ID or name).
  */
 export function getColorFromString(seed: string): string {
-  if (!seed) return "#3B82F6";
+  if (!seed || !seed.trim()) return "#3B82F6";
   let hash = 0;
   for (let i = 0; i < seed.length; i++) {
     hash = seed.charCodeAt(i) + ((hash << 5) - hash);

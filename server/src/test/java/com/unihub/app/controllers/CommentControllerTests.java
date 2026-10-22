@@ -7,16 +7,12 @@ import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.content.request.UpdateCommentRequestDto;
 import com.unihub.app.dto.community.content.response.CommentResponseDto;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.content.CommentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -33,7 +29,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
 public class CommentControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/comments";
@@ -42,12 +37,6 @@ public class CommentControllerTests extends BaseIntegrationTest {
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private CommentService commentService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

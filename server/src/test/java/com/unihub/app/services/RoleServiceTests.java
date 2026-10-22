@@ -1,18 +1,14 @@
 package com.unihub.app.services;
 
-import com.unihub.app.config.CacheConfig;
+import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.entities.authorization.Role;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.services.authorization.RoleService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,25 +16,13 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.unihub.app.config.EmailProperties;
-import com.unihub.app.config.SessionProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-
-@SpringBootTest(classes = {RoleService.class, CacheConfig.class})
-@EnableConfigurationProperties({EmailProperties.class, SessionProperties.class})
-public class RoleServiceTests {
+public class RoleServiceTests extends BaseIntegrationTest {
 
     @Autowired
     private RoleService roleService;
 
     @Autowired
     private CacheManager cacheManager;
-
-    @MockitoBean
-    private RoleRepository roleRepository;
-
-    @MockitoBean
-    private PermissionRepository permissionRepository;
 
     @BeforeEach
     public void setUp() {

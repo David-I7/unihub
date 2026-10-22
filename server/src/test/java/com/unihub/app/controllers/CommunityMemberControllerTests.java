@@ -9,26 +9,14 @@ import com.unihub.app.dto.community.resources.request.UpdateJoinCodeRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.resources.CommunityJoinCodeService;
-import com.unihub.app.services.community.resources.CommunityMemberService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -47,7 +35,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class CommunityMemberControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/communities/fmi-info";
@@ -57,15 +44,6 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private CommunityMemberService communityMemberService;
-
-    @MockitoBean
-    private CommunityJoinCodeService communityJoinCodeService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

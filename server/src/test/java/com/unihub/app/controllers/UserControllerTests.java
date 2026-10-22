@@ -8,21 +8,13 @@ import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.AuthorizationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,7 +36,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class UserControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/users";
@@ -57,9 +48,6 @@ public class UserControllerTests extends BaseIntegrationTest {
 
     @MockitoBean
     private UserService userService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

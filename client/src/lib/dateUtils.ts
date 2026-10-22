@@ -6,6 +6,7 @@
  * Formats a Date object to YYYY-MM-DD local date string.
  */
 export function getLocalDateKey(date: Date): string {
+  if (!date || isNaN(date.getTime())) return "";
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -17,6 +18,7 @@ export function getLocalDateKey(date: Date): string {
  */
 export function getEventDateKey(isoStr: string): string {
   if (!isoStr) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoStr)) return isoStr;
   const d = new Date(isoStr);
   if (isNaN(d.getTime())) return "";
   return getLocalDateKey(d);
@@ -64,13 +66,13 @@ export function formatRelativeTime(isoStr?: string): string {
   if (diffDays < 7) return `${diffDays}d`;
 
   const diffWeeks = Math.floor(diffDays / 7);
-  if (diffWeeks < 4) return `${diffWeeks}w`;
+  if (diffDays < 30) return `${diffWeeks}w`;
 
   const diffMonths = Math.floor(diffDays / 30);
   if (diffMonths < 12) return `${diffMonths}mo`;
 
   const diffYears = Math.floor(diffDays / 365);
-  return `${diffYears}y`;
+  return `${Math.max(1, diffYears)}y`;
 }
 
 /**
@@ -134,10 +136,17 @@ export function formatTime(isoStr?: string): string {
  * Formats a duration in hours into a readable string (e.g., "1.5h", "2h", "30m").
  */
 export function formatDurationHours(durationHours?: number | null): string {
-  if (durationHours == null || durationHours <= 0) return "";
+  if (
+    durationHours == null ||
+    !Number.isFinite(durationHours) ||
+    durationHours <= 0
+  ) {
+    return "";
+  }
   if (durationHours === 1) return "1h";
   if (durationHours < 1) {
     const minutes = Math.round(durationHours * 60);
+    if (minutes >= 60) return "1h";
     return `${minutes}m`;
   }
   // Remove unnecessary trailing zeroes (e.g., 2.0 -> "2h", 1.5 -> "1.5h")
@@ -174,7 +183,11 @@ export function formatEventTimeWithDuration(
   const startFormatted = formatTime(startTime);
   if (!startFormatted) return "";
 
-  if (durationHours == null || durationHours <= 0) {
+  if (
+    durationHours == null ||
+    !Number.isFinite(durationHours) ||
+    durationHours <= 0
+  ) {
     return startFormatted;
   }
 
@@ -182,6 +195,8 @@ export function formatEventTimeWithDuration(
   if (isNaN(startD.getTime())) return startFormatted;
 
   const endD = new Date(startD.getTime() + durationHours * 3600 * 1000);
+  if (isNaN(endD.getTime())) return startFormatted;
+
   const endFormatted = formatTime(endD.toISOString());
   if (!endFormatted || endFormatted === startFormatted) return startFormatted;
 
@@ -198,18 +213,23 @@ export function formatDayHeader(dateStr: string): {
 } {
   const [y, m, d] = dateStr.split("-").map(Number);
   const date = new Date(y, m - 1, d);
+  const isInvalid = isNaN(date.getTime());
   const todayStr = getLocalDateKey(new Date());
 
-  const weekday = date.toLocaleDateString(undefined, { weekday: "short" });
-  const formattedDate = date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
+  const weekday = isInvalid
+    ? ""
+    : date.toLocaleDateString(undefined, { weekday: "short" });
+  const formattedDate = isInvalid
+    ? ""
+    : date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      });
 
   return {
     weekday,
     formattedDate,
-    isToday: dateStr === todayStr,
+    isToday: !isInvalid && dateStr === todayStr,
   };
 }
 
@@ -218,7 +238,8 @@ export function formatDayHeader(dateStr: string): {
  */
 export function formatHeadingDate(dateStr?: string | null): string {
   if (!dateStr) return "";
-  const d = new Date(dateStr + "T00:00:00");
+  const parseable = dateStr.includes("T") ? dateStr : `${dateStr}T00:00:00`;
+  const d = new Date(parseable);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString(undefined, {
     weekday: "long",
@@ -248,7 +269,9 @@ export function toDatetimeLocal(
   }
 
   if (defaultDateStr) {
-    return `${defaultDateStr}T23:59`;
+    return defaultDateStr.includes("T")
+      ? defaultDateStr.slice(0, 16)
+      : `${defaultDateStr}T23:59`;
   }
 
   const now = new Date();
@@ -265,6 +288,10 @@ export function formatOffsetLabel(
   offsetMinutes: number,
   options?: { compact?: boolean },
 ): string {
+  if (!Number.isFinite(offsetMinutes) || offsetMinutes <= 0) {
+    return options?.compact ? "0m" : "At event start";
+  }
+
   if (options?.compact) {
     if (offsetMinutes < 60) return `${offsetMinutes}m`;
     if (offsetMinutes % 10080 === 0) return `${offsetMinutes / 10080}w`;
@@ -275,6 +302,7 @@ export function formatOffsetLabel(
     return `${h}h${m}m`;
   }
 
+  if (offsetMinutes === 1) return "1 minute before";
   if (offsetMinutes === 15) return "15 minutes before";
   if (offsetMinutes === 30) return "30 minutes before";
   if (offsetMinutes === 45) return "45 minutes before";
@@ -355,9 +383,9 @@ export function formatEventRelativeStatus(
       isSoon: true,
     };
   }
-  if (diffDays === 1) {
+  if (diffDays < 7) {
     return {
-      label: `${verb} tomorrow`,
+      label: `${verb} in ${diffDays}d ${diffHours % 24}h`,
       isPast: false,
       isOngoing: false,
       isSoon: false,

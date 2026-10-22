@@ -1,33 +1,11 @@
 package com.unihub.app.security;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.config.SessionProperties;
-import com.unihub.app.controllers.authentication.AuthController;
-import com.unihub.app.exceptions.GlobalExceptionHandler;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
-import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.RoleService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -36,7 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class OAuth2AuthenticationFailureHandlerTests extends BaseIntegrationTest {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";

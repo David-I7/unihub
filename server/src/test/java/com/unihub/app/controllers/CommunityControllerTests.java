@@ -19,28 +19,15 @@ import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseD
 import com.unihub.app.dto.user.UserEnrolledCommunityDto;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.content.CommunityPostService;
-import com.unihub.app.services.community.resources.CommunityMemberService;
-import com.unihub.app.services.community.resources.CommunityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
@@ -60,7 +47,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class CommunityControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/communities";
@@ -70,18 +56,6 @@ public class CommunityControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private CommunityService communityService;
-
-    @MockitoBean
-    private CommunityMemberService communityMemberService;
-
-    @MockitoBean
-    private CommunityPostService communityPostService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

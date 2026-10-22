@@ -25,21 +25,13 @@ import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.MaterialLinkType;
 import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.content.CoursePostService;
-import com.unihub.app.services.community.content.FolderService;
-import com.unihub.app.services.community.content.MaterialFileService;
-import com.unihub.app.services.community.content.MaterialLinkService;
-import com.unihub.app.services.community.resources.CourseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -55,7 +47,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
 public class CourseControllerTests extends BaseIntegrationTest {
 
     private static final String COURSES_BASE_URL = "/api/v1/communities/fmi-info-id/study-years/year-1/courses";
@@ -66,24 +57,6 @@ public class CourseControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private CourseService courseService;
-
-    @MockitoBean
-    private CoursePostService coursePostService;
-
-    @MockitoBean
-    private FolderService folderService;
-
-    @MockitoBean
-    private MaterialFileService materialFileService;
-
-    @MockitoBean
-    private MaterialLinkService materialLinkService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UUID userId;
     private UserDto userDto;

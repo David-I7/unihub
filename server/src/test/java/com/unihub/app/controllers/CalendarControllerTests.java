@@ -14,24 +14,15 @@ import org.openapitools.jackson.nullable.JsonNullable;
 import com.unihub.app.entities.community.content.EventLocation;
 import com.unihub.app.entities.community.content.EventType;
 import com.unihub.app.entities.community.resources.StudyYearName;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.community.content.CalendarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
@@ -50,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class CalendarControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/calendar";
@@ -60,9 +50,6 @@ public class CalendarControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private CalendarService calendarService;
 
     private UUID userId;
     private UserDto userDto;

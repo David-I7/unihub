@@ -72,21 +72,17 @@ export interface PermissionCheckContext {
  */
 export function checkPermission(
   permission: string,
-  context: PermissionCheckContext,
+  context?: PermissionCheckContext | null,
 ): boolean {
-  const { globalPermissions = [], callerMembership } = context;
+  if (!permission || !context) return false;
 
   // 1. Check global role permissions from getProfile
-  if (globalPermissions && globalPermissions.includes(permission)) {
+  if (context.globalPermissions?.includes(permission)) {
     return true;
   }
 
   // 2. Check Community permission from callerMembership
-  if (
-    callerMembership &&
-    callerMembership.permissions &&
-    callerMembership.permissions.includes(permission)
-  ) {
+  if (context.callerMembership?.permissions?.includes(permission)) {
     return true;
   }
 

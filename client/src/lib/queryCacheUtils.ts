@@ -10,6 +10,13 @@ export interface OptimisticRollbackContext<TDetail = unknown, TList = unknown> {
   previousQueries: [QueryKey, TList | undefined][];
 }
 
+function matchesItem<T extends { id: string | number }>(
+  item: T,
+  id: string | number | ((item: T) => boolean),
+): boolean {
+  return typeof id === "function" ? id(item) : item.id === id;
+}
+
 /**
  * Restores query snapshots recorded in an OptimisticRollbackContext.
  */
@@ -24,8 +31,10 @@ export function rollbackOptimisticContext(
     queryClient.setQueryData(key, data);
   }
 
-  for (const [key, data] of context.previousQueries) {
-    queryClient.setQueryData(key, data);
+  if (context.previousQueries) {
+    for (const [key, data] of context.previousQueries) {
+      queryClient.setQueryData(key, data);
+    }
   }
 }
 
@@ -46,12 +55,9 @@ export function updateInfiniteQueryItem<T extends { id: string | number }>(
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          content: page.content.map((item) => {
-            if (typeof id === "function") {
-              return id(item) ? patchFn(item) : item;
-            }
-            return item.id === id ? patchFn(item) : item;
-          }),
+          content: page.content.map((item) =>
+            matchesItem(item, id) ? patchFn(item) : item,
+          ),
         })),
       };
     },
@@ -74,12 +80,7 @@ export function removeInfiniteQueryItem<T extends { id: string | number }>(
         ...old,
         pages: old.pages.map((page) => ({
           ...page,
-          content: page.content.filter((item) => {
-            if (typeof id === "function") {
-              return id(item) ? false : true;
-            }
-            return item.id === id ? false : true;
-          }),
+          content: page.content.filter((item) => !matchesItem(item, id)),
         })),
       };
     },
@@ -121,12 +122,7 @@ export function updateQueryListItem<T extends { id: string | number }>(
 ): void {
   queryClient.setQueriesData<T[]>({ queryKey }, (old) => {
     if (!old) return old;
-    return old.map((item) => {
-      if (typeof id === "function") {
-        return id(item) ? patchFn(item) : item;
-      }
-      return item.id === id ? patchFn(item) : item;
-    });
+    return old.map((item) => (matchesItem(item, id) ? patchFn(item) : item));
   });
 }
 
@@ -137,12 +133,7 @@ export function removeQueryListItem<T extends { id: string | number }>(
 ): void {
   queryClient.setQueriesData<T[]>({ queryKey }, (old) => {
     if (!old) return old;
-    return old.filter((item) => {
-      if (typeof id === "function") {
-        return id(item) ? false : true;
-      }
-      return item.id === id ? false : true;
-    });
+    return old.filter((item) => !matchesItem(item, id));
   });
 }
 

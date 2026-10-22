@@ -1,6 +1,5 @@
 package com.unihub.app.entities.authentication;
 
-import com.unihub.app.entities.authorization.Role;
 import jakarta.persistence.*;
 import lombok.*;
 

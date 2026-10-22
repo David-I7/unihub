@@ -1,39 +1,20 @@
 package com.unihub.app.security;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.config.SessionProperties;
-import com.unihub.app.controllers.authentication.AuthController;
 import com.unihub.app.entities.authentication.AuthProvider;
 import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
 import com.unihub.app.entities.authorization.Role;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.services.JwtService;
-import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.RoleService;
-import com.unihub.app.utils.ProblemDetailUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -51,7 +32,6 @@ import static org.mockito.Mockito.when;
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class OAuth2AuthenticationSuccessHandlerTests extends BaseIntegrationTest {
 
     private static final String CLIENT_ORIGIN = "http://localhost:5173";

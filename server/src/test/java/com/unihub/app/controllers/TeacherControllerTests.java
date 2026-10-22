@@ -4,25 +4,19 @@ import com.unihub.app.BaseIntegrationTest;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.dto.community.OwnerDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.response.TeacherDetailResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherMetricRatingDto;
-import com.unihub.app.dto.community.resources.response.TeacherRatingResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.resources.TeacherService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -39,7 +33,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
 public class TeacherControllerTests extends BaseIntegrationTest {
 
     @Autowired
@@ -47,12 +40,6 @@ public class TeacherControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @MockitoBean
-    private TeacherService teacherService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UserDto userDto;
 
