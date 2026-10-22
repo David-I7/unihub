@@ -11,17 +11,13 @@ import com.unihub.app.dto.community.resources.request.UpdateTeacherRatingRequest
 import com.unihub.app.dto.community.resources.response.TeacherRatingResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherRatingValueResponseDto;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
-import com.unihub.app.services.community.resources.TeacherRatingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
@@ -37,19 +33,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@AutoConfigureMockMvc
 public class TeacherRatingControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private TeacherRatingService teacherRatingService;
-
-    @MockitoBean
-    private AuthorizationService authorizationService;
 
     private UserDto userDto;
 

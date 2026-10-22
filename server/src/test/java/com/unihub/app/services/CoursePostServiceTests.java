@@ -1,6 +1,4 @@
 package com.unihub.app.services;
-
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;

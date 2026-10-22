@@ -8,16 +8,13 @@ import com.unihub.app.dto.community.content.response.NotificationResponseDto;
 import com.unihub.app.entities.community.content.NotificationCategory;
 import com.unihub.app.entities.community.content.NotificationType;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.community.content.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.OffsetDateTime;
@@ -32,16 +29,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@AutoConfigureMockMvc
 public class NotificationControllerTests extends BaseIntegrationTest {
 
     private static final String BASE_URL = "/api/v1/notifications";
 
     @Autowired
     private MockMvc mockMvc;
-
-    @MockitoBean
-    private NotificationService notificationService;
 
     private UUID userId;
     private UserDto userDto;

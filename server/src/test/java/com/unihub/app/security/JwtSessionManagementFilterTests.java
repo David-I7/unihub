@@ -1,31 +1,13 @@
 package com.unihub.app.security;
 
-import com.unihub.app.config.AppConfig;
-import com.unihub.app.config.SecurityConfig;
-import com.unihub.app.controllers.authentication.AuthController;
 import com.unihub.app.dto.UserDto;
-import com.unihub.app.config.SessionProperties;
-import com.unihub.app.mappers.ObjectErrorMapper;
-import com.unihub.app.mappers.UserMapper;
-import com.unihub.app.repositories.authentication.SessionRepository;
-import com.unihub.app.repositories.authentication.UserIdentityRepository;
-import com.unihub.app.repositories.authentication.UserRepository;
-import com.unihub.app.repositories.authorization.PermissionRepository;
-import com.unihub.app.repositories.authorization.RoleRepository;
-import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
-import com.unihub.app.services.JwtService;
 import com.unihub.app.services.authentication.SessionService;
-import com.unihub.app.services.authentication.UserIdentityService;
-import com.unihub.app.services.authentication.UserService;
-import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.ProblemDetailUtil;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -43,7 +25,6 @@ import static org.mockito.Mockito.*;
 
 import com.unihub.app.BaseIntegrationTest;
 
-@AutoConfigureMockMvc
 public class JwtSessionManagementFilterTests extends BaseIntegrationTest {
 
     @Autowired
