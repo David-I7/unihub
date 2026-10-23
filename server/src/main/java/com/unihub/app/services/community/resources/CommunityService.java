@@ -22,13 +22,13 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -50,7 +50,6 @@ public class CommunityService {
     private final UserRepository userRepository;
     private final RoleService roleService;
     private final UserMapper userMapper;
-    private final AuthorizationService authorizationService;
     private final CommunityResourceMapper communityMapper;
     private final PageMapper pageMapper;
     private final StudyYearService studyYearService;
@@ -68,7 +67,7 @@ public class CommunityService {
 
         if (Boolean.TRUE.equals(joined)) {
             if (caller == null) {
-                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required to filter by joined communities");
+                throw new AccessDeniedException("Authentication required to filter by joined communities");
             }
             joinedUserId = caller.id();
 
@@ -220,7 +219,13 @@ public class CommunityService {
         }
 
         if (dto.verified().isPresent()) {
-            if (authorizationService.hasGlobalPermission(PermissionType.VERIFY_COMMUNITY)) {
+            boolean canVerify = userRepository.findById(userId)
+                    .map(User::getRoleId)
+                    .map(roleService::getRoleById)
+                    .map(role -> RoleType.valueOf(role.getName()))
+                    .map(roleType -> roleService.getPermissionNamesByRoleType(roleType).contains(PermissionType.VERIFY_COMMUNITY.getValue()))
+                    .orElse(false);
+            if (canVerify) {
                 community.setVerified(dto.verified().get());
             } else {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only platform administrators can verify communities");

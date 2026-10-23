@@ -48,7 +48,7 @@ public class MaterialControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+
     }
 
     @Test
@@ -123,5 +123,16 @@ public class MaterialControllerTests extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/materials/" + materialId))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/materials/{materialId} returns 403 when user not authorized")
+    public void testDeleteMaterial_Forbidden() throws Exception {
+        UUID materialId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"))
+                .when(resourceService).deleteMaterial(eq(materialId), any(UserDto.class));
+
+        mockMvc.perform(delete("/api/v1/materials/" + materialId))
+                .andExpect(status().isForbidden());
     }
 }

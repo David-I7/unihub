@@ -19,7 +19,8 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.content.FolderRepository;
 import com.unihub.app.repositories.community.content.ResourceRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommunityAccessHelper;
+import com.unihub.app.security.policies.FolderPolicy;
 import com.unihub.app.services.community.content.FolderService;
 import com.unihub.app.services.storage.FileStorageService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -40,9 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class FolderServiceTests {
@@ -63,7 +63,10 @@ public class FolderServiceTests {
     private FileStorageService fileStorageService;
 
     @Mock
-    private AuthorizationService authorizationService;
+    private CommunityAccessHelper communityAccessHelper;
+
+    @Mock
+    private FolderPolicy folderPolicy;
 
     @Mock
     private com.unihub.app.mappers.UserMapper userMapper;
@@ -129,7 +132,7 @@ public class FolderServiceTests {
     }
 
     @Test
-    @DisplayName("Owner can update folder name")
+    @DisplayName("Update folder name")
     public void testUpdateFolder_Success() {
         Folder folder = Folder.builder()
                 .id(UUID.randomUUID())
@@ -148,11 +151,12 @@ public class FolderServiceTests {
 
         FolderSummaryDto result = folderService.updateFolder(folder.getId(), ownerDto, requestDto);
         assertEquals("New Name", result.name());
+        verify(folderPolicy).check(ownerDto, folder, PermissionType.UPDATE_FOLDER);
     }
 
     @Test
-    @DisplayName("Non-owner cannot update folder (throws 403 Forbidden)")
-    public void testUpdateFolder_Forbidden() {
+    @DisplayName("Update folder throws AccessDeniedException when policy denies")
+    public void testUpdateFolder_AccessDenied() {
         Folder folder = Folder.builder()
                 .id(UUID.randomUUID())
                 .name("Old Name")
@@ -160,15 +164,36 @@ public class FolderServiceTests {
                 .owner(owner)
                 .build();
 
-        UserDto otherUser = new UserDto(UUID.randomUUID(), "other@test.com", "other", true, RoleType.USER);
         UpdateFolderRequestDto requestDto = new UpdateFolderRequestDto("New Name", null, null);
 
         when(folderRepository.findByIdWithCourseAndCommunity(folder.getId()))
                 .thenReturn(Optional.of(folder));
+        doThrow(new AccessDeniedException("Access denied")).when(folderPolicy).check(ownerDto, folder, PermissionType.UPDATE_FOLDER);
 
-        assertThrows(ResponseStatusException.class, () ->
-                folderService.updateFolder(folder.getId(), otherUser, requestDto)
+        assertThrows(AccessDeniedException.class, () ->
+                folderService.updateFolder(folder.getId(), ownerDto, requestDto)
         );
+        verify(folderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Delete folder throws AccessDeniedException when policy denies")
+    public void testDeleteFolder_AccessDenied() {
+        Folder folder = Folder.builder()
+                .id(UUID.randomUUID())
+                .name("Folder")
+                .course(course)
+                .owner(owner)
+                .build();
+
+        when(folderRepository.findByIdWithCourseAndCommunity(folder.getId()))
+                .thenReturn(Optional.of(folder));
+        doThrow(new AccessDeniedException("Access denied")).when(folderPolicy).check(ownerDto, folder, PermissionType.DELETE_FOLDER);
+
+        assertThrows(AccessDeniedException.class, () ->
+                folderService.deleteFolder(folder.getId(), ownerDto)
+        );
+        verify(folderRepository, never()).delete(any());
     }
 
     @Test
@@ -183,13 +208,14 @@ public class FolderServiceTests {
 
         when(folderRepository.findByIdWithCourseAndCommunity(folder.getId()))
                 .thenReturn(Optional.of(folder));
-        when(authorizationService.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
+        when(communityAccessHelper.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
                 .thenReturn(false);
         when(folderRepository.existsByParentFolderId(folder.getId())).thenReturn(false);
         when(resourceRepository.existsByFolderId(folder.getId())).thenReturn(false);
 
         folderService.deleteFolder(folder.getId(), ownerDto);
 
+        verify(folderPolicy).check(ownerDto, folder, PermissionType.DELETE_FOLDER);
         verify(folderRepository).delete(folder);
     }
 
@@ -205,7 +231,7 @@ public class FolderServiceTests {
 
         when(folderRepository.findByIdWithCourseAndCommunity(folder.getId()))
                 .thenReturn(Optional.of(folder));
-        when(authorizationService.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
+        when(communityAccessHelper.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
                 .thenReturn(false);
         when(folderRepository.existsByParentFolderId(folder.getId())).thenReturn(true);
 
@@ -231,7 +257,7 @@ public class FolderServiceTests {
 
         when(folderRepository.findByIdWithCourseAndCommunity(folder.getId()))
                 .thenReturn(Optional.of(folder));
-        when(authorizationService.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
+        when(communityAccessHelper.hasCommunityPermission("cs-community", owner.getId(), PermissionType.MODERATE_FOLDER))
                 .thenReturn(true);
         when(resourceRepository.findByFolderId(folder.getId()))
                 .thenReturn(List.of(file));
@@ -250,13 +276,10 @@ public class FolderServiceTests {
         UUID rootFolderId = UUID.randomUUID();
         UUID childFolderId = UUID.randomUUID();
 
-        List<BreadcrumbDto> expectedBreadcrumbs = List.of(
-                BreadcrumbDto.builder().id(rootFolderId).name("Root Folder").build(),
-                BreadcrumbDto.builder().id(childFolderId).name("Child Folder").build()
-        );
+        Folder rootFolder = Folder.builder().id(rootFolderId).name("Root Folder").build();
+        Folder childFolder = Folder.builder().id(childFolderId).name("Child Folder").parentFolder(rootFolder).build();
 
-        when(folderRepository.existsById(childFolderId)).thenReturn(true);
-        when(folderRepository.findBreadcrumbsById(childFolderId)).thenReturn(expectedBreadcrumbs);
+        when(folderRepository.findById(childFolderId)).thenReturn(Optional.of(childFolder));
 
         List<BreadcrumbDto> breadcrumbs = folderService.getBreadcrumbs(childFolderId);
 
@@ -269,7 +292,7 @@ public class FolderServiceTests {
     @DisplayName("getBreadcrumbs throws 404 when folder not found")
     public void testGetBreadcrumbs_NotFound() {
         UUID nonExistentId = UUID.randomUUID();
-        when(folderRepository.existsById(nonExistentId)).thenReturn(false);
+        when(folderRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
         assertThrows(ResponseStatusException.class, () -> folderService.getBreadcrumbs(nonExistentId));
     }

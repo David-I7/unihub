@@ -25,7 +25,7 @@ public class StudyYearController {
     private final StudyYearService studyYearService;
 
     @PostMapping
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:studyYear')")
+    @PreAuthorize("hasPermission(#communitySlug, 'STUDY_YEAR', 'CREATE')")
     public ResponseEntity<StudyYearResponseDto> createStudyYear(
             @PathVariable String communitySlug,
             @Valid @RequestBody CreateStudyYearRequestDto requestDto
@@ -35,7 +35,7 @@ public class StudyYearController {
     }
 
     @DeleteMapping("/{studyYearName}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:studyYear')")
+    @PreAuthorize("hasPermission(#communitySlug, 'STUDY_YEAR', 'DELETE')")
     public ResponseEntity<Void> deleteStudyYear(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName

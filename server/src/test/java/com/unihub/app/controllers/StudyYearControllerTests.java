@@ -55,9 +55,9 @@ public class StudyYearControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
-        when(authorizationService.hasGlobalPermission(any())).thenReturn(true);
-        when(authorizationService.hasCommunityPermission(any(), any(), any())).thenReturn(true);
+
+
+
     }
 
     @Test

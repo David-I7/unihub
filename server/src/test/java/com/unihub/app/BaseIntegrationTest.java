@@ -7,14 +7,18 @@ import com.unihub.app.repositories.authorization.PermissionRepository;
 import com.unihub.app.repositories.authorization.RoleRepository;
 import com.unihub.app.repositories.community.content.*;
 import com.unihub.app.repositories.community.resources.*;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.UnifiedPermissionEvaluator;
 import com.unihub.app.services.community.content.*;
 import com.unihub.app.services.community.resources.*;
 import com.unihub.app.services.email.EmailService;
 import com.unihub.app.services.storage.FileSystemFileStorageService;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -104,7 +108,7 @@ public abstract class BaseIntegrationTest {
     protected EmailService emailService;
 
     @MockitoBean
-    protected AuthorizationService authorizationService;
+    protected UnifiedPermissionEvaluator permissionEvaluator;
 
     @MockitoBean
     protected CalendarService calendarService;
@@ -159,4 +163,10 @@ public abstract class BaseIntegrationTest {
 
     @MockitoBean
     protected TeacherRatingService teacherRatingService;
+
+    @BeforeEach
+    public void setupBaseSecurity() {
+        when(permissionEvaluator.hasPermission(any(), any(), any())).thenReturn(true);
+        when(permissionEvaluator.hasPermission(any(), any(), any(), any())).thenReturn(true);
+    }
 }

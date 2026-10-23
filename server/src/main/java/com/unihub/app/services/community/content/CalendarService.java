@@ -31,7 +31,7 @@ import com.unihub.app.repositories.community.content.EventRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommunityAccessHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -49,7 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -63,7 +62,7 @@ public class CalendarService {
     private final CommunityRepository communityRepository;
     private final CommunityMemberRepository communityMemberRepository;
     private final CourseRepository courseRepository;
-    private final AuthorizationService authorizationService;
+    private final CommunityAccessHelper helper;
     private final UserMapper userMapper;
     private final CommunityContentMapper contentMapper;
     private final PageMapper pageMapper;
@@ -141,7 +140,7 @@ public class CalendarService {
         Community community = communityRepository.findBySlug(requestDto.communitySlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        if (!authorizationService.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
+        if (!helper.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create event");
         }
 
@@ -164,7 +163,7 @@ public class CalendarService {
         Community community = communityRepository.findBySlug(requestDto.communitySlug())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-        if (!authorizationService.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
+        if (!helper.hasCommunityPermission(requestDto.communitySlug(), user.id(), PermissionType.CREATE_EVENT)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create event");
         }
 
@@ -299,7 +298,7 @@ public class CalendarService {
         boolean isOwner = event.getOwner() != null && event.getOwner().getId().equals(user.id());
 
         if (!isOwner) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_EVENT)) {
+            if (!helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_EVENT)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate event");
             }
         }
@@ -332,7 +331,7 @@ public class CalendarService {
         boolean isOwner = event.getOwner() != null && event.getOwner().getId().equals(user.id());
 
         if (!isOwner) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_EVENT)) {
+            if (!helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_EVENT)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate event");
             }
         }

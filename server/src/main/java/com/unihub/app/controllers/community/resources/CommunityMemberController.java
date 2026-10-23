@@ -45,7 +45,7 @@ public class CommunityMemberController {
     }
 
     @PostMapping("/members")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:member')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'CREATE_MEMBER')")
     public ResponseEntity<Void> addMember(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto caller,
@@ -65,7 +65,7 @@ public class CommunityMemberController {
     }
 
     @PatchMapping("/members/{username}/role")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:memberRole')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'UPDATE_ROLE')")
     public ResponseEntity<CommunityMemberResponseDto> updateMemberRole(
             @PathVariable String communitySlug,
             @PathVariable String username,
@@ -76,7 +76,7 @@ public class CommunityMemberController {
     }
 
     @DeleteMapping("/members/{username}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:member')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'DELETE_MEMBER')")
     public ResponseEntity<Void> removeMember(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto caller,
@@ -87,7 +87,7 @@ public class CommunityMemberController {
     }
 
     @PostMapping("/join-codes")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:joinCode')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'CREATE_JOIN_CODE')")
     public ResponseEntity<CommunityJoinCodeResponseDto> createJoinCode(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto caller,
@@ -98,7 +98,7 @@ public class CommunityMemberController {
     }
 
     @GetMapping("/join-codes")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:joinCode')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'CREATE_JOIN_CODE')")
     public ResponseEntity<List<CommunityJoinCodeResponseDto>> getJoinCodes(
             @PathVariable String communitySlug
     ) {
@@ -107,7 +107,7 @@ public class CommunityMemberController {
     }
 
     @PatchMapping("/join-codes/{codeId}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:joinCode')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'UPDATE_JOIN_CODE')")
     public ResponseEntity<CommunityJoinCodeResponseDto> updateJoinCode(
             @PathVariable String communitySlug,
             @PathVariable UUID codeId,
@@ -118,7 +118,7 @@ public class CommunityMemberController {
     }
 
     @DeleteMapping("/join-codes/{codeId}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:joinCode')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY_MEMBER', 'DELETE_JOIN_CODE')")
     public ResponseEntity<Void> deleteJoinCode(
             @PathVariable String communitySlug,
             @PathVariable UUID codeId

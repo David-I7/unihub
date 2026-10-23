@@ -25,7 +25,7 @@ import com.unihub.app.repositories.community.content.EventRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommunityAccessHelper;
 import com.unihub.app.services.community.content.CalendarService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,7 +73,7 @@ public class CalendarServiceTests {
     private CourseRepository courseRepository;
 
     @Mock
-    private AuthorizationService authorizationService;
+    private CommunityAccessHelper helper;
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
@@ -278,7 +278,7 @@ public class CalendarServiceTests {
                 .build();
 
         when(communityRepository.findBySlug(slug)).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission(slug, userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
+        when(helper.hasCommunityPermission(slug, userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(course));
         when(userMapper.toEntity(userDto)).thenReturn(owner);
         when(eventRepository.save(any(Event.class))).thenAnswer(invocation -> {
@@ -320,7 +320,7 @@ public class CalendarServiceTests {
                 .build();
 
         when(communityRepository.findBySlug("comm-1")).thenReturn(Optional.of(community1));
-        when(authorizationService.hasCommunityPermission("comm-1", userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
+        when(helper.hasCommunityPermission("comm-1", userId, com.unihub.app.domain.PermissionType.CREATE_EVENT)).thenReturn(true);
         when(courseRepository.findByIdWithStudyYearAndCommunity(1L)).thenReturn(Optional.of(courseFromComm2));
 
         ResponseStatusException ex = assertThrows(
@@ -584,7 +584,7 @@ public class CalendarServiceTests {
         );
 
         when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+        when(helper.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
                 .thenReturn(true);
         when(userMapper.toEntity(userDto)).thenReturn(owner);
         when(courseRepository.findAllByIdInWithStudyYearAndCommunity(Set.of(course.getId())))
@@ -651,7 +651,7 @@ public class CalendarServiceTests {
         );
 
         when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+        when(helper.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
                 .thenReturn(true);
         when(userMapper.toEntity(userDto)).thenReturn(owner);
         when(courseRepository.findAllByIdInWithStudyYearAndCommunity(Set.of(course.getId())))
@@ -695,7 +695,7 @@ public class CalendarServiceTests {
         );
 
         when(communityRepository.findBySlug(communitySlug)).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
+        when(helper.hasCommunityPermission(communitySlug, userDto.id(), com.unihub.app.domain.PermissionType.CREATE_EVENT))
                 .thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->

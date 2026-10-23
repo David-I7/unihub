@@ -17,7 +17,7 @@ import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+
 import com.unihub.app.services.community.content.CoursePostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,7 +58,7 @@ public class CoursePostServiceTests {
     private PostLikeRepository postLikeRepository;
 
     @Mock
-    private AuthorizationService authorizationService;
+
 
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();

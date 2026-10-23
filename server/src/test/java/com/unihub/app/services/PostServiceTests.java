@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
@@ -15,7 +16,7 @@ import com.unihub.app.entities.community.content.PostLikeId;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.*;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.PostPolicy;
 import com.unihub.app.services.community.content.PostService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,11 +25,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.OffsetDateTime;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,9 +50,6 @@ public class PostServiceTests {
     @Mock
     private PostLikeRepository postLikeRepository;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
@@ -62,6 +58,9 @@ public class PostServiceTests {
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private PostPolicy postPolicy;
 
     @InjectMocks
     private PostService postService;
@@ -76,12 +75,13 @@ public class PostServiceTests {
 
         Post post = Post.builder()
                 .id(postId)
-                .title("Post Title")
-                .description("Post Desc")
+                .title("Title")
+                .description("Desc")
                 .channel(CommunicationChannel.COMMUNITY)
+                .likesCount(10)
+                .commentsCount(5)
+                .pinned(false)
                 .owner(owner)
-                .likesCount(3)
-                .commentsCount(0)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .build();
@@ -93,13 +93,19 @@ public class PostServiceTests {
 
         assertNotNull(result);
         assertEquals(postId, result.id());
-        assertEquals("Post Title", result.title());
+        assertEquals("Title", result.title());
+        assertEquals("Desc", result.description());
+        assertEquals(10, result.likesCount());
+        assertEquals(5, result.commentsCount());
+        assertFalse(result.pinned());
         assertTrue(result.isLiked());
+        assertNotNull(result.owner());
+        assertEquals("david", result.owner().username());
     }
 
     @Test
-    @DisplayName("updatePost successfully updates title and description when caller is author and has permission")
-    public void testUpdatePost_Success() {
+    @DisplayName("updatePost updates title and description")
+    public void testUpdatePost_AuthorSuccess() {
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
@@ -118,8 +124,6 @@ public class PostServiceTests {
         UpdatePostRequestDto dto = new UpdatePostRequestDto("New Title", "New Desc");
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.UPDATE_POST)).thenReturn(true);
         when(postRepository.save(any(Post.class))).thenAnswer(i -> i.getArgument(0));
 
         PostResponseDto result = postService.updatePost(postId, userDto, dto);
@@ -127,87 +131,59 @@ public class PostServiceTests {
         assertNotNull(result);
         assertEquals("New Title", result.title());
         assertEquals("New Desc", result.description());
+        verify(postPolicy).check(userDto, post, PermissionType.UPDATE_POST);
         verify(postRepository).save(post);
     }
 
     @Test
-    @DisplayName("updatePost throws 403 when caller is not author")
-    public void testUpdatePost_ForbiddenNotAuthor() {
+    @DisplayName("updatePost throws AccessDeniedException when policy denies")
+    public void testUpdatePost_AccessDenied() {
         UUID postId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID callerId = UUID.randomUUID();
-        UserDto caller = new UserDto(callerId, "caller@example.com", "caller", true, RoleType.USER);
-        User owner = User.builder().id(authorId).username("author").build();
-
-        Post post = Post.builder().id(postId).owner(owner).build();
-        UpdatePostRequestDto dto = new UpdatePostRequestDto("New Title", "New Desc");
+        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", true, RoleType.USER);
+        Post post = Post.builder().id(postId).build();
+        UpdatePostRequestDto dto = new UpdatePostRequestDto("New", "Desc");
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        doThrow(new AccessDeniedException("Access denied")).when(postPolicy).check(userDto, post, PermissionType.UPDATE_POST);
 
-        assertThrows(ResponseStatusException.class, () -> postService.updatePost(postId, caller, dto));
+        assertThrows(AccessDeniedException.class, () -> postService.updatePost(postId, userDto, dto));
         verify(postRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("deletePost deletes post when caller is author with DELETE_POST permission")
-    public void testDeletePost_AuthorSuccess() {
+    @DisplayName("deletePost deletes post")
+    public void testDeletePost_Success() {
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        UserDto caller = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
         User owner = User.builder().id(userId).username("david").build();
 
         Post post = Post.builder().id(postId).owner(owner).build();
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.DELETE_POST)).thenReturn(true);
 
-        postService.deletePost(postId, caller);
+        postService.deletePost(postId, userDto);
 
+        verify(postPolicy).check(userDto, post, PermissionType.DELETE_POST);
         verify(postRepository).delete(post);
     }
 
     @Test
-    @DisplayName("deletePost deletes post when caller is moderator with MODERATE_POST permission")
-    public void testDeletePost_ModeratorSuccess() {
+    @DisplayName("deletePost throws AccessDeniedException when policy denies")
+    public void testDeletePost_AccessDenied() {
         UUID postId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID moderatorId = UUID.randomUUID();
-        UserDto moderator = new UserDto(moderatorId, "mod@example.com", "mod", true, RoleType.USER);
-        User owner = User.builder().id(authorId).username("author").build();
-
-        Post post = Post.builder().id(postId).owner(owner).build();
+        UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", true, RoleType.USER);
+        Post post = Post.builder().id(postId).build();
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", moderatorId, PermissionType.MODERATE_POST)).thenReturn(true);
+        doThrow(new AccessDeniedException("Access denied")).when(postPolicy).check(userDto, post, PermissionType.DELETE_POST);
 
-        postService.deletePost(postId, moderator);
-
-        verify(postRepository).delete(post);
-    }
-
-    @Test
-    @DisplayName("deletePost throws 403 when non-author lacks MODERATE_POST permission")
-    public void testDeletePost_ForbiddenNonAuthor() {
-        UUID postId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID callerId = UUID.randomUUID();
-        UserDto caller = new UserDto(callerId, "caller@example.com", "caller", true, RoleType.USER);
-        User owner = User.builder().id(authorId).username("author").build();
-
-        Post post = Post.builder().id(postId).owner(owner).build();
-
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", callerId, PermissionType.MODERATE_POST)).thenReturn(false);
-
-        assertThrows(ResponseStatusException.class, () -> postService.deletePost(postId, caller));
+        assertThrows(AccessDeniedException.class, () -> postService.deletePost(postId, userDto));
         verify(postRepository, never()).delete(any());
     }
 
     @Test
-    @DisplayName("pinPost pins post when caller has PIN_POST permission")
+    @DisplayName("pinPost pins post")
     public void testPinPost_Success() {
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -224,14 +200,13 @@ public class PostServiceTests {
         PinPostRequestDto dto = new PinPostRequestDto(true);
 
         when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.PIN_POST)).thenReturn(true);
         when(postRepository.save(any(Post.class))).thenAnswer(i -> i.getArgument(0));
 
         PostResponseDto result = postService.pinPost(postId, caller, dto);
 
         assertNotNull(result);
         assertTrue(result.pinned());
+        verify(postPolicy).check(caller, post, PermissionType.PIN_POST);
         verify(postRepository).save(post);
     }
 
@@ -244,8 +219,6 @@ public class PostServiceTests {
         Post post = Post.builder().id(postId).build();
 
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.LIKE_POST)).thenReturn(true);
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(false);
 
         postService.likePost(postId, caller);
@@ -262,8 +235,6 @@ public class PostServiceTests {
         UserDto caller = new UserDto(userId, "user@example.com", "user", true, RoleType.USER);
 
         when(postRepository.existsById(postId)).thenReturn(true);
-        when(communityPostRepository.findCommunitySlugByPostId(postId)).thenReturn(Optional.of("fmi-info"));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.LIKE_POST)).thenReturn(true);
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
         postService.unlikePost(postId, caller);

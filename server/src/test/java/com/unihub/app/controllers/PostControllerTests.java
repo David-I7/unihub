@@ -55,7 +55,7 @@ public class PostControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+
     }
 
     @Test
@@ -118,13 +118,37 @@ public class PostControllerTests extends BaseIntegrationTest {
     @DisplayName("DELETE /api/v1/posts/{postId} deletes post")
     public void testDeletePost_Success() throws Exception {
         UUID postId = UUID.randomUUID();
-        doNothing().when(postService).deletePost(eq(postId), any());
+        doNothing().when(postService).deletePost(eq(postId), any(UserDto.class));
 
         mockMvc.perform(delete(BASE_URL + "/" + postId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
-        verify(postService).deletePost(eq(postId), any());
+        verify(postService).deletePost(eq(postId), any(UserDto.class));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/posts/{postId} returns 403 when user not authorized")
+    public void testDeletePost_Forbidden() throws Exception {
+        UUID postId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"))
+                .when(postService).deletePost(eq(postId), any(UserDto.class));
+
+        mockMvc.perform(delete(BASE_URL + "/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/posts/{postId} returns 404 when post not found")
+    public void testDeletePost_NotFound() throws Exception {
+        UUID postId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND))
+                .when(postService).deletePost(eq(postId), any(UserDto.class));
+
+        mockMvc.perform(delete(BASE_URL + "/" + postId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 
     @Test

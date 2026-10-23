@@ -20,7 +20,7 @@ import com.unihub.app.repositories.community.resources.CommunityJoinCodeReposito
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
+
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import org.junit.jupiter.api.DisplayName;

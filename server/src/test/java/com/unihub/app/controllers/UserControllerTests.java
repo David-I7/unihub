@@ -238,7 +238,7 @@ public class UserControllerTests extends BaseIntegrationTest {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(authorizationService.hasGlobalPermission(com.unihub.app.domain.PermissionType.UPDATE_USER_ROLE)).thenReturn(true);
+
         when(userService.updateUserRole(eq("target_user"), any(UpdateUserRoleRequestDto.class))).thenReturn(updatedProfile);
 
         mockMvc.perform(patch(BASE_URL + "/target_user/role")
@@ -261,7 +261,7 @@ public class UserControllerTests extends BaseIntegrationTest {
     public void testAdminDeleteUser_Success() throws Exception {
         AdminDeleteUserRequestDto requestDto = new AdminDeleteUserRequestDto("Violation of terms");
 
-        when(authorizationService.hasGlobalPermission(com.unihub.app.domain.PermissionType.DELETE_USER)).thenReturn(true);
+
         doNothing().when(userService).adminDeleteUser(eq("target_user"), eq("Violation of terms"));
 
         mockMvc.perform(delete(BASE_URL + "/target_user")

@@ -47,7 +47,7 @@ public class CommentControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+
     }
 
     @Test
@@ -65,7 +65,7 @@ public class CommentControllerTests extends BaseIntegrationTest {
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        when(commentService.updateComment(eq(commentId), any(), any(UpdateCommentRequestDto.class))).thenReturn(responseDto);
+        when(commentService.updateComment(eq(commentId), any(UserDto.class), any(UpdateCommentRequestDto.class))).thenReturn(responseDto);
 
         mockMvc.perform(patch(BASE_URL + "/" + commentId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,12 +79,24 @@ public class CommentControllerTests extends BaseIntegrationTest {
     @DisplayName("DELETE /api/v1/comments/{commentId} deletes comment")
     public void testDeleteComment_Success() throws Exception {
         UUID commentId = UUID.randomUUID();
-        doNothing().when(commentService).deleteComment(eq(commentId), any());
+        doNothing().when(commentService).deleteComment(eq(commentId), any(UserDto.class));
 
         mockMvc.perform(delete(BASE_URL + "/" + commentId)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
 
-        verify(commentService).deleteComment(eq(commentId), any());
+        verify(commentService).deleteComment(eq(commentId), any(UserDto.class));
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/comments/{commentId} returns 403 when user not authorized")
+    public void testDeleteComment_Forbidden() throws Exception {
+        UUID commentId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"))
+                .when(commentService).deleteComment(eq(commentId), any(UserDto.class));
+
+        mockMvc.perform(delete(BASE_URL + "/" + commentId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
     }
 }

@@ -55,7 +55,7 @@ public class CourseController {
     private final MaterialLinkService materialLinkService;
 
     @PostMapping
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'CREATE')")
     public ResponseEntity<CourseResponseDto> createCourse(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -66,7 +66,7 @@ public class CourseController {
     }
 
     @PatchMapping("/{courseSlug}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'UPDATE')")
     public ResponseEntity<CourseResponseDto> updateCourse(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -78,7 +78,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{courseSlug}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'DELETE')")
     public ResponseEntity<Void> deleteCourse(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -89,7 +89,7 @@ public class CourseController {
     }
 
     @PatchMapping("/{courseSlug}/archive")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'archive:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'ARCHIVE')")
     public ResponseEntity<CourseResponseDto> archiveCourse(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -101,7 +101,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/teachers/{teacherId}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'UPDATE')")
     public ResponseEntity<CourseHomeResponseDto> addTeacher(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -113,7 +113,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{courseSlug}/teachers/{teacherId}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:course')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'UPDATE')")
     public ResponseEntity<CourseHomeResponseDto> removeTeacher(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -146,7 +146,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/folders")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:folder')")
+    @PreAuthorize("hasPermission(#communitySlug, 'FOLDER', 'CREATE')")
     public ResponseEntity<FolderSummaryDto> createFolder(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -159,7 +159,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/materials/upload-url")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    @PreAuthorize("hasPermission(#communitySlug, 'MATERIAL', 'CREATE')")
     public ResponseEntity<PresignedUploadUrlResponseDto> requestPresignedUploadUrl(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -178,7 +178,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/materials/files")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    @PreAuthorize("hasPermission(#communitySlug, 'MATERIAL', 'CREATE')")
     public ResponseEntity<MaterialFileDto> createMaterialFile(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -191,7 +191,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/materials/links")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:material')")
+    @PreAuthorize("hasPermission(#communitySlug, 'MATERIAL', 'CREATE')")
     public ResponseEntity<MaterialLinkDto> createMaterialLink(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,
@@ -216,7 +216,7 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/posts")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:post')")
+    @PreAuthorize("hasPermission(#communitySlug, 'POST', 'CREATE')")
     public ResponseEntity<PostResponseDto> createCoursePost(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,

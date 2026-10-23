@@ -48,7 +48,7 @@ public class TeacherControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+
     }
 
     @Test
@@ -71,7 +71,7 @@ public class TeacherControllerTests extends BaseIntegrationTest {
                 .createdAt(OffsetDateTime.now())
                 .build();
 
-        when(teacherService.createTeacher(eq("fmi-info-id"), any(UserDto.class), any(CreateTeacherRequestDto.class)))
+        when(teacherService.createTeacher(eq("fmi-info-id"), any(CreateTeacherRequestDto.class)))
                 .thenReturn(responseDto);
 
         mockMvc.perform(post("/api/v1/communities/fmi-info-id/teachers")
@@ -160,6 +160,17 @@ public class TeacherControllerTests extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/teachers/" + teacherId))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/teachers/{teacherId} returns 403 when user not authorized")
+    public void testDeleteTeacher_Forbidden() throws Exception {
+        UUID teacherId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"))
+                .when(teacherService).deleteTeacher(eq(teacherId), any(UserDto.class));
+
+        mockMvc.perform(delete("/api/v1/teachers/" + teacherId))
+                .andExpect(status().isForbidden());
     }
 
     @Test

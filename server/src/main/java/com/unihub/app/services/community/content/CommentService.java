@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateCommentRequestDto;
@@ -15,7 +16,7 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommentPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -34,11 +35,11 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final PostService postService;
-    private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommentPolicy commentPolicy;
 
     public String getCommunitySlugForComment(UUID commentId) {
         Comment comment = commentRepository.findById(commentId)
@@ -61,11 +62,6 @@ public class CommentService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        String communitySlug = postService.getCommunitySlugForPost(postId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_COMMENT)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to comment on this post");
-        }
-
         User owner = userMapper.toEntity(caller);
         Comment comment = contentMapper.toCommentEntity(dto, post, owner);
         Comment savedComment = commentRepository.save(comment);
@@ -82,14 +78,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdWithOwner(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
 
-        if (!comment.getOwner().getId().equals(caller.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only edit your own comments");
-        }
-
-        String communitySlug = getCommunitySlugForComment(commentId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.UPDATE_COMMENT)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update comment");
-        }
+        commentPolicy.check(caller, comment, PermissionType.UPDATE_COMMENT);
 
         comment.setContent(dto.content());
         Comment saved = commentRepository.save(comment);
@@ -101,18 +90,7 @@ public class CommentService {
         Comment comment = commentRepository.findByIdWithOwner(commentId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
 
-        String communitySlug = getCommunitySlugForComment(commentId);
-        boolean isAuthor = comment.getOwner().getId().equals(caller.id());
-
-        if (isAuthor) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.DELETE_COMMENT)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete comment");
-            }
-        } else {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.MODERATE_COMMENT)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate comment");
-            }
-        }
+        commentPolicy.check(caller, comment, PermissionType.DELETE_COMMENT);
 
         postRepository.decrementCommentsCount(comment.getPost().getId());
         commentRepository.delete(comment);

@@ -1,11 +1,9 @@
 package com.unihub.app.services.community.content;
 
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.content.CommunicationChannel;
 import com.unihub.app.entities.community.content.CommunityPost;
@@ -39,7 +37,6 @@ public class CommunityPostService {
     private final PostRepository postRepository;
     private final CommunityPostRepository communityPostRepository;
     private final PostLikeRepository postLikeRepository;
-    private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
@@ -49,10 +46,6 @@ public class CommunityPostService {
     public PostResponseDto createCommunityPost(String slug, UserDto caller, CreatePostRequestDto dto) {
         Community community = communityRepository.findBySlug(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-
-        if (!authorizationService.hasCommunityPermission(slug, caller.id(), PermissionType.CREATE_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create post");
-        }
 
         User owner = userMapper.toEntity(caller);
         Post post = contentMapper.toPostEntity(dto, CommunicationChannel.COMMUNITY, owner);

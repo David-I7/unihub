@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -21,7 +22,7 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.RatingMetricRepository;
 import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
 import com.unihub.app.repositories.community.resources.TeacherRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.TeacherRatingPolicy;
 import com.unihub.app.services.community.resources.TeacherRatingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -45,7 +47,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -61,9 +62,6 @@ public class TeacherRatingServiceTests {
     private RatingMetricRepository ratingMetricRepository;
 
     @Mock
-    private AuthorizationService authorizationService;
-
-    @Mock
     private UserMapper userMapper;
 
     @Spy
@@ -71,6 +69,9 @@ public class TeacherRatingServiceTests {
 
     @Spy
     private PageMapper pageMapper = new PageMapper();
+
+    @Mock
+    private TeacherRatingPolicy teacherRatingPolicy;
 
     @InjectMocks
     private TeacherRatingService teacherRatingService;
@@ -159,8 +160,6 @@ public class TeacherRatingServiceTests {
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacher.getId())).thenReturn(Optional.of(teacher));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.CREATE_TEACHER_RATING))
-                .thenReturn(true);
         when(teacherRatingRepository.existsByTeacherIdAndUserId(teacher.getId(), memberUser.id())).thenReturn(false);
         when(ratingMetricRepository.findAll()).thenReturn(metrics);
         when(userMapper.toEntity(memberUser)).thenReturn(userEntity);
@@ -191,8 +190,6 @@ public class TeacherRatingServiceTests {
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacher.getId())).thenReturn(Optional.of(teacher));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.CREATE_TEACHER_RATING))
-                .thenReturn(true);
         when(teacherRatingRepository.existsByTeacherIdAndUserId(teacher.getId(), memberUser.id())).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -210,8 +207,6 @@ public class TeacherRatingServiceTests {
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacher.getId())).thenReturn(Optional.of(teacher));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.CREATE_TEACHER_RATING))
-                .thenReturn(true);
         when(teacherRatingRepository.existsByTeacherIdAndUserId(teacher.getId(), memberUser.id())).thenReturn(false);
         when(ratingMetricRepository.findAll()).thenReturn(metrics);
 
@@ -259,8 +254,6 @@ public class TeacherRatingServiceTests {
                 .build();
 
         when(teacherRatingRepository.findByIdWithTeacherAndValues(ratingId)).thenReturn(Optional.of(existingRating));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.UPDATE_TEACHER_RATING))
-                .thenReturn(true);
         when(ratingMetricRepository.findAll()).thenReturn(metrics);
         when(teacherRatingRepository.save(any(TeacherRating.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -271,35 +264,35 @@ public class TeacherRatingServiceTests {
         assertTrue(result.isAnonymous());
         assertEquals(5.0f, teacher.getAverageRating());
         assertEquals(1, teacher.getRatingsCount());
+        verify(teacherRatingPolicy).check(memberUser, existingRating, PermissionType.UPDATE_TEACHER_RATING);
         verify(teacherRepository).save(teacher);
     }
 
     @Test
-    @DisplayName("updateRating throws Forbidden when non-author attempts update")
-    public void testUpdateRating_NonAuthor_Forbidden() {
+    @DisplayName("updateRating throws AccessDeniedException when policy denies")
+    public void testUpdateRating_AccessDenied() {
         Long ratingId = 10L;
-        User otherUser = User.builder().id(UUID.randomUUID()).username("other").build();
         TeacherRating existingRating = TeacherRating.builder()
                 .id(ratingId)
                 .teacher(teacher)
-                .user(otherUser)
-                .title("Good")
+                .user(userEntity)
+                .build();
+        UpdateTeacherRatingRequestDto request = UpdateTeacherRatingRequestDto.builder()
+                .title("Updated Review")
+                .values(List.of(new RatingValueRequestDto(1, 5), new RatingValueRequestDto(2, 5)))
                 .build();
 
         when(teacherRatingRepository.findByIdWithTeacherAndValues(ratingId)).thenReturn(Optional.of(existingRating));
+        doThrow(new AccessDeniedException("Access denied")).when(teacherRatingPolicy).check(memberUser, existingRating, PermissionType.UPDATE_TEACHER_RATING);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                teacherRatingService.updateRating(teacher.getId(), ratingId, memberUser, UpdateTeacherRatingRequestDto.builder()
-                        .title("Hacked")
-                        .values(List.of(new RatingValueRequestDto(1, 5), new RatingValueRequestDto(2, 5)))
-                        .build()));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertThrows(AccessDeniedException.class, () ->
+                teacherRatingService.updateRating(teacher.getId(), ratingId, memberUser, request));
+        verify(teacherRatingRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("deleteRating removes review and recalculates teacher average rating")
-    public void testDeleteRating_Author_Success() {
+    @DisplayName("deleteRating recalculates teacher count and average")
+    public void testDeleteRating_Success() {
         Long ratingId = 10L;
         teacher.setRatingsCount(2);
         teacher.setAverageRating(4.5f);
@@ -316,11 +309,10 @@ public class TeacherRatingServiceTests {
                 .build();
 
         when(teacherRatingRepository.findByIdWithTeacherAndValues(ratingId)).thenReturn(Optional.of(existingRating));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.DELETE_TEACHER_RATING))
-                .thenReturn(true);
 
         teacherRatingService.deleteRating(teacher.getId(), ratingId, memberUser);
 
+        verify(teacherRatingPolicy).check(memberUser, existingRating, PermissionType.DELETE_TEACHER_RATING);
         verify(teacherRatingRepository).delete(existingRating);
         assertEquals(1, teacher.getRatingsCount());
         assertEquals(4.0f, teacher.getAverageRating());
@@ -328,32 +320,20 @@ public class TeacherRatingServiceTests {
     }
 
     @Test
-    @DisplayName("deleteRating by moderator succeeds with MODERATE_TEACHER_RATING permission")
-    public void testDeleteRating_Moderator_Success() {
+    @DisplayName("deleteRating throws AccessDeniedException when policy denies")
+    public void testDeleteRating_AccessDenied() {
         Long ratingId = 10L;
-        User otherUser = User.builder().id(UUID.randomUUID()).username("other").build();
-        teacher.setRatingsCount(1);
-        teacher.setAverageRating(5.0f);
-
         TeacherRating existingRating = TeacherRating.builder()
                 .id(ratingId)
                 .teacher(teacher)
-                .user(otherUser)
-                .title("Spam review")
-                .values(Set.of(
-                        TeacherRatingValue.builder().value(5).build()
-                ))
+                .user(userEntity)
                 .build();
 
         when(teacherRatingRepository.findByIdWithTeacherAndValues(ratingId)).thenReturn(Optional.of(existingRating));
-        when(authorizationService.hasCommunityPermission(community.getSlug(), memberUser.id(), PermissionType.MODERATE_TEACHER_RATING))
-                .thenReturn(true);
+        doThrow(new AccessDeniedException("Access denied")).when(teacherRatingPolicy).check(memberUser, existingRating, PermissionType.DELETE_TEACHER_RATING);
 
-        teacherRatingService.deleteRating(teacher.getId(), ratingId, memberUser);
-
-        verify(teacherRatingRepository).delete(existingRating);
-        assertEquals(0, teacher.getRatingsCount());
-        assertEquals(0.0f, teacher.getAverageRating());
-        verify(teacherRepository).save(teacher);
+        assertThrows(AccessDeniedException.class, () ->
+                teacherRatingService.deleteRating(teacher.getId(), ratingId, memberUser));
+        verify(teacherRatingRepository, never()).delete(any());
     }
 }

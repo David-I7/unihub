@@ -1,6 +1,9 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.domain.PermissionType;
+
+import com.unihub.app.domain.PermissionType;
+import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreateFolderRequestDto;
 import com.unihub.app.dto.community.content.request.UpdateFolderRequestDto;
@@ -11,14 +14,13 @@ import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.entities.community.resources.Course;
-import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
-import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.content.FolderRepository;
 import com.unihub.app.repositories.community.content.ResourceRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommunityAccessHelper;
+import com.unihub.app.security.policies.FolderPolicy;
 import com.unihub.app.services.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,9 +41,10 @@ public class FolderService {
     private final CourseRepository courseRepository;
     private final ResourceRepository resourceRepository;
     private final FileStorageService fileStorageService;
-    private final AuthorizationService authorizationService;
+    private final CommunityAccessHelper communityAccessHelper;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
+    private final FolderPolicy folderPolicy;
 
     @Transactional
     public FolderSummaryDto createFolder(
@@ -53,30 +57,29 @@ public class FolderService {
         Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearName(courseSlug, communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
 
-        String folderName = requestDto.name();
+        Long courseId = course.getId();
         Folder parentFolder = null;
 
         if (requestDto.parentFolderId() != null) {
-            parentFolder = folderRepository.findByIdWithCourse(requestDto.parentFolderId())
+            parentFolder = folderRepository.findById(requestDto.parentFolderId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Parent folder not found"));
 
-            if (!parentFolder.getCourse().getId().equals(course.getId())) {
+            if (!parentFolder.getCourse().getId().equals(courseId)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Parent folder does not belong to this course");
             }
 
-            if (folderRepository.existsByCourseIdAndParentFolderIdAndNameIgnoreCase(course.getId(), parentFolder.getId(), folderName)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Folder with name '" + folderName + "' already exists in this folder");
+            if (folderRepository.existsByCourseIdAndParentFolderIdAndNameIgnoreCase(courseId, parentFolder.getId(), requestDto.name())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Folder with name '" + requestDto.name() + "' already exists in target parent");
             }
         } else {
-            if (folderRepository.existsByCourseIdAndParentFolderIsNullAndNameIgnoreCase(course.getId(), folderName)) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Folder with name '" + folderName + "' already exists at root level");
+            if (folderRepository.existsByCourseIdAndParentFolderIsNullAndNameIgnoreCase(courseId, requestDto.name())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Folder with name '" + requestDto.name() + "' already exists at root level");
             }
         }
 
         User owner = userMapper.toEntity(userDto);
-
         Folder folder = Folder.builder()
-                .name(folderName)
+                .name(requestDto.name())
                 .course(course)
                 .parentFolder(parentFolder)
                 .owner(owner)
@@ -89,15 +92,13 @@ public class FolderService {
     @Transactional
     public FolderSummaryDto updateFolder(
             UUID folderId,
-            UserDto userDto,
+            UserDto caller,
             UpdateFolderRequestDto requestDto
     ) {
         Folder folder = folderRepository.findByIdWithCourseAndCommunity(folderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
 
-        if (folder.getOwner() == null || !folder.getOwner().getId().equals(userDto.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the folder owner can update this folder");
-        }
+        folderPolicy.check(caller, folder, PermissionType.UPDATE_FOLDER);
 
         Long courseId = folder.getCourse().getId();
 
@@ -158,13 +159,10 @@ public class FolderService {
         Folder folder = folderRepository.findByIdWithCourseAndCommunity(folderId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
 
-        String communitySlug = folder.getCourse().getStudyYear().getCommunity().getSlug();
-        boolean isModerator = authorizationService.hasCommunityPermission(communitySlug, userDto.id(), PermissionType.MODERATE_FOLDER);
-        boolean isOwner = folder.getOwner() != null && folder.getOwner().getId().equals(userDto.id());
+        folderPolicy.check(userDto, folder, PermissionType.DELETE_FOLDER);
 
-        if (!isModerator && !isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this folder");
-        }
+        String communitySlug = folder.getCourse().getStudyYear().getCommunity().getSlug();
+        boolean isModerator = communityAccessHelper.hasCommunityPermission(communitySlug, userDto.id(), PermissionType.MODERATE_FOLDER);
 
         if (!isModerator) {
             boolean hasSubfolders = folderRepository.existsByParentFolderId(folder.getId());
@@ -195,22 +193,29 @@ public class FolderService {
         }
     }
 
-    private boolean isDescendantOf(Folder current, UUID ancestorId) {
-        Folder parent = current.getParentFolder();
-        while (parent != null) {
-            if (parent.getId().equals(ancestorId)) {
+    private boolean isDescendantOf(Folder candidateParent, UUID folderId) {
+        Folder current = candidateParent;
+        while (current != null) {
+            if (current.getId().equals(folderId)) {
                 return true;
             }
-            parent = parent.getParentFolder();
+            current = current.getParentFolder();
         }
         return false;
     }
 
     @Transactional(readOnly = true)
     public List<BreadcrumbDto> getBreadcrumbs(UUID folderId) {
-        if (!folderRepository.existsById(folderId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found");
+        Folder current = folderRepository.findById(folderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Folder not found"));
+
+        List<BreadcrumbDto> breadcrumbs = new ArrayList<>();
+        while (current != null) {
+            breadcrumbs.add(new BreadcrumbDto(current.getId(), current.getName()));
+            current = current.getParentFolder();
         }
-        return folderRepository.findBreadcrumbsById(folderId);
+
+        Collections.reverse(breadcrumbs);
+        return breadcrumbs;
     }
 }

@@ -1,8 +1,6 @@
 package com.unihub.app.config;
 
-import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.unihub.app.services.authentication.VerificationCodeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -55,6 +53,12 @@ public class CacheConfig {
 
         manager.registerCustomCache("revokedUsers", Caffeine.newBuilder()
                 .expireAfterWrite(Duration.ofSeconds(sessionProperties.accessTokenExpirationSec()))
+                .maximumSize(10_000)
+                .build()
+        );
+
+        manager.registerCustomCache("communityMemberships", Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofMinutes(5))
                 .maximumSize(10_000)
                 .build()
         );

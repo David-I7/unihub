@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -15,7 +16,7 @@ import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.CommentRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.CommentPolicy;
 import com.unihub.app.services.community.content.CommentService;
 import com.unihub.app.services.community.content.PostService;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +28,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -50,9 +51,6 @@ public class CommentServiceTests {
     @Mock
     private PostService postService;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
 
@@ -64,6 +62,9 @@ public class CommentServiceTests {
 
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private CommentPolicy commentPolicy;
 
     @InjectMocks
     private CommentService commentService;
@@ -107,8 +108,6 @@ public class CommentServiceTests {
         CreateCommentRequestDto dto = new CreateCommentRequestDto("Nice post!");
 
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
-        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.CREATE_COMMENT)).thenReturn(true);
         when(commentRepository.save(any(Comment.class))).thenAnswer(i -> {
             Comment c = i.getArgument(0);
             c.setId(UUID.randomUUID());
@@ -126,7 +125,7 @@ public class CommentServiceTests {
     }
 
     @Test
-    @DisplayName("updateComment updates content when caller is author with UPDATE_COMMENT permission")
+    @DisplayName("updateComment updates content")
     public void testUpdateComment_AuthorSuccess() {
         UUID commentId = UUID.randomUUID();
         UUID postId = UUID.randomUUID();
@@ -146,39 +145,34 @@ public class CommentServiceTests {
         UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited comment");
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
-        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.UPDATE_COMMENT)).thenReturn(true);
         when(commentRepository.save(any(Comment.class))).thenAnswer(i -> i.getArgument(0));
 
         CommentResponseDto result = commentService.updateComment(commentId, caller, dto);
 
         assertNotNull(result);
         assertEquals("Edited comment", result.content());
+        verify(commentPolicy).check(caller, comment, PermissionType.UPDATE_COMMENT);
         verify(commentRepository).save(comment);
     }
 
     @Test
-    @DisplayName("updateComment throws 403 when caller is not author")
-    public void testUpdateComment_ForbiddenNotAuthor() {
+    @DisplayName("updateComment throws AccessDeniedException when policy denies")
+    public void testUpdateComment_AccessDenied() {
         UUID commentId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID callerId = UUID.randomUUID();
-        UserDto caller = new UserDto(callerId, "other@example.com", "other", true, RoleType.USER);
-        User owner = User.builder().id(authorId).username("author").build();
-
-        Comment comment = Comment.builder().id(commentId).owner(owner).build();
-        UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited");
+        UserDto caller = new UserDto(UUID.randomUUID(), "alice@example.com", "alice", true, RoleType.USER);
+        Comment comment = Comment.builder().id(commentId).build();
+        UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited comment");
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
+        doThrow(new AccessDeniedException("Access denied")).when(commentPolicy).check(caller, comment, PermissionType.UPDATE_COMMENT);
 
-        assertThrows(ResponseStatusException.class, () -> commentService.updateComment(commentId, caller, dto));
+        assertThrows(AccessDeniedException.class, () -> commentService.updateComment(commentId, caller, dto));
         verify(commentRepository, never()).save(any());
     }
 
     @Test
-    @DisplayName("deleteComment deletes comment and decrements counter when caller is author with DELETE_COMMENT permission")
-    public void testDeleteComment_AuthorSuccess() {
+    @DisplayName("deleteComment deletes comment and decrements counter")
+    public void testDeleteComment_Success() {
         UUID commentId = UUID.randomUUID();
         UUID postId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -189,37 +183,25 @@ public class CommentServiceTests {
         Comment comment = Comment.builder().id(commentId).post(post).owner(owner).build();
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
-        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.DELETE_COMMENT)).thenReturn(true);
 
         commentService.deleteComment(commentId, caller);
 
+        verify(commentPolicy).check(caller, comment, PermissionType.DELETE_COMMENT);
         verify(postRepository).decrementCommentsCount(postId);
         verify(commentRepository).delete(comment);
     }
 
     @Test
-    @DisplayName("deleteComment deletes comment when caller is moderator with MODERATE_COMMENT permission")
-    public void testDeleteComment_ModeratorSuccess() {
+    @DisplayName("deleteComment throws AccessDeniedException when policy denies")
+    public void testDeleteComment_AccessDenied() {
         UUID commentId = UUID.randomUUID();
-        UUID postId = UUID.randomUUID();
-        UUID authorId = UUID.randomUUID();
-        UUID moderatorId = UUID.randomUUID();
-        UserDto moderator = new UserDto(moderatorId, "mod@example.com", "mod", true, RoleType.USER);
-        User owner = User.builder().id(authorId).username("author").build();
-        Post post = Post.builder().id(postId).build();
-
-        Comment comment = Comment.builder().id(commentId).post(post).owner(owner).build();
+        UserDto caller = new UserDto(UUID.randomUUID(), "alice@example.com", "alice", true, RoleType.USER);
+        Comment comment = Comment.builder().id(commentId).build();
 
         when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
-        when(postService.getCommunitySlugForPost(postId)).thenReturn("fmi-info");
-        when(authorizationService.hasCommunityPermission("fmi-info", moderatorId, PermissionType.MODERATE_COMMENT)).thenReturn(true);
+        doThrow(new AccessDeniedException("Access denied")).when(commentPolicy).check(caller, comment, PermissionType.DELETE_COMMENT);
 
-        commentService.deleteComment(commentId, moderator);
-
-        verify(postRepository).decrementCommentsCount(postId);
-        verify(commentRepository).delete(comment);
+        assertThrows(AccessDeniedException.class, () -> commentService.deleteComment(commentId, caller));
+        verify(commentRepository, never()).delete(any());
     }
 }

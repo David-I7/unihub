@@ -47,7 +47,7 @@ public class FolderControllerTests extends BaseIntegrationTest {
         userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.ADMIN);
         JwtAuthentication auth = new JwtAuthentication(userDto);
         SecurityContextHolder.getContext().setAuthentication(auth);
-        when(authorizationService.safeRequireAuthentication()).thenReturn(auth);
+
     }
 
     @Test
@@ -80,6 +80,17 @@ public class FolderControllerTests extends BaseIntegrationTest {
 
         mockMvc.perform(delete("/api/v1/folders/" + folderId))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/folders/{folderId} returns 403 when user not authorized")
+    public void testDeleteFolder_Forbidden() throws Exception {
+        UUID folderId = UUID.randomUUID();
+        org.mockito.Mockito.doThrow(new org.springframework.security.access.AccessDeniedException("Forbidden"))
+                .when(folderService).deleteFolder(eq(folderId), any(UserDto.class));
+
+        mockMvc.perform(delete("/api/v1/folders/" + folderId))
+                .andExpect(status().isForbidden());
     }
 
     @Test

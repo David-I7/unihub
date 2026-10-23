@@ -54,7 +54,7 @@ public class CommunityController {
     }
 
     @PostMapping
-    @PreAuthorize("@security.hasGlobalPermission('create:community')")
+    @PreAuthorize("hasPermission('COMMUNITY', 'CREATE')")
     public ResponseEntity<CommunityResponseDto> createCommunity(
             @AuthenticationPrincipal UserDto user,
             @Valid @RequestBody CreateCommunityRequestDto requestDto
@@ -118,7 +118,7 @@ public class CommunityController {
     }
 
     @PatchMapping("/{communitySlug}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'update:community')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY', 'UPDATE')")
     public ResponseEntity<CommunityResponseDto> updateCommunity(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto user,
@@ -137,7 +137,7 @@ public class CommunityController {
     }
 
     @DeleteMapping("/{communitySlug}")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'delete:community')")
+    @PreAuthorize("hasPermission(#communitySlug, 'COMMUNITY', 'DELETE')")
     public ResponseEntity<Void> deleteCommunity(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto user
@@ -147,7 +147,7 @@ public class CommunityController {
     }
 
     @PostMapping("/{communitySlug}/posts")
-    @PreAuthorize("@security.hasCommunityPermission(#communitySlug, 'create:post')")
+    @PreAuthorize("hasPermission(#communitySlug, 'POST', 'CREATE')")
     public ResponseEntity<PostResponseDto> createCommunityPost(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto user,

@@ -1,12 +1,12 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateMaterialRequestDto;
 import com.unihub.app.dto.community.content.response.MaterialResponseDto;
 import com.unihub.app.entities.authentication.User;
-import com.unihub.app.entities.community.content.Folder;
 import com.unihub.app.entities.community.content.MaterialFile;
 import com.unihub.app.entities.community.content.MaterialLink;
 import com.unihub.app.entities.community.content.MaterialLinkType;
@@ -19,7 +19,7 @@ import com.unihub.app.entities.community.resources.StudyYearName;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
 import com.unihub.app.repositories.community.content.ResourceRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.MaterialPolicy;
 import com.unihub.app.services.community.content.ResourceService;
 import com.unihub.app.services.storage.FileStorageService;
 import com.unihub.app.validation.MaterialLinkValidator;
@@ -31,18 +31,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ResourceServiceTests {
@@ -56,14 +52,14 @@ public class ResourceServiceTests {
     @Mock
     private FileStorageService fileStorageService;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     @Spy
     private MaterialLinkValidator materialLinkValidator = new MaterialLinkValidator();
 
     @Spy
     private CommunityContentMapper contentMapper = new CommunityContentMapper();
+
+    @Mock
+    private MaterialPolicy materialPolicy;
 
     @InjectMocks
     private ResourceService resourceService;
@@ -107,7 +103,7 @@ public class ResourceServiceTests {
     }
 
     @Test
-    @DisplayName("Owner can update material link")
+    @DisplayName("Update material link")
     public void testUpdateMaterial_Success() {
         UUID resourceId = UUID.randomUUID();
         MaterialLink link = MaterialLink.builder()
@@ -138,28 +134,21 @@ public class ResourceServiceTests {
         assertNotNull(response);
         assertEquals("New Title", response.link().title());
         assertEquals("https://github.com/new/repo", response.link().url());
+        verify(materialPolicy).check(ownerDto, link, PermissionType.UPDATE_MATERIAL);
     }
 
     @Test
-    @DisplayName("Non-owner cannot update material (throws 403 Forbidden)")
-    public void testUpdateMaterial_Forbidden() {
+    @DisplayName("Update material throws AccessDeniedException when policy denies")
+    public void testUpdateMaterial_AccessDenied() {
         UUID resourceId = UUID.randomUUID();
-        MaterialFile file = MaterialFile.builder()
-                .id(resourceId)
-                .title("Course File")
-                .type(ResourceType.MATERIAL_FILE)
-                .owner(owner)
-                .course(course)
-                .build();
+        MaterialLink link = MaterialLink.builder().id(resourceId).build();
+        UpdateMaterialRequestDto requestDto = new UpdateMaterialRequestDto("New", null, null, null, null, null);
 
-        UserDto otherUser = new UserDto(UUID.randomUUID(), "other@test.com", "other", true, RoleType.USER);
-        UpdateMaterialRequestDto requestDto = new UpdateMaterialRequestDto("New Title", null, null, null, null, null);
+        when(resourceRepository.findByIdWithCourseAndCommunity(resourceId)).thenReturn(Optional.of(link));
+        doThrow(new AccessDeniedException("Access denied")).when(materialPolicy).check(ownerDto, link, PermissionType.UPDATE_MATERIAL);
 
-        when(resourceRepository.findByIdWithCourseAndCommunity(resourceId)).thenReturn(Optional.of(file));
-
-        assertThrows(ResponseStatusException.class, () ->
-                resourceService.updateMaterial(resourceId, otherUser, requestDto)
-        );
+        assertThrows(AccessDeniedException.class, () -> resourceService.updateMaterial(resourceId, ownerDto, requestDto));
+        verify(resourceRepository, never()).save(any());
     }
 
     @Test
@@ -175,12 +164,24 @@ public class ResourceServiceTests {
                 .build();
 
         when(resourceRepository.findByIdWithCourseAndCommunity(resourceId)).thenReturn(Optional.of(file));
-        when(authorizationService.hasCommunityPermission("fmi", owner.getId(), PermissionType.MODERATE_MATERIAL))
-                .thenReturn(false);
 
         resourceService.deleteMaterial(resourceId, ownerDto);
 
+        verify(materialPolicy).check(ownerDto, file, PermissionType.DELETE_MATERIAL);
         verify(fileStorageService).deleteFile("key/file.pdf");
         verify(resourceRepository).delete(file);
+    }
+
+    @Test
+    @DisplayName("Delete material throws AccessDeniedException when policy denies")
+    public void testDeleteMaterial_AccessDenied() {
+        UUID resourceId = UUID.randomUUID();
+        MaterialFile file = MaterialFile.builder().id(resourceId).build();
+
+        when(resourceRepository.findByIdWithCourseAndCommunity(resourceId)).thenReturn(Optional.of(file));
+        doThrow(new AccessDeniedException("Access denied")).when(materialPolicy).check(ownerDto, file, PermissionType.DELETE_MATERIAL);
+
+        assertThrows(AccessDeniedException.class, () -> resourceService.deleteMaterial(resourceId, ownerDto));
+        verify(resourceRepository, never()).delete(any());
     }
 }

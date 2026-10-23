@@ -1,5 +1,6 @@
 package com.unihub.app.security;
 
+import com.unihub.app.security.oauth2.OAuth2AuthenticationFailureHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
