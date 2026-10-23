@@ -22,6 +22,8 @@ import com.unihub.app.repositories.community.resources.CommunityMemberRepository
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -68,6 +71,7 @@ public class CommunityMemberService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "communityMemberships", key = "#result.slug + ':' + #userDto.id")
     public UserEnrolledCommunityDto joinWithCode(UserDto userDto, String code) {
         CommunityJoinCode joinCode = joinCodeRepository.findByCodeWithCommunity(code)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid join code"));
@@ -108,7 +112,8 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public void addMemberDirectly(String communitySlug, UserDto caller, AddCommunityMemberRequestDto dto) {
+    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #result.id")
+    public User addMemberDirectly(String communitySlug, UserDto caller, AddCommunityMemberRequestDto dto) {
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
@@ -147,9 +152,12 @@ public class CommunityMemberService {
 
         communityMemberRepository.save(member);
         communityRepository.updateMemberCount(community.getId(), 1);
+
+        return targetUser;
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #userId")
     public void leaveCommunity(String communitySlug, UUID userId) {
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
@@ -169,6 +177,7 @@ public class CommunityMemberService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #result.userId")
     public CommunityMemberResponseDto updateMemberRole(String communitySlug, String targetUsername, UpdateMemberRoleRequestDto dto) {
         if (dto.role() != RoleType.COMMUNITY_MEMBER && dto.role() != RoleType.COMMUNITY_ADMIN) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. Only COMMUNITY_MEMBER and COMMUNITY_ADMIN are allowed.");
@@ -195,7 +204,8 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    public void removeMember(String communitySlug, UserDto caller, String targetUsername) {
+    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #result.id")
+    public User removeMember(String communitySlug, UserDto caller, String targetUsername) {
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
@@ -221,10 +231,26 @@ public class CommunityMemberService {
 
         communityMemberRepository.delete(targetMember);
         communityRepository.updateMemberCount(community.getId(), -1);
+
+        return targetUser;
     }
 
     @Scheduled(cron="@daily")
     protected void deleteExpiredCodes(){
         joinCodeRepository.deleteExpiredCodes();
     }
+
+    @Transactional
+    @Cacheable(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #userId")
+    public RoleType getCommunityRole(String communitySlug, UUID userId) {
+        if (communitySlug == null || userId == null) {
+            return null;
+        }
+        return communityMemberRepository.findMemberByCommunitySlug(communitySlug, userId)
+                .map(CommunityMember::getRoleId)
+                .map(roleService::getRoleById)
+                .map(role -> RoleType.valueOf(role.getName()))
+                .orElse(null);
+    }
+
 }

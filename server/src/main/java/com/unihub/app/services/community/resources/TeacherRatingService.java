@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRatingRequestDto;
@@ -19,7 +20,7 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.RatingMetricRepository;
 import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
 import com.unihub.app.repositories.community.resources.TeacherRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.TeacherRatingPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,10 +44,10 @@ public class TeacherRatingService {
     private final TeacherRatingRepository teacherRatingRepository;
     private final TeacherRepository teacherRepository;
     private final RatingMetricRepository ratingMetricRepository;
-    private final AuthorizationService authorizationService;
     private final CommunityResourceMapper resourceMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
+    private final TeacherRatingPolicy teacherRatingPolicy;
 
     @Transactional(readOnly = true)
     public PageDto<TeacherRatingResponseDto> getPaginatedRatings(UUID teacherId, Pageable pageable) {
@@ -66,11 +67,6 @@ public class TeacherRatingService {
 
         Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-
-        String communitySlug = teacher.getCommunity().getSlug();
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_TEACHER_RATING)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to rate teacher");
-        }
 
         if (teacherRatingRepository.existsByTeacherIdAndUserId(teacherId, caller.id())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You have already reviewed this teacher");
@@ -135,14 +131,7 @@ public class TeacherRatingService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found for this teacher");
         }
 
-        if (rating.getUser() == null || !rating.getUser().getId().equals(caller.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own review");
-        }
-
-        String communitySlug = rating.getTeacher().getCommunity().getSlug();
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.UPDATE_TEACHER_RATING)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update review");
-        }
+        teacherRatingPolicy.check(caller, rating, PermissionType.UPDATE_TEACHER_RATING);
 
         Map<Integer, RatingMetric> metricMap = validateAndGetRatingMetrics(dto.values());
 
@@ -199,10 +188,6 @@ public class TeacherRatingService {
 
     @Transactional
     public void deleteRating(UUID teacherId, Long ratingId, UserDto caller) {
-        if (caller == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-
         TeacherRating rating = teacherRatingRepository.findByIdWithTeacherAndValues(ratingId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
 
@@ -210,18 +195,7 @@ public class TeacherRatingService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found for this teacher");
         }
 
-        boolean isAuthor = rating.getUser() != null && rating.getUser().getId().equals(caller.id());
-        String communitySlug = rating.getTeacher().getCommunity().getSlug();
-
-        if (isAuthor) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.DELETE_TEACHER_RATING)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete review");
-            }
-        } else {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.MODERATE_TEACHER_RATING)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate review");
-            }
-        }
+        teacherRatingPolicy.check(caller, rating, PermissionType.DELETE_TEACHER_RATING);
 
         double reviewSum = rating.getValues() != null
                 ? rating.getValues().stream().mapToInt(TeacherRatingValue::getValue).sum()

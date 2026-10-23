@@ -17,6 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -96,6 +97,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/comments")
+    @PreAuthorize("hasPermission(#postId, 'COMMENT', 'CREATE')")
     public ResponseEntity<CommentResponseDto> createComment(
             @PathVariable UUID postId,
             @AuthenticationPrincipal UserDto user,

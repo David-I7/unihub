@@ -1,6 +1,5 @@
 package com.unihub.app.services;
 
-import com.unihub.app.domain.Permissions;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -23,8 +22,6 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.security.JwtAuthentication;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityService;
 import com.unihub.app.services.community.resources.StudyYearService;
@@ -39,9 +36,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.server.ResponseStatusException;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +43,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -66,9 +62,6 @@ public class CommunityServiceTests {
 
     @Mock
     private RoleService roleService;
-
-    @Mock
-    private AuthorizationService authorizationService;
 
     @Mock
     private StudyYearService studyYearService;

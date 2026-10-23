@@ -1,6 +1,5 @@
 package com.unihub.app.services;
 
-import com.unihub.app.domain.PermissionType;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -18,7 +17,6 @@ import com.unihub.app.repositories.community.content.CommunityPostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.content.CommunityPostService;
 import org.junit.jupiter.api.DisplayName;
@@ -60,9 +58,6 @@ public class CommunityPostServiceTests {
     private PostLikeRepository postLikeRepository;
 
     @Mock
-    private AuthorizationService authorizationService;
-
-    @Mock
     private RoleService roleService;
 
     @Spy
@@ -89,7 +84,6 @@ public class CommunityPostServiceTests {
         CreatePostRequestDto requestDto = new CreatePostRequestDto("Title", "Description");
 
         when(communityRepository.findBySlug("fmi-info")).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.CREATE_POST)).thenReturn(true);
         when(postRepository.save(any(Post.class))).thenAnswer(i -> {
             Post p = i.getArgument(0);
             p.setId(UUID.randomUUID());
@@ -106,21 +100,6 @@ public class CommunityPostServiceTests {
         assertEquals(CommunicationChannel.COMMUNITY, result.channel());
         assertFalse(result.isLiked());
         verify(communityPostRepository).save(any(CommunityPost.class));
-    }
-
-    @Test
-    @DisplayName("createCommunityPost throws 403 when user lacks CREATE_POST permission")
-    public void testCreateCommunityPost_Forbidden() {
-        UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(userId, "david@example.com", "david", true, RoleType.USER);
-        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi-info").build();
-        CreatePostRequestDto requestDto = new CreatePostRequestDto("Title", "Description");
-
-        when(communityRepository.findBySlug("fmi-info")).thenReturn(Optional.of(community));
-        when(authorizationService.hasCommunityPermission("fmi-info", userId, PermissionType.CREATE_POST)).thenReturn(false);
-
-        assertThrows(ResponseStatusException.class,
-                () -> communityPostService.createCommunityPost("fmi-info", userDto, requestDto));
     }
 
     @Test

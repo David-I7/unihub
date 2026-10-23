@@ -1,4 +1,4 @@
-package com.unihub.app.security;
+package com.unihub.app.security.oauth2;
 
 import com.unihub.app.entities.authentication.AuthProvider;
 import lombok.RequiredArgsConstructor;

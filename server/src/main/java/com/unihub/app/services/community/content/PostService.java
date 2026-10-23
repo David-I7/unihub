@@ -1,7 +1,7 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.domain.PermissionType;
-import com.unihub.app.domain.RoleType;
+
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.PinPostRequestDto;
 import com.unihub.app.dto.community.content.request.UpdatePostRequestDto;
@@ -18,7 +18,7 @@ import com.unihub.app.repositories.community.content.CommunityPostRepository;
 import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.PostPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -36,10 +36,10 @@ public class PostService {
     private final CommunityPostRepository communityPostRepository;
     private final CoursePostRepository coursePostRepository;
     private final PostLikeRepository postLikeRepository;
-    private final AuthorizationService authorizationService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final PostPolicy postPolicy;
 
     public String getCommunitySlugForPost(UUID postId) {
         return communityPostRepository.findCommunitySlugByPostId(postId)
@@ -65,14 +65,7 @@ public class PostService {
         Post post = postRepository.findByIdWithOwner(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        if (!post.getOwner().getId().equals(caller.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only edit your own posts");
-        }
-
-        String communitySlug = getCommunitySlugForPost(postId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.UPDATE_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update post");
-        }
+        postPolicy.check(caller, post, PermissionType.UPDATE_POST);
 
         dto.title().ifPresent(post::setTitle);
         dto.description().ifPresent(post::setDescription);
@@ -87,19 +80,7 @@ public class PostService {
         Post post = postRepository.findByIdWithOwner(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        String communitySlug = getCommunitySlugForPost(postId);
-        boolean isAuthor = post.getOwner().getId().equals(caller.id());
-
-        if (isAuthor) {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.DELETE_POST)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete post");
-            }
-        } else {
-            if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.MODERATE_POST)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to moderate post");
-            }
-        }
-
+        postPolicy.check(caller, post, PermissionType.DELETE_POST);
         postRepository.delete(post);
     }
 
@@ -108,10 +89,7 @@ public class PostService {
         Post post = postRepository.findByIdWithOwner(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
-        String communitySlug = getCommunitySlugForPost(postId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.PIN_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to pin post");
-        }
+        postPolicy.check(caller, post, PermissionType.PIN_POST);
 
         post.setPinned(dto.pinned());
         Post saved = postRepository.save(post);
@@ -123,11 +101,6 @@ public class PostService {
     public void likePost(UUID postId, UserDto caller) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
-        String communitySlug = getCommunitySlugForPost(postId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.LIKE_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to like the post");
-        }
 
         if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {
             return;
@@ -150,11 +123,6 @@ public class PostService {
     public void unlikePost(UUID postId, UserDto caller) {
         if (!postRepository.existsById(postId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
-        }
-
-        String communitySlug = getCommunitySlugForPost(postId);
-        if (!authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.LIKE_POST)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to like the post");
         }
 
         if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {

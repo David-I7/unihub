@@ -56,7 +56,7 @@ public class UserController {
     }
 
     @PatchMapping("/{username}/role")
-    @PreAuthorize("@security.hasGlobalPermission('update:userRole')")
+    @PreAuthorize("hasPermission(#username, 'USER', 'UPDATE_ROLE')")
     public ResponseEntity<UserProfileResponseDto> updateUserRole(
             @PathVariable String username,
             @Valid @RequestBody UpdateUserRoleRequestDto requestDto
@@ -66,7 +66,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{username}")
-    @PreAuthorize("@security.hasGlobalPermission('delete:user')")
+    @PreAuthorize("hasPermission(#username, 'USER', 'DELETE')")
     public ResponseEntity<Void> adminDeleteUser(
             @PathVariable String username,
             @Valid @RequestBody AdminDeleteUserRequestDto requestDto

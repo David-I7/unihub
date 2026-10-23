@@ -28,12 +28,12 @@ public class TeacherController {
     private final TeacherService teacherService;
 
     @PostMapping("/api/v1/communities/{communitySlug}/teachers")
+    @PreAuthorize("hasPermission(#communitySlug, 'TEACHER', 'CREATE')")
     public ResponseEntity<TeacherResponseDto> createTeacher(
             @PathVariable String communitySlug,
-            @AuthenticationPrincipal UserDto caller,
             @Valid @RequestBody CreateTeacherRequestDto requestDto
     ) {
-        TeacherResponseDto created = teacherService.createTeacher(communitySlug, caller, requestDto);
+        TeacherResponseDto created = teacherService.createTeacher(communitySlug, requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
@@ -69,10 +69,8 @@ public class TeacherController {
     }
 
     @GetMapping("/api/v1/teachers/{teacherId}")
-    public ResponseEntity<TeacherDetailResponseDto> getTeacherDetail(
-            @PathVariable UUID teacherId
-    ) {
-        TeacherDetailResponseDto detail = teacherService.getTeacherDetail(teacherId);
-        return ResponseEntity.ok(detail);
+    public ResponseEntity<TeacherDetailResponseDto> getTeacherDetail(@PathVariable UUID teacherId) {
+        TeacherDetailResponseDto teacher = teacherService.getTeacherDetail(teacherId);
+        return ResponseEntity.ok(teacher);
     }
 }

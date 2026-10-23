@@ -1,16 +1,18 @@
 package com.unihub.app.config;
 
-import com.unihub.app.security.OAuth2AuthenticationFailureHandler;
-import com.unihub.app.security.OAuth2AuthenticationSuccessHandler;
+import com.unihub.app.security.JwtSessionManagementFilter;
+import com.unihub.app.security.oauth2.OAuth2AuthenticationFailureHandler;
+import com.unihub.app.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.unihub.app.security.UnifiedPermissionEvaluator;
 import com.unihub.app.utils.AppUtils;
 import com.unihub.app.utils.ProblemDetailUtil;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.unihub.app.security.JwtSessionManagementFilter;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -38,6 +40,13 @@ public class SecurityConfig {
 
     @Autowired
     private ProblemDetailUtil problemDetailUtil;
+
+    @Bean
+    public MethodSecurityExpressionHandler methodSecurityExpressionHandler(UnifiedPermissionEvaluator evaluator) {
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+        handler.setPermissionEvaluator(evaluator);
+        return handler;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

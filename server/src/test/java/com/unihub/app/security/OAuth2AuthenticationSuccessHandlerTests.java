@@ -5,6 +5,7 @@ import com.unihub.app.entities.authentication.Session;
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.authentication.UserIdentity;
 import com.unihub.app.entities.authorization.Role;
+import com.unihub.app.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

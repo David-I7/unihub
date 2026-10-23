@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.content;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.UpdateMaterialRequestDto;
 import com.unihub.app.dto.community.content.response.MaterialResponseDto;
@@ -12,7 +13,7 @@ import com.unihub.app.entities.community.content.Resource;
 import com.unihub.app.mappers.community.CommunityContentMapper;
 import com.unihub.app.repositories.community.content.FolderRepository;
 import com.unihub.app.repositories.community.content.ResourceRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.MaterialPolicy;
 import com.unihub.app.services.storage.FileStorageService;
 import com.unihub.app.validation.MaterialLinkValidator;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +31,9 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
     private final FolderRepository folderRepository;
     private final FileStorageService fileStorageService;
-    private final AuthorizationService authorizationService;
     private final MaterialLinkValidator materialLinkValidator;
     private final CommunityContentMapper contentMapper;
+    private final MaterialPolicy materialPolicy;
 
     @Transactional(readOnly = true)
     public MaterialResponseDto getMaterialById(UUID materialId) {
@@ -45,15 +46,13 @@ public class ResourceService {
     @Transactional
     public MaterialResponseDto updateMaterial(
             UUID materialId,
-            UserDto userDto,
+            UserDto caller,
             UpdateMaterialRequestDto requestDto
     ) {
         Resource resource = resourceRepository.findByIdWithCourseAndCommunity(materialId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
 
-        if (resource.getOwner() == null || !resource.getOwner().getId().equals(userDto.id())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the material owner can update this material");
-        }
+        materialPolicy.check(caller, resource, PermissionType.UPDATE_MATERIAL);
 
         Long courseId = resource.getCourse().getId();
 
@@ -120,17 +119,11 @@ public class ResourceService {
     }
 
     @Transactional
-    public void deleteMaterial(UUID materialId, UserDto userDto) {
+    public void deleteMaterial(UUID materialId, UserDto caller) {
         Resource resource = resourceRepository.findByIdWithCourseAndCommunity(materialId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Material not found"));
 
-        String communitySlug = resource.getCourse().getStudyYear().getCommunity().getSlug();
-        boolean isModerator = authorizationService.hasCommunityPermission(communitySlug, userDto.id(), PermissionType.MODERATE_MATERIAL);
-        boolean isOwner = resource.getOwner() != null && resource.getOwner().getId().equals(userDto.id());
-
-        if (!isModerator && !isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have permission to delete this material");
-        }
+        materialPolicy.check(caller, resource, PermissionType.DELETE_MATERIAL);
 
         if (resource instanceof MaterialFile materialFile) {
             fileStorageService.deleteFile(materialFile.getStorageKey());

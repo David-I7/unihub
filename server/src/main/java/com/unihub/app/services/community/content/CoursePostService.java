@@ -18,7 +18,7 @@ import com.unihub.app.repositories.community.content.CoursePostRepository;
 import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;

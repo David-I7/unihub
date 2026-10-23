@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
@@ -15,7 +16,7 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
 import com.unihub.app.repositories.community.resources.TeacherRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.TeacherPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,16 +39,12 @@ public class TeacherService {
     private final TeacherRepository teacherRepository;
     private final TeacherRatingRepository teacherRatingRepository;
     private final CommunityRepository communityRepository;
-    private final AuthorizationService authorizationService;
     private final CommunityResourceMapper resourceMapper;
     private final PageMapper pageMapper;
+    private final TeacherPolicy teacherPolicy;
 
     @Transactional
-    public TeacherResponseDto createTeacher(String communitySlug, UserDto caller, CreateTeacherRequestDto dto) {
-        if(caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.CREATE_TEACHER)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to create teacher");
-        }
-
+    public TeacherResponseDto createTeacher(String communitySlug, CreateTeacherRequestDto dto) {
         Community community = communityRepository.findBySlug(communitySlug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
@@ -75,11 +72,7 @@ public class TeacherService {
         Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
-        String communitySlug = teacher.getCommunity().getSlug();
-
-        if (caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.UPDATE_TEACHER)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to update teacher");
-        }
+        teacherPolicy.check(caller, teacher, PermissionType.UPDATE_TEACHER);
 
         String targetFirstName = dto.firstName().isPresent() ? dto.firstName().get() : teacher.getFirstName();
         String targetLastName = dto.lastName().isPresent() ? dto.lastName().get() : teacher.getLastName();
@@ -110,10 +103,7 @@ public class TeacherService {
         Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
-        String communitySlug = teacher.getCommunity().getSlug();
-        if (caller == null || !authorizationService.hasCommunityPermission(communitySlug, caller.id(), PermissionType.DELETE_TEACHER)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied to delete teacher");
-        }
+        teacherPolicy.check(caller, teacher, PermissionType.DELETE_TEACHER);
 
         teacherRepository.delete(teacher);
     }

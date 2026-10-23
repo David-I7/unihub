@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.PermissionType;
+
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -8,16 +9,14 @@ import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.response.TeacherDetailResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
-import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.Teacher;
-import com.unihub.app.entities.community.resources.TeacherRating;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.TeacherRatingRepository;
 import com.unihub.app.repositories.community.resources.TeacherRepository;
-import com.unihub.app.services.authorization.AuthorizationService;
+import com.unihub.app.security.policies.TeacherPolicy;
 import com.unihub.app.services.community.resources.TeacherService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -41,7 +41,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,14 +55,14 @@ public class TeacherServiceTests {
     @Mock
     private CommunityRepository communityRepository;
 
-    @Mock
-    private AuthorizationService authorizationService;
-
     @Spy
     private CommunityResourceMapper resourceMapper = new CommunityResourceMapper();
 
     @Spy
     private PageMapper pageMapper = new PageMapper();
+
+    @Mock
+    private TeacherPolicy teacherPolicy;
 
     @InjectMocks
     private TeacherService teacherService;
@@ -84,7 +83,7 @@ public class TeacherServiceTests {
     }
 
     @Test
-    @DisplayName("createTeacher succeeds when caller has permission and teacher is unique")
+    @DisplayName("createTeacher succeeds when teacher is unique")
     public void testCreateTeacher_Success() {
         CreateTeacherRequestDto request = CreateTeacherRequestDto.builder()
                 .firstName("Daniel")
@@ -92,8 +91,6 @@ public class TeacherServiceTests {
                 .estimatedAge(42)
                 .build();
 
-        when(authorizationService.hasCommunityPermission("fmi-info-id", memberUser.id(), PermissionType.CREATE_TEACHER))
-                .thenReturn(true);
         when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
         when(teacherRepository.findByCommunityIdAndFirstNameAndLastName(community.getId(), "Daniel", "Dragulici"))
                 .thenReturn(Optional.empty());
@@ -105,30 +102,13 @@ public class TeacherServiceTests {
             return t;
         });
 
-        TeacherResponseDto result = teacherService.createTeacher("fmi-info-id", memberUser, request);
+        TeacherResponseDto result = teacherService.createTeacher("fmi-info-id", request);
 
         assertNotNull(result);
         assertEquals(teacherId, result.id());
         assertEquals("Daniel", result.firstName());
         assertEquals("Dragulici", result.lastName());
         assertEquals(42, result.estimatedAge());
-    }
-
-    @Test
-    @DisplayName("createTeacher throws Forbidden when caller lacks permission")
-    public void testCreateTeacher_Forbidden() {
-        CreateTeacherRequestDto request = CreateTeacherRequestDto.builder()
-                .firstName("Daniel")
-                .lastName("Dragulici")
-                .build();
-
-        when(authorizationService.hasCommunityPermission("fmi-info-id", memberUser.id(), PermissionType.CREATE_TEACHER))
-                .thenReturn(false);
-
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                teacherService.createTeacher("fmi-info-id", memberUser, request));
-
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
@@ -139,14 +119,12 @@ public class TeacherServiceTests {
                 .lastName("Dragulici")
                 .build();
 
-        when(authorizationService.hasCommunityPermission("fmi-info-id", memberUser.id(), PermissionType.CREATE_TEACHER))
-                .thenReturn(true);
         when(communityRepository.findBySlug("fmi-info-id")).thenReturn(Optional.of(community));
         when(teacherRepository.findByCommunityIdAndFirstNameAndLastName(community.getId(), "Daniel", "Dragulici"))
                 .thenReturn(Optional.of(Teacher.builder().id(UUID.randomUUID()).build()));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                teacherService.createTeacher("fmi-info-id", memberUser, request));
+                teacherService.createTeacher("fmi-info-id", request));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
@@ -171,8 +149,6 @@ public class TeacherServiceTests {
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
-        when(authorizationService.hasCommunityPermission("fmi-info-id", memberUser.id(), PermissionType.UPDATE_TEACHER))
-                .thenReturn(true);
         when(teacherRepository.findByCommunityIdAndFirstNameAndLastName(community.getId(), "Dan", "Dragulici"))
                 .thenReturn(Optional.empty());
         when(teacherRepository.save(any(Teacher.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -183,6 +159,21 @@ public class TeacherServiceTests {
         assertEquals("Dan", result.firstName());
         assertEquals("Dragulici", result.lastName());
         assertEquals(45, result.estimatedAge());
+        verify(teacherPolicy).check(memberUser, existingTeacher, PermissionType.UPDATE_TEACHER);
+    }
+
+    @Test
+    @DisplayName("updateTeacher throws AccessDeniedException when policy denies")
+    public void testUpdateTeacher_AccessDenied() {
+        UUID teacherId = UUID.randomUUID();
+        Teacher existingTeacher = Teacher.builder().id(teacherId).build();
+        UpdateTeacherRequestDto request = UpdateTeacherRequestDto.builder().firstName("Dan").build();
+
+        when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
+        doThrow(new AccessDeniedException("Access denied")).when(teacherPolicy).check(memberUser, existingTeacher, PermissionType.UPDATE_TEACHER);
+
+        assertThrows(AccessDeniedException.class, () -> teacherService.updateTeacher(teacherId, memberUser, request));
+        verify(teacherRepository, never()).save(any());
     }
 
     @Test
@@ -197,12 +188,24 @@ public class TeacherServiceTests {
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
-        when(authorizationService.hasCommunityPermission("fmi-info-id", memberUser.id(), PermissionType.DELETE_TEACHER))
-                .thenReturn(true);
 
         teacherService.deleteTeacher(teacherId, memberUser);
 
+        verify(teacherPolicy).check(memberUser, existingTeacher, PermissionType.DELETE_TEACHER);
         verify(teacherRepository, times(1)).delete(existingTeacher);
+    }
+
+    @Test
+    @DisplayName("deleteTeacher throws AccessDeniedException when policy denies")
+    public void testDeleteTeacher_AccessDenied() {
+        UUID teacherId = UUID.randomUUID();
+        Teacher existingTeacher = Teacher.builder().id(teacherId).build();
+
+        when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
+        doThrow(new AccessDeniedException("Access denied")).when(teacherPolicy).check(memberUser, existingTeacher, PermissionType.DELETE_TEACHER);
+
+        assertThrows(AccessDeniedException.class, () -> teacherService.deleteTeacher(teacherId, memberUser));
+        verify(teacherRepository, never()).delete(any());
     }
 
     @Test
