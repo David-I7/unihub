@@ -38,7 +38,10 @@ export function OtpInput({
     return arr;
   }, [value, length]);
 
-  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const rawVal = e.target.value;
     const digit = rawVal.replace(/\D/g, "").slice(-1);
 
@@ -56,7 +59,10 @@ export function OtpInput({
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
     if (e.key === "Backspace") {
       if (!digits[index] && index > 0) {
         inputRefs.current[index - 1]?.focus();
@@ -72,7 +78,10 @@ export function OtpInput({
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData("text/plain").replace(/\D/g, "").slice(0, length);
+    const pasteData = e.clipboardData
+      .getData("text/plain")
+      .replace(/\D/g, "")
+      .slice(0, length);
     if (!pasteData) return;
 
     onChange(pasteData);
@@ -103,12 +112,12 @@ export function OtpInput({
           onPaste={handlePaste}
           disabled={disabled}
           className={cn(
-            "size-11 sm:size-12 rounded-xl border bg-background text-center font-mono text-xl font-bold text-foreground shadow-xs transition-colors",
+            "size-10 sm:size-12 rounded-xl border bg-background text-center font-mono text-xl font-bold text-foreground shadow-xs transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring",
             hasError
               ? "border-destructive text-destructive focus-visible:ring-destructive"
               : "border-input hover:border-accent-foreground/30",
-            disabled && "cursor-not-allowed opacity-50"
+            disabled && "cursor-not-allowed opacity-50",
           )}
           aria-label={`Digit ${i + 1} of ${length}`}
         />

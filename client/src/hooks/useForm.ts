@@ -17,13 +17,9 @@ export function isFieldValueEqual(a: unknown, b: unknown): boolean {
 
   // Normalized empty value handling (null, undefined, empty string after trimming)
   const isAEmpty =
-    a === null ||
-    a === undefined ||
-    (typeof a === "string" && a.trim() === "");
+    a === null || a === undefined || (typeof a === "string" && a.trim() === "");
   const isBEmpty =
-    b === null ||
-    b === undefined ||
-    (typeof b === "string" && b.trim() === "");
+    b === null || b === undefined || (typeof b === "string" && b.trim() === "");
   if (isAEmpty && isBEmpty) return true;
   if (isAEmpty !== isBEmpty) return false;
 
@@ -37,7 +33,9 @@ export function isFieldValueEqual(a: unknown, b: unknown): boolean {
     if (a.length !== b.length) return false;
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
-    return sortedA.every((val, index) => isFieldValueEqual(val, sortedB[index]));
+    return sortedA.every((val, index) =>
+      isFieldValueEqual(val, sortedB[index]),
+    );
   }
 
   // Objects comparison
@@ -135,6 +133,7 @@ export function useForm<T extends Record<string, any>>({
             ...prevErr,
             [field]: undefined,
           }));
+          setServerError(null);
         }
         return next;
       });
@@ -188,6 +187,7 @@ export function useForm<T extends Record<string, any>>({
             ...prevErr,
             [field]: undefined,
           }));
+          setServerError(null);
         }
       }
     },
@@ -244,6 +244,8 @@ export function useForm<T extends Record<string, any>>({
     async (e?: SyntheticEvent) => {
       if (e) e.preventDefault();
 
+      if (isSubmitting) return;
+
       const allTouched = Object.keys(values).reduce((acc, key) => {
         acc[key as keyof T] = true;
         return acc;
@@ -264,7 +266,7 @@ export function useForm<T extends Record<string, any>>({
         setIsSubmitting(false);
       }
     },
-    [values, validate, onSubmit],
+    [values, validate, onSubmit, isSubmitting],
   );
 
   const getFieldProps = useCallback(

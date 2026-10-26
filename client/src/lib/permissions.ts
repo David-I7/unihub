@@ -64,12 +64,6 @@ export interface PermissionCheckContext {
   callerMembership?: CallerMembership | null;
 }
 
-/**
- * Pure evaluation function checking permissions strictly in order:
- * 1. Check global role permissions from getProfile
- * 2. Check Community permission from callerMembership
- * With no hardcoded assumptions or overrides.
- */
 export function checkPermission(
   permission: string,
   context?: PermissionCheckContext | null,

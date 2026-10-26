@@ -14,6 +14,8 @@ import { OtpInput } from "@/components/ui/otp-input";
 import { useVerifyEmail } from "../api/verifyEmail";
 import { useConfirmEmail } from "../api/confirmEmail";
 import { useConfirmRegister } from "../api/confirmRegister";
+import { useResendEmailVerification } from "../api/resendEmailVerification";
+import { useResendRegisterCode } from "../api/resendRegisterCode";
 import useCountdownTimer from "@/hooks/useCountdownTimer";
 import useAuthStore from "../store/useAuthStore";
 import queryClient from "@/lib/queryClient";
@@ -23,7 +25,6 @@ export interface VerifyEmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
-  mode?: "verify" | "register";
   autoSend?: boolean;
   onSuccess?: () => void;
   onChangeEmail?: () => void;
@@ -33,7 +34,6 @@ export function VerifyEmailModal({
   open,
   onOpenChange,
   email,
-  mode = "verify",
   autoSend = false,
   onSuccess,
   onChangeEmail,
@@ -58,18 +58,19 @@ export function VerifyEmailModal({
     resetTimer,
   } = useCountdownTimer({ defaultSeconds: 60, storageKey });
 
-  const isCodeSent = mode === "register" || isTimerActive || codeSent;
+  const isCodeSent = isTimerActive || codeSent;
 
   const { mutateAsync: sendVerifyCode, isPending: isSendingCode } =
     useVerifyEmail();
+  const { mutateAsync: resendEmailMutation, isPending: isResendingEmail } =
+    useResendEmailVerification();
+
+  const isResending = isResendingEmail;
+
   const { mutateAsync: confirmEmailMutation, isPending: isConfirmingEmail } =
     useConfirmEmail();
-  const {
-    mutateAsync: confirmRegisterMutation,
-    isPending: isConfirmingRegister,
-  } = useConfirmRegister();
 
-  const isSubmitting = isConfirmingEmail || isConfirmingRegister;
+  const isSubmitting = isConfirmingEmail;
 
   const handleOpenChange = React.useCallback(
     (isOpen: boolean) => {
@@ -100,6 +101,26 @@ export function VerifyEmailModal({
     }
   }, [email, sendVerifyCode, startTimer]);
 
+  const handleResendCode = React.useCallback(async () => {
+    if (!email || isTimerActive || isResending || isSendingCode) return;
+    setError(null);
+    try {
+      await resendEmailMutation({ email });
+
+      setCodeSent(true);
+      startTimer(60);
+    } catch (err) {
+      setError(getErrorMessage(err, "Failed to resend verification code."));
+    }
+  }, [
+    email,
+    isTimerActive,
+    isResending,
+    isSendingCode,
+    resendEmailMutation,
+    startTimer,
+  ]);
+
   React.useEffect(() => {
     if (!open) {
       hasAutoSentRef.current = false;
@@ -107,12 +128,6 @@ export function VerifyEmailModal({
     }
 
     if (isTimerActive) {
-      return;
-    }
-
-    if (mode === "register" && !hasAutoSentRef.current) {
-      hasAutoSentRef.current = true;
-      startTimer(60);
       return;
     }
 
@@ -127,7 +142,7 @@ export function VerifyEmailModal({
           setError(getErrorMessage(err, "Failed to send verification code."));
         });
     }
-  }, [open, autoSend, email, mode, isTimerActive, sendVerifyCode, startTimer]);
+  }, [open, autoSend, email, isTimerActive, sendVerifyCode, startTimer]);
 
   const handleConfirm = async (codeToVerify?: string) => {
     const code = codeToVerify ?? otpCode;
@@ -136,26 +151,16 @@ export function VerifyEmailModal({
     setError(null);
 
     try {
-      if (mode === "register") {
-        await confirmRegisterMutation({ email, code });
-        resetTimer();
-        onSuccess?.();
-        handleOpenChange(false);
-        navigate("/");
-      } else {
-        await confirmEmailMutation({ email, code });
-        resetTimer();
-        setEmailVerified(true);
-        queryClient.invalidateQueries({ queryKey: ["users", "me"] });
-        setIsSuccess(true);
-        onSuccess?.();
-      }
+      await confirmEmailMutation({ email, code });
+      resetTimer();
+      setEmailVerified(true);
+      queryClient.invalidateQueries({ queryKey: ["users", "me"] });
+      setIsSuccess(true);
+      onSuccess?.();
     } catch (err) {
       setError(getErrorMessage(err, "Invalid verification code."));
     }
   };
-
-  const isRegister = mode === "register";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -169,23 +174,13 @@ export function VerifyEmailModal({
             )}
           </div>
           <DialogTitle className="text-center text-xl font-bold font-heading">
-            {isSuccess
-              ? "Email verified"
-              : isRegister
-                ? "Complete your registration"
-                : "Verify your email"}
+            {isSuccess ? "Email verified" : "Verify your email"}
           </DialogTitle>
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
             {isSuccess ? (
               "Your email address has been successfully verified. You now have full access to notifications and reminders."
             ) : !isCodeSent ? (
               "We will send a 6-digit verification code to the email address associated with your account."
-            ) : isRegister ? (
-              <>
-                We sent a 6-digit verification code to{" "}
-                <span className="font-semibold text-foreground">{email}</span>.
-                Enter the code below to complete your registration.
-              </>
             ) : isSendingCode ? (
               <>
                 Sending verification code to{" "}
@@ -264,9 +259,7 @@ export function VerifyEmailModal({
                   ? "Verifying..."
                   : isSendingCode
                     ? "Sending code..."
-                    : isRegister
-                      ? "Complete registration"
-                      : "Confirm code"}
+                    : "Confirm code"}
               </Button>
 
               <div className="flex items-center justify-between text-xs pt-1">
@@ -290,15 +283,15 @@ export function VerifyEmailModal({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  disabled={isTimerActive || isSendingCode}
-                  onClick={handleSendCode}
+                  disabled={isTimerActive || isSendingCode || isResending}
+                  onClick={handleResendCode}
                   className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground cursor-pointer font-normal"
                 >
                   {isTimerActive ? (
                     <>
-                      Resend in <span ref={timerTextRef}>60</span>s
+                      Resend in <span ref={timerTextRef}></span>s
                     </>
-                  ) : isSendingCode ? (
+                  ) : isSendingCode || isResending ? (
                     "Sending code..."
                   ) : (
                     "Resend code"

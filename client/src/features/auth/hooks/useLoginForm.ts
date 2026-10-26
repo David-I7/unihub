@@ -34,7 +34,8 @@ export function useLoginForm(options?: UseLoginFormOptions) {
         if (options?.onSuccess) {
           options.onSuccess();
         } else {
-          const redirectTarget = options?.redirectTo ?? searchParams.get("redirect") ?? "/";
+          const redirectTarget =
+            options?.redirectTo ?? searchParams.get("redirect") ?? "/";
           navigate(redirectTarget);
         }
       } catch (err) {

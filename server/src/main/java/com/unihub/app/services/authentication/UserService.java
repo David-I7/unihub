@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -98,12 +99,41 @@ public class UserService {
     }
 
     @Transactional
+    public MessageResponseDto resendRegisterCode(String email) {
+        VerificationCodeService.PendingRegistration pending = verificationCodeService.getPendingRegistration(email);
+        if (pending == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No pending registration found for this email");
+        }
+
+        String code = verificationCodeService.generateCode();
+        verificationCodeService.savePendingRegistration(pending.getUsername(), pending.getEmail(), pending.getEncodedPassword(), code);
+
+        eventPublisher.publishEvent(new RegisterVerificationRequestedEvent(
+                pending.getEmail(),
+                pending.getUsername(),
+                code
+        ));
+
+        return new MessageResponseDto("Verification email sent. Please check your inbox.");
+    }
+
+    @Transactional
     public User confirmRegister(String email, String code) {
         VerificationCodeService.PendingRegistration pending = verificationCodeService.verifyAndConsumeRegistration(email, code);
 
         List<User> existingUsers = userRepository.findByUsernameOrEmail(pending.getUsername(), pending.getEmail());
         if (!existingUsers.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
+            if (existingUsers.size() > 1) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username and email.");
+            }
+
+            boolean sameUsername = pending.getUsername() != null && pending.getUsername().equals(existingUsers.get(0).getUsername());
+
+            if (sameUsername) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username");
+            }else {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same email");
+            }
         }
 
         OffsetDateTime now = OffsetDateTime.now();
@@ -159,6 +189,11 @@ public class UserService {
         }
 
         User user = optionalUser.get();
+
+        if (verificationCodeService.existsPendingEmailVerification(user.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "A verification email has already been sent to this email address. Please check your inbox.");
+        }
+
         String code = verificationCodeService.generateCode();
         verificationCodeService.savePendingEmailVerification(user.getEmail(), code);
 
@@ -169,6 +204,35 @@ public class UserService {
         ));
 
         return new MessageResponseDto("If an account exists with that email, a verification code has been sent.");
+    }
+
+    @Transactional
+    public MessageResponseDto resendEmailVerificationCode(String email) {
+        Optional<User> optionalUser = userRepository.findByEmail(email);
+        if (optionalUser.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
+        User user = optionalUser.get();
+        if (user.isEmailVerified()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already verified");
+        }
+
+        VerificationCodeService.PendingEmailVerification pending = verificationCodeService.getPendingEmailVerification(email);
+        if (pending == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No pending verification found for this email");
+        }
+
+        String code = verificationCodeService.generateCode();
+        verificationCodeService.savePendingEmailVerification(user.getEmail(), code);
+
+        eventPublisher.publishEvent(new EmailVerificationRequestedEvent(
+                user.getEmail(),
+                user.getUsername(),
+                code
+        ));
+
+        return new MessageResponseDto("Verification email sent. Please check your inbox.");
     }
 
     @Transactional(readOnly = true)
@@ -213,19 +277,15 @@ public class UserService {
 
         String purpose = claims.get(JwtService.PURPOSE_CLAIM, String.class);
         if (!JwtService.PURPOSE_PASSWORD_RESET.equals(purpose)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid token purpose");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid token");
         }
 
         String subject = claims.getSubject();
-        if (subject == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed reset token");
-        }
 
         UUID userId = UUID.fromString(subject);
         User user = findById(userId);
 
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setUpdatedAt(OffsetDateTime.now());
         userRepository.save(user);
 
         sessionService.revokeAllUserSessions(userId);

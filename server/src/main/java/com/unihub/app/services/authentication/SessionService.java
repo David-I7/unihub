@@ -214,14 +214,14 @@ public class SessionService {
                 return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
             }
             else {
-                // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
+                // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                 sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
             }return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
         } catch (InvalidJwtTokenException e) {
             if(e.getCause() instanceof ExpiredJwtException) {
                 session = getSession(refreshToken);
                 if(session != null && session.isRevoked()){
-                    // Token reuse detected. This scenario happens when a user logs in and then immediately logs out and logs in again, or refreshToken was rotated.
+                    // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                     sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
                     return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
                 }else if (session != null && !session.isRevoked()){

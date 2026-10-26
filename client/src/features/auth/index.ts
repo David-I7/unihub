@@ -1,4 +1,5 @@
 import { RegisterForm } from "@/features/auth/components/RegisterForm";
+import { RegisterVerificationStep } from "@/features/auth/components/RegisterVerificationStep";
 import { LoginForm } from "@/features/auth/components/LoginForm";
 import { ForgotPasswordModal } from "@/features/auth/components/ForgotPasswordModal";
 import { VerifyEmailModal } from "@/features/auth/components/VerifyEmailModal";
@@ -14,6 +15,15 @@ import useAuthStore from "./store/useAuthStore";
 import { refresh } from "./api/refresh";
 import { register, useRegister } from "./api/register";
 import { confirmRegister, useConfirmRegister } from "./api/confirmRegister";
+import {
+  resendEmailVerification,
+  useResendEmailVerification,
+  type ResendEmailVerificationRequest,
+} from "./api/resendEmailVerification";
+import {
+  resendRegisterCode,
+  useResendRegisterCode,
+} from "./api/resendRegisterCode";
 import { verifyEmail, useVerifyEmail } from "./api/verifyEmail";
 import { confirmEmail, useConfirmEmail } from "./api/confirmEmail";
 import { forgotPassword, useForgotPassword } from "./api/forgotPassword";
@@ -25,6 +35,7 @@ import type {
 } from "./api/types";
 import type { ForgotPasswordModalProps } from "@/features/auth/components/ForgotPasswordModal";
 import type { VerifyEmailModalProps } from "@/features/auth/components/VerifyEmailModal";
+import type { RegisterVerificationStepProps } from "@/features/auth/components/RegisterVerificationStep";
 
 export {
   refresh,
@@ -32,6 +43,10 @@ export {
   useRegister,
   confirmRegister,
   useConfirmRegister,
+  resendRegisterCode,
+  useResendRegisterCode,
+  resendEmailVerification,
+  useResendEmailVerification,
   verifyEmail,
   useVerifyEmail,
   confirmEmail,
@@ -41,6 +56,7 @@ export {
   resetPassword,
   useResetPassword,
   RegisterForm,
+  RegisterVerificationStep,
   LoginForm,
   ForgotPasswordModal,
   VerifyEmailModal,
@@ -56,4 +72,6 @@ export {
   type MessageResponse,
   type ForgotPasswordModalProps,
   type VerifyEmailModalProps,
+  type RegisterVerificationStepProps,
+  type ResendEmailVerificationRequest,
 };

@@ -11,7 +11,6 @@ type ThemeState = {
 };
 
 export function getSystemTheme(): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
   return window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
@@ -25,7 +24,6 @@ export function resolveEffectiveTheme(theme: Theme): ResolvedTheme {
 }
 
 function applyThemeToDocument(theme: Theme): ResolvedTheme {
-  if (typeof window === "undefined") return "light";
   const root = window.document.documentElement;
   root.classList.remove("light", "dark");
 

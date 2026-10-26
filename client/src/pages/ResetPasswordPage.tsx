@@ -2,7 +2,12 @@ import * as React from "react";
 import { useSearchParams, useNavigate, Link } from "react-router";
 import { isAxiosError } from "axios";
 import { z } from "zod";
-import { CheckCircle2, AlertTriangle, KeyRound, ArrowLeft } from "@/components/ui/icons";
+import {
+  CheckCircle2,
+  AlertTriangle,
+  KeyRound,
+  ArrowLeft,
+} from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -35,6 +40,7 @@ export default function ResetPasswordPage() {
   const token = searchParams.get("token");
   const navigate = useNavigate();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const isUserLoggedIn = Boolean(useAuthStore((state) => state.user));
 
   const [isSuccess, setIsSuccess] = React.useState(false);
   const { mutateAsync: resetPasswordMutation, isPending } = useResetPassword();
@@ -63,7 +69,9 @@ export default function ResetPasswordPage() {
               "Password reset link has expired or is invalid. Please request a new link.",
           );
         } else {
-          form.setServerError("An unexpected error occurred. Please try again.");
+          form.setServerError(
+            "An unexpected error occurred. Please try again.",
+          );
         }
       }
     },
@@ -73,7 +81,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex flex-1 min-h-full w-full flex-col items-center justify-center p-4 my-auto animate-in fade-in duration-200">
         <div className="w-full max-w-md rounded-2xl border bg-card p-6 sm:p-8 shadow-xs flex flex-col items-center gap-5 text-center">
-          <div className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
             <AlertTriangle className="size-6" />
           </div>
           <div className="flex flex-col gap-1">
@@ -81,7 +89,8 @@ export default function ResetPasswordPage() {
               Invalid or missing link
             </h1>
             <p className="text-xs text-muted-foreground text-balance">
-              This password reset link is invalid or has already been used. Please request a new password reset link.
+              This password reset link is invalid or has already been used.
+              Please request a new password reset link.
             </p>
           </div>
           <Button
@@ -108,7 +117,8 @@ export default function ResetPasswordPage() {
               Password reset successfully
             </h1>
             <p className="text-xs text-muted-foreground text-balance">
-              Your password has been reset. You may safely close this tab or proceed to login with your new password.
+              Your password has been reset. You may safely close this tab and
+              proceed to login with your new password.
             </p>
           </div>
           <Button
@@ -138,9 +148,16 @@ export default function ResetPasswordPage() {
             <h1 className="text-2xl font-bold font-heading text-foreground">
               Set a new password
             </h1>
-            <p className="text-xs text-balance text-muted-foreground">
-              Enter your new secure password below to regain access to your account.
-            </p>
+            {isUserLoggedIn ? (
+              <p className="text-xs text-muted-foreground">
+                Enter your new secure password below{" "}
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Enter your new secure password below to regain access to your
+                account.
+              </p>
+            )}
           </div>
 
           {form.serverError && (
@@ -150,7 +167,10 @@ export default function ResetPasswordPage() {
           )}
 
           <Field data-invalid={form.isInvalid("password")}>
-            <FieldLabel htmlFor="new-password" className="text-xs font-semibold">
+            <FieldLabel
+              htmlFor="new-password"
+              className="text-xs font-semibold"
+            >
               New Password
             </FieldLabel>
             <Input
@@ -168,7 +188,10 @@ export default function ResetPasswordPage() {
           </Field>
 
           <Field data-invalid={form.isInvalid("confirmPassword")}>
-            <FieldLabel htmlFor="confirm-password" className="text-xs font-semibold">
+            <FieldLabel
+              htmlFor="confirm-password"
+              className="text-xs font-semibold"
+            >
               Confirm New Password
             </FieldLabel>
             <Input
@@ -190,19 +213,23 @@ export default function ResetPasswordPage() {
               disabled={isPending || form.isSubmitting}
               className="w-full h-9 font-semibold text-xs cursor-pointer"
             >
-              {isPending || form.isSubmitting ? "Resetting..." : "Reset Password"}
+              {isPending || form.isSubmitting
+                ? "Resetting..."
+                : "Reset Password"}
             </Button>
           </Field>
 
-          <div className="flex justify-center pt-1">
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="size-3.5" />
-              Back to login
-            </Link>
-          </div>
+          {!isUserLoggedIn && (
+            <div className="flex justify-center pt-1">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="size-3.5" />
+                Back to login
+              </Link>
+            </div>
+          )}
         </FieldGroup>
       </form>
     </div>

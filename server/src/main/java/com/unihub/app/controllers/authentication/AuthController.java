@@ -48,6 +48,12 @@ public class AuthController {
         return ResponseEntity.ok(message);
     }
 
+    @PostMapping("/register/resend-code")
+    public ResponseEntity<MessageResponseDto> resendRegisterCode(@Valid @RequestBody EmailRequestDto request) {
+        MessageResponseDto message = userService.resendRegisterCode(request.email());
+        return ResponseEntity.ok(message);
+    }
+
     @PostMapping("/confirm-register")
     public ResponseEntity<SessionResponseDto> confirmRegister(@Valid @RequestBody ConfirmRegisterRequestDto request) {
         User registeredUser = userService.confirmRegister(request.email(), request.code());
@@ -68,6 +74,12 @@ public class AuthController {
     public ResponseEntity<MessageResponseDto> verifyEmail(@Valid @RequestBody EmailRequestDto request) {
         MessageResponseDto message = userService.requestConfirmEmail(request.email());
 
+        return ResponseEntity.ok(message);
+    }
+
+    @PostMapping({"/verify-email/resend-code"})
+    public ResponseEntity<MessageResponseDto> resendEmailVerificationCode(@Valid @RequestBody EmailRequestDto request) {
+        MessageResponseDto message = userService.resendEmailVerificationCode(request.email());
         return ResponseEntity.ok(message);
     }
 

@@ -78,7 +78,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
       if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
         return true;
       }
-      return hasPermission(PERMISSIONS.UPDATE_POST);
+      return false;
     },
     [user, hasPermission],
   );
@@ -88,10 +88,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
       if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
         return true;
       }
-      return (
-        hasPermission(PERMISSIONS.DELETE_POST) ||
-        hasPermission(PERMISSIONS.MODERATE_POST)
-      );
+      return hasPermission(PERMISSIONS.MODERATE_POST);
     },
     [user, hasPermission],
   );
