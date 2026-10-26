@@ -61,22 +61,17 @@ export function useCountdownTimer({
   }, []);
 
   const runTick = React.useCallback(() => {
-    let currentRemaining: number;
-    if (storageKey) {
-      currentRemaining = getStoredRemainingSeconds(storageKey);
-    } else {
-      secondsLeftRef.current -= 1;
-      currentRemaining = secondsLeftRef.current;
-    }
+    secondsLeftRef.current -= 1;
+    const currentRemaining = secondsLeftRef.current;
 
-    secondsLeftRef.current = currentRemaining;
-    if (timerTextRef.current) {
-      timerTextRef.current.textContent = String(currentRemaining);
-    }
     if (currentRemaining <= 0) {
       clearTimerInterval();
       clearStoredExpiresAt(storageKey);
       setIsActive(false);
+    }
+
+    if (timerTextRef.current) {
+      timerTextRef.current.textContent = String(currentRemaining);
     }
   }, [clearTimerInterval, storageKey]);
 

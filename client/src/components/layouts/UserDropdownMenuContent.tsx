@@ -192,7 +192,6 @@ export function UserDropdownMenuContent({
         open={isVerifyEmailOpen}
         onOpenChange={setIsVerifyEmailOpen}
         email={user.email}
-        mode="verify"
         autoSend={false}
       />
 

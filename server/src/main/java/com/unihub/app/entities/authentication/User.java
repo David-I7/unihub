@@ -46,4 +46,9 @@ public class User {
     public boolean isActive(){
         return deletedAt == null;
     }
+
+    @PreUpdate
+    private void preUpdate() {
+        updatedAt = OffsetDateTime.now();
+    }
 }

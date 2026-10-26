@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +86,52 @@ public class AuthControllerTests extends BaseIntegrationTest {
 
     @Autowired
     private com.unihub.app.services.authentication.VerificationCodeService verificationCodeService;
+
+    // =========================================================================
+    // =========================================================================
+    // POST /api/v1/auth/register/resend-code
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: no pending registration exists
+            When: /register/resend-code endpoint is called
+            Then: 400 Bad Request is returned
+            """)
+    public void testResendRegisterCode_NotFound() throws Exception {
+        var request = new com.unihub.app.dto.authentication.EmailRequestDto("nonexistent@gmail.com");
+
+        mockMvc.perform(post(BASE_URL + "/register/resend-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // =========================================================================
+    // POST /api/v1/auth/verify-email/resend-code
+    // =========================================================================
+
+    @Test
+    @DisplayName("""
+            Given: no pending email verification exists
+            When: /verify-email/resend-code endpoint is called
+            Then: 400 Bad Request is returned
+            """)
+    public void testResendEmailVerificationCode_NotFound() throws Exception {
+        User user = new User();
+        user.setId(UUID.randomUUID());
+        user.setEmail("noverify@gmail.com");
+        user.setUsername("noverify");
+        user.setEmailVerified(false);
+        when(userRepository.findByEmail("noverify@gmail.com")).thenReturn(Optional.of(user));
+
+        var request = new com.unihub.app.dto.authentication.EmailRequestDto("noverify@gmail.com");
+
+        mockMvc.perform(post(BASE_URL + "/verify-email/resend-code")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
 
     // =========================================================================
     // POST /api/v1/auth/confirm-register
