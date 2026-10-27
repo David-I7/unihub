@@ -104,7 +104,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/register/resend-code")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Verification email sent. Please check your inbox."));
     }
 
     // =========================================================================
@@ -130,7 +131,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/verify-email/resend-code")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Verification email sent. Please check your inbox."));
     }
 
     // =========================================================================
@@ -165,8 +167,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/confirm-register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/v1/auth/refresh")))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.id").exists())
                 .andExpect(jsonPath("$.user.username").value("testuser"))
                 .andExpect(jsonPath("$.user.email").value("test@gmail.com"))
@@ -276,6 +277,43 @@ public class AuthControllerTests extends BaseIntegrationTest {
 
         verify(userRepository).save(user);
         verify(sessionRepository).revokeAllByUserId(userId);
+    }
+
+    @Test
+    @DisplayName("""
+            Given: password reset token that has already been used
+            When: /reset-password endpoint is called again
+            Then: 400 bad request is returned
+            """)
+    public void testResetPassword_TokenAlreadyUsed() throws Exception {
+        UUID userId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("test@gmail.com").username("testuser").password("oldEncoded").build();
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        String token = jwtService.generateToken(
+                userId.toString(),
+                Map.of(
+                        JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_PASSWORD_RESET,
+                        "userId", userId.toString(),
+                        "email", "test@gmail.com"
+                ),
+                3600
+        );
+
+        var request = new com.unihub.app.dto.authentication.ResetPasswordRequestDto(token, "newPassword123");
+
+        // First use
+        mockMvc.perform(post(BASE_URL + "/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        // Second use (should fail)
+        mockMvc.perform(post(BASE_URL + "/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("The password reset link is invalid or has already been used."));
     }
 
     @Test
@@ -512,8 +550,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/login/local")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.detail").value("User not found"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Invalid username, email, or password."));
     }
 
     @Test
@@ -537,8 +575,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/login/local")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.detail").value("This account does not have a password."));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Invalid username, email, or password."));
     }
 
     @Test
@@ -564,8 +602,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
         mockMvc.perform(post(BASE_URL + "/login/local")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.detail").value("Incorrect password"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Invalid username, email, or password."));
     }
 
     @Test
@@ -689,8 +727,8 @@ public class AuthControllerTests extends BaseIntegrationTest {
             """)
     public void testLogout_MissingRefreshToken() throws Exception {
         mockMvc.perform(post(BASE_URL + "/logout"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.detail").value("No refresh token found."));
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("refreshToken", 0));
     }
 
     @Test
@@ -798,7 +836,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(5))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(session));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -828,7 +866,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusHours(12))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(session));
         when(sessionRepository.save(any(Session.class))).thenAnswer(i -> {
             Session s = i.getArgument(0);
             if (s.getId() == null) s.setId(UUID.randomUUID());
@@ -868,7 +906,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         UUID userId = UUID.randomUUID();
         String token = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.empty());
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -895,10 +933,11 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .user(user)
                 .refreshToken(token)
                 .revoked(true)
+                .revokedAt(OffsetDateTime.now().minusMinutes(1))
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(revokedSession));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(revokedSession));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -907,6 +946,52 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .andExpect(cookie().maxAge("refreshToken", 0));
 
         verify(sessionRepository).revokeSessionFamily(initialSessionId);
+    }
+
+    @Test
+    @DisplayName("""
+            Given: request with revoked refresh token within 30s grace window and valid replacement
+            When: /refresh endpoint is called
+            Then: 200 ok is returned with replacement session data and cookie
+            """)
+    public void testRefresh_RevokedRefreshToken_WithinGracePeriod_ReturnsReplacedSession() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID initialSessionId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("user@gmail.com").username("user").build();
+        String oldToken = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
+        String newToken = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
+
+        Session replacementSession = Session.builder()
+                .id(UUID.randomUUID())
+                .initialSessionId(initialSessionId)
+                .user(user)
+                .refreshToken(newToken)
+                .revoked(false)
+                .expiresAt(OffsetDateTime.now().plusDays(5))
+                .build();
+
+        Session oldRevokedSession = Session.builder()
+                .id(UUID.randomUUID())
+                .initialSessionId(initialSessionId)
+                .user(user)
+                .refreshToken(oldToken)
+                .revoked(true)
+                .revokedAt(OffsetDateTime.now().minusSeconds(5))
+                .replacedBy(replacementSession)
+                .expiresAt(OffsetDateTime.now().plusDays(5))
+                .build();
+
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(oldToken)).thenReturn(Optional.of(oldRevokedSession));
+
+        mockMvc.perform(post(BASE_URL + "/refresh")
+                        .cookie(new Cookie("refreshToken", oldToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value(userId.toString()))
+                .andExpect(jsonPath("$.user.username").value("user"))
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(cookie().value("refreshToken", newToken));
+
+        verify(sessionRepository, never()).revokeSessionFamily(any());
     }
 
     @Test

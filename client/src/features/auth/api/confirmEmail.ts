@@ -2,6 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import type { ConfirmEmailRequest, MessageResponse } from "./types";
 import client from "@/api/client";
 import useAuthStore from "../store/useAuthStore";
+import { refresh } from "./refresh";
 
 export const confirmEmail = async (
   request: ConfirmEmailRequest,
@@ -16,8 +17,12 @@ export const confirmEmail = async (
 export const useConfirmEmail = () => {
   return useMutation<MessageResponse, Error, ConfirmEmailRequest>({
     mutationFn: confirmEmail,
-    onSuccess: () => {
+    onSuccess: async () => {
       useAuthStore.getState().setEmailVerified(true);
+      try {
+        const data = await refresh();
+        useAuthStore.getState().setAuth(data.user, data.accessToken);
+      } catch {}
     },
   });
 };

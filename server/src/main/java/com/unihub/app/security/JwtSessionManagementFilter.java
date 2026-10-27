@@ -50,10 +50,12 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
                     }
                 }catch (ResponseStatusException e){
                     if(e.getStatusCode() == HttpStatus.UNAUTHORIZED){
-                        log.info("Found and invalid or expired refresh token for a user: {}", e.getMessage());
+                        log.info("Found an invalid or expired refresh token for a user on unauthenticated path, clearing cookie and proceeding: {}", e.getMessage());
+                        response.setHeader(HttpHeaders.SET_COOKIE, sessionService.clearSessionCookie().toString());
+                    } else {
+                        problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getMessage());
+                        return;
                     }
-                    problemDetailUtil.writeProblemDetail(request,response, HttpStatus.valueOf(e.getStatusCode().value()), e.getMessage());
-                    return;
                 }
             }
             filterChain.doFilter(request,response);

@@ -73,21 +73,53 @@ public class SessionService {
 
     @Transactional
     public JwtSession refreshSession(HttpServletRequest request, HttpServletResponse response){
-        SessionAndSessionStatus sessionAndSessionStatusStatus = _validateRefreshTokenSession(request,response);
-        SessionStatus sessionStatus = sessionAndSessionStatusStatus.sessionStatus();
-        Session session = sessionAndSessionStatusStatus.session();
+        Cookie refreshCookie = null;
+        if (request.getCookies() != null) {
+            refreshCookie = Arrays.stream(request.getCookies())
+                    .filter(c -> "refreshToken".equals(c.getName()))
+                    .findFirst()
+                    .orElse(null);
+        }
 
-        if(sessionStatus != SessionStatus.ACTIVE && sessionStatus != SessionStatus.ROTATE_REQUIRED && sessionStatus != SessionStatus.ABSENT){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
-        } else if (sessionStatus == SessionStatus.ABSENT) {
+        if (refreshCookie == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token found.");
         }
 
-        if(sessionStatus == SessionStatus.ROTATE_REQUIRED){
+        String token = refreshCookie.getValue();
+        try {
+            jwtService.parseClaims(token);
+        } catch (InvalidJwtTokenException e) {
+            response.setHeader(HttpHeaders.SET_COOKIE, clearSessionCookie().toString());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid.");
+        }
+
+        Session session = sessionRepository.findByRefreshTokenWithUserForUpdate(token).orElse(null);
+        if (session == null) {
+            response.setHeader(HttpHeaders.SET_COOKIE, clearSessionCookie().toString());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid.");
+        }
+
+        if (session.isRevoked()) {
+            if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
+                Session replacement = session.getReplacedBy();
+                while (replacement != null && replacement.isRevoked() && replacement.getReplacedBy() != null) {
+                    replacement = replacement.getReplacedBy();
+                }
+                if (replacement != null && !replacement.isRevoked()) {
+                    User user = replacement.getUser();
+                    String accessToken = createAccessToken(user);
+                    return new JwtSession(userMapper.toDto(user), accessToken, createSessionCookie(replacement.getRefreshToken()));
+                }
+            }
+            sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
+            response.setHeader(HttpHeaders.SET_COOKIE, clearSessionCookie().toString());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is invalid.");
+        }
+
+        if (session.getExpiresAt().isBefore(OffsetDateTime.now().plusSeconds(sessionProperties.refreshTokenRotateWindowSec()))) {
             return rotateSession(session);
         }
 
-        // Generate a new access token
         User user = session.getUser();
         String accessToken = createAccessToken(user);
         return new JwtSession(userMapper.toDto(user), accessToken, null);
@@ -123,10 +155,8 @@ public class SessionService {
         SessionStatus sessionStatus = sessionAndSessionStatusStatus.sessionStatus();
         Session session = sessionAndSessionStatusStatus.session();
 
-        if(sessionStatus != SessionStatus.ACTIVE && sessionStatus != SessionStatus.ROTATE_REQUIRED && sessionStatus != SessionStatus.ABSENT){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,"Refresh token is invalid.");
-        } else if (sessionStatus == SessionStatus.ABSENT) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No refresh token found.");
+        if(sessionStatus != SessionStatus.ACTIVE && sessionStatus != SessionStatus.ROTATE_REQUIRED){
+            return clearSessionCookie();
         }
 
         sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
@@ -142,6 +172,10 @@ public class SessionService {
     @Transactional
     public void invalidateUserTokens(UUID userId) {
         sessionRepository.revokeAllByUserId(userId);
+        tokenRevocationService.revokeUserTokens(userId);
+    }
+
+    public void invalidateActiveAccessTokens(UUID userId){
         tokenRevocationService.revokeUserTokens(userId);
     }
 
@@ -175,9 +209,8 @@ public class SessionService {
                 sessionProperties.refreshTokenExpirationSec());
     }
 
-    private JwtSession _createSession(User user, UUID initialSessionId) {
+    private Session _buildAndSaveSession(User user, UUID initialSessionId) {
         String refreshToken = createRefreshToken(user);
-
         OffsetDateTime sessionExpiresAt = OffsetDateTime.now().plusSeconds(sessionProperties.refreshTokenExpirationSec());
 
         var session = Session.builder()
@@ -187,17 +220,25 @@ public class SessionService {
                 .user(user)
                 .build();
 
-        sessionRepository.save(session);
+        return sessionRepository.save(session);
+    }
 
+    private JwtSession _createSession(User user, UUID initialSessionId) {
+        Session session = _buildAndSaveSession(user, initialSessionId);
         String accessToken = createAccessToken(user);
-
-        return new JwtSession(userMapper.toDto(user), accessToken, createSessionCookie(refreshToken));
+        return new JwtSession(userMapper.toDto(user), accessToken, createSessionCookie(session.getRefreshToken()));
     }
 
     private JwtSession rotateSession(Session oldSession){
+        Session newSession = _buildAndSaveSession(oldSession.getUser(), getSessionFamilyId(oldSession));
+
         oldSession.setRevoked(true);
+        oldSession.setRevokedAt(OffsetDateTime.now());
+        oldSession.setReplacedBy(newSession);
         sessionRepository.save(oldSession);
-        return _createSession(oldSession.getUser(), getSessionFamilyId(oldSession));
+
+        String accessToken = createAccessToken(oldSession.getUser());
+        return new JwtSession(userMapper.toDto(oldSession.getUser()), accessToken, createSessionCookie(newSession.getRefreshToken()));
     }
 
     private SessionAndSessionStatus getSessionAndSessionStatus(String refreshToken){
@@ -214,18 +255,26 @@ public class SessionService {
                 return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
             }
             else {
+                if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
+                    return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
+                }
                 // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                 sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
-            }return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
+                return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
+            }
         } catch (InvalidJwtTokenException e) {
             if(e.getCause() instanceof ExpiredJwtException) {
                 session = getSession(refreshToken);
                 if(session != null && session.isRevoked()){
+                    if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
+                        return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
+                    }
                     // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                     sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
                     return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
                 }else if (session != null && !session.isRevoked()){
                     session.setRevoked(true);
+                    session.setRevokedAt(OffsetDateTime.now());
                     sessionRepository.save(session);
                     return new SessionAndSessionStatus(session, SessionStatus.EXPIRED);
                 }else return new SessionAndSessionStatus(session, SessionStatus.INVALID);

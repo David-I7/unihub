@@ -192,7 +192,7 @@ export function UserDropdownMenuContent({
         open={isVerifyEmailOpen}
         onOpenChange={setIsVerifyEmailOpen}
         email={user.email}
-        autoSend={false}
+
       />
 
       {/* Reset Password Modal */}
@@ -200,7 +200,7 @@ export function UserDropdownMenuContent({
         open={isForgotPasswordOpen}
         onOpenChange={setIsForgotPasswordOpen}
         email={user.email}
-        autoSend={false}
+
       />
 
       {/* Update Username Modal */}

@@ -31,6 +31,8 @@ import com.unihub.app.utils.AppUtils;
 import com.unihub.app.utils.Random;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -63,6 +65,7 @@ public class UserService {
     private final EmailProperties emailProperties;
     private final AppUtils appUtils;
     private final VerificationCodeService verificationCodeService;
+    private final CacheManager cacheManager;
 
     @Transactional
     public MessageResponseDto register(User user) {
@@ -102,7 +105,7 @@ public class UserService {
     public MessageResponseDto resendRegisterCode(String email) {
         VerificationCodeService.PendingRegistration pending = verificationCodeService.getPendingRegistration(email);
         if (pending == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No pending registration found for this email");
+            return new MessageResponseDto("Verification email sent. Please check your inbox.");
         }
 
         String code = verificationCodeService.generateCode();
@@ -173,6 +176,7 @@ public class UserService {
         user.setEmailVerified(true);
         user.setUpdatedAt(OffsetDateTime.now());
         userRepository.save(user);
+        sessionService.invalidateActiveAccessTokens(user.getId());
 
         return new MessageResponseDto("Email has been successfully verified.");
     }
@@ -180,19 +184,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public MessageResponseDto requestConfirmEmail(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-
-        if(optionalUser.get().isEmailVerified()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already verified");
+        if (optionalUser.isEmpty() || optionalUser.get().isEmailVerified() || verificationCodeService.existsPendingEmailVerification(email)) {
+            return new MessageResponseDto("If an account exists with that email, a verification code has been sent.");
         }
 
         User user = optionalUser.get();
-
-        if (verificationCodeService.existsPendingEmailVerification(user.getEmail())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "A verification email has already been sent to this email address. Please check your inbox.");
-        }
 
         String code = verificationCodeService.generateCode();
         verificationCodeService.savePendingEmailVerification(user.getEmail(), code);
@@ -209,18 +205,15 @@ public class UserService {
     @Transactional
     public MessageResponseDto resendEmailVerificationCode(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        if (optionalUser.isEmpty() || optionalUser.get().isEmailVerified()) {
+            return new MessageResponseDto("Verification email sent. Please check your inbox.");
         }
 
         User user = optionalUser.get();
-        if (user.isEmailVerified()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already verified");
-        }
 
         VerificationCodeService.PendingEmailVerification pending = verificationCodeService.getPendingEmailVerification(email);
         if (pending == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No pending verification found for this email");
+            return new MessageResponseDto("Verification email sent. Please check your inbox.");
         }
 
         String code = verificationCodeService.generateCode();
@@ -238,12 +231,8 @@ public class UserService {
     @Transactional(readOnly = true)
     public MessageResponseDto requestPasswordReset(String email) {
         Optional<User> optionalUser = userRepository.findByEmail(email);
-        if (optionalUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
-
-        if(!optionalUser.get().isEmailVerified()){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is not verified");
+        if (optionalUser.isEmpty() || !optionalUser.get().isEmailVerified()) {
+            return new MessageResponseDto("If an account exists with that email, a password reset link has been sent.");
         }
 
         User user = optionalUser.get();
@@ -254,7 +243,7 @@ public class UserService {
         );
 
         String token = jwtService.generateToken(user.getId().toString(), claims, expirationSec);
-        String resetUrl = appUtils.getOrigin() + "/reset-password?token=" + token;
+        String resetUrl = appUtils.getClientOrigin() + "/reset-password?token=" + token;
 
         eventPublisher.publishEvent(new PasswordResetRequestedEvent(
                 user.getEmail(),
@@ -268,6 +257,11 @@ public class UserService {
 
     @Transactional
     public MessageResponseDto resetPassword(String token, String newPassword) {
+        Cache usedResetTokens = cacheManager != null ? cacheManager.getCache("usedResetTokens") : null;
+        if (usedResetTokens != null && usedResetTokens.get(token) != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password reset link is invalid or has already been used.");
+        }
+
         Claims claims;
         try {
             claims = jwtService.parseClaims(token);
@@ -288,6 +282,10 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
+        if (usedResetTokens != null) {
+            usedResetTokens.put(token, true);
+        }
+
         sessionService.revokeAllUserSessions(userId);
 
         return new MessageResponseDto("Password has been successfully reset. Please log in with your new password.");
@@ -301,6 +299,12 @@ public class UserService {
     @Transactional
     public void selfDelete(UUID userId) {
         User user = findById(userId);
+        if (user.getRoleId() != null) {
+            Role role = roleService.getRoleById(user.getRoleId());
+            if (role != null && RoleType.ROOT.name().equals(role.getName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete user with ROOT role");
+            }
+        }
         String email = user.getEmail();
         String username = user.getUsername();
 
@@ -332,6 +336,7 @@ public class UserService {
 
         user.setUpdatedAt(OffsetDateTime.now());
         User saved = userRepository.save(user);
+        sessionService.invalidateActiveAccessTokens(saved.getId());
         return userMapper.toUserProfile(saved);
     }
 
@@ -457,20 +462,20 @@ public class UserService {
         );
 
         if (existingUser.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username, email, or password.");
         }
 
         User savedUser = existingUser.get(0);
 
         if (savedUser.getPassword() == null) {
             throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "This account does not have a password."
+                    HttpStatus.UNAUTHORIZED,
+                    "Invalid username, email, or password."
             );
         }
 
         if (!passwordEncoder.matches(user.getPassword(), savedUser.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Incorrect password");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username, email, or password.");
         }
 
         reactivateIfDeleted(savedUser);

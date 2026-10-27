@@ -11,4 +11,9 @@ public record AddCommunityMemberRequestDto(
 
         RoleType role
 ) {
+        public AddCommunityMemberRequestDto{
+                if (username != null){
+                        username = username.trim().toLowerCase();
+                }
+        }
 }

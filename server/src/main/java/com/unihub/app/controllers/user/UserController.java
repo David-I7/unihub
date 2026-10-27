@@ -7,12 +7,14 @@ import com.unihub.app.dto.user.UserProfileResponseDto;
 import com.unihub.app.dto.user.request.AdminDeleteUserRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserProfileRequestDto;
 import com.unihub.app.dto.user.request.UpdateUserRoleRequestDto;
+import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authentication.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final SessionService sessionService;
 
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponseDto> getMyProfile(@AuthenticationPrincipal UserDto currentUser) {
@@ -52,7 +55,9 @@ public class UserController {
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyAccount(@AuthenticationPrincipal UserDto currentUser) {
         userService.selfDelete(currentUser.id());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, sessionService.clearSessionCookie().toString())
+                .build();
     }
 
     @PatchMapping("/{username}/role")

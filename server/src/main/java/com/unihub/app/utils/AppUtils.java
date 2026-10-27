@@ -13,13 +13,12 @@ public class AppUtils {
 
     private final DevelopmentProperties developmentProperties;
 
+    public String getClientOrigin(){
+        return developmentProperties.clientOrigin();
+    }
+
     public String getOrigin(){
-        if (developmentProperties.isDevelopment()){
-            return developmentProperties.clientOrigin();
-        }else return ServletUriComponentsBuilder
-                .fromCurrentContextPath()
-                .build()
-                .toUriString();
+       return developmentProperties.origin();
     }
 
     public boolean isDevelopment(){
@@ -27,14 +26,7 @@ public class AppUtils {
     }
 
     public List<String> getAllowedOrigins(){
-        if (isDevelopment()){
-            return java.util.stream.Stream.of(developmentProperties.clientOrigin(), developmentProperties.origin())
-                    .filter(java.util.Objects::nonNull)
-                    .toList();
-        } else {
-            return java.util.stream.Stream.of(developmentProperties.origin())
-                    .filter(java.util.Objects::nonNull)
-                    .toList();
-        }
+        return java.util.stream.Stream.of(developmentProperties.clientOrigin(), developmentProperties.origin())
+                .toList();
     }
 }

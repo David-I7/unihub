@@ -63,6 +63,13 @@ public class CacheConfig {
                 .build()
         );
 
+        manager.registerCustomCache("usedResetTokens", Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(emailProperties.passwordResetTokenExpirationSec()))
+                .maximumSize(10_000)
+                .build()
+        );
+
+
         return manager;
     }
 }
