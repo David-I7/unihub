@@ -25,13 +25,10 @@ public record LocalUsernameOrEmailLoginRequestDto(
 
     public LocalUsernameOrEmailLoginRequestDto {
         if (email != null) {
-            email = email.trim();
+            email = email.trim().toLowerCase();
         }
         if (username != null) {
-            username = username.trim();
-        }
-        if (password != null) {
-            password = password.trim();
+            username = username.trim().toLowerCase();
         }
     }
 }

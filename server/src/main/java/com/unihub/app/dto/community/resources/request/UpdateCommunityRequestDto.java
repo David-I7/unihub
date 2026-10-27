@@ -33,7 +33,7 @@ public record UpdateCommunityRequestDto(
                         JsonNullable.undefined(),
                         backgroundColor != null ? JsonNullable.of(backgroundColor) : JsonNullable.undefined(),
                         verified != null ? JsonNullable.of(verified) : JsonNullable.undefined(),
-                        newOwnerUsername != null ? JsonNullable.of(newOwnerUsername) : JsonNullable.undefined()
+                        newOwnerUsername != null ? JsonNullable.of(newOwnerUsername.trim().toLowerCase()) : JsonNullable.undefined()
                 );
         }
 
@@ -44,6 +44,6 @@ public record UpdateCommunityRequestDto(
                 readme = readme == null ? JsonNullable.undefined() : readme.map(String::trim);
                 backgroundColor = backgroundColor == null ? JsonNullable.undefined() : backgroundColor.map(String::trim);
                 verified = verified == null ? JsonNullable.undefined() : verified;
-                newOwnerUsername = newOwnerUsername == null ? JsonNullable.undefined() : newOwnerUsername.map(String::trim);
+                newOwnerUsername = newOwnerUsername == null ? JsonNullable.undefined() : newOwnerUsername.map(s -> s.trim().toLowerCase());
         }
 }

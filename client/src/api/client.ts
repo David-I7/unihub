@@ -38,7 +38,7 @@ client.interceptors.response.use(
     if (
       error.response?.status !== 401 ||
       error.config._retry ||
-      error.config.url?.includes("/refresh")
+      error.config.url?.includes("/auth/")
     )
       return Promise.reject(error);
 

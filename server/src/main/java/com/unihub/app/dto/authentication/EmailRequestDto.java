@@ -10,4 +10,9 @@ public record EmailRequestDto(
         @Size(max = 255, message = "Email must not exceed 255 characters")
         String email
 ) {
+    public EmailRequestDto {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
+    }
 }

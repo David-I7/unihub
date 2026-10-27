@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useNavigate } from "react-router";
 import { Mail, Check, ArrowLeft } from "@/components/ui/icons";
 import {
   Dialog,
@@ -13,9 +12,7 @@ import { FieldError } from "@/components/ui/field";
 import { OtpInput } from "@/components/ui/otp-input";
 import { useVerifyEmail } from "../api/verifyEmail";
 import { useConfirmEmail } from "../api/confirmEmail";
-import { useConfirmRegister } from "../api/confirmRegister";
 import { useResendEmailVerification } from "../api/resendEmailVerification";
-import { useResendRegisterCode } from "../api/resendRegisterCode";
 import useCountdownTimer from "@/hooks/useCountdownTimer";
 import useAuthStore from "../store/useAuthStore";
 import queryClient from "@/lib/queryClient";
@@ -25,7 +22,6 @@ export interface VerifyEmailModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
-  autoSend?: boolean;
   onSuccess?: () => void;
   onChangeEmail?: () => void;
 }
@@ -34,16 +30,13 @@ export function VerifyEmailModal({
   open,
   onOpenChange,
   email,
-  autoSend = false,
   onSuccess,
   onChangeEmail,
 }: VerifyEmailModalProps) {
-  const navigate = useNavigate();
   const [otpCode, setOtpCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
   const [codeSent, setCodeSent] = React.useState(false);
-  const hasAutoSentRef = React.useRef(false);
 
   const setEmailVerified = useAuthStore((state) => state.setEmailVerified);
 
@@ -82,7 +75,6 @@ export function VerifyEmailModal({
           setCodeSent(false);
           resetTimer();
         }
-        hasAutoSentRef.current = false;
       }
       onOpenChange(isOpen);
     },
@@ -120,29 +112,6 @@ export function VerifyEmailModal({
     resendEmailMutation,
     startTimer,
   ]);
-
-  React.useEffect(() => {
-    if (!open) {
-      hasAutoSentRef.current = false;
-      return;
-    }
-
-    if (isTimerActive) {
-      return;
-    }
-
-    if (autoSend && email && !hasAutoSentRef.current) {
-      hasAutoSentRef.current = true;
-      sendVerifyCode({ email })
-        .then(() => {
-          setCodeSent(true);
-          startTimer(60);
-        })
-        .catch((err) => {
-          setError(getErrorMessage(err, "Failed to send verification code."));
-        });
-    }
-  }, [open, autoSend, email, isTimerActive, sendVerifyCode, startTimer]);
 
   const handleConfirm = async (codeToVerify?: string) => {
     const code = codeToVerify ?? otpCode;

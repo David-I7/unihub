@@ -21,8 +21,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmail(@Param("email") String email);
 
-    long countByRoleId(UUID roleId);
-
     @Query("SELECT u FROM User u WHERE u.deletedAt IS NOT NULL AND u.deletedAt <= :threshold")
     List<User> findScheduledDeletedUsers(@Param("threshold") OffsetDateTime threshold);
 }

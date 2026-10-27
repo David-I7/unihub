@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 
 public class UsernameValidator implements ConstraintValidator<Username,String>{
 
-    private static Pattern USERNAME_PATTERN = Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9_-]{1,}[a-zA-Z0-9]$");
+    private static Pattern USERNAME_PATTERN = Pattern.compile("[a-z0-9][a-z0-9_-]{1,}[a-z0-9]$");
 
     private static final Pattern ALLOWED_CHARS_PATTERN =
-            Pattern.compile("^[a-zA-Z0-9_-]+$");
+            Pattern.compile("^[a-z0-9_-]+$");
 
     @Override
     public boolean isValid(String username, ConstraintValidatorContext context) {

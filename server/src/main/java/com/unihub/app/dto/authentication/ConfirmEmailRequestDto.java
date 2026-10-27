@@ -13,4 +13,9 @@ public record ConfirmEmailRequestDto(
         @Pattern(regexp = "\\d{6}", message = "Code must be 6 digits")
         String code
 ) {
+    public ConfirmEmailRequestDto {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
+    }
 }

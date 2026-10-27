@@ -34,7 +34,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
 
         OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
-        String origin = appUtils.getOrigin();
+        String origin = appUtils.getClientOrigin();
 
         try {
             AuthProvider provider = AuthProvider.valueOf(token.getAuthorizedClientRegistrationId().toUpperCase());

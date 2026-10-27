@@ -79,12 +79,6 @@ public class OAuth2ProviderUserInfoExtractor {
             OAuth2AuthenticationToken token,
             Map<String, Object> attributes
     ) {
-        String emailFromAttributes = Objects.toString(attributes.get("email"), null);
-
-        if (emailFromAttributes != null && !emailFromAttributes.isBlank()) {
-            return emailFromAttributes;
-        }
-
         var authorizedClient = authorizedClientService.loadAuthorizedClient(
                 token.getAuthorizedClientRegistrationId(),
                 token.getName()

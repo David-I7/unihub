@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { Mail, ArrowLeft } from "@/components/ui/icons";
+import { Mail } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
 import { OtpInput } from "@/components/ui/otp-input";

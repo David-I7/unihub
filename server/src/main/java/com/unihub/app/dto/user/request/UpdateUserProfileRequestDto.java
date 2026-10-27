@@ -10,10 +10,10 @@ public record UpdateUserProfileRequestDto(
         JsonNullable<@NotNull(message = "Username cannot be null") @Username String> username
 ) {
         public UpdateUserProfileRequestDto(String username) {
-                this(username != null ? JsonNullable.of(username) : JsonNullable.undefined());
+                this(username != null ? JsonNullable.of(username.trim().toLowerCase()) : JsonNullable.undefined());
         }
 
         public UpdateUserProfileRequestDto {
-                username = username == null ? JsonNullable.undefined() : username.map(String::trim);
+                username = username == null ? JsonNullable.undefined() : username.map(s->s.trim().toLowerCase());
         }
 }

@@ -2,20 +2,28 @@ import { z } from "zod";
 
 export const emailSchema = z
   .email("Please enter a valid email address")
-  .max(255, "Email cannot exceed 255 characters");
+  .max(255, "Email cannot exceed 255 characters")
+  .refine((val) => val === val.toLowerCase(), {
+    message: "Email must be in lowercase",
+  });
+
+export const urlSchema = z.url();
 
 export const usernameSchema = z
   .string()
   .min(3, "Username must be at least 3 characters long.")
   .max(30, "Username cannot exceed 30 characters.")
   .regex(
-    /^[a-zA-Z0-9_-]+$/,
-    "Username can only contain letters, numbers, underscores (_), and hyphens (-)."
+    /^[a-z0-9_-]+$/,
+    "Username can only contain lowercase letters, numbers, underscores (_), and hyphens (-).",
   )
   .regex(
-    /^[a-zA-Z0-9].*[a-zA-Z0-9]$/,
-    "Username must start and end with a letter or a number."
-  );
+    /^[a-z0-9].*[a-z0-9]$/,
+    "Username must start and end with a letter or a number.",
+  )
+  .refine((val) => val === val.toLowerCase(), {
+    message: "Username must be in lowercase",
+  });
 
 export const identifierSchema = z.string().superRefine((val, ctx) => {
   if (val.length === 0) {
@@ -31,7 +39,9 @@ export const identifierSchema = z.string().superRefine((val, ctx) => {
     if (!result.success) {
       ctx.addIssue({
         code: "custom",
-        message: result.error.issues[0]?.message || "Please enter a valid email address",
+        message:
+          result.error.issues[0]?.message ||
+          "Please enter a valid email address",
       });
     }
   } else {

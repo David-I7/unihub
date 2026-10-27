@@ -61,15 +61,24 @@ public class VerificationCodeService {
     }
 
     @CachePut(cacheNames = "pendingRegistrations", key = "#email.toLowerCase()", unless = "#result == null")
-    public PendingRegistration savePendingRegistration(String username, String email, String encodedPassword, String code) {
+    public PendingRegistration savePendingRegistration(String username, String email, String encodedPassword,
+            String code) {
+        return savePendingRegistration(username, email, encodedPassword, code, 0);
+    }
+
+    @CachePut(cacheNames = "pendingRegistrations", key = "#email.toLowerCase()", unless = "#result == null")
+    public PendingRegistration savePendingRegistration(String username, String email, String encodedPassword,
+            String code, int attempts) {
         PendingRegistration pending = pendingRegistrations.get(email.toLowerCase(), PendingRegistration.class);
 
-        if (pending != null && pending.getCreatedAt() != null && !pending.getCreatedAt().plusSeconds(60).isBefore(Instant.now())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A registration request is already pending for this email address.");
+        if (pending != null && pending.getCreatedAt() != null
+                && !pending.getCreatedAt().plusSeconds(60).isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "A registration request is already pending for this email address.");
         }
 
         pendingRegistrations.evict(email.toLowerCase());
-        return new PendingRegistration(username, email, encodedPassword, code, 0, Instant.now());
+        return new PendingRegistration(username, email, encodedPassword, code, attempts, Instant.now());
     }
 
     public PendingRegistration getPendingRegistration(String email) {
@@ -99,15 +108,23 @@ public class VerificationCodeService {
     }
 
     @CachePut(cacheNames = "pendingEmailVerifications", key = "#email.toLowerCase()", unless = "#result == null")
-    public void savePendingEmailVerification(String email, String code) {
-        PendingEmailVerification pending = pendingEmailVerifications.get(email.toLowerCase(), PendingEmailVerification.class);
+    public PendingEmailVerification savePendingEmailVerification(String email, String code) {
+        return savePendingEmailVerification(email, code, 0);
+    }
 
-        if (pending != null && pending.getCreatedAt() != null && !pending.getCreatedAt().plusSeconds(60).isBefore(Instant.now())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "A verification request is already pending for this email address.");
+    @CachePut(cacheNames = "pendingEmailVerifications", key = "#email.toLowerCase()", unless = "#result == null")
+    public PendingEmailVerification savePendingEmailVerification(String email, String code, int attempts) {
+        PendingEmailVerification pending = pendingEmailVerifications.get(email.toLowerCase(),
+                PendingEmailVerification.class);
+
+        if (pending != null && pending.getCreatedAt() != null
+                && !pending.getCreatedAt().plusSeconds(60).isBefore(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "A verification request is already pending for this email address.");
         }
 
         pendingEmailVerifications.evict(email.toLowerCase());
-        pendingEmailVerifications.put(email.toLowerCase(), new PendingEmailVerification(email, code, 0, Instant.now()));
+        return new PendingEmailVerification(email, code, attempts, Instant.now());
     }
 
     public boolean existsPendingEmailVerification(String email) {
@@ -128,7 +145,8 @@ public class VerificationCodeService {
 
         if (pending.getAttempts() >= MAX_ATTEMPTS) {
             pendingEmailVerifications.evict(key);
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Too many failed attempts. Please request a new verification code.");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Too many failed attempts. Please request a new verification code.");
         }
 
         if (!pending.getCode().equals(code)) {

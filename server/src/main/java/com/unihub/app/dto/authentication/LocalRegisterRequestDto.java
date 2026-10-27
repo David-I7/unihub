@@ -1,6 +1,5 @@
 package com.unihub.app.dto.authentication;
 
-
 import com.unihub.app.validation.Username;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +11,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
+
 @NoArgsConstructor
 public class LocalRegisterRequestDto {
 
@@ -28,5 +27,15 @@ public class LocalRegisterRequestDto {
     @NotBlank
     @Size(min = 8, max = 64)
     private String password;
+
+    public LocalRegisterRequestDto(String email, String username, String password) {
+        this.email = email != null ? email.trim().toLowerCase() : null;
+        this.username = username != null ? username.trim().toLowerCase() : null;
+        this.password = password;
+    }
+
+    public void setEmail(String email) {
+        this.email = email != null ? email.trim().toLowerCase() : null;
+    }
 
 }

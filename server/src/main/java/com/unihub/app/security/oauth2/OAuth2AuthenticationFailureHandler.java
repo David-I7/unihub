@@ -19,7 +19,7 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
-        String origin = appUtils.getOrigin();
+        String origin = appUtils.getClientOrigin();
         response.sendRedirect(origin + "/oauth2?status=failure&provider=" + extractProvider(request));
     }
 

@@ -26,7 +26,6 @@ public class AuthController {
     private final UserService userService;
     private final SessionService sessionService;
     private final UserMapper userMapper;
-    private final AppUtils appUtils;
 
     @PostMapping("/login/local")
     public ResponseEntity<?> login(@Valid @RequestBody LocalUsernameOrEmailLoginRequestDto request) {
@@ -59,7 +58,7 @@ public class AuthController {
         User registeredUser = userService.confirmRegister(request.email(), request.code());
         JwtSession session = sessionService.createSession(registeredUser);
 
-        return ResponseEntity.created(URI.create(appUtils.getOrigin() + "/api/v1/auth/refresh"))
+        return ResponseEntity.ok()
                 .header("Set-Cookie", session.cookie().toString())
                 .body(new SessionResponseDto(session.userDto(), session.accessToken()));
     }
@@ -77,7 +76,7 @@ public class AuthController {
         return ResponseEntity.ok(message);
     }
 
-    @PostMapping({"/verify-email/resend-code"})
+    @PostMapping({ "/verify-email/resend-code" })
     public ResponseEntity<MessageResponseDto> resendEmailVerificationCode(@Valid @RequestBody EmailRequestDto request) {
         MessageResponseDto message = userService.resendEmailVerificationCode(request.email());
         return ResponseEntity.ok(message);
@@ -96,7 +95,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout( HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
         ResponseCookie expiredCookie = sessionService.logout(request, response);
 
         return ResponseEntity
@@ -109,7 +108,8 @@ public class AuthController {
     public ResponseEntity<SessionResponseDto> refresh(HttpServletRequest request, HttpServletResponse response) {
         JwtSession session = sessionService.refreshSession(request, response);
 
-        ResponseEntity<SessionResponseDto> responseEntity = ResponseEntity.ok().body(new SessionResponseDto(session.userDto(), session.accessToken()));
+        ResponseEntity<SessionResponseDto> responseEntity = ResponseEntity.ok()
+                .body(new SessionResponseDto(session.userDto(), session.accessToken()));
 
         if (session.cookie() != null) {
             response.setHeader("Set-Cookie", session.cookie().toString());
