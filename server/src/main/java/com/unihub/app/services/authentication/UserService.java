@@ -109,7 +109,7 @@ public class UserService {
         }
 
         String code = verificationCodeService.generateCode();
-        verificationCodeService.savePendingRegistration(pending.getUsername(), pending.getEmail(), pending.getEncodedPassword(), code, pending.getAttempts());
+        verificationCodeService.savePendingRegistration(pending.getUsername(), pending.getEmail(), pending.getEncodedPassword(), code);
 
         eventPublisher.publishEvent(new RegisterVerificationRequestedEvent(
                 pending.getEmail(),
@@ -217,7 +217,7 @@ public class UserService {
         }
 
         String code = verificationCodeService.generateCode();
-        verificationCodeService.savePendingEmailVerification(user.getEmail(), code, pending.getAttempts());
+        verificationCodeService.savePendingEmailVerification(user.getEmail(), code);
 
         eventPublisher.publishEvent(new EmailVerificationRequestedEvent(
                 user.getEmail(),
@@ -257,8 +257,8 @@ public class UserService {
 
     @Transactional
     public MessageResponseDto resetPassword(String token, String newPassword) {
-        Cache usedResetTokens = cacheManager.getCache("usedResetTokens");
-        if (usedResetTokens.get(token) != null) {
+        Cache usedResetTokens = cacheManager != null ? cacheManager.getCache("usedResetTokens") : null;
+        if (usedResetTokens != null && usedResetTokens.get(token) != null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password reset link is invalid or has already been used.");
         }
 
@@ -299,8 +299,11 @@ public class UserService {
     @Transactional
     public void selfDelete(UUID userId) {
         User user = findById(userId);
-        if (roleService.getRoleById(user.getRoleId()).equals(RoleType.ROOT)){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete user with ROOT role");
+        if (user.getRoleId() != null) {
+            Role role = roleService.getRoleById(user.getRoleId());
+            if (role != null && RoleType.ROOT.name().equals(role.getName())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete user with ROOT role");
+            }
         }
         String email = user.getEmail();
         String username = user.getUsername();

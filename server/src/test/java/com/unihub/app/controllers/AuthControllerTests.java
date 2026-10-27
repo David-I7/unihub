@@ -836,7 +836,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusDays(5))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(session));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -866,7 +866,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .expiresAt(OffsetDateTime.now().plusHours(12))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(session));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(session));
         when(sessionRepository.save(any(Session.class))).thenAnswer(i -> {
             Session s = i.getArgument(0);
             if (s.getId() == null) s.setId(UUID.randomUUID());
@@ -906,7 +906,7 @@ public class AuthControllerTests extends BaseIntegrationTest {
         UUID userId = UUID.randomUUID();
         String token = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.empty());
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.empty());
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -933,10 +933,11 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .user(user)
                 .refreshToken(token)
                 .revoked(true)
+                .revokedAt(OffsetDateTime.now().minusMinutes(1))
                 .expiresAt(OffsetDateTime.now().plusDays(1))
                 .build();
 
-        when(sessionRepository.findByRefreshTokenWithUser(token)).thenReturn(Optional.of(revokedSession));
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(token)).thenReturn(Optional.of(revokedSession));
 
         mockMvc.perform(post(BASE_URL + "/refresh")
                         .cookie(new Cookie("refreshToken", token)))
@@ -945,6 +946,52 @@ public class AuthControllerTests extends BaseIntegrationTest {
                 .andExpect(cookie().maxAge("refreshToken", 0));
 
         verify(sessionRepository).revokeSessionFamily(initialSessionId);
+    }
+
+    @Test
+    @DisplayName("""
+            Given: request with revoked refresh token within 30s grace window and valid replacement
+            When: /refresh endpoint is called
+            Then: 200 ok is returned with replacement session data and cookie
+            """)
+    public void testRefresh_RevokedRefreshToken_WithinGracePeriod_ReturnsReplacedSession() throws Exception {
+        UUID userId = UUID.randomUUID();
+        UUID initialSessionId = UUID.randomUUID();
+        User user = User.builder().id(userId).email("user@gmail.com").username("user").build();
+        String oldToken = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
+        String newToken = jwtService.generateToken(userId.toString(), Map.of(), sessionProperties.refreshTokenExpirationSec());
+
+        Session replacementSession = Session.builder()
+                .id(UUID.randomUUID())
+                .initialSessionId(initialSessionId)
+                .user(user)
+                .refreshToken(newToken)
+                .revoked(false)
+                .expiresAt(OffsetDateTime.now().plusDays(5))
+                .build();
+
+        Session oldRevokedSession = Session.builder()
+                .id(UUID.randomUUID())
+                .initialSessionId(initialSessionId)
+                .user(user)
+                .refreshToken(oldToken)
+                .revoked(true)
+                .revokedAt(OffsetDateTime.now().minusSeconds(5))
+                .replacedBy(replacementSession)
+                .expiresAt(OffsetDateTime.now().plusDays(5))
+                .build();
+
+        when(sessionRepository.findByRefreshTokenWithUserForUpdate(oldToken)).thenReturn(Optional.of(oldRevokedSession));
+
+        mockMvc.perform(post(BASE_URL + "/refresh")
+                        .cookie(new Cookie("refreshToken", oldToken)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.id").value(userId.toString()))
+                .andExpect(jsonPath("$.user.username").value("user"))
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(cookie().value("refreshToken", newToken));
+
+        verify(sessionRepository, never()).revokeSessionFamily(any());
     }
 
     @Test

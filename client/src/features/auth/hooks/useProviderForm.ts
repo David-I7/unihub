@@ -3,6 +3,7 @@ import { useCallback, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import type { OAuth2Response } from "../api/types";
 import { useRefresh } from "../api/refresh";
+import { urlSchema } from "../schemas/authSchemas";
 
 type ProviderError = {
   provider: AuthProvider;
@@ -32,7 +33,11 @@ export default function useProviderForm() {
     async (message: OAuth2Response) => {
       try {
         await refreshMutation.mutateAsync();
-        const redirectTarget = searchParams.get("redirect") ?? "/";
+        const redirectTarget = urlSchema.safeParse(
+          searchParams.get("redirect") ?? "",
+        ).success
+          ? searchParams.get("redirect")!
+          : "/";
         navigate(redirectTarget);
       } catch {
         handleFailure({

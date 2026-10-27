@@ -36,8 +36,8 @@ public class VerificationCodeService {
         int attempts;
         Instant createdAt;
 
-        public PendingRegistration(String username, String email, String encodedPassword, String code, int attempts) {
-            this(username, email, encodedPassword, code, attempts, Instant.now());
+        public PendingRegistration(String username, String email, String encodedPassword, String code) {
+            this(username, email, encodedPassword, code, 0, Instant.now());
         }
     }
 
@@ -50,8 +50,8 @@ public class VerificationCodeService {
         int attempts;
         Instant createdAt;
 
-        public PendingEmailVerification(String email, String code, int attempts) {
-            this(email, code, attempts, Instant.now());
+        public PendingEmailVerification(String email, String code) {
+            this(email, code, 0, Instant.now());
         }
     }
 
@@ -63,12 +63,6 @@ public class VerificationCodeService {
     @CachePut(cacheNames = "pendingRegistrations", key = "#email.toLowerCase()", unless = "#result == null")
     public PendingRegistration savePendingRegistration(String username, String email, String encodedPassword,
             String code) {
-        return savePendingRegistration(username, email, encodedPassword, code, 0);
-    }
-
-    @CachePut(cacheNames = "pendingRegistrations", key = "#email.toLowerCase()", unless = "#result == null")
-    public PendingRegistration savePendingRegistration(String username, String email, String encodedPassword,
-            String code, int attempts) {
         PendingRegistration pending = pendingRegistrations.get(email.toLowerCase(), PendingRegistration.class);
 
         if (pending != null && pending.getCreatedAt() != null
@@ -78,7 +72,7 @@ public class VerificationCodeService {
         }
 
         pendingRegistrations.evict(email.toLowerCase());
-        return new PendingRegistration(username, email, encodedPassword, code, attempts, Instant.now());
+        return new PendingRegistration(username, email, encodedPassword, code);
     }
 
     public PendingRegistration getPendingRegistration(String email) {
@@ -109,11 +103,6 @@ public class VerificationCodeService {
 
     @CachePut(cacheNames = "pendingEmailVerifications", key = "#email.toLowerCase()", unless = "#result == null")
     public PendingEmailVerification savePendingEmailVerification(String email, String code) {
-        return savePendingEmailVerification(email, code, 0);
-    }
-
-    @CachePut(cacheNames = "pendingEmailVerifications", key = "#email.toLowerCase()", unless = "#result == null")
-    public PendingEmailVerification savePendingEmailVerification(String email, String code, int attempts) {
         PendingEmailVerification pending = pendingEmailVerifications.get(email.toLowerCase(),
                 PendingEmailVerification.class);
 
@@ -124,7 +113,7 @@ public class VerificationCodeService {
         }
 
         pendingEmailVerifications.evict(email.toLowerCase());
-        return new PendingEmailVerification(email, code, attempts, Instant.now());
+        return new PendingEmailVerification(email, code);
     }
 
     public boolean existsPendingEmailVerification(String email) {

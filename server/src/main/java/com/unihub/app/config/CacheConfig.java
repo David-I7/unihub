@@ -69,11 +69,6 @@ public class CacheConfig {
                 .build()
         );
 
-        manager.registerCustomCache("rotatedSessions", Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofSeconds(30))
-                .maximumSize(10_000)
-                .build()
-        );
 
         return manager;
     }

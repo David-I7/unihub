@@ -19,7 +19,7 @@ public class Session {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "refresh_token",nullable = false)
+    @Column(name = "refresh_token", nullable = false)
     private String refreshToken;
 
     @ManyToOne
@@ -35,6 +35,13 @@ public class Session {
     @Column(name = "initial_session_id", nullable = true)
     private UUID initialSessionId;
 
+    @Column(name = "revoked_at")
+    private OffsetDateTime revokedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "replaced_by_id")
+    private Session replacedBy;
+
     @Override
     public String toString() {
         return "Session{" +
@@ -44,6 +51,7 @@ public class Session {
                 ", expiresAt=" + expiresAt +
                 ", revoked=" + revoked +
                 ", initialSessionId=" + initialSessionId +
+                ", revokedAt=" + revokedAt +
                 '}';
     }
 }

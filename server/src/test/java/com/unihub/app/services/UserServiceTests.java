@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -87,6 +88,9 @@ public class UserServiceTests {
     @Mock
     private VerificationCodeService verificationCodeService;
 
+    @Mock
+    private CacheManager cacheManager;
+
     private UserMapper userMapper;
     private UserService userService;
 
@@ -114,7 +118,8 @@ public class UserServiceTests {
                 sessionService,
                 emailProperties,
                 appUtils,
-                verificationCodeService
+                verificationCodeService,
+                cacheManager
         );
     }
 
@@ -367,7 +372,7 @@ public class UserServiceTests {
     @DisplayName("confirmRegister saves user and local identity, sets emailVerified true, and publishes UserWelcomeEvent")
     public void testConfirmRegister_Success() {
         VerificationCodeService.PendingRegistration pending = verificationCodeService.new PendingRegistration(
-                "testuser", "test@example.com", "encodedSecret", "123456", 0
+                "testuser", "test@example.com", "encodedSecret", "123456"
         );
         when(verificationCodeService.verifyAndConsumeRegistration("test@example.com", "123456")).thenReturn(pending);
 
