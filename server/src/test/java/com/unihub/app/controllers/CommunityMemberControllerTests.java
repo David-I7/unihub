@@ -10,6 +10,7 @@ import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto
 import com.unihub.app.dto.community.resources.response.CommunityJoinCodeResponseDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
 import com.unihub.app.security.JwtAuthentication;
+import com.unihub.app.entities.authentication.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -142,7 +143,8 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
     public void testAddMember_Success() throws Exception {
         AddCommunityMemberRequestDto requestDto = new AddCommunityMemberRequestDto("new_student", RoleType.COMMUNITY_MEMBER);
 
-        doNothing().when(communityMemberService).addMemberDirectly(eq("fmi-info"), eq(userDto), any(AddCommunityMemberRequestDto.class));
+        when(communityMemberService.addMemberDirectly(eq("fmi-info"), eq(userDto), any(AddCommunityMemberRequestDto.class)))
+                .thenReturn(User.builder().id(UUID.randomUUID()).build());
 
         mockMvc.perform(post(BASE_URL + "/members")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -202,7 +204,8 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
     @Test
     @DisplayName("DELETE /members/{username} removes member from community")
     public void testRemoveMember_Success() throws Exception {
-        doNothing().when(communityMemberService).removeMember("fmi-info", userDto, "student_1");
+        when(communityMemberService.removeMember("fmi-info", userDto, "student_1"))
+                .thenReturn(User.builder().id(UUID.randomUUID()).build());
 
         mockMvc.perform(delete(BASE_URL + "/members/student_1")
                         .contentType(MediaType.APPLICATION_JSON))

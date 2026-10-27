@@ -38,6 +38,39 @@ public class CommunityAccessHelper {
         return roleService.getPermissionNamesByRoleType(role).contains(permission.getValue());
     }
 
+    public boolean hasGlobalRole(UserDto user, RoleType requiredRole) {
+        if (user == null || user.role() == null || requiredRole == null) {
+            return false;
+        }
+        if (user.role().equals(RoleType.ROOT)) {
+            return true;
+        }
+        return user.role().equals(requiredRole);
+    }
+
+    public boolean hasCommunityRole(String communitySlug, UserDto user, RoleType requiredRole) {
+        if (user == null || communitySlug == null || requiredRole == null) {
+            return false;
+        }
+        if (isGlobalAdmin(user)) {
+            return true;
+        }
+        RoleType role = communityMemberService.getCommunityRole(communitySlug, user.id());
+        if (role == null) {
+            return false;
+        }
+        if (role.equals(requiredRole)) {
+            return true;
+        }
+        if (requiredRole.equals(RoleType.COMMUNITY_MEMBER)) {
+            return role.equals(RoleType.COMMUNITY_ADMIN) || role.equals(RoleType.COMMUNITY_OWNER);
+        }
+        if (requiredRole.equals(RoleType.COMMUNITY_ADMIN)) {
+            return role.equals(RoleType.COMMUNITY_OWNER);
+        }
+        return false;
+    }
+
     public boolean isGlobalAdmin(UserDto user) {
         if (user == null) {
             return false;
@@ -47,7 +80,8 @@ public class CommunityAccessHelper {
 
     public boolean isCommunityAdmin(String communitySlug, UUID userId) {
         RoleType role = communityMemberService.getCommunityRole(communitySlug, userId);
-        return role.equals(RoleType.COMMUNITY_ADMIN) || role.equals(RoleType.ROOT);
+        if (role == null) return false;
+        return role.equals(RoleType.COMMUNITY_ADMIN) || role.equals(RoleType.COMMUNITY_OWNER) || role.equals(RoleType.ROOT);
     }
 
     public boolean isCommunityMember(String communitySlug, UUID userId) {
