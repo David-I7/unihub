@@ -236,7 +236,7 @@
                         <span th:case="*" th:text="${location}">In-Person</span>
                     </td>
                 </tr>
-                <tr th:if="${eventType != 'ASSIGNMENT' and locationDetails != null and !locationDetails.isEmpty()}">
+                <tr th:if="${locationDetails != null and !locationDetails.isEmpty()}">
                     <td class="detail-label">Location Details:</td>
                     <td class="detail-value" th:text="${locationDetails}">Hall B, Room 102</td>
                 </tr>

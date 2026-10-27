@@ -67,6 +67,12 @@ export function useDeleteComment() {
         previousQueries: [...previousQueries, ...postFeedQueries] as any,
       };
     },
+    onSuccess: (_, variables) => {
+      const commentKey = variables.postId
+        ? commentKeys.post(variables.postId)
+        : commentKeys.all;
+      queryClient.invalidateQueries({ queryKey: commentKey });
+    },
     onError: (_err, _vars, context) => {
       rollbackOptimisticContext(queryClient, context);
     },

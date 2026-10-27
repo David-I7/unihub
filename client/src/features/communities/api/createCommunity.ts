@@ -17,10 +17,10 @@ export function useCreateCommunity() {
   return useMutation({
     mutationFn: createCommunity,
     onSuccess: () => {
-      queryClient.resetQueries({
+      queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),
       });
-      queryClient.resetQueries({ queryKey: userKeys.communities() });
+      queryClient.invalidateQueries({ queryKey: userKeys.communities() });
     },
   });
 }

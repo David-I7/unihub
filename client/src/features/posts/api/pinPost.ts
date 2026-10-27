@@ -53,6 +53,9 @@ export function usePinPost() {
         previousQueries,
       };
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+    },
     onError: (_err, _vars, context) => {
       rollbackOptimisticContext(queryClient, context);
     },

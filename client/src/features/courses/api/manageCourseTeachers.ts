@@ -59,6 +59,9 @@ export function useAddCourseTeacher() {
       queryClient.invalidateQueries({
         queryKey: teacherKeys.lists(),
       });
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.detail(variables.teacherId),
+      });
     },
   });
 }
@@ -85,6 +88,9 @@ export function useRemoveCourseTeacher() {
       });
       queryClient.invalidateQueries({
         queryKey: teacherKeys.lists(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.detail(variables.teacherId),
       });
     },
   });

@@ -18,18 +18,15 @@ export interface ForgotPasswordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   email: string;
-  autoSend?: boolean;
 }
 
 export function ForgotPasswordModal({
   open,
   onOpenChange,
   email,
-  autoSend = false,
 }: ForgotPasswordModalProps) {
   const [error, setError] = React.useState<string | null>(null);
   const [isSuccess, setIsSuccess] = React.useState(false);
-  const hasAutoSentRef = React.useRef(false);
 
   const storageKey = email
     ? `auth_forgot_password_${email.trim().toLowerCase()}`
@@ -54,7 +51,6 @@ export function ForgotPasswordModal({
           setIsSuccess(false);
           resetTimer();
         }
-        hasAutoSentRef.current = false;
       }
       onOpenChange(isOpen);
     },
@@ -84,22 +80,6 @@ export function ForgotPasswordModal({
     [sendReset, startTimer],
   );
 
-  React.useEffect(() => {
-    if (!open) {
-      hasAutoSentRef.current = false;
-      return;
-    }
-
-    if (isTimerActive) {
-      return;
-    }
-
-    if (autoSend && email && !hasAutoSentRef.current) {
-      hasAutoSentRef.current = true;
-      handleSendResetEmail(email);
-    }
-  }, [open, autoSend, email, isTimerActive, handleSendResetEmail]);
-
   const handleResend = async () => {
     if (isTimerActive || !email || isPending) return;
     await handleSendResetEmail(email);
@@ -121,7 +101,7 @@ export function ForgotPasswordModal({
           </DialogTitle>
           <DialogDescription className="text-center text-xs text-muted-foreground text-balance">
             {showSuccess
-              ? `If an account exists for ${email}, a password reset link has been sent with 15-minute validity.`
+              ? `If an account exists for ${email}, a password reset link has been sent.`
               : "We will send a password reset link to the email address associated with your account."}
           </DialogDescription>
         </DialogHeader>

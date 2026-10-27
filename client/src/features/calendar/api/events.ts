@@ -221,6 +221,13 @@ export function useUpdateEvent() {
       };
     },
 
+    onSuccess: (updatedEvent, variables) => {
+      queryClient.setQueryData(calendarKeys.detail(variables.id), updatedEvent);
+      queryClient.invalidateQueries({ queryKey: calendarKeys.eventsList() });
+      queryClient.invalidateQueries({ queryKey: calendarKeys.upcomingList() });
+      queryClient.invalidateQueries({ queryKey: calendarKeys.reminders() });
+    },
+
     onError: (_err, _vars, context) => {
       rollbackOptimisticContext(queryClient, context);
     },

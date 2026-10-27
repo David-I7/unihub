@@ -1,7 +1,7 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseMaterialsKeys } from "./getCourseMaterials";
-
+import { breadcrumbKeys } from "./getBreadcrumbs";
 import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
 import { removeCourseMaterialItem } from "./courseMaterialsCache";
 import type { CourseMaterialsResponse } from "./types";
@@ -33,6 +33,14 @@ export function useDeleteFolder() {
     },
     onError: (_err, _vars, context) => {
       rollbackOptimisticContext(queryClient, context);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.removeQueries({
+        queryKey: breadcrumbKeys.folder(variables.folderId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: courseMaterialsKeys.all,
+      });
     },
   });
 }

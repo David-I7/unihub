@@ -159,11 +159,9 @@ export function LoginForm({
         open={isForgotPasswordOpen}
         onOpenChange={setIsForgotPasswordOpen}
         email={forgotPasswordEmail}
-        autoSend={false}
       />
     </div>
   );
 }
 
 export default LoginForm;
-

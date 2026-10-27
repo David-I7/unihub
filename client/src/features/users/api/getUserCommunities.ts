@@ -24,7 +24,7 @@ export function useUserCommunities(
   const { page = 0, size = 100 } = params;
 
   return useQuery({
-    queryKey: [...userKeys.communities(), params],
+    queryKey: [...userKeys.communities(), { page, size }],
     queryFn: () => getUserCommunities({ page, size }),
     placeholderData: keepPreviousData,
     enabled: enabled && Boolean(user),

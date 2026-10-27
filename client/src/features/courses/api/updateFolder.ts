@@ -6,7 +6,7 @@ import type {
   CourseMaterialsResponse,
 } from "./types";
 import { courseMaterialsKeys } from "./getCourseMaterials";
-
+import { breadcrumbKeys } from "./getBreadcrumbs";
 import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
 import { updateCourseMaterialItem } from "./courseMaterialsCache";
 
@@ -56,6 +56,7 @@ export function useUpdateFolder() {
         updatedFolder.id,
         () => updatedFolder,
       );
+      queryClient.invalidateQueries({ queryKey: breadcrumbKeys.all });
     },
   });
 }

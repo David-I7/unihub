@@ -1,6 +1,8 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseHomeKeys } from "./getCourseHome";
+import { courseMaterialsKeys } from "./getCourseMaterials";
+import { postKeys } from "@/features/posts/api/getCommunityPosts";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 import { studyYearCoursesKeys } from "@/features/studyYears/api/getStudyYearCourses";
 import { communityKeys } from "@/features/communities";
@@ -28,16 +30,34 @@ export function useDeleteCourse() {
     mutationFn: deleteCourse,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.courses(variables.communitySlug, variables.studyYearSlug),
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: ["study-years", "home", "infinite", variables.communitySlug, variables.studyYearSlug],
-      });
-      queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.courses(variables.communitySlug, variables.studyYearSlug),
+        queryKey: studyYearCoursesKeys.courses(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.removeQueries({
         queryKey: courseHomeKeys.byCourse(
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ),
+      });
+      queryClient.removeQueries({
+        queryKey: [
+          ...courseMaterialsKeys.all,
+          variables.communitySlug,
+          variables.studyYearSlug,
+          variables.courseSlug,
+        ],
+      });
+      queryClient.removeQueries({
+        queryKey: postKeys.course(
           variables.communitySlug,
           variables.studyYearSlug,
           variables.courseSlug,

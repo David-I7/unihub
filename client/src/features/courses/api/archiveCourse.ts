@@ -34,14 +34,20 @@ export function useArchiveCourse() {
 
   return useMutation({
     mutationFn: archiveCourse,
-    onMutate: async ({ communitySlug, studyYearSlug, courseSlug, archived }) => {
+    onMutate: async ({
+      communitySlug,
+      studyYearSlug,
+      courseSlug,
+      archived,
+    }) => {
       const courseKey = courseHomeKeys.byCourse(
         communitySlug,
         studyYearSlug,
         courseSlug,
       );
       await queryClient.cancelQueries({ queryKey: courseKey });
-      const previousCourseHome = queryClient.getQueryData<CourseHome>(courseKey);
+      const previousCourseHome =
+        queryClient.getQueryData<CourseHome>(courseKey);
 
       if (previousCourseHome) {
         queryClient.setQueryData<CourseHome>(courseKey, {
