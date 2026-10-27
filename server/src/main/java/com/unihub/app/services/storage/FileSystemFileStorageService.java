@@ -116,9 +116,6 @@ public class FileSystemFileStorageService implements FileStorageService {
 
     private String getBaseOrigin() {
         String origin = developmentProperties.origin();
-        if (origin == null || origin.isBlank()) {
-            origin = "http://localhost:8080";
-        }
         if (origin.endsWith("/")) {
             return origin.substring(0, origin.length() - 1);
         }

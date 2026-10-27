@@ -54,5 +54,7 @@ CREATE TABLE SESSIONS(
     refresh_token text not null,
     expires_at timestamptz not null,
     revoked boolean default false,
+    revoked_at timestamptz DEFAULT NULL,
+    replaced_by_id UUID DEFAULT NULL REFERENCES SESSIONS(id) ON DELETE SET NULL,
     CONSTRAINT unique_refresh_token UNIQUE(refresh_token)
 );

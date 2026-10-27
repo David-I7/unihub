@@ -1,7 +1,6 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { courseMaterialsKeys } from "./getCourseMaterials";
-
 import { rollbackOptimisticContext } from "@/lib/queryCacheUtils";
 import { removeCourseMaterialItem } from "./courseMaterialsCache";
 import type { CourseMaterialsResponse } from "./types";
@@ -33,6 +32,14 @@ export function useDeleteMaterial() {
     },
     onError: (_err, _vars, context) => {
       rollbackOptimisticContext(queryClient, context);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.removeQueries({
+        queryKey: ["materials", variables.materialId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: courseMaterialsKeys.all,
+      });
     },
   });
 }

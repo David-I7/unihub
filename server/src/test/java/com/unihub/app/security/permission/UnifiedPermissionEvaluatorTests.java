@@ -76,4 +76,77 @@ public class UnifiedPermissionEvaluatorTests {
         boolean result = evaluator.hasPermission(auth, "fmi", "UNKNOWN", "NONEXISTENT");
         assertThat(result).isFalse();
     }
+
+    @Test
+    @DisplayName("Transforms snake_case resource to camelCase permission for join code")
+    public void testHasPermission_CamelCaseJoinCode() {
+        when(helper.hasCommunityPermission("fmi", user.id(), PermissionType.CREATE_JOIN_CODE)).thenReturn(true);
+
+        boolean result = evaluator.hasPermission(auth, "fmi", "JOIN_CODE", "CREATE");
+
+        assertThat(result).isTrue();
+        verify(helper).hasCommunityPermission("fmi", user.id(), PermissionType.CREATE_JOIN_CODE);
+    }
+
+    @Test
+    @DisplayName("Transforms snake_case resource to camelCase permission for study year")
+    public void testHasPermission_CamelCaseStudyYear() {
+        when(helper.hasCommunityPermission("fmi", user.id(), PermissionType.CREATE_STUDY_YEAR)).thenReturn(true);
+
+        boolean result = evaluator.hasPermission(auth, "fmi", "STUDY_YEAR", "CREATE");
+
+        assertThat(result).isTrue();
+        verify(helper).hasCommunityPermission("fmi", user.id(), PermissionType.CREATE_STUDY_YEAR);
+    }
+
+    @Test
+    @DisplayName("Transforms snake_case resource to camelCase permission for user role")
+    public void testHasPermission_CamelCaseUserRole() {
+        when(helper.hasGlobalPermission(user, PermissionType.UPDATE_USER_ROLE)).thenReturn(true);
+
+        boolean result = evaluator.hasPermission(auth, "USER_ROLE", "UPDATE");
+
+        assertThat(result).isTrue();
+        verify(helper).hasGlobalPermission(user, PermissionType.UPDATE_USER_ROLE);
+    }
+
+    @Test
+    @DisplayName("Evaluates 2-arg hasPermission with valid global role")
+    public void testHasPermission_GlobalRole_Valid() {
+        when(helper.hasGlobalRole(user, RoleType.ADMIN)).thenReturn(true);
+
+        boolean result = evaluator.hasPermission(auth, "ROLE", "ADMIN");
+
+        assertThat(result).isTrue();
+        verify(helper).hasGlobalRole(user, RoleType.ADMIN);
+    }
+
+    @Test
+    @DisplayName("Returns false for 2-arg hasPermission with invalid role")
+    public void testHasPermission_GlobalRole_Invalid() {
+        boolean result = evaluator.hasPermission(auth, "ROLE", "INVALID_ROLE");
+
+        assertThat(result).isFalse();
+        verify(helper, never()).hasGlobalRole(any(), any());
+    }
+
+    @Test
+    @DisplayName("Evaluates 3-arg hasPermission with valid community role")
+    public void testHasPermission_CommunityRole_Valid() {
+        when(helper.hasCommunityRole("fmi", user, RoleType.COMMUNITY_ADMIN)).thenReturn(true);
+
+        boolean result = evaluator.hasPermission(auth, "fmi", "ROLE", "COMMUNITY_ADMIN");
+
+        assertThat(result).isTrue();
+        verify(helper).hasCommunityRole("fmi", user, RoleType.COMMUNITY_ADMIN);
+    }
+
+    @Test
+    @DisplayName("Returns false for 3-arg hasPermission with invalid community role")
+    public void testHasPermission_CommunityRole_Invalid() {
+        boolean result = evaluator.hasPermission(auth, "fmi", "ROLE", "NON_EXISTENT");
+
+        assertThat(result).isFalse();
+        verify(helper, never()).hasCommunityRole(any(), any(), any());
+    }
 }

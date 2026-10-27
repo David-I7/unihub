@@ -50,7 +50,6 @@ export async function getCommunityTeachers(
   return response.data;
 }
 
-
 export function useInfiniteCommunityTeachers(
   communitySlug: string,
   params: {
@@ -82,6 +81,8 @@ export function useInfiniteCommunityTeachers(
       search: search.trim() || undefined,
       studyYear: studyYear || undefined,
       semester,
+      sort,
+      size,
     }),
     queryFn: ({ pageParam }) =>
       getCommunityTeachers(communitySlug, {

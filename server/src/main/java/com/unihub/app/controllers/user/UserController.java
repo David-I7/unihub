@@ -61,7 +61,7 @@ public class UserController {
     }
 
     @PatchMapping("/{username}/role")
-    @PreAuthorize("hasPermission(#username, 'USER', 'UPDATE_ROLE')")
+    @PreAuthorize("hasPermission(#username, 'USER_ROLE', 'UPDATE')")
     public ResponseEntity<UserProfileResponseDto> updateUserRole(
             @PathVariable String username,
             @Valid @RequestBody UpdateUserRoleRequestDto requestDto

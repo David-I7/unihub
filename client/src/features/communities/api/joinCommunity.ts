@@ -37,9 +37,6 @@ export function useJoinCommunity() {
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(data.slug),
       });
-      queryClient.invalidateQueries({
-        queryKey: communityKeys.membershipDetail(data.slug),
-      });
     },
   });
 }

@@ -84,7 +84,6 @@ public class JwtSessionManagementFilter extends OncePerRequestFilter {
         }catch (ResponseStatusException e){
             if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
                 log.info("Rejected blacklisted access token for a user: {}", e.getMessage());
-                response.setHeader(HttpHeaders.SET_COOKIE, sessionService.clearSessionCookie().toString());
             } else log.info("Rejected invalid access token for a user: {}", e.getMessage());
             problemDetailUtil.writeProblemDetail(request,response, HttpStatus.UNAUTHORIZED, e.getReason() != null ? e.getReason() : e.getMessage());
         }

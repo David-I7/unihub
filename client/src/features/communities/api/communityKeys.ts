@@ -16,9 +16,6 @@ export const communityKeys = {
   allMemberships: ["communities", "membership"] as const,
   membershipDetail: (slug: string) =>
     [...communityKeys.allMemberships, slug] as const,
-  allCommunityPosts: ["communities", "posts"] as const,
-  communityPostinfinite: (slug: string, params: { size?: number }) =>
-    [...communityKeys.allCommunityPosts, slug, "infinite", params] as const,
   allStudyYears: ["communities", "study-years"] as const,
   studyYearDetail: (slug: string) =>
     [...communityKeys.allStudyYears, slug] as const,

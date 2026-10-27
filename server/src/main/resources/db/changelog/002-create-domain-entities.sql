@@ -129,7 +129,7 @@ CREATE TABLE COMMENTS(
 
 CREATE TABLE POST_LIKES(
     post_id UUID REFERENCES POSTS(id) ON DELETE CASCADE,
-    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES USERS(id) ON DELETE CASCADE,
     PRIMARY KEY (post_id, user_id)
 );
 
@@ -143,7 +143,6 @@ CREATE TABLE COURSE_POSTS(
     course_id bigint REFERENCES COURSES(id) ON DELETE CASCADE
 );
 
-
 CREATE TYPE RESOURCE_TYPE AS ENUM(
   'MATERIAL_FILE', 'MATERIAL_LINK'
 );
@@ -152,7 +151,7 @@ CREATE TABLE RESOURCES(
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id bigint not null REFERENCES COURSES(id) ON DELETE CASCADE,
     folder_id UUID REFERENCES FOLDERS(id) ON DELETE CASCADE,
-    owner_id UUID not null REFERENCES USERS(id),
+    owner_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     title text not null,

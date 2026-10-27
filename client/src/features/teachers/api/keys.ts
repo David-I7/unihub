@@ -3,7 +3,15 @@ export const teacherKeys = {
   lists: () => [...teacherKeys.all, "list"] as const,
   list: (
     communitySlug: string,
-    filters?: { search?: string; studyYear?: string; semester?: number } | string,
+    filters?:
+      | {
+          search?: string;
+          studyYear?: string;
+          semester?: number;
+          sort?: string;
+          size?: number;
+        }
+      | string,
   ) => {
     const filterObj =
       typeof filters === "string"
@@ -12,6 +20,8 @@ export const teacherKeys = {
             search: filters?.search || "",
             studyYear: filters?.studyYear || "",
             semester: filters?.semester,
+            sort: filters?.sort,
+            size: filters?.size,
           };
     return [...teacherKeys.lists(), communitySlug, filterObj] as const;
   },

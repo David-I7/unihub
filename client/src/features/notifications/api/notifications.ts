@@ -108,6 +108,18 @@ export function useMarkNotificationAsRead() {
         queryKey: notificationKeys.unreadCount(),
       })?.[0];
 
+      let isAlreadyRead = false;
+      for (const [, cacheData] of previousData) {
+        for (const page of cacheData?.pages ?? []) {
+          const found = page.content.find((item) => item.id === notificationId);
+          if (found) {
+            isAlreadyRead = found.isRead;
+            break;
+          }
+        }
+        if (isAlreadyRead) break;
+      }
+
       // Optimistically update infinite queries
       updateInfiniteQueryItem<AppNotification>(
         queryClient,
@@ -116,14 +128,21 @@ export function useMarkNotificationAsRead() {
         (item) => ({ ...item, isRead: true }),
       );
 
-      // Optimistically decrement unread count
-      patchDetailQuery<number>(
-        queryClient,
-        notificationKeys.unreadCount(),
-        (item) => Math.max(0, item - 1),
-      );
+      // Optimistically decrement unread count only if not already read
+      if (!isAlreadyRead) {
+        patchDetailQuery<number>(
+          queryClient,
+          notificationKeys.unreadCount(),
+          (item) => Math.max(0, item - 1),
+        );
+      }
 
       return { previousData, previousCount };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.unreadCount(),
+      });
     },
     onError: (_err, _variables, context) => {
       if (context) {
@@ -170,6 +189,14 @@ export function useMarkAllNotificationsAsRead() {
       );
 
       return { previousData, previousCount };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.unreadCount(),
+      });
+      queryClient.invalidateQueries({
+        queryKey: notificationKeys.infinites(),
+      });
     },
     onError: (_err, _variables, context) => {
       if (context) {

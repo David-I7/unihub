@@ -1,7 +1,6 @@
 export * from "./api/getCommunities";
 export * from "./api/getCommunityHome";
 export * from "./api/getCommunityMembership";
-export * from "./api/getCommunityPosts";
 export * from "./api/getCommunityStudyYear";
 export * from "./api/createCommunity";
 export * from "./api/updateCommunity";

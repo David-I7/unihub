@@ -32,7 +32,14 @@ export async function getStudyYearHome(
   studyYearName: string,
   params: StudyYearHomePaginatedRequest = { page: 0, size: 12 },
 ): Promise<StudyYearHome> {
-  const { page = 0, size = 12, search, semester, archived = false, sort } = params;
+  const {
+    page = 0,
+    size = 12,
+    search,
+    semester,
+    archived = false,
+    sort,
+  } = params;
   const response = await client.get<StudyYearHome>(
     `/communities/${communitySlug}/study-years/${studyYearName}/home`,
     {
@@ -53,40 +60,17 @@ export const studyYearHomeKeys = {
   all: ["study-years", "home"] as const,
   byStudyYear: (communitySlug: string, studyYearName: string) =>
     [...studyYearHomeKeys.all, communitySlug, studyYearName] as const,
-  byStudyYearInfinite: (communitySlug: string, studyYearName: string) =>
-    [...studyYearHomeKeys.all, "infinite", communitySlug, studyYearName] as const,
-  courses: (
-    communitySlug: string,
-    studyYearName: string,
-    params: StudyYearHomePaginatedRequest = { page: 0, size: 12 },
-  ) =>
-    [
-      ...studyYearHomeKeys.byStudyYear(communitySlug, studyYearName),
-      params,
-    ] as const,
   infinite: (
     communitySlug: string,
     studyYearName: string,
     params: StudyYearHomeQueryParams = {},
   ) =>
     [
-      ...studyYearHomeKeys.byStudyYearInfinite(communitySlug, studyYearName),
+      ...studyYearHomeKeys.byStudyYear(communitySlug, studyYearName),
+      "infinite",
       params,
     ] as const,
 };
-
-export function useStudyYearHome(
-  communitySlug: string,
-  studyYearName: string,
-  params: StudyYearHomePaginatedRequest = { page: 0, size: 12 },
-) {
-  return useQuery({
-    queryKey: studyYearHomeKeys.courses(communitySlug, studyYearName, params),
-    queryFn: () => getStudyYearHome(communitySlug, studyYearName, params),
-    placeholderData: keepPreviousData,
-    enabled: communitySlug.length > 0 && studyYearName.length > 0,
-  });
-}
 
 export function useInfiniteStudyYearHome(
   communitySlug: string,
@@ -135,4 +119,3 @@ export function useInfiniteStudyYearHome(
     ...options,
   });
 }
-

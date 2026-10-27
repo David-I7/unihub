@@ -49,7 +49,7 @@ client.interceptors.response.use(
     try {
       if (refreshPromise === null) {
         refreshPromise = refresh().then((data) => {
-          useAuthStore.getState().setAuth(data.user, data.accessToken);
+          useAuthStore.getState().setAuth(data.user, data.accessToken, false);
           return data;
         });
       }

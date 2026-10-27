@@ -9,7 +9,11 @@ type State = {
 };
 
 type Action = {
-  setAuth: (user: User, accessToken: string) => void;
+  setAuth: (
+    user: User,
+    accessToken: string,
+    shouldInvalidate?: boolean,
+  ) => void;
   setAccessToken: (accessToken: string) => void;
   setEmailVerified: (emailVerified: boolean) => void;
   updateUser: (partialUser: Partial<User>) => void;
@@ -24,9 +28,11 @@ const useAuthStore = create<AuthState>((set) => {
     user: null,
     accessToken: null,
     initialized: false,
-    setAuth: (user, accessToken) => {
+    setAuth: (user, accessToken, shouldInvalidate = true) => {
       set({ user, accessToken, initialized: true });
-      queryClient.invalidateQueries();
+      if (shouldInvalidate) {
+        queryClient.invalidateQueries();
+      }
     },
     setAccessToken: (accessToken) => set({ accessToken }),
     setEmailVerified: (emailVerified) =>

@@ -127,15 +127,15 @@ public class UserService {
         List<User> existingUsers = userRepository.findByUsernameOrEmail(pending.getUsername(), pending.getEmail());
         if (!existingUsers.isEmpty()) {
             if (existingUsers.size() > 1) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username and email.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username and email. Please choose a different username and email.");
             }
 
             boolean sameUsername = pending.getUsername() != null && pending.getUsername().equals(existingUsers.get(0).getUsername());
 
             if (sameUsername) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same username. Please choose a different username.");
             }else {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same email");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Another user already registered with the same email. Please choose a different email.");
             }
         }
 
@@ -204,17 +204,17 @@ public class UserService {
 
     @Transactional
     public MessageResponseDto resendEmailVerificationCode(String email) {
+        VerificationCodeService.PendingEmailVerification pending = verificationCodeService.getPendingEmailVerification(email);
+        if (pending == null) {
+            return new MessageResponseDto("Verification email sent. Please check your inbox.");
+        }
+
         Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isEmpty() || optionalUser.get().isEmailVerified()) {
             return new MessageResponseDto("Verification email sent. Please check your inbox.");
         }
 
         User user = optionalUser.get();
-
-        VerificationCodeService.PendingEmailVerification pending = verificationCodeService.getPendingEmailVerification(email);
-        if (pending == null) {
-            return new MessageResponseDto("Verification email sent. Please check your inbox.");
-        }
 
         String code = verificationCodeService.generateCode();
         verificationCodeService.savePendingEmailVerification(user.getEmail(), code);

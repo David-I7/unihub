@@ -30,13 +30,16 @@ export function useCreateCourse() {
     mutationFn: createCourse,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: studyYearHomeKeys.courses(variables.communitySlug, variables.studyYearSlug),
+        queryKey: studyYearHomeKeys.byStudyYear(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
-        queryKey: ["study-years", "home", "infinite", variables.communitySlug, variables.studyYearSlug],
-      });
-      queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.courses(variables.communitySlug, variables.studyYearSlug),
+        queryKey: studyYearCoursesKeys.courses(
+          variables.communitySlug,
+          variables.studyYearSlug,
+        ),
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(variables.communitySlug),

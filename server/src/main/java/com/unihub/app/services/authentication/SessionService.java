@@ -255,9 +255,6 @@ public class SessionService {
                 return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
             }
             else {
-                if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
-                    return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
-                }
                 // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                 sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
                 return new SessionAndSessionStatus(session, SessionStatus.REVOKED);
@@ -266,9 +263,6 @@ public class SessionService {
             if(e.getCause() instanceof ExpiredJwtException) {
                 session = getSession(refreshToken);
                 if(session != null && session.isRevoked()){
-                    if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
-                        return new SessionAndSessionStatus(session, SessionStatus.ACTIVE);
-                    }
                     // Token reuse detected. This scenario happens when a user's refreshToken was rotated.
                     sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
                     return new SessionAndSessionStatus(session, SessionStatus.REVOKED);

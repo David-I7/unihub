@@ -1,6 +1,8 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { teacherKeys } from "./keys";
+import { courseHomeKeys } from "@/features/courses/api/getCourseHome";
+import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 
 export async function deleteTeacher(teacherId: string): Promise<void> {
   await client.delete(`/teachers/${teacherId}`);
@@ -23,6 +25,8 @@ export function useDeleteTeacher(teacherId?: string) {
         queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
       }
       queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: courseHomeKeys.all });
+      queryClient.invalidateQueries({ queryKey: studyYearHomeKeys.all });
     },
   });
 }

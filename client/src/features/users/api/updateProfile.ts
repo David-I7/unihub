@@ -24,10 +24,11 @@ export function useUpdateProfile() {
       useAuthStore.getState().updateUser({ username: data.username });
       try {
         const refreshed = await refresh();
-        useAuthStore.getState().setAuth(refreshed.user, refreshed.accessToken);
+        useAuthStore
+          .getState()
+          .setAuth(refreshed.user, refreshed.accessToken, false);
       } catch {}
       queryClient.setQueryData(userKeys.me(), data);
-      queryClient.invalidateQueries({ queryKey: userKeys.all });
     },
   });
 }
