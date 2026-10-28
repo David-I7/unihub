@@ -165,11 +165,6 @@ public class SessionService {
     }
 
     @Transactional
-    public void revokeAllUserSessions(UUID userId) {
-        sessionRepository.revokeAllByUserId(userId);
-    }
-
-    @Transactional
     public void revokeAllUserSessionsAndAccessTokens(UUID userId) {
         sessionRepository.revokeAllByUserId(userId);
         tokenRevocationService.revokeUserTokens(userId);

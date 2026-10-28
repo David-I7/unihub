@@ -9,6 +9,11 @@ export const PERMISSIONS = {
   UPDATE_USER_ROLE: "update:userRole",
   DELETE_USER: "delete:user",
 
+  // Teachers
+  CREATE_TEACHER: "create:teacher",
+  UPDATE_TEACHER: "update:teacher",
+  DELETE_TEACHER: "delete:teacher",
+
   // Membership & Join Codes
   CREATE_JOIN_CODE: "create:joinCode",
   UPDATE_JOIN_CODE: "update:joinCode",

@@ -24,6 +24,7 @@ import { TeacherCardSkeleton } from "./TeacherCardSkeleton";
 import { CreateTeacherDialog } from "./CreateTeacherDialog";
 import { TeacherDetailDialog } from "./TeacherDetailDialog";
 import type { CallerMembership } from "../api/types";
+import { getErrorMessage } from "@/api/types";
 
 const SEMESTER_FILTER_OPTIONS = [
   { value: "ALL", label: "All Semesters" },
@@ -75,9 +76,7 @@ export function CommunityTeachersTab({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [createTeacherOpen, setCreateTeacherOpen] = useState(false);
 
-  const user = useAuthStore((state) => state.user);
-  const { isMember, isOwner, communityRole, globalPermissions } =
-    usePermissions(callerMembership);
+  const { canCreateTeacher } = usePermissions(callerMembership);
 
   // Fetch active study years for this community
   const { data: communityStudyYears, isLoading: isStudyYearsLoading } =
@@ -95,17 +94,6 @@ export function CommunityTeachersTab({
       })),
     ];
   }, [communityStudyYears]);
-
-  const canAddTeacher =
-    Boolean(user) &&
-    (isMember ||
-      isOwner ||
-      communityRole === "COMMUNITY_ADMIN" ||
-      communityRole === "COMMUNITY_MEMBER" ||
-      globalPermissions.includes("ADMIN") ||
-      globalPermissions.includes("ROOT") ||
-      user?.role === "ADMIN" ||
-      user?.role === "ROOT");
 
   const studyYearParam =
     filters.studyYear !== "ALL" ? filters.studyYear : undefined;
@@ -204,7 +192,7 @@ export function CommunityTeachersTab({
       </ExpandableSearch>
 
       {/* Dedicated Action Button Row */}
-      {canAddTeacher && (
+      {canCreateTeacher && (
         <div className="flex justify-end">
           <Button size="sm" onClick={() => setCreateTeacherOpen(true)}>
             <Plus />
@@ -222,11 +210,7 @@ export function CommunityTeachersTab({
         </div>
       ) : isError ? (
         <ErrorStateCard
-          message={
-            error instanceof Error
-              ? error.message
-              : "Failed to load community teachers."
-          }
+          message={getErrorMessage(error, "Failed to load community teachers.")}
           onRetry={() => refetch()}
         />
       ) : teachers.length === 0 ? (
@@ -265,6 +249,7 @@ export function CommunityTeachersTab({
                 key={teacher.id}
                 teacher={teacher}
                 callerMembership={callerMembership}
+                communitySlug={communitySlug}
               />
             ))}
           </div>

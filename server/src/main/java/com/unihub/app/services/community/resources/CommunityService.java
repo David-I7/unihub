@@ -24,6 +24,7 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.security.policies.CommunityAccessHelper;
 import com.unihub.app.services.authentication.UserService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +59,7 @@ public class CommunityService {
     private final StudyYearService studyYearService;
     private final CommunityMemberService communityMemberService;
     private final UserService userService;
+    private final CommunityAccessHelper communityAccessHelper;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityResponseDto> findAll(
@@ -221,8 +223,7 @@ public class CommunityService {
         }
 
         if (dto.verified().isPresent()) {
-            boolean canVerify = roleService.getRoleByName(caller.role())
-                    .getPermissions().stream().map(Permission::getName).anyMatch(Permissions.VERIFY_COMMUNITY::equals);
+            boolean canVerify = communityAccessHelper.hasCommunityPermission(community.getSlug(), caller.id(), PermissionType.VERIFY_COMMUNITY);
             if (canVerify) {
                 community.setVerified(dto.verified().get());
             } else {

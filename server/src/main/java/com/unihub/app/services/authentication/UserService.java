@@ -284,7 +284,7 @@ public class UserService {
             usedResetTokens.put(token, true);
         }
 
-        sessionService.revokeAllUserSessions(userId);
+        sessionService.revokeAllUserSessionsAndAccessTokens(userId);
 
         return new MessageResponseDto("Password has been successfully reset. Please log in with your new password.");
     }

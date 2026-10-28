@@ -28,9 +28,10 @@ export function useUpdateCommunity() {
     mutationFn: updateCommunity,
     onSuccess: (data, variables) => {
       if (variables.payload.readme !== undefined) {
-        queryClient.invalidateQueries({
-          queryKey: communityKeys.readmeDetail(variables.communitySlug),
-        });
+        queryClient.setQueryData(
+          communityKeys.readmeDetail(variables.communitySlug),
+          (_) => ({ readme: variables.payload.readme }),
+        );
         return;
       }
       queryClient.invalidateQueries({

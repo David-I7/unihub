@@ -15,6 +15,7 @@ import type { Teacher } from "../api/types";
 interface DeleteTeacherAlertDialogProps {
   teacher: Teacher | null;
   open: boolean;
+  communitySlug: string;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
 }
@@ -24,8 +25,9 @@ export function DeleteTeacherAlertDialog({
   open,
   onOpenChange,
   onSuccess,
+  communitySlug,
 }: DeleteTeacherAlertDialogProps) {
-  const deleteMutation = useDeleteTeacher();
+  const deleteMutation = useDeleteTeacher(communitySlug);
 
   if (!teacher) return null;
 

@@ -451,7 +451,7 @@ public class UserServiceTests {
 
         assertEquals("newEncoded", user.getPassword());
         verify(userRepository).save(user);
-        verify(sessionService).revokeAllUserSessions(userId);
+        verify(sessionService).revokeAllUserSessionsAndAccessTokens(userId);
     }
 
     // =========================================================================

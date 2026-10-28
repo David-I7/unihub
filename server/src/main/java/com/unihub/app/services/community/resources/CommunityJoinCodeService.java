@@ -121,6 +121,9 @@ public class CommunityJoinCodeService {
             if (maxUses == null || maxUses == -1) {
                 joinCode.setMaxUses(null);
             } else if (maxUses > 0) {
+                if (joinCode.getMaxUses() != null && joinCode.getMaxUses() < maxUses) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be greater than or equal to the current value");
+                }
                 joinCode.setMaxUses(maxUses);
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be -1 or greater than 0");

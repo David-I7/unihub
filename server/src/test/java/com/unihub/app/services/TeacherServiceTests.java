@@ -138,7 +138,7 @@ public class TeacherServiceTests {
                 .community(community)
                 .firstName("Daniel")
                 .lastName("Dragulici")
-                .estimatedBirthDate(LocalDate.now().minusYears(40))
+                .estimatedBirthYear(LocalDate.now().getYear() - 40)
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -271,7 +271,7 @@ public class TeacherServiceTests {
                 .lastName("Dragulici")
                 .averageRating(4.5f)
                 .ratingsCount(1)
-                .estimatedBirthDate(LocalDate.now().minusYears(43))
+                .estimatedBirthYear(LocalDate.now().getYear() - 43)
                 .createdAt(OffsetDateTime.now())
                 .coursesTaught(Collections.emptyList())
                 .build();

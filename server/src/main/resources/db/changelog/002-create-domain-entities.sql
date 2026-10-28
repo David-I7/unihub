@@ -27,7 +27,7 @@ CREATE TABLE TEACHERS(
     community_id UUID not null REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
     first_name text not null,
     last_name text not null,
-    estimated_birth_date date,
+    estimated_birth_year int,
     average_rating real not null default 0.0 check (average_rating between 0 and 5),
     ratings_count int not null default 0,
     created_at timestamptz not null default now(),

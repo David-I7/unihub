@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.Period;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -25,8 +25,8 @@ import java.util.UUID;
 public class CommunityResourceMapper {
 
     public TeacherResponseDto toTeacherResponseDto(Teacher teacher) {
-        Integer estimatedAge = teacher.getEstimatedBirthDate() != null
-                ? Period.between(teacher.getEstimatedBirthDate(), LocalDate.now()).getYears()
+        Integer estimatedAge = teacher.getEstimatedBirthYear() != null
+                ? LocalDate.now().getYear() - teacher.getEstimatedBirthYear()
                 : null;
 
         return TeacherResponseDto.builder()
@@ -41,15 +41,15 @@ public class CommunityResourceMapper {
     }
 
     public Teacher toTeacherEntity(CreateTeacherRequestDto dto, Community community) {
-        LocalDate estimatedBirthDate = dto.estimatedAge() != null
-                ? LocalDate.now().minusYears(dto.estimatedAge())
+        Integer estimatedBirthYear = dto.estimatedAge() != null
+                ? LocalDate.now().minusYears(dto.estimatedAge()).getYear()
                 : null;
 
         return Teacher.builder()
                 .community(community)
                 .firstName(dto.firstName())
                 .lastName(dto.lastName())
-                .estimatedBirthDate(estimatedBirthDate)
+                .estimatedBirthYear(estimatedBirthYear)
                 .averageRating(0.0f)
                 .ratingsCount(0)
                 .createdAt(OffsetDateTime.now())

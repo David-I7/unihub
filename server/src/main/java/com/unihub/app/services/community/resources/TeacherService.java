@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
-import java.time.Period;
+import java.util.Objects;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +78,17 @@ public class TeacherService {
         String targetLastName = dto.lastName().isPresent() ? dto.lastName().get() : teacher.getLastName();
 
         if (targetFirstName != null && targetLastName != null &&
+                (targetFirstName.equalsIgnoreCase(teacher.getFirstName()) && targetLastName.equalsIgnoreCase(teacher.getLastName()))
+                && dto.estimatedAge().isPresent()
+                && Objects.equals(
+                        dto.estimatedAge().get() != null ? LocalDate.now().getYear() - dto.estimatedAge().get() : null,
+                        teacher.getEstimatedBirthYear()
+                )
+            ){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No changes detected in the update request");
+        }
+
+        if (targetFirstName != null && targetLastName != null &&
                 (!targetFirstName.equalsIgnoreCase(teacher.getFirstName()) || !targetLastName.equalsIgnoreCase(teacher.getLastName()))) {
             Optional<Teacher> duplicate = teacherRepository.findByCommunityIdAndFirstNameAndLastName(
                     teacher.getCommunity().getId(), targetFirstName, targetLastName
@@ -91,7 +102,7 @@ public class TeacherService {
         dto.lastName().ifPresent(teacher::setLastName);
         if (dto.estimatedAge().isPresent()) {
             Integer age = dto.estimatedAge().get();
-            teacher.setEstimatedBirthDate(age != null ? LocalDate.now().minusYears(age) : null);
+            teacher.setEstimatedBirthYear(age != null ? LocalDate.now().getYear() - age : null);
         }
 
         Teacher saved = teacherRepository.save(teacher);
@@ -170,8 +181,8 @@ public class TeacherService {
                     .build();
         }).toList();
 
-        Integer estimatedAge = teacher.getEstimatedBirthDate() != null
-                ? Period.between(teacher.getEstimatedBirthDate(), LocalDate.now()).getYears()
+        Integer estimatedAge = teacher.getEstimatedBirthYear() != null
+                ? LocalDate.now().getYear() - teacher.getEstimatedBirthYear()
                 : null;
 
         return TeacherDetailResponseDto.builder()

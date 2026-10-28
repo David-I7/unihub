@@ -32,6 +32,7 @@ import com.unihub.app.repositories.community.resources.CommunityMemberRepository
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 import com.unihub.app.security.policies.CommunityAccessHelper;
+import com.unihub.app.services.community.resources.CommunityMemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -67,6 +68,7 @@ public class CalendarService {
     private final CommunityContentMapper contentMapper;
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final CommunityMemberService communityMemberService;
 
     @Transactional(readOnly = true)
     public List<CalendarEventResponseDto> getEvents(
@@ -96,7 +98,7 @@ public class CalendarService {
             Community community = communityRepository.findBySlug(communitySlug)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
 
-            boolean isMember = communityMemberRepository.isMemberOfCommunity(communitySlug, userId);
+            boolean isMember = communityMemberService.getCommunityRole(communitySlug, userId) != null;
             if (!isMember) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User is not a member of this community");
             }

@@ -20,16 +20,4 @@ public record UpdateJoinCodeRequestDto(
         maxUses = maxUses == null ? JsonNullable.undefined() : maxUses;
         validForHours = validForHours == null ? JsonNullable.undefined() : validForHours;
     }
-
-    public static class UpdateJoinCodeRequestDtoBuilder {
-        public UpdateJoinCodeRequestDtoBuilder maxUses(Integer maxUses) {
-            this.maxUses = maxUses != null ? JsonNullable.of(maxUses) : JsonNullable.of(null);
-            return this;
-        }
-
-        public UpdateJoinCodeRequestDtoBuilder validForHours(Integer validForHours) {
-            this.validForHours = validForHours != null ? JsonNullable.of(validForHours) : JsonNullable.of(null);
-            return this;
-        }
-    }
 }

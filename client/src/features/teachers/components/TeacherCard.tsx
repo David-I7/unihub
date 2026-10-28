@@ -20,24 +20,20 @@ import type { Teacher, CallerMembership } from "../api/types";
 interface TeacherCardProps {
   teacher: Teacher;
   callerMembership?: CallerMembership | null;
+  communitySlug: string;
 }
 
-export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
+export function TeacherCard({
+  teacher,
+  callerMembership,
+  communitySlug,
+}: TeacherCardProps) {
   const [, setSearchParams] = useSearchParams();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
-  const user = useAuthStore((state) => state.user);
-  const { isOwner, communityRole, globalPermissions } =
+  const { canUpdateTeacher, canDeleteTeacher } =
     usePermissions(callerMembership);
-
-  const isCommunityAdmin =
-    isOwner ||
-    communityRole === "COMMUNITY_ADMIN" ||
-    globalPermissions.includes("ADMIN") ||
-    globalPermissions.includes("ROOT") ||
-    user?.role === "ADMIN" ||
-    user?.role === "ROOT";
 
   const handleCardClick = () => {
     setSearchParams(
@@ -81,7 +77,7 @@ export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
             </div>
           </div>
 
-          {isCommunityAdmin && (
+          {(canUpdateTeacher || canDeleteTeacher) && (
             <div onClick={(e) => e.stopPropagation()} className="shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger
@@ -97,21 +93,25 @@ export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
                   <MoreVertical className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-36">
-                  <DropdownMenuItem
-                    onClick={() => setEditOpen(true)}
-                    className="gap-2 cursor-pointer text-xs"
-                  >
-                    <Edit2 className="size-3.5" />
-                    <span>Edit</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setDeleteOpen(true)}
-                    className="gap-2 cursor-pointer text-xs"
-                  >
-                    <Trash2 className="size-3.5" />
-                    <span>Delete</span>
-                  </DropdownMenuItem>
+                  {canUpdateTeacher && (
+                    <DropdownMenuItem
+                      onClick={() => setEditOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Edit2 className="size-3.5" />
+                      <span>Edit</span>
+                    </DropdownMenuItem>
+                  )}
+                  {canDeleteTeacher && (
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onClick={() => setDeleteOpen(true)}
+                      className="gap-2 cursor-pointer text-xs"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -145,6 +145,7 @@ export function TeacherCard({ teacher, callerMembership }: TeacherCardProps) {
         teacher={teacher}
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
+        communitySlug={communitySlug}
       />
     </>
   );

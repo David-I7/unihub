@@ -49,6 +49,7 @@ public class TeacherController {
         return ResponseEntity.ok(page);
     }
 
+    @PreAuthorize("hasPermission(#communitySlug, 'TEACHER', 'UPDATE')")
     @PatchMapping("/api/v1/teachers/{teacherId}")
     public ResponseEntity<TeacherResponseDto> updateTeacher(
             @PathVariable UUID teacherId,
@@ -59,6 +60,7 @@ public class TeacherController {
         return ResponseEntity.ok(updated);
     }
 
+    @PreAuthorize("hasPermission(#communitySlug, 'TEACHER', 'DELETE')")
     @DeleteMapping("/api/v1/teachers/{teacherId}")
     public ResponseEntity<Void> deleteTeacher(
             @PathVariable UUID teacherId,

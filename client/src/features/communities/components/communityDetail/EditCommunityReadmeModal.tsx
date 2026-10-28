@@ -59,11 +59,19 @@ export function EditCommunityReadmeModal({
       return;
     }
 
+    const trimmedReadme = readme.trim();
+    if (trimmedReadme.length > 50000) {
+      toast.error(
+        "Readme content exceeds the maximum length of 50,000 characters.",
+      );
+      return;
+    }
+
     try {
       await updateMutation.mutateAsync({
         communitySlug: community.slug,
         payload: {
-          readme: readme.trim(),
+          readme: trimmedReadme,
         },
       });
 
