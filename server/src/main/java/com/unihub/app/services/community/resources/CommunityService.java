@@ -53,6 +53,7 @@ public class CommunityService {
     private final CommunityResourceMapper communityMapper;
     private final PageMapper pageMapper;
     private final StudyYearService studyYearService;
+    private final CommunityMemberService communityMemberService;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityResponseDto> findAll(
@@ -105,7 +106,7 @@ public class CommunityService {
     public CommunityResponseDto findBySlug(String slug, UserDto caller) {
         Community community = communityRepository.findBySlugWithOwner(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-        boolean isJoined = (caller != null) && communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), caller.id());
+        boolean isJoined = (caller != null) && communityMemberService.getCommunityRole(community.getSlug(), caller.id()) != null;
         return communityMapper.toCommunityResponseDto(community, isJoined);
     }
 
@@ -119,23 +120,20 @@ public class CommunityService {
                     .build();
         }
 
-        return communityMemberRepository.findMemberByCommunitySlug(communitySlug, caller.id())
-                .map(member -> {
-                    Role role = roleService.getRoleById(member.getRoleId());
-                    RoleType roleType = RoleType.valueOf(role.getName());
-                    List<String> permissions = roleService.getPermissionNamesByRoleType(roleType);
-
-                    return CallerMembershipDto.builder()
-                            .isMember(true)
-                            .role(role.getName())
-                            .permissions(permissions)
-                            .build();
-                })
-                .orElseGet(() -> CallerMembershipDto.builder()
-                        .isMember(false)
-                        .role(null)
-                        .permissions(Collections.emptyList())
-                        .build());
+        RoleType role = communityMemberService.getCommunityRole(communitySlug, caller.id());
+        if(role != null) {
+            return CallerMembershipDto.builder()
+                    .isMember(true)
+                    .role(role.name())
+                    .permissions(roleService.getPermissionNamesByRoleType(role))
+                    .build();
+        }else{
+            return CallerMembershipDto.builder()
+                    .isMember(false)
+                    .role(null)
+                    .permissions(Collections.emptyList())
+                    .build();
+        }
     }
 
     @Transactional(readOnly = true)

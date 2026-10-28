@@ -39,7 +39,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
@@ -229,7 +228,7 @@ public class UserServiceTests {
         assertNotNull(result);
         assertEquals(newRoleId, target.getRoleId());
         verify(userRepository).save(target);
-        verify(sessionService).invalidateUserTokens(targetId);
+        verify(sessionService).invalidateActiveAccessTokens(targetId);
     }
 
     // =========================================================================
@@ -248,7 +247,7 @@ public class UserServiceTests {
 
         assertNotNull(user.getDeletedAt());
         verify(userRepository).save(user);
-        verify(sessionService).invalidateUserTokens(userId);
+        verify(sessionService).revokeAllUserSessionsAndAccessTokens(userId);
     }
 
     @Test
@@ -266,7 +265,7 @@ public class UserServiceTests {
 
         userService.adminDeleteUser("bob", "Violation of terms");
 
-        verify(sessionService).invalidateUserTokens(userId);
+        verify(sessionService).revokeAllUserSessionsAndAccessTokens(userId);
         verify(userRepository).deleteById(userId);
         verify(eventPublisher).publishEvent(any(UserDeletedEvent.class));
     }

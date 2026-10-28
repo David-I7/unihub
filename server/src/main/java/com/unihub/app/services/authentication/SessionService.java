@@ -170,7 +170,7 @@ public class SessionService {
     }
 
     @Transactional
-    public void invalidateUserTokens(UUID userId) {
+    public void revokeAllUserSessionsAndAccessTokens(UUID userId) {
         sessionRepository.revokeAllByUserId(userId);
         tokenRevocationService.revokeUserTokens(userId);
     }

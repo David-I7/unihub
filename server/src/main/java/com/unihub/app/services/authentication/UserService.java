@@ -24,7 +24,6 @@ import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
-import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.JwtService;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.utils.AppUtils;
@@ -43,7 +42,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -311,7 +309,7 @@ public class UserService {
         user.setDeletedAt(OffsetDateTime.now());
         userRepository.save(user);
 
-        sessionService.invalidateUserTokens(userId);
+        sessionService.revokeAllUserSessionsAndAccessTokens(userId);
 
         eventPublisher.publishEvent(new UserDeletedEvent(email, username, false, null));
     }
@@ -355,7 +353,7 @@ public class UserService {
         targetUser.setUpdatedAt(OffsetDateTime.now());
         User saved = userRepository.save(targetUser);
 
-        sessionService.invalidateUserTokens(saved.getId());
+        sessionService.invalidateActiveAccessTokens(saved.getId());
 
         return userMapper.toUserProfile(saved);
     }
@@ -374,7 +372,7 @@ public class UserService {
         UUID targetId = targetUser.getId();
 
         userRepository.deleteById(targetId);
-        sessionService.invalidateUserTokens(targetId);
+        sessionService.revokeAllUserSessionsAndAccessTokens(targetId);
 
         eventPublisher.publishEvent(new UserDeletedEvent(email, username, true, reason));
     }

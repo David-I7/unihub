@@ -81,10 +81,7 @@ public class UnifiedPermissionEvaluator implements PermissionEvaluator {
         String[] parts = text.trim().split("[_\\-\\s]+");
         if (parts.length == 1) {
             String part = parts[0];
-            if (part.equals(part.toUpperCase())) {
-                return part.toLowerCase();
-            }
-            return Character.toLowerCase(part.charAt(0)) + part.substring(1);
+            return part.toLowerCase();
         }
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
