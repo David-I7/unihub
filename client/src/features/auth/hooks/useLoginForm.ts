@@ -1,12 +1,8 @@
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate } from "react-router";
 import { useForm } from "@/hooks/useForm";
 import { useLogin } from "../api/login";
 import type { LoginRequest } from "../api/types";
-import {
-  loginSchema,
-  urlSchema,
-  type LoginFormData,
-} from "../schemas/authSchemas";
+import { loginSchema, type LoginFormData } from "../schemas/authSchemas";
 import { getFormErrors } from "@/api/types";
 
 export interface UseLoginFormOptions {
@@ -16,7 +12,6 @@ export interface UseLoginFormOptions {
 
 export function useLoginForm(options?: UseLoginFormOptions) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const loginMutation = useLogin();
 
   const form = useForm<LoginFormData>({
@@ -38,11 +33,7 @@ export function useLoginForm(options?: UseLoginFormOptions) {
         if (options?.onSuccess) {
           options.onSuccess();
         } else {
-          const redirectTarget =
-            (options?.redirectTo ??
-            urlSchema.safeParse(searchParams.get("redirect") ?? "").success)
-              ? searchParams.get("redirect")!
-              : "/";
+          const redirectTarget = options?.redirectTo ?? "/";
           navigate(redirectTarget);
         }
       } catch (err) {

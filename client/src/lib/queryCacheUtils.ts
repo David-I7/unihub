@@ -38,6 +38,22 @@ export function rollbackOptimisticContext(
   }
 }
 
+export function removeInfiniteQueryPagesExceptFirst(
+  queryClient: QueryClient,
+  queryKey: QueryKey,
+): void {
+  queryClient.setQueriesData<InfiniteData<PaginatedResponse<unknown>>>(
+    { queryKey },
+    (old) => {
+      if (!old?.pages) return old;
+      return {
+        pageParams: [old.pageParams[0]],
+        pages: [old.pages[0]],
+      };
+    },
+  );
+}
+
 /**
  * Updates an item across all matching pages in all matching infinite queries.
  */

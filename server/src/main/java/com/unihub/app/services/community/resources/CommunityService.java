@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.PermissionType;
+import com.unihub.app.domain.Permissions;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -13,6 +14,7 @@ import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
@@ -22,6 +24,8 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.security.policies.CommunityAccessHelper;
+import com.unihub.app.services.authentication.UserService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -53,6 +57,9 @@ public class CommunityService {
     private final CommunityResourceMapper communityMapper;
     private final PageMapper pageMapper;
     private final StudyYearService studyYearService;
+    private final CommunityMemberService communityMemberService;
+    private final UserService userService;
+    private final CommunityAccessHelper communityAccessHelper;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityResponseDto> findAll(
@@ -105,7 +112,7 @@ public class CommunityService {
     public CommunityResponseDto findBySlug(String slug, UserDto caller) {
         Community community = communityRepository.findBySlugWithOwner(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found"));
-        boolean isJoined = (caller != null) && communityMemberRepository.existsByCommunityIdAndUserId(community.getId(), caller.id());
+        boolean isJoined = (caller != null) && communityMemberService.getCommunityRole(community.getSlug(), caller.id()) != null;
         return communityMapper.toCommunityResponseDto(community, isJoined);
     }
 
@@ -119,23 +126,20 @@ public class CommunityService {
                     .build();
         }
 
-        return communityMemberRepository.findMemberByCommunitySlug(communitySlug, caller.id())
-                .map(member -> {
-                    Role role = roleService.getRoleById(member.getRoleId());
-                    RoleType roleType = RoleType.valueOf(role.getName());
-                    List<String> permissions = roleService.getPermissionNamesByRoleType(roleType);
-
-                    return CallerMembershipDto.builder()
-                            .isMember(true)
-                            .role(role.getName())
-                            .permissions(permissions)
-                            .build();
-                })
-                .orElseGet(() -> CallerMembershipDto.builder()
-                        .isMember(false)
-                        .role(null)
-                        .permissions(Collections.emptyList())
-                        .build());
+        RoleType role = communityMemberService.getCommunityRole(communitySlug, caller.id());
+        if(role != null) {
+            return CallerMembershipDto.builder()
+                    .isMember(true)
+                    .role(role.name())
+                    .permissions(roleService.getPermissionNamesByRoleType(role))
+                    .build();
+        }else{
+            return CallerMembershipDto.builder()
+                    .isMember(false)
+                    .role(null)
+                    .permissions(Collections.emptyList())
+                    .build();
+        }
     }
 
     @Transactional(readOnly = true)
@@ -186,7 +190,7 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityResponseDto updateCommunity(String slug, UUID userId, UpdateCommunityRequestDto dto) {
+    public CommunityResponseDto updateCommunity(String slug, UserDto caller, UpdateCommunityRequestDto dto) {
         if (dto.name().isUndefined() && dto.slug().isUndefined() && dto.description().isUndefined() && dto.readme().isUndefined() && dto.backgroundColor().isUndefined() && dto.verified().isUndefined() && dto.newOwnerUsername().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
@@ -219,12 +223,7 @@ public class CommunityService {
         }
 
         if (dto.verified().isPresent()) {
-            boolean canVerify = userRepository.findById(userId)
-                    .map(User::getRoleId)
-                    .map(roleService::getRoleById)
-                    .map(role -> RoleType.valueOf(role.getName()))
-                    .map(roleType -> roleService.getPermissionNamesByRoleType(roleType).contains(PermissionType.VERIFY_COMMUNITY.getValue()))
-                    .orElse(false);
+            boolean canVerify = communityAccessHelper.hasCommunityPermission(community.getSlug(), caller.id(), PermissionType.VERIFY_COMMUNITY);
             if (canVerify) {
                 community.setVerified(dto.verified().get());
             } else {
@@ -233,6 +232,10 @@ public class CommunityService {
         }
 
         if (dto.newOwnerUsername().isPresent() && dto.newOwnerUsername().get() != null && !dto.newOwnerUsername().get().equals(community.getOwner().getUsername())) {
+            if (!community.getOwner().getId().equals(caller.id())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can change community ownership");
+            }
+
             User newOwner = userRepository.findByUsername(dto.newOwnerUsername().get())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New owner user not found"));
 

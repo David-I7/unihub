@@ -59,16 +59,16 @@ export function DeleteStudyYearDialog({
         <DialogHeader>
           <DialogTitle>Delete {displayName} Curriculum?</DialogTitle>
           <DialogDescription className="space-y-2">
-            <p>
+            <div>
               Are you sure you want to delete{" "}
               <strong className="text-foreground">{displayName}</strong> from
               this community?
-            </p>
-            <p className="text-xs text-destructive font-medium bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
+            </div>
+            <div className="text-xs text-destructive font-medium bg-destructive/10 p-2.5 rounded-lg border border-destructive/20">
               Warning: All courses ({studyYear.coursesCount || 0} active,{" "}
               {studyYear.archivedCoursesCount || 0} archived), materials, and
               related files inside this study year will be permanently deleted.
-            </p>
+            </div>
           </DialogDescription>
         </DialogHeader>
 

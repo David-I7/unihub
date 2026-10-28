@@ -5,6 +5,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 @Service
@@ -17,7 +18,7 @@ public class TokenRevocationService {
     }
 
     public void revokeUserTokens(UUID userId) {
-        revokedUsers.put(userId, Instant.now());
+        revokedUsers.put(userId, Instant.now().truncatedTo(ChronoUnit.SECONDS));
     }
 
     public boolean isTokenRevoked(UUID userId, Instant issuedAt) {

@@ -124,7 +124,7 @@ public class CommunityController {
             @AuthenticationPrincipal UserDto user,
             @Valid @RequestBody UpdateCommunityRequestDto requestDto
     ) {
-        CommunityResponseDto updated = communityService.updateCommunity(communitySlug, user.id(), requestDto);
+        CommunityResponseDto updated = communityService.updateCommunity(communitySlug, user, requestDto);
         return ResponseEntity.ok(updated);
     }
 

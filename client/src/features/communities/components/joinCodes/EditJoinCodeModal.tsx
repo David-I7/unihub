@@ -193,7 +193,7 @@ export function EditJoinCodeModal({
           {/* Extend validity */}
           <Field>
             <FieldLabel htmlFor="editValidityHours">
-              Extend Validity (Hours)
+              Validity (Hours)
             </FieldLabel>
             <div className="flex items-center gap-2">
               <Input

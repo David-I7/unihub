@@ -14,6 +14,7 @@ import com.unihub.app.repositories.community.resources.CommunityMemberRepository
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityJoinCodeService;
+import com.unihub.app.services.community.resources.CommunityMemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,6 +46,9 @@ public class CommunityJoinCodeServiceTests {
     private CommunityMemberRepository communityMemberRepository;
 
     @Mock
+    private CommunityMemberService communityMemberService;
+
+    @Mock
     private RoleService roleService;
 
     private CommunityResourceMapper communityMapper;
@@ -60,7 +64,8 @@ public class CommunityJoinCodeServiceTests {
                 communityRepository,
                 communityMemberRepository,
                 userMapper,
-                communityMapper
+                communityMapper,
+                communityMemberService
         );
     }
 

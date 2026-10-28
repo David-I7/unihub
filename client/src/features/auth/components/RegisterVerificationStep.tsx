@@ -61,7 +61,6 @@ export function RegisterVerificationStep({
       await confirmRegisterMutation({ email, code });
       resetTimer();
       onSuccess?.();
-      navigate("/");
     } catch (err) {
       setError(getErrorMessage(err, "Invalid verification code."));
     }

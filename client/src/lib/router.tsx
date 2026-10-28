@@ -18,6 +18,7 @@ import {
   AuthenticatedRoute,
 } from "@/features/auth";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
+import TestPage from "@/pages/TestPage";
 
 export const router = createBrowserRouter([
   {
@@ -74,14 +75,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/communities/:communitySlug/join",
-        element: (
-          <AuthenticatedRoute
-            title="Join Community"
-            description="Sign in to join a community using a join code."
-          >
-            <CommunityJoinPage />
-          </AuthenticatedRoute>
-        ),
+        element: <CommunityJoinPage />,
       },
       {
         path: "/communities/:communitySlug",
@@ -118,6 +112,10 @@ export const router = createBrowserRouter([
       {
         path: "/reset-password",
         element: <ResetPasswordPage />,
+      },
+      {
+        path: "test",
+        element: <TestPage />,
       },
     ],
   },

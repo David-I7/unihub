@@ -146,7 +146,11 @@ export default function CalendarPage() {
 
       {/* Calendar View Container */}
       {!communitySlug ? (
-        !hasCommunities && !isLoadingCommunities ? (
+        isLoadingCommunities ? (
+          <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
+            <Spinner className="size-8" />
+          </div>
+        ) : !hasCommunities ? (
           /* Empty State 1: User has no enrolled communities */
           <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border bg-card p-12 text-center shadow-xs">
             <div className="size-12 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground mb-4">

@@ -53,6 +53,7 @@ export default function AuthenticatedRoute({
               size="sm"
               className="text-xs font-semibold gap-1.5 px-4 cursor-pointer"
               render={<Link to="/login" />}
+              nativeButton={false}
             >
               <LogIn className="size-3.5" />
               <span>Log In</span>
@@ -62,6 +63,7 @@ export default function AuthenticatedRoute({
               size="sm"
               className="text-xs font-semibold gap-1.5 px-4 cursor-pointer"
               render={<Link to="/register" />}
+              nativeButton={false}
             >
               <UserPlus className="size-3.5" />
               <span>Sign Up</span>

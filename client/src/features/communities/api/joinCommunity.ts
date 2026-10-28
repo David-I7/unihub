@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UserEnrolledCommunity } from "@/features/users/api/types";
 import { userKeys } from "@/features/users/api/getUserProfile";
 import { communityKeys } from "./communityKeys";
+import { joinCodeKeys } from "./joinCodes";
 
 export interface JoinCommunityPayload {
   joinCode: string;
@@ -23,7 +24,15 @@ export function useJoinCommunity() {
 
   return useMutation({
     mutationFn: joinCommunity,
-    onSuccess: (data) => {
+    onMutate: async (payload) => {
+      return payload.joinCode;
+    },
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: joinCodeKeys.preview(data.slug, variables.joinCode),
+        refetchType: "none",
+      });
+      queryClient.invalidateQueries({ queryKey: joinCodeKeys.list(data.slug) });
       queryClient.invalidateQueries({ queryKey: userKeys.communities() });
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),

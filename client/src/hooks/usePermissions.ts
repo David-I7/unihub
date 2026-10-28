@@ -73,6 +73,10 @@ export function usePermissions(target?: string | CallerMembership | null) {
   const canPinPost = hasPermission(PERMISSIONS.PIN_POST);
   const canCreateComment = hasPermission(PERMISSIONS.CREATE_COMMENT);
 
+  const canCreateTeacher = hasPermission(PERMISSIONS.CREATE_TEACHER);
+  const canUpdateTeacher = hasPermission(PERMISSIONS.UPDATE_TEACHER);
+  const canDeleteTeacher = hasPermission(PERMISSIONS.DELETE_TEACHER);
+
   const canEditPost = useCallback(
     (postOwnerId: string) => {
       if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
@@ -196,15 +200,20 @@ export function usePermissions(target?: string | CallerMembership | null) {
 
   return {
     user,
+    isAuthenticated: Boolean(user),
     isMember,
     isOwner,
     communityRole,
     globalPermissions,
     hasPermission,
     canCreateCommunity,
+    canLeaveCommunity: isMember && !isOwner,
     canEditCommunity,
     canDeleteCommunity,
     canVerifyCommunity,
+    canCreateTeacher,
+    canUpdateTeacher,
+    canDeleteTeacher,
     canManageJoinCodes,
     canAddMember,
     canRemoveMember,

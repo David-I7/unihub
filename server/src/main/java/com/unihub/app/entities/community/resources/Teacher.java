@@ -3,7 +3,7 @@ package com.unihub.app.entities.community.resources;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,8 +36,8 @@ public class Teacher {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "estimated_birth_date")
-    private LocalDate estimatedBirthDate;
+    @Column(name = "estimated_birth_year")
+    private Integer estimatedBirthYear;
 
     @Column(name = "average_rating", nullable = false)
     private float averageRating;

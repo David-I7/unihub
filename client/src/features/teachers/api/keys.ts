@@ -1,6 +1,8 @@
 export const teacherKeys = {
   all: ["teachers"] as const,
-  lists: () => [...teacherKeys.all, "list"] as const,
+  allLists: () => [...teacherKeys.all, "lists"] as const,
+  communityList: (communitySlug: string) =>
+    [...teacherKeys.allLists(), communitySlug] as const,
   list: (
     communitySlug: string,
     filters?:
@@ -23,11 +25,10 @@ export const teacherKeys = {
             sort: filters?.sort,
             size: filters?.size,
           };
-    return [...teacherKeys.lists(), communitySlug, filterObj] as const;
+    return [...teacherKeys.communityList(communitySlug), filterObj] as const;
   },
   details: () => [...teacherKeys.all, "detail"] as const,
-  detail: (teacherId: string) =>
-    [...teacherKeys.details(), teacherId] as const,
+  detail: (teacherId: string) => [...teacherKeys.details(), teacherId] as const,
   ratings: (teacherId: string) =>
     [...teacherKeys.detail(teacherId), "ratings"] as const,
 };

@@ -37,14 +37,15 @@ public class CommunityJoinCodeService {
     private final CommunityMemberRepository communityMemberRepository;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
+    private final CommunityMemberService communityMemberService;
 
     @Transactional
     public CommunityJoinPreviewResponseDto getJoinCodePreview(String communitySlug, String code, UserDto caller) {
         CommunityJoinCode joinCode = joinCodeRepository.findByCodeWithCommunity(code)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid join code"));
 
         if (!joinCode.getCommunity().getSlug().equalsIgnoreCase(communitySlug)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code does not belong to this community");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid join code");
         }
 
         if (joinCode.isExpired() || joinCode.isUsageLimitReached()) {
@@ -52,7 +53,7 @@ public class CommunityJoinCodeService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Join code has expired or reached usage limit");
         }
 
-        boolean isMember = (caller != null) && communityMemberRepository.existsByCommunityIdAndUserId(joinCode.getCommunity().getId(), caller.id());
+        boolean isMember = (caller != null) && communityMemberService.getCommunityRole(joinCode.getCommunity().getSlug(), caller.id()) != null;
         return communityMapper.toCommunityJoinPreviewResponseDto(joinCode.getCommunity(), isMember);
     }
 
@@ -84,9 +85,6 @@ public class CommunityJoinCodeService {
 
     @Transactional(readOnly = true)
     public List<CommunityJoinCodeResponseDto> getJoinCodes(String communitySlug) {
-        if (!communityRepository.existsBySlug(communitySlug)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Community not found");
-        }
         return joinCodeRepository.findByCommunitySlugWithCommunity(communitySlug)
                 .stream()
                 .map(communityMapper::toCommunityJoinCodeResponseDto)
@@ -123,6 +121,9 @@ public class CommunityJoinCodeService {
             if (maxUses == null || maxUses == -1) {
                 joinCode.setMaxUses(null);
             } else if (maxUses > 0) {
+                if (joinCode.getMaxUses() != null && joinCode.getMaxUses() < maxUses) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be greater than or equal to the current value");
+                }
                 joinCode.setMaxUses(maxUses);
             } else {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "maxUses must be -1 or greater than 0");

@@ -62,14 +62,14 @@ export function CommunityHero({
   const {
     isMember,
     isOwner,
+    isAuthenticated,
     communityRole,
     canEditCommunity,
     canDeleteCommunity,
     canVerifyCommunity,
     canManageJoinCodes,
+    canLeaveCommunity,
   } = usePermissions(callerMembership);
-
-  const canLeaveCommunity = isMember && !isOwner;
 
   const totalCourses = studyYears.reduce(
     (acc, year) => acc + (year.coursesCount ?? 0),
@@ -138,7 +138,7 @@ export function CommunityHero({
 
               {isMember ? (
                 <RoleBadge role={communityRole} size="xs" />
-              ) : (
+              ) : isAuthenticated ? (
                 <Button
                   size="xs"
                   onClick={() => setJoinModalOpen(true)}
@@ -147,7 +147,7 @@ export function CommunityHero({
                   <KeyRound className="size-3" />
                   <span>Join Community</span>
                 </Button>
-              )}
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">

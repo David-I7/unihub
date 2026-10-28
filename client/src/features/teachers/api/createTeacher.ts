@@ -2,6 +2,7 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateTeacherRequest, Teacher } from "./types";
 import { teacherKeys } from "./keys";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export async function createTeacher(
   communitySlug: string,
@@ -21,7 +22,13 @@ export function useCreateTeacher(communitySlug: string) {
     mutationFn: (payload: CreateTeacherRequest) =>
       createTeacher(communitySlug, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        teacherKeys.communityList(communitySlug),
+      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.communityList(communitySlug),
+      });
     },
   });
 }

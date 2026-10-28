@@ -78,13 +78,4 @@ public class CommunityAccessHelper {
         return user.role().equals(RoleType.ADMIN) || user.role().equals(RoleType.ROOT);
     }
 
-    public boolean isCommunityAdmin(String communitySlug, UUID userId) {
-        RoleType role = communityMemberService.getCommunityRole(communitySlug, userId);
-        if (role == null) return false;
-        return role.equals(RoleType.COMMUNITY_ADMIN) || role.equals(RoleType.COMMUNITY_OWNER) || role.equals(RoleType.ROOT);
-    }
-
-    public boolean isCommunityMember(String communitySlug, UUID userId) {
-        return communityMemberService.getCommunityRole(communitySlug, userId) != null;
-    }
 }

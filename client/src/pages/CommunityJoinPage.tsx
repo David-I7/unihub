@@ -35,33 +35,12 @@ import { getErrorMessage } from "@/api/types";
 
 export default function CommunityJoinPage() {
   const { communitySlug = "" } = useParams<{ communitySlug: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
 
-  const storageKey = `join_code_${communitySlug.toLowerCase()}`;
-  const [code] = useState<string>(() => {
-    const urlCode = searchParams.get("code");
-    if (urlCode) {
-      sessionStorage.setItem(storageKey, urlCode.toUpperCase().trim());
-      searchParams.delete("code");
-      return urlCode.toUpperCase().trim();
-    }
-    return sessionStorage.getItem(storageKey) || "";
-  });
-
+  const [code] = useState<string>(searchParams.get("code") || "");
   const [actionError, setActionError] = useState<string | null>(null);
-
-  // Immediately obfuscate / strip ?code=... from the URL bar on load
-  useEffect(() => {
-    if (searchParams.has("code")) {
-      searchParams.delete("code");
-      setSearchParams(searchParams, {
-        replace: true,
-      });
-    }
-  }, [searchParams, communitySlug, setSearchParams]);
-
   const isValidCode = joinCodeSchema.safeParse(code).success;
 
   const {
@@ -79,9 +58,8 @@ export default function CommunityJoinPage() {
 
     try {
       const enrolled = await joinMutation.mutateAsync({ joinCode: code });
-      sessionStorage.removeItem(storageKey);
       toast.success(`Successfully joined "${enrolled.name}"!`);
-      navigate(`/communities/${enrolled.slug}`);
+      await navigate(`/communities/${enrolled.slug}`);
     } catch (err: unknown) {
       const message = getErrorMessage(
         err,
@@ -113,13 +91,13 @@ export default function CommunityJoinPage() {
         {code && !isPreviewLoading && isPreviewError && (
           <Card className="rounded-2xl border shadow-sm">
             <CardHeader className="text-center pb-4">
-              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive mb-2">
+              <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground mb-2">
                 <ShieldAlert className="size-6" />
               </div>
               <CardTitle className="text-xl font-bold">
                 Invalid Invitation
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-destructive">
                 {getErrorMessage(
                   previewError,
                   "This invite code is invalid, expired, or has reached its maximum usage limit.",
@@ -210,7 +188,7 @@ export default function CommunityJoinPage() {
                 <Button
                   onClick={() =>
                     navigate(
-                      `/login?redirect=/communities/${preview.slug}/join`,
+                      `/login?redirect=/communities/${preview.slug}/join?code=${code}`,
                     )
                   }
                   className="w-full font-bold rounded-xl gap-2 cursor-pointer"
@@ -255,119 +233,6 @@ export default function CommunityJoinPage() {
               )}
             </div>
           </Card>
-
-          // <Card className="rounded-2xl border overflow-hidden shadow-md">
-          //   {/* Header Banner with Community Gradient */}
-          //   <div
-          //     className="h-28 w-full p-4 flex items-end justify-between text-white"
-          //     style={{ background: computeGradient(preview.backgroundColor) }}
-          //   >
-          //     {preview.verified ? (
-          //       <Badge
-          //         variant="secondary"
-          //         className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
-          //       >
-          //         <ShieldCheck className="size-3 text-emerald-400" />
-          //         Verified Community
-          //       </Badge>
-          //     ) : (
-          //       <Badge
-          //         variant="secondary"
-          //         className="bg-black/40 text-white border-0 backdrop-blur-xs font-semibold gap-1 text-[11px]"
-          //       >
-          //         <ShieldAlert className="size-3 text-red-400" />
-          //         Unverified Community
-          //       </Badge>
-          //     )}
-
-          //     <span className="text-xs font-semibold bg-black/40 px-2.5 py-1 rounded-full flex items-center gap-1 backdrop-blur-xs">
-          //       <Users className="size-3" />
-          //       {preview.memberCount} members
-          //     </span>
-          //   </div>
-
-          //   <CardHeader className="pt-6">
-          //     <div className="space-y-1">
-          //       <CardTitle className="text-2xl font-bold text-foreground">
-          //         {preview.name}
-          //       </CardTitle>
-          //     </div>
-          //     <CardDescription className="pt-2 text-sm leading-relaxed">
-          //       {preview.description || "No description provided."}
-          //     </CardDescription>
-          //   </CardHeader>
-
-          //   <CardContent className="space-y-4">
-          //     {actionError && (
-          //       <div className="rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-xs text-destructive font-medium">
-          //         {actionError}
-          //       </div>
-          //     )}
-
-          //     {/* Already a member */}
-          //     {preview.isMember && (
-          //       <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-4 flex items-center gap-3">
-          //         <CheckCircle2 className="size-5 text-emerald-500 shrink-0" />
-          //         <div className="text-xs">
-          //           <p className="font-semibold text-emerald-600 dark:text-emerald-400">
-          //             You are already a member!
-          //           </p>
-          //           <p className="text-muted-foreground">
-          //             You have full access to this community's content and
-          //             materials.
-          //           </p>
-          //         </div>
-          //       </div>
-          //     )}
-          //   </CardContent>
-
-          //   <CardFooter className="flex flex-col gap-2.5 pb-6">
-          //     {!user ? (
-          //       <Button
-          //         onClick={() =>
-          //           navigate(
-          //             `/login?redirect=/communities/${preview.slug}/join`,
-          //           )
-          //         }
-          //         className="w-full h-11 font-bold rounded-xl gap-2 cursor-pointer"
-          //       >
-          //         <LogIn className="size-4" />
-          //         Log in to Join Community
-          //       </Button>
-          //     ) : preview.isMember ? (
-          //       <Button
-          //         onClick={() => navigate(`/communities/${preview.slug}`)}
-          //         className="w-full h-11 font-bold rounded-xl gap-2 cursor-pointer"
-          //       >
-          //         Go to Community
-          //         <ArrowRight className="size-4" />
-          //       </Button>
-          //     ) : (
-          //       <Button
-          //         onClick={handleJoin}
-          //         disabled={joinMutation.isPending}
-          //         className="w-full h-11 font-bold rounded-xl gap-2 cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white"
-          //       >
-          //         {joinMutation.isPending ? (
-          //           <>
-          //             <Spinner className="size-4" /> Joining...
-          //           </>
-          //         ) : (
-          //           "Join Community"
-          //         )}
-          //       </Button>
-          //     )}
-
-          //     <Button
-          //       variant="ghost"
-          //       size="sm"
-          //       onClick={handleClearCode}
-          //       className="text-xs text-muted-foreground"
-          //     >
-          //       Use a different code
-          //     </Button>
-          //   </CardFooter>
-          // </Card>
         )}
       </div>
     </div>

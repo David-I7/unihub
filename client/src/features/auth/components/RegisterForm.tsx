@@ -12,7 +12,8 @@ import { SocialAuthSection } from "./SocialAuthSection";
 import { RegisterVerificationStep } from "./RegisterVerificationStep";
 import { useRegisterForm } from "../hooks/useRegisterForm";
 import useProviderForm from "../hooks/useProviderForm";
-
+import { useNavigate, useSearchParams } from "react-router";
+import { relativeUrlSchema } from "../schemas/authSchemas";
 export function RegisterForm({
   className,
   ...props
@@ -20,6 +21,11 @@ export function RegisterForm({
   const [registeredEmail, setRegisteredEmail] = React.useState<string | null>(
     null,
   );
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const shouldRedirect = relativeUrlSchema.safeParse(
+    searchParams.get("redirect"),
+  ).success;
 
   const {
     handleSuccess: handleProviderSuccess,
@@ -46,6 +52,7 @@ export function RegisterForm({
 
   const handleRegistrationSuccess = React.useCallback(() => {
     setRegisteredEmail(null);
+    navigate(shouldRedirect ? searchParams.get("redirect")! : "/");
   }, []);
 
   return (
@@ -158,8 +165,8 @@ export function RegisterForm({
                 footerText="Already have an account?"
                 footerActionText="Login"
                 footerActionTo={
-                  new URLSearchParams(window.location.search).get("redirect")
-                    ? `/login?redirect=${encodeURIComponent(new URLSearchParams(window.location.search).get("redirect")!)}`
+                  shouldRedirect
+                    ? `/login?redirect=${searchParams.get("redirect")!}`
                     : "/login"
                 }
               />

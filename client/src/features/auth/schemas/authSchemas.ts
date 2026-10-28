@@ -1,13 +1,19 @@
 import { z } from "zod";
 
+export const relativeUrlSchema = z
+  .string()
+  .min(1)
+  .refine((val) => {
+    return z.url().safeParse(import.meta.env.VITE_CLIENT_ORIGIN.concat(val))
+      .success;
+  });
+
 export const emailSchema = z
   .email("Please enter a valid email address")
   .max(255, "Email cannot exceed 255 characters")
   .refine((val) => val === val.toLowerCase(), {
     message: "Email must be in lowercase",
   });
-
-export const urlSchema = z.url();
 
 export const usernameSchema = z
   .string()

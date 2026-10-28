@@ -68,7 +68,7 @@ Pattern: <action>:<resource>
   create:reminder            |  X   |   X   |        X        |        X        |        X         |
   delete:reminder            |  X   |   X   |        X        |        X        |        X         |
   create:teacher             |  X   |   X   |        X        |        X        |        X         |
-  update:teacher             |  X   |   X   |        X        |        X        |                  |
+  update:teacher             |  X   |   X   |        X        |        X        |        X         |
   delete:teacher             |  X   |   X   |        X        |        X        |                  |
   create:teacherRating       |  X   |   X   |        X        |        X        |        X         |
   update:teacherRating       |  X   |   X   |        X        |        X        |        X         |
@@ -308,6 +308,7 @@ WHERE r.name = 'COMMUNITY_MEMBER'
     'create:reminder',
     'delete:reminder',
     'create:teacher',
+    'update:teacher',
     'create:teacherRating',
     'update:teacherRating',
     'delete:teacherRating'

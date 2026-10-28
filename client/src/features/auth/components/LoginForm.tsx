@@ -10,9 +10,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { SocialAuthSection } from "./SocialAuthSection";
 import { ForgotPasswordModal } from "./ForgotPasswordModal";
-import { emailSchema } from "../schemas/authSchemas";
+import { emailSchema, relativeUrlSchema } from "../schemas/authSchemas";
 import { useLoginForm } from "../hooks/useLoginForm";
 import useProviderForm from "../hooks/useProviderForm";
+import { useSearchParams } from "react-router";
 
 export function LoginForm({
   className,
@@ -20,6 +21,10 @@ export function LoginForm({
 }: React.ComponentProps<"form">) {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = React.useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = React.useState("");
+  const [searchParams] = useSearchParams();
+  const shouldRedirect = relativeUrlSchema.safeParse(
+    searchParams.get("redirect"),
+  ).success;
 
   const {
     handleSuccess: handleProviderSuccess,
@@ -41,7 +46,9 @@ export function LoginForm({
     isInvalid,
     setFieldError,
     setTouched,
-  } = useLoginForm();
+  } = useLoginForm({
+    redirectTo: shouldRedirect ? searchParams.get("redirect")! : undefined,
+  });
 
   const handleForgotPasswordClick = () => {
     const rawIdentifier = (values.identifier ?? "").trim();
@@ -147,8 +154,8 @@ export function LoginForm({
             footerText="Don't have an account?"
             footerActionText="Sign up"
             footerActionTo={
-              new URLSearchParams(window.location.search).get("redirect")
-                ? `/register?redirect=${encodeURIComponent(new URLSearchParams(window.location.search).get("redirect")!)}`
+              shouldRedirect
+                ? `/register?redirect=${searchParams.get("redirect")!}`
                 : "/register"
             }
           />

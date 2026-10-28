@@ -3,11 +3,11 @@ import { z } from "zod";
 export const createCommunitySchema = z.object({
   name: z
     .string()
-    .min(2, "Community name must be at least 2 characters")
+    .min(3, "Community name must be at least 3 characters")
     .max(100, "Community name must not exceed 100 characters"),
   slug: z
     .string()
-    .min(2, "Slug must be at least 2 characters")
+    .min(3, "Slug must be at least 3 characters")
     .max(50, "Slug must not exceed 50 characters")
     .regex(
       /^[a-z0-9-]+$/,
@@ -19,7 +19,10 @@ export const createCommunitySchema = z.object({
     .max(500, "Description must not exceed 500 characters"),
   backgroundColor: z
     .string()
-    .regex(/^#([A-Fa-f0-9]{6})$/, "Must be a valid 6-character hex color (e.g. #3b82f6)"),
+    .regex(
+      /^#([A-Fa-f0-9]{6})$/,
+      "Must be a valid 6-character hex color (e.g. #3b82f6)",
+    ),
 });
 
 export type CreateCommunityFormData = z.infer<typeof createCommunitySchema>;
@@ -27,12 +30,12 @@ export type CreateCommunityFormData = z.infer<typeof createCommunitySchema>;
 export const updateCommunitySchema = z.object({
   name: z
     .string()
-    .min(2, "Community name must be at least 2 characters")
+    .min(3, "Community name must be at least 3 characters")
     .max(100, "Community name must not exceed 100 characters")
     .optional(),
   slug: z
     .string()
-    .min(2, "Slug must be at least 2 characters")
+    .min(3, "Slug must be at least 3 characters")
     .max(50, "Slug must not exceed 50 characters")
     .regex(
       /^[a-z0-9-]+$/,

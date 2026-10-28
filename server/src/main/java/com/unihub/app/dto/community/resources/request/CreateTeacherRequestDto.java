@@ -1,6 +1,7 @@
 package com.unihub.app.dto.community.resources.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
@@ -14,6 +15,7 @@ public record CreateTeacherRequestDto(
         @Size(min = 1, max = 50, message = "Last name must be between 1 and 50 characters")
         String lastName,
 
+        @Positive(message = "Estimated age must be a positive integer")
         Integer estimatedAge
 ) {
         public CreateTeacherRequestDto {
