@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useSearchParams } from "react-router";
-import { useDebounce } from "./useDebounce";
 
 export type FilterFieldType = "string" | "number" | "boolean" | "enum";
 
@@ -169,21 +168,35 @@ export function useDebouncedInput(
   delay = 300,
 ) {
   const [value, setValue] = useState(externalValue);
+  const [debouncedValue, setDebouncedValue] = useState(externalValue);
   const [prevExternal, setPrevExternal] = useState(externalValue);
+
+  const onCommitRef = useRef(onCommit);
+  useEffect(() => {
+    onCommitRef.current = onCommit;
+  });
 
   if (prevExternal !== externalValue) {
     setPrevExternal(externalValue);
     setValue(externalValue);
+    setDebouncedValue(externalValue);
   }
 
-  const debouncedValue = useDebounce(value.trim(), delay);
-
   useEffect(() => {
-    if (debouncedValue !== externalValue) {
-      onCommit(debouncedValue);
+    if (value.trim() === externalValue.trim()) {
+      return;
     }
-  }, [debouncedValue, externalValue, onCommit]);
+
+    const handler = setTimeout(() => {
+      const trimmed = value.trim();
+      setDebouncedValue(trimmed);
+      onCommitRef.current(trimmed);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, externalValue, delay]);
 
   return [value, setValue, debouncedValue] as const;
 }
-

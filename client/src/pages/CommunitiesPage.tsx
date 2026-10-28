@@ -52,7 +52,7 @@ const COMMUNITIES_FILTER_SCHEMA: FilterSchema<CommunitiesFilters> = {
 };
 
 export default function CommunitiesPage() {
-  const { filters, setFilters, setFilter } = useUrlFilters(
+  const { filters, setFilters, setFilter, resetFilters } = useUrlFilters(
     COMMUNITIES_FILTER_SCHEMA,
   );
 
@@ -152,12 +152,7 @@ export default function CommunitiesPage() {
             onClick={() => {
               setSearchInput("");
               setIsSearchExpanded(false);
-              setFilters({
-                search: "",
-                verified: false,
-                sort: "memberCount",
-                dir: "desc",
-              });
+              resetFilters();
             }}
             className="text-xs text-muted-foreground hover:text-foreground rounded-xl shrink-0 cursor-pointer"
           >

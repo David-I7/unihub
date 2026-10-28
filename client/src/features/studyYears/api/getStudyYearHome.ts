@@ -7,7 +7,7 @@ import {
 import type { StudyYearHome } from "./types";
 import {
   useInfiniteQuery,
-  useQuery,
+
   keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
