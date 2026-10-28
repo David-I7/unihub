@@ -27,20 +27,15 @@ export function useUpdateCommunity() {
   return useMutation({
     mutationFn: updateCommunity,
     onSuccess: (data, variables) => {
+      if (variables.payload.readme !== undefined) {
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.readmeDetail(variables.communitySlug),
+        });
+        return;
+      }
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
-      queryClient.invalidateQueries({
-        queryKey: communityKeys.readmeDetail(variables.communitySlug),
-      });
-      if (data.slug && data.slug !== variables.communitySlug) {
-        queryClient.invalidateQueries({
-          queryKey: communityKeys.homeDetail(data.slug),
-        });
-        queryClient.invalidateQueries({
-          queryKey: communityKeys.readmeDetail(data.slug),
-        });
-      }
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),
       });

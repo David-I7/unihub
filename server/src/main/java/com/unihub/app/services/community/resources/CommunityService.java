@@ -1,6 +1,7 @@
 package com.unihub.app.services.community.resources;
 
 import com.unihub.app.domain.PermissionType;
+import com.unihub.app.domain.Permissions;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
@@ -13,6 +14,7 @@ import com.unihub.app.dto.community.resources.response.CommunityResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearIdentifiersResponseDto;
 import com.unihub.app.dto.community.resources.response.StudyYearMetricsResponseDto;
 import com.unihub.app.entities.authentication.User;
+import com.unihub.app.entities.authorization.Permission;
 import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityMember;
@@ -22,6 +24,7 @@ import com.unihub.app.mappers.community.CommunityResourceMapper;
 import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.services.authentication.UserService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -54,6 +57,7 @@ public class CommunityService {
     private final PageMapper pageMapper;
     private final StudyYearService studyYearService;
     private final CommunityMemberService communityMemberService;
+    private final UserService userService;
 
     @Transactional(readOnly = true)
     public PageDto<CommunityResponseDto> findAll(
@@ -184,7 +188,7 @@ public class CommunityService {
     }
 
     @Transactional
-    public CommunityResponseDto updateCommunity(String slug, UUID userId, UpdateCommunityRequestDto dto) {
+    public CommunityResponseDto updateCommunity(String slug, UserDto caller, UpdateCommunityRequestDto dto) {
         if (dto.name().isUndefined() && dto.slug().isUndefined() && dto.description().isUndefined() && dto.readme().isUndefined() && dto.backgroundColor().isUndefined() && dto.verified().isUndefined() && dto.newOwnerUsername().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
@@ -217,12 +221,8 @@ public class CommunityService {
         }
 
         if (dto.verified().isPresent()) {
-            boolean canVerify = userRepository.findById(userId)
-                    .map(User::getRoleId)
-                    .map(roleService::getRoleById)
-                    .map(role -> RoleType.valueOf(role.getName()))
-                    .map(roleType -> roleService.getPermissionNamesByRoleType(roleType).contains(PermissionType.VERIFY_COMMUNITY.getValue()))
-                    .orElse(false);
+            boolean canVerify = roleService.getRoleByName(caller.role())
+                    .getPermissions().stream().map(Permission::getName).anyMatch(Permissions.VERIFY_COMMUNITY::equals);
             if (canVerify) {
                 community.setVerified(dto.verified().get());
             } else {
@@ -231,6 +231,10 @@ public class CommunityService {
         }
 
         if (dto.newOwnerUsername().isPresent() && dto.newOwnerUsername().get() != null && !dto.newOwnerUsername().get().equals(community.getOwner().getUsername())) {
+            if (!community.getOwner().getId().equals(caller.id())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can change community ownership");
+            }
+
             User newOwner = userRepository.findByUsername(dto.newOwnerUsername().get())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New owner user not found"));
 

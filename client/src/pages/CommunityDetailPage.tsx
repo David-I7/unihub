@@ -149,10 +149,7 @@ export default function CommunityDetailPage() {
             )}
           </TabsContent>
 
-          <TabsContent
-            value="teachers"
-            className="focus-visible:outline-none"
-          >
+          <TabsContent value="teachers" className="focus-visible:outline-none">
             {isInitialLoading ? (
               <CommunityTeachersTabSkeleton />
             ) : (
@@ -163,10 +160,7 @@ export default function CommunityDetailPage() {
             )}
           </TabsContent>
 
-          <TabsContent
-            value="members"
-            className="focus-visible:outline-none"
-          >
+          <TabsContent value="members" className="focus-visible:outline-none">
             {isInitialLoading ? (
               <CommunityMembersTabSkeleton />
             ) : (

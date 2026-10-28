@@ -59,7 +59,7 @@ export default function CommunityJoinPage() {
     try {
       const enrolled = await joinMutation.mutateAsync({ joinCode: code });
       toast.success(`Successfully joined "${enrolled.name}"!`);
-      navigate(`/communities/${enrolled.slug}`);
+      await navigate(`/communities/${enrolled.slug}`);
     } catch (err: unknown) {
       const message = getErrorMessage(
         err,
@@ -97,7 +97,7 @@ export default function CommunityJoinPage() {
               <CardTitle className="text-xl font-bold">
                 Invalid Invitation
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-destructive">
                 {getErrorMessage(
                   previewError,
                   "This invite code is invalid, expired, or has reached its maximum usage limit.",
@@ -188,7 +188,7 @@ export default function CommunityJoinPage() {
                 <Button
                   onClick={() =>
                     navigate(
-                      `/login?redirect=${encodeURIComponent(`/communities/${preview.slug}/join?code=${code}`)}`,
+                      `/login?redirect=/communities/${preview.slug}/join?code=${code}`,
                     )
                   }
                   className="w-full font-bold rounded-xl gap-2 cursor-pointer"

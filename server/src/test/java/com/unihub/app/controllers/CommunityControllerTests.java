@@ -289,7 +289,7 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .owner(new OwnerDto(userId, "david", true))
                 .build();
 
-        when(communityService.updateCommunity(eq("fmi-info-id"), eq(userId), any(UpdateCommunityRequestDto.class)))
+        when(communityService.updateCommunity(eq("fmi-info-id"), any(), any(UpdateCommunityRequestDto.class)))
                 .thenReturn(responseDto);
 
         mockMvc.perform(patch(BASE_URL + "/fmi-info-id")

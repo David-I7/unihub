@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useEffect } from "react";
 import {
   SlidersHorizontal,
   Users,
@@ -140,6 +140,19 @@ export function CalendarFilters({
       type: "All",
     });
   };
+
+  useEffect(() => {
+    if (communitySlug) return;
+    if (userCommunitiesData?.content?.length === 1) {
+      const singleCommunitySlug = userCommunitiesData.content[0].slug;
+      setFilters({
+        community: singleCommunitySlug,
+        studyYear: "",
+        course: "",
+        type: "All",
+      });
+    }
+  }, [userCommunitiesData, communitySlug]);
 
   return (
     <ExpandableSearch

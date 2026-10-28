@@ -196,12 +196,14 @@ export function usePermissions(target?: string | CallerMembership | null) {
 
   return {
     user,
+    isAuthenticated: Boolean(user),
     isMember,
     isOwner,
     communityRole,
     globalPermissions,
     hasPermission,
     canCreateCommunity,
+    canLeaveCommunity: isMember && !isOwner,
     canEditCommunity,
     canDeleteCommunity,
     canVerifyCommunity,

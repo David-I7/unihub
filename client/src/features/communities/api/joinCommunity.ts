@@ -30,6 +30,7 @@ export function useJoinCommunity() {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({
         queryKey: joinCodeKeys.preview(data.slug, variables.joinCode),
+        refetchType: "none",
       });
       queryClient.invalidateQueries({ queryKey: joinCodeKeys.list(data.slug) });
       queryClient.invalidateQueries({ queryKey: userKeys.communities() });

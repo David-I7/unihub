@@ -18,6 +18,7 @@ import {
   AuthenticatedRoute,
 } from "@/features/auth";
 import ResetPasswordPage from "../pages/ResetPasswordPage";
+import TestPage from "@/pages/TestPage";
 
 export const router = createBrowserRouter([
   {
@@ -111,6 +112,10 @@ export const router = createBrowserRouter([
       {
         path: "/reset-password",
         element: <ResetPasswordPage />,
+      },
+      {
+        path: "test",
+        element: <TestPage />,
       },
     ],
   },
