@@ -29,6 +29,7 @@ import { getErrorMessage } from "@/api/types";
 import { useForm } from "@/hooks/useForm";
 import { useAddCommunityMember } from "../../api/addCommunityMember";
 import type { CommunityMemberRole } from "../../api/types";
+import useAuthStore from "@/features/auth/store/useAuthStore";
 
 type MemberRoleUi = "Member" | "Admin";
 
@@ -50,8 +51,12 @@ const addMemberSchema: z.ZodType<AddMemberFormValues> = z.object({
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username cannot exceed 30 characters")
     .regex(
-      /^[a-zA-Z0-9_.-]+$/,
-      "Username can only contain letters, numbers, underscores, dots, and hyphens",
+      /^[a-z0-9_.-]+$/,
+      "Username can only contain lowercase letters, numbers, underscores, dots, and hyphens",
+    )
+    .refine(
+      (val) => useAuthStore.getState().user?.username !== val,
+      "You cannot add yourself as a member",
     ),
   role: z.enum(["Member", "Admin"]),
 });
@@ -145,40 +150,40 @@ export function AddMemberModal({
             <FieldError errors={[{ message: form.errors.username }]} />
           </Field>
 
-          {canAssignAdmin && (
-            <Field>
-              <FieldLabel htmlFor="role">Role</FieldLabel>
-              <Select
-                value={form.values.role}
-                onValueChange={(val: string | null) => {
-                  if (val === "Member" || val === "Admin") {
-                    form.setValue("role", val);
-                  }
-                }}
-              >
-                <SelectTrigger className="h-8 text-xs rounded-xl">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Member">
-                    <div className="flex items-center gap-2 text-xs">
-                      <User className="size-3.5 text-muted-foreground" />
-                      <span>Member</span>
-                    </div>
-                  </SelectItem>
+          <Field>
+            <FieldLabel htmlFor="role">Role</FieldLabel>
+            <Select
+              value={form.values.role}
+              onValueChange={(val: string | null) => {
+                if (val === "Member" || val === "Admin") {
+                  form.setValue("role", val);
+                }
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs rounded-xl">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Member">
+                  <div className="flex items-center gap-2 text-xs">
+                    <User className="size-3.5 text-muted-foreground" />
+                    <span>Member</span>
+                  </div>
+                </SelectItem>
+                {canAssignAdmin && (
                   <SelectItem value="Admin">
                     <div className="flex items-center gap-2 text-xs">
-                      <Shield className="size-3.5 text-primary" />
+                      <Shield className="size-3.5" />
                       <span>Admin</span>
                     </div>
                   </SelectItem>
-                </SelectContent>
-              </Select>
-              <FieldDescription className="text-xs text-muted-foreground">
-                Community Admins can manage courses, study years, and members.
-              </FieldDescription>
-            </Field>
-          )}
+                )}
+              </SelectContent>
+            </Select>
+            <FieldDescription className="text-xs text-muted-foreground">
+              Community Admins can manage courses, study years, and members.
+            </FieldDescription>
+          </Field>
 
           <DialogFooter className="pt-3 border-t border-border/60">
             <Button

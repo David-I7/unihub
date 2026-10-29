@@ -55,14 +55,14 @@ export function TeacherCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3.5 min-w-0 flex-1">
             <UserAvatar
-              username={teacher.lastName || teacher.firstName}
+              username={teacher.lastName.concat(" ", teacher.firstName)}
               size="md"
               className="ring-1 ring-primary/20 shrink-0 transition-transform group-hover:scale-105"
             />
             <div className="space-y-1 min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <h3 className="font-heading text-sm sm:text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
-                  Prof. {teacher.firstName} {teacher.lastName}
+                  Prof. {teacher.lastName} {teacher.firstName}
                 </h3>
               </div>
               {teacher.estimatedAge && (

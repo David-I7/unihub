@@ -4,6 +4,7 @@ import { useUserProfile } from "@/features/users/api/getUserProfile";
 import { PERMISSIONS, checkPermission } from "@/lib/permissions";
 import type {
   CallerMembership,
+  CommunityMember,
   CommunityMemberRole,
 } from "@/features/communities/api/types";
 
@@ -45,6 +46,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
   );
 
   const isMember = Boolean(callerMembership?.isMember);
+  const isPlatformAdmin = user?.role === "ADMIN" || user?.role === "ROOT";
   const communityRole: CommunityMemberRole | null =
     callerMembership?.role ?? null;
   const isOwner = communityRole === "COMMUNITY_OWNER";
@@ -58,8 +60,35 @@ export function usePermissions(target?: string | CallerMembership | null) {
     hasPermission(PERMISSIONS.UPDATE_JOIN_CODE);
 
   const canAddMember = hasPermission(PERMISSIONS.CREATE_MEMBER);
-  const canRemoveMember = hasPermission(PERMISSIONS.DELETE_MEMBER);
-  const canUpdateMemberRole = hasPermission(PERMISSIONS.UPDATE_MEMBER_ROLE);
+  const canRemoveMember = (member: CommunityMember) => {
+    if (isPlatformAdmin) {
+      return member.role !== "COMMUNITY_OWNER";
+    }
+
+    const hasHigherRoleThanTarget =
+      (callerMembership?.role === "COMMUNITY_OWNER" &&
+        member.role !== "COMMUNITY_OWNER") ||
+      (callerMembership?.role === "COMMUNITY_ADMIN" &&
+        member.role === "COMMUNITY_MEMBER");
+    return hasPermission(PERMISSIONS.DELETE_MEMBER) && hasHigherRoleThanTarget;
+  };
+  const canUpdateMemberRole = (member: CommunityMember) => {
+    if (isPlatformAdmin) {
+      return member.role !== "COMMUNITY_OWNER";
+    }
+
+    const isSelf = member.userId === user?.id;
+    const hasHigherRoleThanTarget =
+      (callerMembership?.role === "COMMUNITY_OWNER" &&
+        member.role !== "COMMUNITY_OWNER") ||
+      (callerMembership?.role === "COMMUNITY_ADMIN" &&
+        member.role === "COMMUNITY_MEMBER");
+    return (
+      hasPermission(PERMISSIONS.UPDATE_MEMBER_ROLE) &&
+      !isSelf &&
+      hasHigherRoleThanTarget
+    );
+  };
 
   const canCreateStudyYear = hasPermission(PERMISSIONS.CREATE_STUDY_YEAR);
   const canDeleteStudyYear = hasPermission(PERMISSIONS.DELETE_STUDY_YEAR);
@@ -224,6 +253,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
     user,
     isAuthenticated: Boolean(user),
     isMember,
+    isPlatformAdmin,
     isOwner,
     communityRole,
     globalPermissions,

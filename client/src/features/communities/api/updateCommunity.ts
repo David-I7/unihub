@@ -4,6 +4,7 @@ import type { Community, UpdateCommunityDto } from "./types";
 import { communityKeys } from "./communityKeys";
 
 import { userKeys } from "@/features/users";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface UpdateCommunityVariables {
   communitySlug: string;
@@ -43,6 +44,16 @@ export function useUpdateCommunity() {
       queryClient.invalidateQueries({
         queryKey: userKeys.communities(),
       });
+
+      if (variables.payload.newOwnerUsername) {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          communityKeys.membersList(variables.communitySlug),
+        );
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.communityMembers(variables.communitySlug),
+        });
+      }
     },
   });
 }

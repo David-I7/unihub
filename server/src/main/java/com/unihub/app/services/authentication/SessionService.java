@@ -100,7 +100,7 @@ public class SessionService {
         }
 
         if (session.isRevoked()) {
-            if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(30).isAfter(OffsetDateTime.now())) {
+            if (session.getRevokedAt() != null && session.getRevokedAt().plusSeconds(10).isAfter(OffsetDateTime.now())) {
                 Session replacement = session.getReplacedBy();
                 while (replacement != null && replacement.isRevoked() && replacement.getReplacedBy() != null) {
                     replacement = replacement.getReplacedBy();
@@ -160,6 +160,7 @@ public class SessionService {
         }
 
         sessionRepository.revokeSessionFamily(getSessionFamilyId(session));
+        tokenRevocationService.revokeUserTokens(session.getUser().getId());
 
         return clearSessionCookie();
     }

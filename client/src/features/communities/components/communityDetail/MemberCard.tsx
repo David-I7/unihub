@@ -30,28 +30,13 @@ export function MemberCard({
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
 
-  const user = useAuthStore((state) => state.user);
-  const { isOwner, canRemoveMember, canUpdateMemberRole, globalPermissions } =
+  const { canRemoveMember, canUpdateMemberRole } =
     usePermissions(callerMembership);
 
-  const isPlatformAdmin =
-    globalPermissions.includes("ADMIN") ||
-    globalPermissions.includes("ROOT") ||
-    user?.role === "ADMIN" ||
-    user?.role === "ROOT";
-
-  const isSelf = user?.username === member.username;
-  const isTargetOwner = member.role === "COMMUNITY_OWNER";
-  const isTargetAdmin = member.role === "COMMUNITY_ADMIN";
-
-  const canEditRole =
-    canUpdateMemberRole && !isTargetOwner && (isOwner || isPlatformAdmin);
-
-  const canRemove =
-    canRemoveMember &&
-    !isTargetOwner &&
-    !isSelf &&
-    (!isTargetAdmin || isOwner || isPlatformAdmin);
+  const canEditRole = canUpdateMemberRole(member);
+  const canRemove = canRemoveMember(member);
+  const isSelf =
+    useAuthStore((state) => state.user?.username) === member.username;
 
   const hasAnyActions = canEditRole || canRemove;
 
@@ -123,7 +108,11 @@ export function MemberCard({
                       className="gap-2 cursor-pointer text-xs"
                     >
                       <User className="size-3.5" />
-                      <span>Remove Member</span>
+                      {isSelf ? (
+                        <span>Leave Community</span>
+                      ) : (
+                        <span>Remove Member</span>
+                      )}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>

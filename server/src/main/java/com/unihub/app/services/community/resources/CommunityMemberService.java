@@ -20,8 +20,11 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
+import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authorization.RoleService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -37,7 +40,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class CommunityMemberService {
 
     private final CommunityMemberRepository communityMemberRepository;
@@ -48,6 +50,21 @@ public class CommunityMemberService {
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
+    private final SessionService sessionService;
+    private final Cache communityMembershipsCache;
+
+    public CommunityMemberService(CacheManager cacheManager, CommunityMemberRepository communityMemberRepository, CommunityRepository communityRepository, CommunityJoinCodeRepository joinCodeRepository, UserRepository userRepository, RoleService roleService, PageMapper pageMapper, UserMapper userMapper, CommunityResourceMapper communityMapper, SessionService sessionService) {
+        this.communityMemberRepository = communityMemberRepository;
+        this.communityRepository = communityRepository;
+        this.joinCodeRepository = joinCodeRepository;
+        this.userRepository = userRepository;
+        this.roleService = roleService;
+        this.pageMapper = pageMapper;
+        this.userMapper = userMapper;
+        this.communityMapper = communityMapper;
+        this.sessionService = sessionService;
+        this.communityMembershipsCache = cacheManager.getCache("communityMemberships");
+    }
 
     @Transactional(readOnly = true)
     public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, String search, RoleType role, Pageable pageable) {
@@ -177,10 +194,9 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #result.userId")
     public CommunityMemberResponseDto updateMemberRole(String communitySlug, String targetUsername, UpdateMemberRoleRequestDto dto) {
         if (dto.role() != RoleType.COMMUNITY_MEMBER && dto.role() != RoleType.COMMUNITY_ADMIN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. Only COMMUNITY_MEMBER and COMMUNITY_ADMIN are allowed.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. You can only change the role to a COMMUNITY_MEMBER or COMMUNITY_ADMIN.");
         }
 
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
@@ -200,6 +216,7 @@ public class CommunityMemberService {
         member.setRoleId(newRole.getId());
         CommunityMember saved = communityMemberRepository.save(member);
 
+        communityMembershipsCache.evict(communitySlug + ':' + targetUser.getId());
         return communityMapper.toCommunityMemberResponseDto(saved, newRole.getName());
     }
 
@@ -251,6 +268,10 @@ public class CommunityMemberService {
                 .map(roleService::getRoleById)
                 .map(role -> RoleType.valueOf(role.getName()))
                 .orElse(null);
+    }
+
+    public void evictCommunityMemberRoleCache(String communitySlug, UUID userId) {
+        communityMembershipsCache.evict(communitySlug + ':' + userId);
     }
 
 }

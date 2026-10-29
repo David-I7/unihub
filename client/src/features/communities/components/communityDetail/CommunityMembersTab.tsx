@@ -63,16 +63,13 @@ export function CommunityMembersTab({
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
-  const user = useAuthStore((state) => state.user);
   const { canAddMember, isOwner, globalPermissions } =
     usePermissions(callerMembership);
 
   const canAssignAdmin =
     isOwner ||
     globalPermissions.includes("ADMIN") ||
-    globalPermissions.includes("ROOT") ||
-    user?.role === "ADMIN" ||
-    user?.role === "ROOT";
+    globalPermissions.includes("ROOT");
 
   const roleParam =
     filters.role !== "ALL" ? (filters.role as CommunityMemberRole) : undefined;
