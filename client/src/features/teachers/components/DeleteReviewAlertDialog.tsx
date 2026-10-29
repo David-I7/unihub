@@ -18,6 +18,7 @@ interface DeleteReviewAlertDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  communitySlug: string;
 }
 
 export function DeleteReviewAlertDialog({
@@ -26,8 +27,9 @@ export function DeleteReviewAlertDialog({
   open,
   onOpenChange,
   onSuccess,
+  communitySlug,
 }: DeleteReviewAlertDialogProps) {
-  const deleteMutation = useDeleteTeacherRating(teacherId);
+  const deleteMutation = useDeleteTeacherRating(teacherId, communitySlug);
   const [cachedRatingId, setCachedRatingId] = useState<number | null>(ratingId);
   if (ratingId !== null && ratingId !== cachedRatingId) {
     setCachedRatingId(ratingId);

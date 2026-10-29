@@ -47,7 +47,9 @@ export function useTeacherDetail(
   options?: Omit<UseQueryOptions<TeacherDetail>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
-    queryKey: teacherId ? teacherKeys.detail(teacherId) : teacherKeys.detail(""),
+    queryKey: teacherId
+      ? teacherKeys.detail(teacherId)
+      : teacherKeys.detail(""),
     queryFn: () => getTeacherDetail(teacherId!),
     placeholderData: keepPreviousData,
     enabled: Boolean(teacherId && teacherId.trim().length > 0),
@@ -56,7 +58,7 @@ export function useTeacherDetail(
 }
 
 export function useInfiniteTeacherRatings(
-  teacherId: string | null | undefined,
+  teacherId: string,
   params: { size?: number; sort?: string } = {},
   options?: Omit<
     UseInfiniteQueryOptions<
@@ -74,12 +76,11 @@ export function useInfiniteTeacherRatings(
   >,
 ) {
   const { size = 10, sort = "createdAt,desc" } = params;
-  const validId = teacherId || "";
 
   return useInfiniteQuery({
-    queryKey: teacherKeys.ratings(validId),
+    queryKey: teacherKeys.ratings(teacherId),
     queryFn: ({ pageParam }) =>
-      getTeacherRatings(validId, {
+      getTeacherRatings(teacherId, {
         page: pageParam,
         size,
         sort,

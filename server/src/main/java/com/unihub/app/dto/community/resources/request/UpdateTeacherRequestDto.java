@@ -17,21 +17,4 @@ public record UpdateTeacherRequestDto(
         lastName = lastName == null ? JsonNullable.undefined() : lastName.map(String::trim);
         estimatedAge = estimatedAge == null ? JsonNullable.undefined() : estimatedAge;
     }
-
-    public static class UpdateTeacherRequestDtoBuilder {
-        public UpdateTeacherRequestDtoBuilder firstName(String firstName) {
-            this.firstName = firstName != null ? JsonNullable.of(firstName) : JsonNullable.of(null);
-            return this;
-        }
-
-        public UpdateTeacherRequestDtoBuilder lastName(String lastName) {
-            this.lastName = lastName != null ? JsonNullable.of(lastName) : JsonNullable.of(null);
-            return this;
-        }
-
-        public UpdateTeacherRequestDtoBuilder estimatedAge(Integer estimatedAge) {
-            this.estimatedAge = estimatedAge != null ? JsonNullable.of(estimatedAge) : JsonNullable.of(null);
-            return this;
-        }
-    }
 }

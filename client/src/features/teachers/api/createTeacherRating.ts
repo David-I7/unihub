@@ -2,6 +2,8 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateTeacherRatingRequest, TeacherRating } from "./types";
 import { teacherKeys } from "./keys";
+import { courseHomeKeys } from "@/features/courses/api/getCourseHome";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export async function createTeacherRating(
   teacherId: string,
@@ -14,16 +16,32 @@ export async function createTeacherRating(
   return response.data;
 }
 
-export function useCreateTeacherRating(teacherId: string) {
+export function useCreateTeacherRating(
+  teacherId: string,
+  communitySlug: string,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateTeacherRatingRequest) =>
       createTeacherRating(teacherId, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.ratings(teacherId) });
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) });
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        teacherKeys.ratings(teacherId),
+      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.detail(teacherId),
+      });
+
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        teacherKeys.communityList(communitySlug),
+      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.communityList(communitySlug),
+      });
+      queryClient.invalidateQueries({ queryKey: courseHomeKeys.all });
     },
   });
 }

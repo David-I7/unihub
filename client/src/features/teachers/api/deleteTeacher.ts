@@ -22,13 +22,16 @@ export function useDeleteTeacher(communitySlug: string) {
     },
     onSuccess: (_, variables) => {
       const id = variables;
-      if (id) {
-        queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
-      }
+
+      queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
+
       removeInfiniteQueryPagesExceptFirst(
         queryClient,
         teacherKeys.communityList(communitySlug),
       );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.communityList(communitySlug),
+      });
       queryClient.invalidateQueries({ queryKey: courseHomeKeys.all });
       queryClient.invalidateQueries({ queryKey: studyYearHomeKeys.all });
     },

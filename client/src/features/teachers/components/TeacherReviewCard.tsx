@@ -6,7 +6,6 @@ import {
   Trash2,
 } from "@/components/ui/icons";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/app/UserAvatar";
 import { MarkdownRenderer } from "@/components/app/MarkdownRenderer";
@@ -27,17 +26,19 @@ import type { TeacherRating } from "../api/types";
 interface TeacherReviewCardProps {
   review: TeacherRating;
   isAuthor: boolean;
-  canManageReview: boolean;
   onEdit: (review: TeacherRating) => void;
   onDelete: (reviewId: number) => void;
+  canUpdateReview: boolean;
+  canDeleteReview: boolean;
 }
 
 export function TeacherReviewCard({
   review,
   isAuthor,
-  canManageReview,
   onEdit,
   onDelete,
+  canUpdateReview,
+  canDeleteReview,
 }: TeacherReviewCardProps) {
   const reviewAverageRating =
     review.values && review.values.length > 0
@@ -70,11 +71,6 @@ export function TeacherReviewCard({
               <span className="font-semibold text-xs text-foreground truncate">
                 {authorName}
               </span>
-              {review.isAnonymous && (
-                <Badge variant="secondary" size="xs" className="text-[10px]">
-                  Anonymous
-                </Badge>
-              )}
               {isAuthor && (
                 <span className="text-[10px] text-muted-foreground font-medium">
                   (Your Review)
@@ -142,7 +138,7 @@ export function TeacherReviewCard({
           </Popover>
 
           {/* Review management options */}
-          {canManageReview && (
+          {(canUpdateReview || canDeleteReview) && (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
@@ -156,7 +152,7 @@ export function TeacherReviewCard({
                 <MoreVertical className="size-3.5" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-36">
-                {isAuthor && (
+                {canUpdateReview && (
                   <DropdownMenuItem
                     onClick={() => onEdit(review)}
                     className="gap-2 cursor-pointer text-xs"
@@ -165,14 +161,16 @@ export function TeacherReviewCard({
                     <span>Edit Review</span>
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => onDelete(review.id)}
-                  className="gap-2 cursor-pointer text-xs"
-                >
-                  <Trash2 className="size-3" />
-                  <span>Delete Review</span>
-                </DropdownMenuItem>
+                {canDeleteReview && (
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => onDelete(review.id)}
+                    className="gap-2 cursor-pointer text-xs"
+                  >
+                    <Trash2 className="size-3" />
+                    <span>Delete Review</span>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           )}

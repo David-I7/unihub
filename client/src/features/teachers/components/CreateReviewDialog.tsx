@@ -24,39 +24,12 @@ import { StarRatingInput } from "./StarRatingInput";
 import { useCreateTeacherRating } from "../api/createTeacherRating";
 import type { TeacherMetricRating, TeacherRating } from "../api/types";
 
-const FALLBACK_METRICS = [
-  {
-    metricId: 1,
-    metricName: "Teaching ability",
-    description: "Effectiveness in explaining concepts and engaging students",
-  },
-  {
-    metricId: 2,
-    metricName: "Punctuality",
-    description: "Punctual schedule adherence and timely responsiveness",
-  },
-  {
-    metricId: 3,
-    metricName: "Communication",
-    description: "Clear and accessible communication with students",
-  },
-  {
-    metricId: 4,
-    metricName: "Knowledge",
-    description: "Deep understanding and mastery of the course material",
-  },
-  {
-    metricId: 5,
-    metricName: "Fairness",
-    description: "Impartial grading and fair treatment of all students",
-  },
-];
-
 interface CreateReviewDialogProps {
   teacherId: string;
   teacherName?: string;
-  metrics?: TeacherMetricRating[];
+  metrics: TeacherMetricRating[];
   open: boolean;
+  communitySlug: string;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (created: TeacherRating) => void;
 }
@@ -66,14 +39,16 @@ function CreateReviewForm({
   metrics = [],
   onClose,
   onSuccess,
+  communitySlug,
 }: {
   teacherId: string;
-  metrics?: TeacherMetricRating[];
+  communitySlug: string;
+  metrics: TeacherMetricRating[];
   onClose: () => void;
   onSuccess?: (created: TeacherRating) => void;
 }) {
-  const activeMetrics = metrics.length > 0 ? metrics : FALLBACK_METRICS;
-  const createMutation = useCreateTeacherRating(teacherId);
+  const activeMetrics = metrics;
+  const createMutation = useCreateTeacherRating(teacherId, communitySlug);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -258,6 +233,7 @@ export function CreateReviewDialog({
   open,
   onOpenChange,
   onSuccess,
+  communitySlug,
 }: CreateReviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -273,6 +249,7 @@ export function CreateReviewDialog({
 
         <CreateReviewForm
           teacherId={teacherId}
+          communitySlug={communitySlug}
           metrics={metrics}
           onClose={() => onOpenChange(false)}
           onSuccess={onSuccess}

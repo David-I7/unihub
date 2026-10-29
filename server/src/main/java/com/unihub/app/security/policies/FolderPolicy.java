@@ -9,13 +9,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class FolderPolicy implements ResourcePolicy<Folder> {
+public class FolderPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, Folder folder, PermissionType permission) {
-        if (user == null || folder == null || permission == null) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
+        if (user == null || resource == null || permission == null) {
+            return false;
+        }
+
+        if (!(resource instanceof Folder folder)) {
             return false;
         }
 
@@ -35,7 +39,7 @@ public class FolderPolicy implements ResourcePolicy<Folder> {
     }
 
     @Override
-    public void check(UserDto user, Folder resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on folder");
         }

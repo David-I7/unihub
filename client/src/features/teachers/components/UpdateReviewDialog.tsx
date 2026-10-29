@@ -23,41 +23,14 @@ import { StarRatingInput } from "./StarRatingInput";
 import { useUpdateTeacherRating } from "../api/updateTeacherRating";
 import type { TeacherMetricRating, TeacherRating } from "../api/types";
 
-const FALLBACK_METRICS = [
-  {
-    metricId: 1,
-    metricName: "Teaching ability",
-    description: "Effectiveness in explaining concepts and engaging students",
-  },
-  {
-    metricId: 2,
-    metricName: "Punctuality",
-    description: "Punctual schedule adherence and timely responsiveness",
-  },
-  {
-    metricId: 3,
-    metricName: "Communication",
-    description: "Clear and accessible communication with students",
-  },
-  {
-    metricId: 4,
-    metricName: "Knowledge",
-    description: "Deep understanding and mastery of the course material",
-  },
-  {
-    metricId: 5,
-    metricName: "Fairness",
-    description: "Impartial grading and fair treatment of all students",
-  },
-];
-
 interface UpdateReviewDialogProps {
   teacherId: string;
   rating: TeacherRating | null;
-  metrics?: TeacherMetricRating[];
+  metrics: TeacherMetricRating[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (updated: TeacherRating) => void;
+  communitySlug: string;
 }
 
 function UpdateReviewForm({
@@ -66,15 +39,17 @@ function UpdateReviewForm({
   metrics = [],
   onClose,
   onSuccess,
+  communitySlug,
 }: {
   teacherId: string;
   rating: TeacherRating;
-  metrics?: TeacherMetricRating[];
+  metrics: TeacherMetricRating[];
   onClose: () => void;
   onSuccess?: (updated: TeacherRating) => void;
+  communitySlug: string;
 }) {
-  const activeMetrics = metrics.length > 0 ? metrics : FALLBACK_METRICS;
-  const updateMutation = useUpdateTeacherRating(teacherId, rating.id);
+  const activeMetrics = metrics;
+  const updateMutation = useUpdateTeacherRating(teacherId, communitySlug);
 
   const [title, setTitle] = useState(rating.title || "");
   const [description, setDescription] = useState(rating.description || "");
@@ -255,6 +230,7 @@ export function UpdateReviewDialog({
   open,
   onOpenChange,
   onSuccess,
+  communitySlug,
 }: UpdateReviewDialogProps) {
   const [cachedRating, setCachedRating] = useState<TeacherRating | null>(
     rating,
@@ -277,6 +253,7 @@ export function UpdateReviewDialog({
         </DialogHeader>
 
         <UpdateReviewForm
+          communitySlug={communitySlug}
           key={currentRating.id}
           teacherId={teacherId}
           rating={currentRating}
