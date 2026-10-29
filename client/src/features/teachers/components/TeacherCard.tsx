@@ -134,11 +134,11 @@ export function TeacherCard({
         </div>
       </Card>
 
-      {/* Admin Mutation Dialogs */}
       <UpdateTeacherDialog
         teacher={teacher}
         open={editOpen}
         onOpenChange={setEditOpen}
+        communitySlug={communitySlug}
       />
 
       <DeleteTeacherAlertDialog

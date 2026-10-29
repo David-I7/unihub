@@ -68,6 +68,8 @@ public class TeacherRatingService {
         Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
 
+        teacherRatingPolicy.check(caller, teacher.getCommunity().getSlug(), PermissionType.CREATE_TEACHER_RATING);
+
         if (teacherRatingRepository.existsByTeacherIdAndUserId(teacherId, caller.id())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You have already reviewed this teacher");
         }
@@ -133,7 +135,7 @@ public class TeacherRatingService {
 
         teacherRatingPolicy.check(caller, rating, PermissionType.UPDATE_TEACHER_RATING);
 
-        Map<Integer, RatingMetric> metricMap = validateAndGetRatingMetrics(dto.values());
+        validateAndGetRatingMetrics(dto.values());
 
         double oldReviewSum = rating.getValues() != null
                 ? rating.getValues().stream().mapToInt(TeacherRatingValue::getValue).sum()
@@ -158,18 +160,7 @@ public class TeacherRatingService {
 
         for (RatingValueRequestDto valDto : dto.values()) {
             TeacherRatingValue existingVal = existingValuesMap.get(valDto.metricId());
-            if (existingVal != null) {
-                existingVal.setValue(valDto.value());
-            } else {
-                RatingMetric metric = metricMap.get(valDto.metricId());
-                TeacherRatingValue newVal = TeacherRatingValue.builder()
-                        .id(new TeacherRatingValueId(rating.getId(), metric.getId()))
-                        .teacherRating(rating)
-                        .ratingMetric(metric)
-                        .value(valDto.value())
-                        .build();
-                rating.getValues().add(newVal);
-            }
+            existingVal.setValue(valDto.value());
         }
 
         TeacherRating savedRating = teacherRatingRepository.save(rating);

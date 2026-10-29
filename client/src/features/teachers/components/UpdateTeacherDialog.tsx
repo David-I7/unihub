@@ -46,6 +46,7 @@ interface UpdateTeacherDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (updated: Teacher) => void;
+  communitySlug: string;
 }
 
 export function UpdateTeacherDialog({
@@ -53,9 +54,9 @@ export function UpdateTeacherDialog({
   open,
   onOpenChange,
   onSuccess,
+  communitySlug,
 }: UpdateTeacherDialogProps) {
-  const teacherId = teacher?.id ?? "";
-  const updateMutation = useUpdateTeacher(teacherId);
+  const updateMutation = useUpdateTeacher(communitySlug);
 
   const form = useForm<UpdateTeacherFormValues>({
     initialValues: {

@@ -14,6 +14,12 @@ export const PERMISSIONS = {
   UPDATE_TEACHER: "update:teacher",
   DELETE_TEACHER: "delete:teacher",
 
+  // Teacher Reviews
+  CREATE_TEACHER_RATING: "create:teacherRating",
+  UPDATE_TEACHER_RATING: "update:teacherRating",
+  DELETE_TEACHER_RATING: "delete:teacherRating",
+  MODERATE_TEACHER_RATING: "moderate:teacherRating",
+
   // Membership & Join Codes
   CREATE_JOIN_CODE: "create:joinCode",
   UPDATE_JOIN_CODE: "update:joinCode",

@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TeacherRatingPolicy implements ResourcePolicy<TeacherRating> {
+public class TeacherRatingPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, TeacherRating rating, PermissionType permission) {
-        if (user == null || rating == null || permission == null) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
+        if (user == null || resource == null || permission == null) {
             return false;
         }
 
@@ -23,7 +23,21 @@ public class TeacherRatingPolicy implements ResourcePolicy<TeacherRating> {
             return true;
         }
 
+        if (resource instanceof String slug) {
+            if (permission.equals(PermissionType.CREATE_TEACHER_RATING)) {
+                return helper.hasCommunityPermission(slug, user.id(), permission);
+            } else {
+                return false;
+            }
+        }
+
+        if (!(resource instanceof TeacherRating)) {
+            return false;
+        }
+
+        TeacherRating rating = (TeacherRating) resource;
         String communitySlug = rating.getTeacher().getCommunity().getSlug();
+
         boolean isAuthor = rating.getUser() != null && user.id().equals(rating.getUser().getId());
 
         return switch (permission) {
@@ -35,7 +49,7 @@ public class TeacherRatingPolicy implements ResourcePolicy<TeacherRating> {
     }
 
     @Override
-    public void check(UserDto user, TeacherRating resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on teacher rating");
         }

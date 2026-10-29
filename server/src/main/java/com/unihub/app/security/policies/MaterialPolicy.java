@@ -9,13 +9,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MaterialPolicy implements ResourcePolicy<Resource> {
+public class MaterialPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, Resource resource, PermissionType permission) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
         if (user == null || resource == null || permission == null) {
+            return false;
+        }
+
+        if (!(resource instanceof Resource material)) {
             return false;
         }
 
@@ -23,8 +27,8 @@ public class MaterialPolicy implements ResourcePolicy<Resource> {
             return true;
         }
 
-        String communitySlug = resource.getCourse().getStudyYear().getCommunity().getSlug();
-        boolean isAuthor = resource.getOwner() != null && user.id().equals(resource.getOwner().getId());
+        String communitySlug = material.getCourse().getStudyYear().getCommunity().getSlug();
+        boolean isAuthor = material.getOwner() != null && user.id().equals(material.getOwner().getId());
 
         return switch (permission) {
             case CREATE_MATERIAL -> helper.hasCommunityPermission(communitySlug, user.id(), permission);
@@ -35,7 +39,7 @@ public class MaterialPolicy implements ResourcePolicy<Resource> {
     }
 
     @Override
-    public void check(UserDto user, Resource resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on material");
         }

@@ -26,7 +26,6 @@ public class TeacherRatingController {
     private final TeacherRatingService teacherRatingService;
 
     @PostMapping("/api/v1/teachers/{teacherId}/ratings")
-    @PreAuthorize("hasPermission(#teacherId, 'TEACHER_RATING', 'CREATE')")
     public ResponseEntity<TeacherRatingResponseDto> createRating(
             @PathVariable UUID teacherId,
             @AuthenticationPrincipal UserDto caller,

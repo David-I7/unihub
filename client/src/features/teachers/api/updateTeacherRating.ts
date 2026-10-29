@@ -2,6 +2,8 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdateTeacherRatingRequest, TeacherRating } from "./types";
 import { teacherKeys } from "./keys";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
+import { courseHomeKeys } from "@/features/courses/api/getCourseHome";
 
 export async function updateTeacherRating(
   teacherId: string,
@@ -15,22 +17,40 @@ export async function updateTeacherRating(
   return response.data;
 }
 
-export function useUpdateTeacherRating(teacherId: string, ratingId?: number) {
+export function useUpdateTeacherRating(
+  teacherId: string,
+  communitySlug: string,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (variables: { ratingId?: number; payload: UpdateTeacherRatingRequest } | UpdateTeacherRatingRequest) => {
-      const targetRatingId = "ratingId" in variables && variables.ratingId ? variables.ratingId : ratingId;
-      if (targetRatingId === undefined) {
-        throw new Error("Rating ID is required for update.");
-      }
-      const data = "payload" in variables ? variables.payload : variables;
-      return updateTeacherRating(teacherId, targetRatingId, data);
+    mutationFn: (variables: {
+      ratingId: number;
+      payload: UpdateTeacherRatingRequest;
+    }) => {
+      return updateTeacherRating(
+        teacherId,
+        variables.ratingId,
+        variables.payload,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teacherKeys.ratings(teacherId) });
-      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(teacherId) });
-      queryClient.invalidateQueries({ queryKey: teacherKeys.lists() });
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        teacherKeys.ratings(teacherId),
+      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.detail(teacherId),
+      });
+
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        teacherKeys.communityList(communitySlug),
+      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.communityList(communitySlug),
+      });
+      queryClient.invalidateQueries({ queryKey: courseHomeKeys.all });
     },
   });
 }

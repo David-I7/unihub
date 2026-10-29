@@ -10,13 +10,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class PostPolicy implements ResourcePolicy<Post> {
+public class PostPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, Post post, PermissionType permission) {
-        if (user == null || post == null || permission == null) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
+        if (user == null || resource == null || permission == null) {
+            return false;
+        }
+
+        if (!(resource instanceof Post post)) {
             return false;
         }
 
@@ -48,7 +52,7 @@ public class PostPolicy implements ResourcePolicy<Post> {
     }
 
     @Override
-    public void check(UserDto user, Post resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on post");
         }

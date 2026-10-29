@@ -77,6 +77,28 @@ export function usePermissions(target?: string | CallerMembership | null) {
   const canUpdateTeacher = hasPermission(PERMISSIONS.UPDATE_TEACHER);
   const canDeleteTeacher = hasPermission(PERMISSIONS.DELETE_TEACHER);
 
+  const canCreateTeacherRating = hasPermission(
+    PERMISSIONS.CREATE_TEACHER_RATING,
+  );
+  const canUpdateTeacherRating = useCallback(
+    (reviewOwnerId: string) => {
+      if (user && reviewOwnerId && String(user.id) === String(reviewOwnerId)) {
+        return true;
+      }
+      return false;
+    },
+    [user, hasPermission],
+  );
+  const canDeleteTeacherRating = useCallback(
+    (reviewOwnerId: string) => {
+      if (user && reviewOwnerId && String(user.id) === String(reviewOwnerId)) {
+        return true;
+      }
+      return hasPermission(PERMISSIONS.MODERATE_TEACHER_RATING);
+    },
+    [user, hasPermission],
+  );
+
   const canEditPost = useCallback(
     (postOwnerId: string) => {
       if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
@@ -206,24 +228,34 @@ export function usePermissions(target?: string | CallerMembership | null) {
     communityRole,
     globalPermissions,
     hasPermission,
+    // Community Permissions
     canCreateCommunity,
     canLeaveCommunity: isMember && !isOwner,
     canEditCommunity,
     canDeleteCommunity,
     canVerifyCommunity,
+    // Teacher Permissions
     canCreateTeacher,
     canUpdateTeacher,
     canDeleteTeacher,
+    // Teacher Rating Permissions
+    canCreateTeacherRating,
+    canUpdateTeacherRating,
+    canDeleteTeacherRating,
+    // Community Member Permissions
     canManageJoinCodes,
     canAddMember,
     canRemoveMember,
     canUpdateMemberRole,
+    // Study Year Permissions
     canCreateStudyYear,
     canDeleteStudyYear,
+    // Course Permissions
     canCreateCourse,
     canEditCourse,
     canDeleteCourse,
     canArchiveCourse,
+    // Discussion Permissions
     canCreatePost,
     canPinPost,
     canCreateComment,
@@ -231,12 +263,14 @@ export function usePermissions(target?: string | CallerMembership | null) {
     canDeletePost,
     canEditComment,
     canDeleteComment,
+    // Course Folder & Material Permissions
     canCreateFolder,
     canCreateMaterial,
     canEditFolder,
     canDeleteFolder,
     canEditMaterial,
     canDeleteMaterial,
+    // Calendar & Reminder Permissions
     canCreateEvent,
     canEditEvent,
     canDeleteEvent,

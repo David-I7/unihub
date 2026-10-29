@@ -16,8 +16,6 @@ export async function updateProfile(
 }
 
 export function useUpdateProfile() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: updateProfile,
     onSuccess: async (data) => {
@@ -26,9 +24,8 @@ export function useUpdateProfile() {
         const refreshed = await refresh();
         useAuthStore
           .getState()
-          .setAuth(refreshed.user, refreshed.accessToken, false);
+          .setAuth(refreshed.user, refreshed.accessToken, true);
       } catch {}
-      queryClient.setQueryData(userKeys.me(), data);
     },
   });
 }

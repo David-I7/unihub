@@ -11,13 +11,17 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CommentPolicy implements ResourcePolicy<Comment> {
+public class CommentPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, Comment comment, PermissionType permission) {
-        if (user == null || comment == null || permission == null) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
+        if (user == null || resource == null || permission == null) {
+            return false;
+        }
+
+        if (!(resource instanceof Comment comment)) {
             return false;
         }
 
@@ -53,7 +57,7 @@ public class CommentPolicy implements ResourcePolicy<Comment> {
     }
 
     @Override
-    public void check(UserDto user, Comment resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on comment");
         }

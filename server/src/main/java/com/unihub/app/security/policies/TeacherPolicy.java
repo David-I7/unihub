@@ -9,13 +9,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TeacherPolicy implements ResourcePolicy<Teacher> {
+public class TeacherPolicy implements ResourcePolicy {
 
     private final CommunityAccessHelper helper;
 
     @Override
-    public boolean can(UserDto user, Teacher teacher, PermissionType permission) {
-        if (user == null || teacher == null || permission == null) {
+    public boolean can(UserDto user, Object resource, PermissionType permission) {
+        if (user == null || resource == null || permission == null) {
             return false;
         }
 
@@ -23,12 +23,14 @@ public class TeacherPolicy implements ResourcePolicy<Teacher> {
             return true;
         }
 
-        String communitySlug = teacher.getCommunity().getSlug();
+        String communitySlug = resource instanceof Teacher teacher ? teacher.getCommunity().getSlug()
+                : resource instanceof String slug ? slug : null;
+
         return helper.hasCommunityPermission(communitySlug, user.id(), permission);
     }
 
     @Override
-    public void check(UserDto user, Teacher resource, PermissionType permission) {
+    public void check(UserDto user, Object resource, PermissionType permission) {
         if (!can(user, resource, permission)) {
             throw new AccessDeniedException("User is not authorized to perform " + permission.name() + " on teacher");
         }
