@@ -2,8 +2,6 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CommunityMember, UpdateMemberRoleDto } from "./types";
 import { communityKeys } from "./communityKeys";
-import { userKeys } from "@/features/users/api/getUserProfile";
-import { useAuthStore } from "@/features/auth";
 import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface UpdateCommunityMemberRoleVariables {

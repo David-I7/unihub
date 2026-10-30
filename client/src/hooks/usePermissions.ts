@@ -122,8 +122,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
         String(user.id) === String(review.author.id)
       ) {
         return (
-          new Date(review.createdAt).getTime() <
-          new Date().getTime() - 30 * 60 * 1000
+          Date.now() - new Date(review.createdAt).getTime() <= 30 * 60 * 1000
         );
       }
       return false;
@@ -144,8 +143,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
     (post: Post) => {
       if (user && post.owner && post.owner.id === user.id) {
         return (
-          new Date(post.createdAt).getTime() <
-          new Date().getTime() - 30 * 60 * 1000
+          Date.now() - new Date(post.createdAt).getTime() <= 30 * 60 * 1000
         ); // Allow editing within 30 minutes of creation
       }
       return false;
@@ -171,8 +169,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
         String(user.id) === String(comment.owner.id)
       ) {
         return (
-          new Date(comment.createdAt).getTime() <
-          new Date().getTime() - 30 * 60 * 1000
+          Date.now() - new Date(comment.createdAt).getTime() <= 30 * 60 * 1000
         ); // Allow editing within 30 minutes of creation
       }
       return false;

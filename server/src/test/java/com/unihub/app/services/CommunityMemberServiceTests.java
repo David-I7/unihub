@@ -3,6 +3,7 @@ package com.unihub.app.services;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
+import org.springframework.http.HttpStatus;
 import com.unihub.app.dto.community.resources.request.AddCommunityMemberRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateMemberRoleRequestDto;
 import com.unihub.app.dto.community.resources.response.CommunityMemberResponseDto;
@@ -337,5 +338,132 @@ public class CommunityMemberServiceTests {
 
         verify(communityMemberRepository).delete(targetMember);
         verify(communityRepository).updateMemberCount(commId, -1);
+    }
+
+    @Test
+    @DisplayName("removeMember(UUID) deletes deleted user member when caller is owner")
+    public void testRemoveMemberById_Success() {
+        UUID callerId = UUID.randomUUID();
+        UUID commId = UUID.randomUUID();
+        UUID membershipId = UUID.randomUUID();
+        UUID targetRoleId = UUID.randomUUID();
+        UUID ownerRoleId = UUID.randomUUID();
+
+        UserDto callerDto = new UserDto(callerId, "owner@example.com", "owner", true, RoleType.USER);
+        Community community = Community.builder().id(commId).slug("fmi-info").build();
+        Role memberRole = Role.builder().id(targetRoleId).name(RoleType.COMMUNITY_MEMBER.name()).build();
+        Role ownerRole = Role.builder().id(ownerRoleId).name(RoleType.COMMUNITY_OWNER.name()).build();
+
+        CommunityMember callerMember = CommunityMember.builder().community(community).roleId(ownerRoleId).build();
+        CommunityMember targetMember = CommunityMember.builder()
+                .id(membershipId)
+                .community(community)
+                .user(null)
+                .roleId(targetRoleId)
+                .build();
+
+        when(communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)).thenReturn(Optional.of(targetMember));
+        when(communityMemberRepository.findMemberByCommunitySlug("fmi-info", callerId)).thenReturn(Optional.of(callerMember));
+        when(roleService.getRoleById(ownerRoleId)).thenReturn(ownerRole);
+        when(roleService.getRoleById(targetRoleId)).thenReturn(memberRole);
+
+        communityMemberService.removeMember("fmi-info", callerDto, membershipId);
+
+        verify(communityRepository).updateMemberCount(commId, -1);
+        verify(communityMemberRepository).delete(targetMember);
+    }
+
+    @Test
+    @DisplayName("removeMember(UUID) succeeds when caller is platform admin even if not in community")
+    public void testRemoveMemberById_PlatformAdminSuccess() {
+        UUID callerId = UUID.randomUUID();
+        UUID commId = UUID.randomUUID();
+        UUID membershipId = UUID.randomUUID();
+        UUID targetRoleId = UUID.randomUUID();
+
+        UserDto callerDto = new UserDto(callerId, "admin@example.com", "admin", true, RoleType.ADMIN);
+        Community community = Community.builder().id(commId).slug("fmi-info").build();
+        Role adminRole = Role.builder().id(targetRoleId).name(RoleType.COMMUNITY_ADMIN.name()).build();
+
+        CommunityMember targetMember = CommunityMember.builder()
+                .id(membershipId)
+                .community(community)
+                .user(null)
+                .roleId(targetRoleId)
+                .build();
+
+        when(communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)).thenReturn(Optional.of(targetMember));
+        when(communityMemberRepository.findMemberByCommunitySlug("fmi-info", callerId)).thenReturn(Optional.empty());
+        when(roleService.getRoleById(targetRoleId)).thenReturn(adminRole);
+
+        communityMemberService.removeMember("fmi-info", callerDto, membershipId);
+
+        verify(communityRepository).updateMemberCount(commId, -1);
+        verify(communityMemberRepository).delete(targetMember);
+    }
+
+    @Test
+    @DisplayName("removeMember(UUID) throws BAD_REQUEST when target user is not deleted")
+    public void testRemoveMemberById_ActiveUser_ThrowsBadRequest() {
+        UUID callerId = UUID.randomUUID();
+        UUID membershipId = UUID.randomUUID();
+        UserDto callerDto = new UserDto(callerId, "owner@example.com", "owner", true, RoleType.USER);
+
+        User activeUser = User.builder().id(UUID.randomUUID()).username("active").build();
+        CommunityMember targetMember = CommunityMember.builder()
+                .id(membershipId)
+                .user(activeUser)
+                .build();
+
+        when(communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)).thenReturn(Optional.of(targetMember));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> communityMemberService.removeMember("fmi-info", callerDto, membershipId));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(communityMemberRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("removeMember(UUID) throws NOT_FOUND when membership does not exist")
+    public void testRemoveMemberById_NotFound_ThrowsNotFound() {
+        UUID callerId = UUID.randomUUID();
+        UUID membershipId = UUID.randomUUID();
+        UserDto callerDto = new UserDto(callerId, "owner@example.com", "owner", true, RoleType.USER);
+
+        when(communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)).thenReturn(Optional.empty());
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> communityMemberService.removeMember("fmi-info", callerDto, membershipId));
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("removeMember(UUID) throws FORBIDDEN when community admin attempts to remove another community admin")
+    public void testRemoveMemberById_AdminCannotRemoveAdmin_ThrowsForbidden() {
+        UUID callerId = UUID.randomUUID();
+        UUID commId = UUID.randomUUID();
+        UUID membershipId = UUID.randomUUID();
+        UUID adminRoleId = UUID.randomUUID();
+
+        UserDto callerDto = new UserDto(callerId, "caller@example.com", "caller", true, RoleType.USER);
+        Community community = Community.builder().id(commId).slug("fmi-info").build();
+        Role adminRole = Role.builder().id(adminRoleId).name(RoleType.COMMUNITY_ADMIN.name()).build();
+
+        CommunityMember callerMember = CommunityMember.builder().community(community).roleId(adminRoleId).build();
+        CommunityMember targetMember = CommunityMember.builder()
+                .id(membershipId)
+                .community(community)
+                .user(null)
+                .roleId(adminRoleId)
+                .build();
+
+        when(communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)).thenReturn(Optional.of(targetMember));
+        when(communityMemberRepository.findMemberByCommunitySlug("fmi-info", callerId)).thenReturn(Optional.of(callerMember));
+        when(roleService.getRoleById(adminRoleId)).thenReturn(adminRole);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> communityMemberService.removeMember("fmi-info", callerDto, membershipId));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(communityMemberRepository, never()).delete(any());
     }
 }

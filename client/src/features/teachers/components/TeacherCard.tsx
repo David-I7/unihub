@@ -11,7 +11,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { UpdateTeacherDialog } from "./UpdateTeacherDialog";
 import { DeleteTeacherAlertDialog } from "./DeleteTeacherAlertDialog";

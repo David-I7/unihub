@@ -27,7 +27,7 @@ export function useUpdateCommunity() {
 
   return useMutation({
     mutationFn: updateCommunity,
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       if (variables.payload.readme !== undefined) {
         queryClient.setQueryData(
           communityKeys.readmeDetail(variables.communitySlug),

@@ -60,6 +60,12 @@ export function ChangeMemberRoleModal({
     e.preventDefault();
     const serverRole = ROLE_UI_TO_SERVER[selectedRole];
 
+    if (!member.username) {
+      toast.error("Cannot change role for a deleted user.");
+      onOpenChange(false);
+      return;
+    }
+
     if (serverRole === member.role) {
       onOpenChange(false);
       return;

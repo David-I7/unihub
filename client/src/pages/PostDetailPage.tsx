@@ -39,6 +39,7 @@ import {
   EditPostModal,
   DeletePostDialog,
 } from "@/features/posts";
+import type { PostTarget } from "@/features/posts/api/types";
 import { useInfinitePostComments } from "@/features/comments/api/getPostComments";
 import { CommentComposer } from "@/features/comments/components/CommentComposer";
 import { CommentItem } from "@/features/comments/components/CommentItem";
@@ -139,6 +140,19 @@ export default function PostDetailPage() {
   const canEdit = canEditPost(post);
   const canDelete = canDeletePost(post.owner?.id);
   const hasActions = (canPin || canEdit || canDelete) && !post.isArchived;
+
+  const postTarget: PostTarget =
+    post.channel === "COMMUNITY"
+      ? {
+          type: "community",
+          communitySlug: post.communitySlug ?? "",
+        }
+      : {
+          type: "course",
+          communitySlug: post.communitySlug ?? "",
+          studyYearSlug: post.studyYearSlug ?? "",
+          courseSlug: post.courseSlug ?? "",
+        };
 
   const handleLike = async () => {
     if (post.isArchived) return;
@@ -446,19 +460,7 @@ export default function PostDetailPage() {
                   >
                     <CommentItem
                       comment={comment}
-                      target={
-                        post.channel === "COMMUNITY"
-                          ? {
-                              type: "community",
-                              communitySlug: post.communitySlug ?? "",
-                            }
-                          : {
-                              type: "course",
-                              communitySlug: post.communitySlug ?? "",
-                              studyYearSlug: post.studyYearSlug ?? "",
-                              courseSlug: post.courseSlug ?? "",
-                            }
-                      }
+                      target={postTarget}
                       isArchived={post.isArchived}
                     />
                   </div>
@@ -493,12 +495,14 @@ export default function PostDetailPage() {
       {/* Edit & Delete Dialogs */}
       <EditPostModal
         post={post}
+        target={postTarget}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
       />
 
       <DeletePostDialog
         post={post}
+        target={postTarget}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onDeleted={handlePostDeleted}

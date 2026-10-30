@@ -86,7 +86,7 @@ public class CommunityMemberController {
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/members/{membershipId}")
+    @DeleteMapping("/memberships/{membershipId}")
     @PreAuthorize("hasPermission(#communitySlug, 'MEMBER', 'DELETE')")
     public ResponseEntity<Void> removeMemberById(
             @PathVariable String communitySlug,

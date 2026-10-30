@@ -16,7 +16,7 @@ export async function removeCommunityMember({
 }: RemoveCommunityMemberVariables): Promise<void> {
   if (member.userId === null) {
     return client.delete(
-      `/communities/${communitySlug}/members/${member.membershipId}`,
+      `/communities/${communitySlug}/memberships/${member.membershipId}`,
     );
   }
   await client.delete(

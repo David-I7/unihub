@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 
 @Component
@@ -49,6 +48,10 @@ public class CommentPolicy implements ResourcePolicy {
             default -> null;
         };
 
+        if (isArchived) {
+            return false;
+        }
+
         boolean hasPermission = switch (post.getChannel()) {
             case COMMUNITY, COURSE -> helper.hasCommunityPermission(communitySlug, user.id(), permission);
             case GENERAL -> helper.isGlobalAdmin(user);
@@ -57,7 +60,7 @@ public class CommentPolicy implements ResourcePolicy {
 
         return switch (permission) {
             case CREATE_COMMENT -> hasPermission;
-            case UPDATE_COMMENT -> isAuthor && comment.getCreatedAt().isBefore(OffsetDateTime.now().plusMinutes(30));
+            case UPDATE_COMMENT -> isAuthor && comment.getCreatedAt() != null && OffsetDateTime.now().isBefore(comment.getCreatedAt().plusMinutes(30));
             case DELETE_COMMENT -> isAuthor ||
                     (!post.getChannel().equals(CommunicationChannel.GENERAL) && helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_COMMENT));
             default -> false;

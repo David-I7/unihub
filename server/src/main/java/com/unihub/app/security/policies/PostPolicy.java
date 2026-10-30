@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class PostPolicy implements ResourcePolicy {
@@ -51,7 +53,7 @@ public class PostPolicy implements ResourcePolicy {
 
         return switch (permission) {
             case CREATE_POST -> hasPermission;
-            case UPDATE_POST -> isAuthor && post.getCreatedAt().isBefore(post.getCreatedAt().plusMinutes(30));
+            case UPDATE_POST -> isAuthor && post.getCreatedAt() != null && OffsetDateTime.now().isBefore(post.getCreatedAt().plusMinutes(30));
             case DELETE_POST -> isAuthor ||
                     (!post.getChannel().equals(CommunicationChannel.GENERAL) && helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_POST));
             case PIN_POST -> hasPermission;

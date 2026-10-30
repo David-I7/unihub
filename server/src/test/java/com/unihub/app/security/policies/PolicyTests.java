@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -167,7 +168,7 @@ public class PolicyTests {
         Community community = Community.builder().slug("cs").build();
         Teacher teacher = Teacher.builder().community(community).build();
         User author = User.builder().id(userId).build();
-        TeacherRating rating = TeacherRating.builder().teacher(teacher).user(author).build();
+        TeacherRating rating = TeacherRating.builder().teacher(teacher).user(author).createdAt(OffsetDateTime.now()).build();
 
         assertThat(policy.can(user, rating, PermissionType.UPDATE_TEACHER_RATING)).isTrue();
         policy.check(user, rating, PermissionType.UPDATE_TEACHER_RATING);
@@ -182,5 +183,128 @@ public class PolicyTests {
         assertThat(policy.can(user, rating, PermissionType.DELETE_TEACHER_RATING)).isFalse();
         assertThatThrownBy(() -> policy.check(user, rating, PermissionType.DELETE_TEACHER_RATING))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    @DisplayName("PostPolicy enforces 30-minute edit window and archived course restrictions")
+    public void testPostPolicy_EditWindowAndArchived() {
+        PostPolicy policy = new PostPolicy(helper);
+
+        Community community = Community.builder().slug("cs").build();
+        CommunityPost communityPost = CommunityPost.builder().community(community).build();
+        User author = User.builder().id(userId).build();
+
+        // Recent post (within 30 mins) can be updated by author
+        Post recentPost = Post.builder()
+                .owner(author)
+                .channel(CommunicationChannel.COMMUNITY)
+                .communityPost(communityPost)
+                .createdAt(OffsetDateTime.now().minusMinutes(10))
+                .build();
+        assertThat(policy.can(user, recentPost, PermissionType.UPDATE_POST)).isTrue();
+
+        // Older post (more than 30 mins) cannot be updated
+        Post oldPost = Post.builder()
+                .owner(author)
+                .channel(CommunicationChannel.COMMUNITY)
+                .communityPost(communityPost)
+                .createdAt(OffsetDateTime.now().minusMinutes(35))
+                .build();
+        assertThat(policy.can(user, oldPost, PermissionType.UPDATE_POST)).isFalse();
+
+        // Post on archived course cannot be created, updated, or deleted
+        Course archivedCourse = Course.builder().archived(true).build();
+        StudyYear studyYear = StudyYear.builder().community(community).build();
+        archivedCourse.setStudyYear(studyYear);
+        CoursePost coursePost = CoursePost.builder().course(archivedCourse).build();
+
+        Post archivedCoursePost = Post.builder()
+                .owner(author)
+                .channel(CommunicationChannel.COURSE)
+                .coursePost(coursePost)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        assertThat(policy.can(user, archivedCoursePost, PermissionType.CREATE_POST)).isFalse();
+        assertThat(policy.can(user, archivedCoursePost, PermissionType.UPDATE_POST)).isFalse();
+    }
+
+    @Test
+    @DisplayName("CommentPolicy enforces 30-minute edit window and archived course restrictions")
+    public void testCommentPolicy_EditWindowAndArchived() {
+        CommentPolicy policy = new CommentPolicy(helper);
+
+        Community community = Community.builder().slug("cs").build();
+        CommunityPost communityPost = CommunityPost.builder().community(community).build();
+        Post post = Post.builder()
+                .channel(CommunicationChannel.COMMUNITY)
+                .communityPost(communityPost)
+                .build();
+
+        User author = User.builder().id(userId).build();
+
+        // Within 30 mins -> author can update
+        Comment recentComment = Comment.builder()
+                .owner(author)
+                .post(post)
+                .createdAt(OffsetDateTime.now().minusMinutes(5))
+                .build();
+        assertThat(policy.can(user, recentComment, PermissionType.UPDATE_COMMENT)).isTrue();
+
+        // After 30 mins -> author cannot update
+        Comment oldComment = Comment.builder()
+                .owner(author)
+                .post(post)
+                .createdAt(OffsetDateTime.now().minusMinutes(40))
+                .build();
+        assertThat(policy.can(user, oldComment, PermissionType.UPDATE_COMMENT)).isFalse();
+
+        // Comment on post in archived course cannot be updated or created
+        Course archivedCourse = Course.builder().archived(true).build();
+        StudyYear studyYear = StudyYear.builder().community(community).build();
+        archivedCourse.setStudyYear(studyYear);
+        CoursePost coursePost = CoursePost.builder().course(archivedCourse).build();
+        Post archivedPost = Post.builder()
+                .channel(CommunicationChannel.COURSE)
+                .coursePost(coursePost)
+                .build();
+
+        Comment commentOnArchivedCourse = Comment.builder()
+                .owner(author)
+                .post(archivedPost)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        assertThat(policy.can(user, commentOnArchivedCourse, PermissionType.CREATE_COMMENT)).isFalse();
+        assertThat(policy.can(user, commentOnArchivedCourse, PermissionType.UPDATE_COMMENT)).isFalse();
+    }
+
+    @Test
+    @DisplayName("TeacherRatingPolicy enforces 30-minute edit window and handles null createdAt")
+    public void testTeacherRatingPolicy_EditWindow() {
+        TeacherRatingPolicy policy = new TeacherRatingPolicy(helper);
+
+        Community community = Community.builder().slug("cs").build();
+        Teacher teacher = Teacher.builder().community(community).build();
+        User author = User.builder().id(userId).build();
+
+        TeacherRating recentRating = TeacherRating.builder()
+                .teacher(teacher)
+                .user(author)
+                .createdAt(OffsetDateTime.now().minusMinutes(15))
+                .build();
+        assertThat(policy.can(user, recentRating, PermissionType.UPDATE_TEACHER_RATING)).isTrue();
+
+        TeacherRating oldRating = TeacherRating.builder()
+                .teacher(teacher)
+                .user(author)
+                .createdAt(OffsetDateTime.now().minusMinutes(31))
+                .build();
+        assertThat(policy.can(user, oldRating, PermissionType.UPDATE_TEACHER_RATING)).isFalse();
+
+        TeacherRating nullCreatedAtRating = TeacherRating.builder()
+                .teacher(teacher)
+                .user(author)
+                .createdAt(null)
+                .build();
+        assertThat(policy.can(user, nullCreatedAtRating, PermissionType.UPDATE_TEACHER_RATING)).isFalse();
     }
 }

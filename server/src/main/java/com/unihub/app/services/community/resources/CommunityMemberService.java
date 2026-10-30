@@ -261,7 +261,7 @@ public class CommunityMemberService {
 
         boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
         RoleType communityRole = getCommunityRole(communitySlug, caller.id());
-        boolean isOwner = communityRole.equals(RoleType.COMMUNITY_OWNER);
+        boolean isOwner = communityRole == RoleType.COMMUNITY_OWNER;
 
         String targetRoleName = roleService.getRoleById(targetMember.getRoleId()).getName();
 

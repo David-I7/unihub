@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { ExpandableSearch } from "@/components/app/ExpandableSearch";
 import { FilterSelect } from "@/components/app/FilterSelect";
 import { ErrorStateCard } from "@/components/app/ErrorStateCard";
-import { useAuthStore } from "@/features/auth";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useObserver } from "@/hooks/useObserver";
 import { useCommunityStudyYears } from "@/features/communities";

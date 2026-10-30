@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useNavigate } from "react-router";
 import { Mail } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { FieldError } from "@/components/ui/field";
@@ -18,7 +17,6 @@ export function RegisterVerificationStep({
   email,
   onSuccess,
 }: RegisterVerificationStepProps) {
-  const navigate = useNavigate();
   const [otpCode, setOtpCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const hasStartedTimerRef = React.useRef(false);

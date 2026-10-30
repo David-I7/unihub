@@ -65,11 +65,7 @@ public class CommunityResourceMapper {
     }
 
     public TeacherRatingResponseDto toTeacherRatingResponseDto(TeacherRating rating) {
-        OwnerDto author = new OwnerDto(
-                rating.getUser().getId(),
-                rating.getUser().getUsername(),
-                rating.getUser().isActive()
-        );
+        OwnerDto author = toOwnerDto(rating.getUser());
 
         List<TeacherRatingValueResponseDto> values = rating.getValues() != null
                 ? rating.getValues().stream().map(this::toTeacherRatingValueResponseDto).toList()

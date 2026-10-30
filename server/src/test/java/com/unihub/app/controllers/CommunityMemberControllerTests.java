@@ -214,6 +214,19 @@ public class CommunityMemberControllerTests extends BaseIntegrationTest {
         verify(communityMemberService).removeMember("fmi-info", userDto, "student_1");
     }
 
+    @Test
+    @DisplayName("DELETE /memberships/{membershipId} removes deleted user member from community")
+    public void testRemoveMemberById_Success() throws Exception {
+        UUID membershipId = UUID.randomUUID();
+        doNothing().when(communityMemberService).removeMember("fmi-info", userDto, membershipId);
+
+        mockMvc.perform(delete(BASE_URL + "/memberships/" + membershipId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+        verify(communityMemberService).removeMember("fmi-info", userDto, membershipId);
+    }
+
     // =========================================================================
     // POST /join-codes
     // =========================================================================

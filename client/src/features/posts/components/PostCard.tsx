@@ -361,12 +361,14 @@ export function PostCard({
 
       <EditPostModal
         post={post}
+        target={target}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
       />
 
       <DeletePostDialog
         post={post}
+        target={target}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
       />
