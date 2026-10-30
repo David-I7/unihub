@@ -6,6 +6,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
+import org.openapitools.jackson.nullable.JsonNullable;
 import com.unihub.app.dto.community.resources.response.TeacherDetailResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherMetricRatingDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
@@ -126,8 +127,8 @@ public class TeacherControllerTests extends BaseIntegrationTest {
     public void testUpdateTeacher_Success() throws Exception {
         UUID teacherId = UUID.randomUUID();
         UpdateTeacherRequestDto requestDto = UpdateTeacherRequestDto.builder()
-                .firstName("Dan")
-                .estimatedAge(43)
+                .firstName(JsonNullable.of("Dan"))
+                .estimatedAge(JsonNullable.of(43))
                 .build();
 
         TeacherResponseDto responseDto = TeacherResponseDto.builder()

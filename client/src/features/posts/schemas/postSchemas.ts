@@ -8,7 +8,7 @@ export const createPostSchema = z.object({
   description: z
     .string()
     .min(5, "Description must be at least 5 characters")
-    .max(10000, "Description must not exceed 10,000 characters"),
+    .max(1000, "Description must not exceed 1,000 characters"),
 });
 
 export type CreatePostFormData = z.infer<typeof createPostSchema>;
@@ -22,7 +22,7 @@ export const updatePostSchema = z.object({
   description: z
     .string()
     .min(5, "Description must be at least 5 characters")
-    .max(20000, "Description must not exceed 20,000 characters")
+    .max(1000, "Description must not exceed 1,000 characters")
     .optional(),
 });
 

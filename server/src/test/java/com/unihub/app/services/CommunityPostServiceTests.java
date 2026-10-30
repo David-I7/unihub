@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 
 import com.unihub.app.domain.RoleType;
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
@@ -20,6 +21,7 @@ import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.content.CommunityPostService;
 import org.junit.jupiter.api.DisplayName;
+import com.unihub.app.security.policies.PostPolicy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -72,6 +74,9 @@ public class CommunityPostServiceTests {
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private PostPolicy postPolicy;
+
     @InjectMocks
     private CommunityPostService communityPostService;
 
@@ -99,7 +104,8 @@ public class CommunityPostServiceTests {
         assertEquals("Description", result.description());
         assertEquals(CommunicationChannel.COMMUNITY, result.channel());
         assertFalse(result.isLiked());
-        verify(communityPostRepository).save(any(CommunityPost.class));
+        verify(postPolicy).check(eq(userDto), any(Post.class), eq(PermissionType.CREATE_POST));
+        verify(postRepository).save(any(Post.class));
     }
 
     @Test

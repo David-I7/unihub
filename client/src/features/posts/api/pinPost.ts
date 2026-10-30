@@ -1,13 +1,9 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Post, PostDetail } from "@/types/domain";
+import type { Post } from "@/types/domain";
 import { postKeys } from "./getCommunityPosts";
-import {
-  updateInfiniteQueryItem,
-  patchDetailQuery,
-  rollbackOptimisticContext,
-  type OptimisticRollbackContext,
-} from "@/lib/queryCacheUtils";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
+import type { PostTarget } from "./types";
 
 export interface PinPostVariables {
   postId: string;
@@ -28,36 +24,43 @@ export function usePinPost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: pinPost,
-    onMutate: async ({ postId, pinned }): Promise<OptimisticRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all });
-
-      const detailKey = postKeys.detail(postId);
-      const previousDetail = queryClient.getQueryData<PostDetail>(detailKey);
-      const previousQueries = queryClient.getQueriesData({
-        queryKey: postKeys.all,
+    mutationFn: (variables: {
+      postId: string;
+      pinned: boolean;
+      target: PostTarget;
+    }) => {
+      return pinPost(variables);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: postKeys.detail(variables.postId),
       });
 
-      patchDetailQuery<PostDetail>(queryClient, detailKey, (old) => ({
-        ...old,
-        pinned,
-      }));
-
-      updateInfiniteQueryItem<Post>(queryClient, postKeys.all, postId, (post) => ({
-        ...post,
-        pinned,
-      }));
-
-      return {
-        previousDetail: [detailKey, previousDetail],
-        previousQueries,
-      };
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: postKeys.all });
-    },
-    onError: (_err, _vars, context) => {
-      rollbackOptimisticContext(queryClient, context);
+      if (variables.target.type === "community") {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.community(variables.target.communitySlug),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.community(variables.target.communitySlug),
+        });
+      } else {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        });
+      }
     },
   });
 }

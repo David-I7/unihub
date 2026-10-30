@@ -9,10 +9,12 @@ export const communityKeys = {
   allHome: ["communities", "home"] as const,
   homeDetail: (slug: string) => [...communityKeys.allHome, slug] as const,
   allMembers: ["communities", "members"] as const,
+  communityMembers: (slug: string) =>
+    [...communityKeys.allMembers, slug] as const,
   membersList: (
     communitySlug: string,
     filters?: { search?: string; role?: CommunityMemberRole },
-  ) => [...communityKeys.allMembers, communitySlug, filters] as const,
+  ) => [...communityKeys.communityMembers(communitySlug), filters] as const,
   allMemberships: ["communities", "membership"] as const,
   membershipDetail: (slug: string) =>
     [...communityKeys.allMemberships, slug] as const,

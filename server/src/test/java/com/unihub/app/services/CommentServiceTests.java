@@ -107,7 +107,7 @@ public class CommentServiceTests {
         Post post = Post.builder().id(postId).build();
         CreateCommentRequestDto dto = new CreateCommentRequestDto("Nice post!");
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         when(commentRepository.save(any(Comment.class))).thenAnswer(i -> {
             Comment c = i.getArgument(0);
             c.setId(UUID.randomUUID());
@@ -144,7 +144,7 @@ public class CommentServiceTests {
                 .build();
         UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited comment");
 
-        when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdWithOwnerAndPost(commentId)).thenReturn(Optional.of(comment));
         when(commentRepository.save(any(Comment.class))).thenAnswer(i -> i.getArgument(0));
 
         CommentResponseDto result = commentService.updateComment(commentId, caller, dto);
@@ -163,7 +163,7 @@ public class CommentServiceTests {
         Comment comment = Comment.builder().id(commentId).build();
         UpdateCommentRequestDto dto = new UpdateCommentRequestDto("Edited comment");
 
-        when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdWithOwnerAndPost(commentId)).thenReturn(Optional.of(comment));
         doThrow(new AccessDeniedException("Access denied")).when(commentPolicy).check(caller, comment, PermissionType.UPDATE_COMMENT);
 
         assertThrows(AccessDeniedException.class, () -> commentService.updateComment(commentId, caller, dto));
@@ -182,7 +182,7 @@ public class CommentServiceTests {
 
         Comment comment = Comment.builder().id(commentId).post(post).owner(owner).build();
 
-        when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdWithOwnerAndPost(commentId)).thenReturn(Optional.of(comment));
 
         commentService.deleteComment(commentId, caller);
 
@@ -198,7 +198,7 @@ public class CommentServiceTests {
         UserDto caller = new UserDto(UUID.randomUUID(), "alice@example.com", "alice", true, RoleType.USER);
         Comment comment = Comment.builder().id(commentId).build();
 
-        when(commentRepository.findByIdWithOwner(commentId)).thenReturn(Optional.of(comment));
+        when(commentRepository.findByIdWithOwnerAndPost(commentId)).thenReturn(Optional.of(comment));
         doThrow(new AccessDeniedException("Access denied")).when(commentPolicy).check(caller, comment, PermissionType.DELETE_COMMENT);
 
         assertThrows(AccessDeniedException.class, () -> commentService.deleteComment(commentId, caller));

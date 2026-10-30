@@ -1,13 +1,9 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Post, PostDetail } from "@/types/domain";
 import { postKeys } from "./getCommunityPosts";
 import { commentKeys } from "@/features/comments/api/getPostComments";
-import {
-  removeInfiniteQueryItem,
-  rollbackOptimisticContext,
-  type OptimisticRollbackContext,
-} from "@/lib/queryCacheUtils";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
+import type { PostTarget } from "./types";
 
 export async function deletePost(postId: string): Promise<void> {
   await client.delete(`/posts/${postId}`);
@@ -17,30 +13,42 @@ export function useDeletePost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: deletePost,
-    onMutate: async (postId: string): Promise<OptimisticRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all });
-
-      const detailKey = postKeys.detail(postId);
-      const previousDetail = queryClient.getQueryData<PostDetail>(detailKey);
-      const previousQueries = queryClient.getQueriesData({
-        queryKey: postKeys.all,
+    mutationFn: async (variables: { postId: string; target: PostTarget }) => {
+      return deletePost(variables.postId);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.removeQueries({
+        queryKey: postKeys.detail(variables.postId),
+      });
+      queryClient.removeQueries({
+        queryKey: commentKeys.post(variables.postId),
       });
 
-      removeInfiniteQueryItem<Post>(queryClient, postKeys.all, postId);
-
-      return {
-        previousDetail: [detailKey, previousDetail],
-        previousQueries,
-      };
-    },
-    onSuccess: (_, postId) => {
-      queryClient.removeQueries({ queryKey: postKeys.detail(postId) });
-      queryClient.removeQueries({ queryKey: commentKeys.post(postId) });
-      queryClient.invalidateQueries({ queryKey: postKeys.all });
-    },
-    onError: (_err, _vars, context) => {
-      rollbackOptimisticContext(queryClient, context);
+      if (variables.target.type === "community") {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.community(variables.target.communitySlug),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.community(variables.target.communitySlug),
+        });
+      } else {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        });
+      }
     },
   });
 }

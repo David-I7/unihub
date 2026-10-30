@@ -58,7 +58,6 @@ public class CommunityService {
     private final PageMapper pageMapper;
     private final StudyYearService studyYearService;
     private final CommunityMemberService communityMemberService;
-    private final UserService userService;
     private final CommunityAccessHelper communityAccessHelper;
 
     @Transactional(readOnly = true)
@@ -182,7 +181,7 @@ public class CommunityService {
         Community savedCommunity = communityRepository.save(community);
 
         Role ownerRole = roleService.getRoleByName(RoleType.COMMUNITY_OWNER);
-        CommunityMember member = communityMapper.toCommunityMemberEntity(savedCommunity, owner, ownerRole.getId(), now);
+        CommunityMember member = communityMapper.toCommunityMemberEntity(null,savedCommunity, owner, ownerRole.getId(), now);
 
         communityMemberRepository.save(member);
 
@@ -232,7 +231,8 @@ public class CommunityService {
         }
 
         if (dto.newOwnerUsername().isPresent() && dto.newOwnerUsername().get() != null && !dto.newOwnerUsername().get().equals(community.getOwner().getUsername())) {
-            if (!community.getOwner().getId().equals(caller.id())) {
+            boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
+            if (!community.getOwner().getId().equals(caller.id()) && !isPlatformAdmin) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only owner can change community ownership");
             }
 
@@ -257,6 +257,7 @@ public class CommunityService {
                 communityMemberRepository.save(newOwnerMember);
             } else {
                 CommunityMember newMember = communityMapper.toCommunityMemberEntity(
+                        null,
                         community,
                         newOwner,
                         ownerRole.getId(),
@@ -266,6 +267,8 @@ public class CommunityService {
                 community.setMemberCount(community.getMemberCount() + 1);
             }
 
+            communityMemberService.evictCommunityMemberRoleCache(community.getSlug(), newOwner.getId());
+            communityMemberService.evictCommunityMemberRoleCache(community.getSlug(), caller.id());
             community.setOwner(newOwner);
         }
 

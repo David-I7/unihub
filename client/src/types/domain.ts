@@ -30,8 +30,8 @@ export interface Comment {
   postId: string;
   content: string;
   createdAt: string;
-  updatedAt?: string;
-  owner: ResourceOwner;
+  updatedAt: string;
+  owner: ResourceOwner | null;
 }
 
 export interface Post {
@@ -43,16 +43,17 @@ export interface Post {
   likesCount: number;
   commentsCount: number;
   createdAt: string;
-  updatedAt?: string;
-  owner: ResourceOwner;
-  isLiked?: boolean;
+  updatedAt: string;
+  owner: ResourceOwner | null;
+  isLiked: boolean;
 }
 
 export interface PostDetail extends Post {
-  communitySlug?: string | null;
-  communityName?: string | null;
-  studyYearSlug?: string | null;
-  studyYearName?: string | null;
-  courseSlug?: string | null;
-  courseName?: string | null;
+  communitySlug: string | null;
+  communityName: string | null;
+  studyYearSlug: string | null;
+  studyYearName: string | null;
+  courseSlug: string | null;
+  courseName: string | null;
+  isArchived: boolean;
 }

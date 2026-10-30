@@ -3,17 +3,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { communityKeys } from "./communityKeys";
 import { userKeys } from "@/features/users";
 import { useAuthStore } from "@/features/auth";
+import type { CommunityMember } from "./types";
 
 export interface RemoveCommunityMemberVariables {
   communitySlug: string;
-  username: string;
+  member: CommunityMember;
 }
 
 export async function removeCommunityMember({
   communitySlug,
-  username,
+  member,
 }: RemoveCommunityMemberVariables): Promise<void> {
-  await client.delete(`/communities/${communitySlug}/members/${username}`);
+  if (member.userId === null) {
+    return client.delete(
+      `/communities/${communitySlug}/memberships/${member.membershipId}`,
+    );
+  }
+  await client.delete(
+    `/communities/${communitySlug}/members/${member.username}`,
+  );
 }
 
 export function useRemoveCommunityMember() {
@@ -23,7 +31,7 @@ export function useRemoveCommunityMember() {
     mutationFn: removeCommunityMember,
     onSuccess: (_, variables) => {
       const currentUser = useAuthStore.getState().user;
-      const isCaller = currentUser?.username === variables.username;
+      const isCaller = currentUser?.username === variables.member.username;
 
       if (isCaller) {
         queryClient.invalidateQueries({ queryKey: userKeys.communities() });

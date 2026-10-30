@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
+
 @Component
 @RequiredArgsConstructor
 public class CommentPolicy implements ResourcePolicy {
@@ -20,6 +22,7 @@ public class CommentPolicy implements ResourcePolicy {
         if (user == null || resource == null || permission == null) {
             return false;
         }
+
 
         if (!(resource instanceof Comment comment)) {
             return false;
@@ -35,11 +38,19 @@ public class CommentPolicy implements ResourcePolicy {
         }
 
         boolean isAuthor = comment.getOwner() != null && user.id().equals(comment.getOwner().getId());
+        boolean isArchived = false;
         String communitySlug = switch (post.getChannel()) {
             case COMMUNITY -> post.getCommunityPost().getCommunity().getSlug();
-            case COURSE -> post.getCoursePost().getCourse().getStudyYear().getCommunity().getSlug() ;
+            case COURSE -> {
+                isArchived = post.getCoursePost().getCourse().isArchived();
+                yield post.getCoursePost().getCourse().getStudyYear().getCommunity().getSlug() ;
+            }
             default -> null;
         };
+
+        if (isArchived) {
+            return false;
+        }
 
         boolean hasPermission = switch (post.getChannel()) {
             case COMMUNITY, COURSE -> helper.hasCommunityPermission(communitySlug, user.id(), permission);
@@ -49,7 +60,7 @@ public class CommentPolicy implements ResourcePolicy {
 
         return switch (permission) {
             case CREATE_COMMENT -> hasPermission;
-            case UPDATE_COMMENT -> isAuthor;
+            case UPDATE_COMMENT -> isAuthor && comment.getCreatedAt() != null && OffsetDateTime.now().isBefore(comment.getCreatedAt().plusMinutes(30));
             case DELETE_COMMENT -> isAuthor ||
                     (!post.getChannel().equals(CommunicationChannel.GENERAL) && helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_COMMENT));
             default -> false;

@@ -1,6 +1,7 @@
 package com.unihub.app.services;
 import com.unihub.app.domain.RoleType;
 import com.unihub.app.dto.PageDto;
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
 import com.unihub.app.dto.community.content.response.PostResponseDto;
@@ -20,6 +21,7 @@ import com.unihub.app.repositories.community.resources.CourseRepository;
 
 import com.unihub.app.services.community.content.CoursePostService;
 import org.junit.jupiter.api.DisplayName;
+import com.unihub.app.security.policies.PostPolicy;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +60,7 @@ public class CoursePostServiceTests {
     private PostLikeRepository postLikeRepository;
 
     @Mock
+    private PostPolicy postPolicy;
 
 
     @Spy
@@ -98,7 +101,8 @@ public class CoursePostServiceTests {
         assertNotNull(result);
         assertEquals("ASC Lab 1", result.title());
         assertEquals(CommunicationChannel.COURSE, result.channel());
-        verify(coursePostRepository).save(any(CoursePost.class));
+        verify(postPolicy).check(eq(userDto), any(Post.class), eq(PermissionType.CREATE_POST));
+        verify(postRepository).save(any(Post.class));
     }
 
     @Test

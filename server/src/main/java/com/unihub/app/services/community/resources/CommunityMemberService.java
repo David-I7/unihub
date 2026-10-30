@@ -12,7 +12,6 @@ import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.entities.community.resources.CommunityMembersId;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -21,7 +20,8 @@ import com.unihub.app.repositories.community.resources.CommunityJoinCodeReposito
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
 import com.unihub.app.services.authorization.RoleService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -33,11 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class CommunityMemberService {
 
     private final CommunityMemberRepository communityMemberRepository;
@@ -48,6 +46,19 @@ public class CommunityMemberService {
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
+    private final Cache communityMembershipsCache;
+
+    public CommunityMemberService(CacheManager cacheManager, CommunityMemberRepository communityMemberRepository, CommunityRepository communityRepository, CommunityJoinCodeRepository joinCodeRepository, UserRepository userRepository, RoleService roleService, PageMapper pageMapper, UserMapper userMapper, CommunityResourceMapper communityMapper) {
+        this.communityMemberRepository = communityMemberRepository;
+        this.communityRepository = communityRepository;
+        this.joinCodeRepository = joinCodeRepository;
+        this.userRepository = userRepository;
+        this.roleService = roleService;
+        this.pageMapper = pageMapper;
+        this.userMapper = userMapper;
+        this.communityMapper = communityMapper;
+        this.communityMembershipsCache = cacheManager != null ? cacheManager.getCache("communityMemberships") : null;
+    }
 
     @Transactional(readOnly = true)
     public PageDto<CommunityMemberResponseDto> getMembers(String communitySlug, String search, RoleType role, Pageable pageable) {
@@ -98,6 +109,7 @@ public class CommunityMemberService {
         OffsetDateTime now = OffsetDateTime.now();
 
         CommunityMember member = communityMapper.toCommunityMemberEntity(
+                null,
                 community,
                 user,
                 memberRole.getId(),
@@ -144,6 +156,7 @@ public class CommunityMemberService {
         OffsetDateTime now = OffsetDateTime.now();
 
         CommunityMember member = communityMapper.toCommunityMemberEntity(
+                null,
                 community,
                 targetUser,
                 assignedRole.getId(),
@@ -177,10 +190,9 @@ public class CommunityMemberService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "communityMemberships", key = "#communitySlug + ':' + #result.userId")
     public CommunityMemberResponseDto updateMemberRole(String communitySlug, String targetUsername, UpdateMemberRoleRequestDto dto) {
         if (dto.role() != RoleType.COMMUNITY_MEMBER && dto.role() != RoleType.COMMUNITY_ADMIN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. Only COMMUNITY_MEMBER and COMMUNITY_ADMIN are allowed.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role. You can only change the role to a COMMUNITY_MEMBER or COMMUNITY_ADMIN.");
         }
 
         Community community = communityRepository.findBySlugWithOwner(communitySlug)
@@ -200,6 +212,9 @@ public class CommunityMemberService {
         member.setRoleId(newRole.getId());
         CommunityMember saved = communityMemberRepository.save(member);
 
+        if (communityMembershipsCache != null) {
+            communityMembershipsCache.evict(communitySlug + ':' + targetUser.getId());
+        }
         return communityMapper.toCommunityMemberResponseDto(saved, newRole.getName());
     }
 
@@ -235,6 +250,30 @@ public class CommunityMemberService {
         return targetUser;
     }
 
+    @Transactional
+    public void removeMember(String communitySlug, UserDto caller, UUID membershipId) {
+        CommunityMember targetMember = communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
+
+        if (targetMember.getUser() != null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This methods is intended only for deleted users.");
+        }
+
+        boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
+        RoleType communityRole = getCommunityRole(communitySlug, caller.id());
+        boolean isOwner = communityRole == RoleType.COMMUNITY_OWNER;
+
+        String targetRoleName = roleService.getRoleById(targetMember.getRoleId()).getName();
+
+        // If caller is COMMUNITY_ADMIN (not owner or platform admin), they cannot remove another COMMUNITY_ADMIN
+        if (!isOwner && !isPlatformAdmin && RoleType.COMMUNITY_ADMIN.name().equals(targetRoleName)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Community administrators cannot remove other administrators");
+        }
+
+        communityRepository.updateMemberCount(targetMember.getCommunity().getId(), -1);
+        communityMemberRepository.delete(targetMember);
+    }
+
     @Scheduled(cron="@daily")
     protected void deleteExpiredCodes(){
         joinCodeRepository.deleteExpiredCodes();
@@ -251,6 +290,12 @@ public class CommunityMemberService {
                 .map(roleService::getRoleById)
                 .map(role -> RoleType.valueOf(role.getName()))
                 .orElse(null);
+    }
+
+    public void evictCommunityMemberRoleCache(String communitySlug, UUID userId) {
+        if (communityMembershipsCache != null) {
+            communityMembershipsCache.evict(communitySlug + ':' + userId);
+        }
     }
 
 }

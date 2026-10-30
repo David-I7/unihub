@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -33,23 +34,15 @@ import java.util.UUID;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final CommunityPostRepository communityPostRepository;
-    private final CoursePostRepository coursePostRepository;
     private final PostLikeRepository postLikeRepository;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final PostPolicy postPolicy;
 
-    public String getCommunitySlugForPost(UUID postId) {
-        return communityPostRepository.findCommunitySlugByPostId(postId)
-                .or(() -> coursePostRepository.findCommunitySlugByPostId(postId))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post does not belong to any community"));
-    }
-
     @Transactional(readOnly = true)
     public PostDetailResponseDto getPostById(UUID postId, UserDto caller) {
-        Post post = postRepository.findByIdWithOwner(postId)
+        Post post = postRepository.findByIdWithOwnerAndPost(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
 
         Boolean isLiked = caller != null ? postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id()) : null;
@@ -62,9 +55,12 @@ public class PostService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
-        Post post = postRepository.findByIdWithOwner(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
 
+        Post post = existingPost.get();
         postPolicy.check(caller, post, PermissionType.UPDATE_POST);
 
         dto.title().ifPresent(post::setTitle);
@@ -77,18 +73,23 @@ public class PostService {
 
     @Transactional
     public void deletePost(UUID postId, UserDto caller) {
-        Post post = postRepository.findByIdWithOwner(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+        Post post = existingPost.get();
         postPolicy.check(caller, post, PermissionType.DELETE_POST);
         postRepository.delete(post);
     }
 
     @Transactional
     public PostResponseDto pinPost(UUID postId, UserDto caller, PinPostRequestDto dto) {
-        Post post = postRepository.findByIdWithOwner(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
 
+        Post post = existingPost.get();
         postPolicy.check(caller, post, PermissionType.PIN_POST);
 
         post.setPinned(dto.pinned());
@@ -99,31 +100,34 @@ public class PostService {
 
     @Transactional
     public void likePost(UUID postId, UserDto caller) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
-        if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {
-            return;
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }
+
+        postPolicy.check(caller, existingPost.get(), PermissionType.LIKE_POST);
 
         User callerUser = userMapper.toEntity(caller);
         PostLike postLike = PostLike.builder()
                 .id(new PostLikeId(postId, caller.id()))
-                .post(post)
+                .post(existingPost.get())
                 .user(callerUser)
                 .build();
 
         postLikeRepository.save(postLike);
         postRepository.incrementLikesCount(postId);
 
-        eventPublisher.publishEvent(new PostLikedNotificationEvent(post, callerUser));
+        eventPublisher.publishEvent(new PostLikedNotificationEvent(existingPost.get(), callerUser));
     }
 
     @Transactional
     public void unlikePost(UUID postId, UserDto caller) {
-        if (!postRepository.existsById(postId)) {
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
         }
+
+        postPolicy.check(caller, existingPost.get(), PermissionType.LIKE_POST);
 
         if (postLikeRepository.existsByIdPostIdAndIdUserId(postId, caller.id())) {
             postLikeRepository.deleteByIdPostIdAndIdUserId(postId, caller.id());

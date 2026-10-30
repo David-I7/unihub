@@ -14,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import {
   Field,
   FieldLabel,
-  FieldError,
   FieldDescription,
 } from "@/components/ui/field";
 import { getErrorMessage } from "@/api/types";
@@ -138,9 +137,9 @@ export function TransferCommunityOwnershipModal({
               autoFocus
             />
             <FieldDescription className="text-xs text-muted-foreground">
-              The user must already be an active member of this community.
+              The user doesn't already need to be an active member of this
+              community.
             </FieldDescription>
-            <FieldError errors={error ? [{ message: error }] : []} />
           </Field>
 
           <DialogFooter className="flex-col sm:flex-row gap-2 pt-2">

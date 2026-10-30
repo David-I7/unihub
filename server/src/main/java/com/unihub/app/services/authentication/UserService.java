@@ -42,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -234,6 +235,15 @@ public class UserService {
         }
 
         User user = optionalUser.get();
+        Cache activeResetTokens = cacheManager != null ? cacheManager.getCache("activeResetTokens") : null;
+
+        if (activeResetTokens != null && activeResetTokens.get(user.getId()) != null) {
+            var createdAt = (Instant)activeResetTokens.get(user.getId(), Map.class).get("createdAt");
+            if (Instant.now().minusSeconds(60).isBefore(createdAt)) {
+                return new MessageResponseDto("If an account exists with that email, a password reset link has been sent.");
+            }
+        }
+
         long expirationSec = emailProperties.passwordResetTokenExpirationSec();
         Map<String, Object> claims = Map.of(
                 JwtService.PURPOSE_CLAIM, JwtService.PURPOSE_PASSWORD_RESET,
@@ -242,6 +252,10 @@ public class UserService {
 
         String token = jwtService.generateToken(user.getId().toString(), claims, expirationSec);
         String resetUrl = appUtils.getClientOrigin() + "/reset-password?token=" + token;
+
+        if (activeResetTokens != null) {
+            activeResetTokens.put(user.getId(), Map.of("token", token, "createdAt", Instant.now()));
+        }
 
         eventPublisher.publishEvent(new PasswordResetRequestedEvent(
                 user.getEmail(),
@@ -255,10 +269,7 @@ public class UserService {
 
     @Transactional
     public MessageResponseDto resetPassword(String token, String newPassword) {
-        Cache usedResetTokens = cacheManager != null ? cacheManager.getCache("usedResetTokens") : null;
-        if (usedResetTokens != null && usedResetTokens.get(token) != null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password reset link is invalid or has already been used.");
-        }
+        Cache activeResetTokens = cacheManager != null ? cacheManager.getCache("activeResetTokens") : null;
 
         Claims claims;
         try {
@@ -273,17 +284,18 @@ public class UserService {
         }
 
         String subject = claims.getSubject();
-
         UUID userId = UUID.fromString(subject);
+        var savedToken = activeResetTokens != null && activeResetTokens.get(userId) != null ? (String)activeResetTokens.get(userId, Map.class).get("token") : null;
+        if (savedToken == null || !token.equals(savedToken)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The password reset link is invalid or has already been used.");
+        }
+
         User user = findById(userId);
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        if (usedResetTokens != null) {
-            usedResetTokens.put(token, true);
-        }
-
+        activeResetTokens.evict(userId);
         sessionService.revokeAllUserSessionsAndAccessTokens(userId);
 
         return new MessageResponseDto("Password has been successfully reset. Please log in with your new password.");

@@ -60,6 +60,12 @@ export function ChangeMemberRoleModal({
     e.preventDefault();
     const serverRole = ROLE_UI_TO_SERVER[selectedRole];
 
+    if (!member.username) {
+      toast.error("Cannot change role for a deleted user.");
+      onOpenChange(false);
+      return;
+    }
+
     if (serverRole === member.role) {
       onOpenChange(false);
       return;
@@ -111,13 +117,13 @@ export function ChangeMemberRoleModal({
                 <SelectItem value="Member">
                   <div className="flex items-center gap-2 text-xs">
                     <User className="size-3.5 text-muted-foreground" />
-                    <span>Member (Standard access)</span>
+                    <span>Member</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="Admin">
                   <div className="flex items-center gap-2 text-xs">
                     <Shield className="size-3.5 text-muted-foreground" />
-                    <span>Admin (Manage members & courses)</span>
+                    <span>Admin</span>
                   </div>
                 </SelectItem>
               </SelectContent>

@@ -9,7 +9,10 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "community_members")
+@Table(
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"community_id", "user_id"})},
+        name = "community_members"
+)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,16 +20,15 @@ import java.util.UUID;
 @Setter
 public class CommunityMember {
 
-    @EmbeddedId
-    private CommunityMembersId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("communityId")
     @JoinColumn(name = "community_id")
     private Community community;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("userId")
     @JoinColumn(name = "user_id")
     private User user;
 

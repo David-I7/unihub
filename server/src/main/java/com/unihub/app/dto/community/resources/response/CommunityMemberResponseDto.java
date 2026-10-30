@@ -7,6 +7,7 @@ import java.util.UUID;
 
 @Builder
 public record CommunityMemberResponseDto(
+        UUID membershipId,
         UUID userId,
         String username,
         String email,

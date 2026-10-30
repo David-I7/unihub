@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { getErrorMessage } from "@/api/types";
 import { useDeletePost } from "../api/deletePost";
 import type { Post } from "@/types/domain";
+import type { PostTarget } from "../api/types";
 
 interface DeletePostDialogProps {
   post: Post | null;
+  target: PostTarget;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onDeleted?: () => void;
@@ -21,6 +23,7 @@ interface DeletePostDialogProps {
 
 export function DeletePostDialog({
   post,
+  target,
   open,
   onOpenChange,
   onDeleted,
@@ -31,7 +34,10 @@ export function DeletePostDialog({
 
   const handleDelete = async () => {
     try {
-      await deleteMutation.mutateAsync(post.id);
+      await deleteMutation.mutateAsync({
+        postId: post.id,
+        target,
+      });
       toast.success("Post deleted successfully.");
       onOpenChange(false);
       onDeleted?.();

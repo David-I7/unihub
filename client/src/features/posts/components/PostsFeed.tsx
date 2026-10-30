@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PostCard } from "./PostCard";
 import { useObserver } from "@/hooks/useObserver";
-import type { Post } from "../api/types";
+import type { Post, PostTarget } from "../api/types";
 import type { CallerMembership } from "@/features/communities/api/types";
 
 export interface PostsFeedProps {
@@ -19,7 +19,7 @@ export interface PostsFeedProps {
   onOpenComposer: () => void;
   emptyTitle?: string;
   emptyDescription?: string;
-  communitySlug?: string;
+  target: PostTarget;
   callerMembership?: CallerMembership | null;
   isArchived?: boolean;
 }
@@ -36,9 +36,9 @@ export function PostsFeed({
   onOpenComposer,
   emptyTitle = "No Discussions Yet",
   emptyDescription = "Be the first to start an academic discussion or share materials.",
-  communitySlug,
   callerMembership,
   isArchived = false,
+  target,
 }: PostsFeedProps) {
   const { ref: sentinelRef } = useObserver<HTMLDivElement>({
     onIntersect: () => {
@@ -111,7 +111,7 @@ export function PostsFeed({
             <PostCard
               key={post.id}
               post={post}
-              communitySlug={communitySlug}
+              target={target}
               callerMembership={callerMembership}
               isArchived={isArchived}
             />

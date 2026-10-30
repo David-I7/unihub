@@ -1,8 +1,7 @@
 import client from "@/api/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import useAuthStore from "@/features/auth/store/useAuthStore";
 import { refresh } from "@/features/auth";
-import { userKeys } from "./getUserProfile";
 import type { UpdateUserProfilePayload, UserProfileResponse } from "./types";
 
 export async function updateProfile(

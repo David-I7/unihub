@@ -62,6 +62,7 @@ export function CommunityHero({
   const {
     isMember,
     isOwner,
+    isPlatformAdmin,
     isAuthenticated,
     communityRole,
     canEditCommunity,
@@ -215,7 +216,7 @@ export function CommunityHero({
                     </DropdownMenuItem>
                   )}
 
-                  {isOwner && (
+                  {(isOwner || isPlatformAdmin) && (
                     <DropdownMenuItem
                       onClick={() => setTransferOwnershipOpen(true)}
                       className="gap-2 cursor-pointer text-xs"
@@ -357,7 +358,7 @@ export function CommunityHero({
         />
       )}
 
-      {isOwner && (
+      {(isOwner || isPlatformAdmin) && (
         <TransferCommunityOwnershipModal
           community={community}
           open={transferOwnershipOpen}

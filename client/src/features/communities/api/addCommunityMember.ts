@@ -2,8 +2,7 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AddCommunityMemberDto } from "./types";
 import { communityKeys } from "./communityKeys";
-import { userKeys } from "@/features/users/api/getUserProfile";
-import { useAuthStore } from "@/features/auth";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface AddCommunityMemberVariables {
   communitySlug: string;
@@ -26,21 +25,16 @@ export function useAddCommunityMember() {
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityInfinities(),
       });
+      removeInfiniteQueryPagesExceptFirst(
+        queryClient,
+        communityKeys.membersList(variables.communitySlug),
+      );
       queryClient.invalidateQueries({
-        queryKey: communityKeys.membersList(variables.communitySlug),
+        queryKey: communityKeys.communityMembers(variables.communitySlug),
       });
       queryClient.invalidateQueries({
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
-      const currentUser = useAuthStore.getState().user;
-      if (currentUser?.username === variables.payload.username) {
-        queryClient.invalidateQueries({
-          queryKey: communityKeys.membershipDetail(variables.communitySlug),
-        });
-        queryClient.invalidateQueries({
-          queryKey: userKeys.communities(),
-        });
-      }
     },
   });
 }

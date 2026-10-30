@@ -39,6 +39,7 @@ import {
   EditPostModal,
   DeletePostDialog,
 } from "@/features/posts";
+import type { PostTarget } from "@/features/posts/api/types";
 import { useInfinitePostComments } from "@/features/comments/api/getPostComments";
 import { CommentComposer } from "@/features/comments/components/CommentComposer";
 import { CommentItem } from "@/features/comments/components/CommentItem";
@@ -102,7 +103,7 @@ export default function PostDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 pb-16">
+      <div className="space-y-6">
         <div className="h-6 w-48 bg-muted rounded-md animate-pulse" />
         <div className="rounded-2xl border bg-card p-6 space-y-4">
           <div className="flex items-center gap-3">
@@ -121,7 +122,7 @@ export default function PostDetailPage() {
 
   if (isError || !post) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 pb-16">
+      <div className="space-y-6">
         <ErrorStateCard
           message="Post not found or has been deleted."
           onRetry={() => refetch()}
@@ -136,11 +137,25 @@ export default function PostDetailPage() {
     user && post.owner && String(user.id) === String(post.owner.id),
   );
   const canPin = canPinPost;
-  const canEdit = canEditPost(post.owner?.id);
+  const canEdit = canEditPost(post);
   const canDelete = canDeletePost(post.owner?.id);
-  const hasActions = canPin || canEdit || canDelete;
+  const hasActions = (canPin || canEdit || canDelete) && !post.isArchived;
+
+  const postTarget: PostTarget =
+    post.channel === "COMMUNITY"
+      ? {
+          type: "community",
+          communitySlug: post.communitySlug ?? "",
+        }
+      : {
+          type: "course",
+          communitySlug: post.communitySlug ?? "",
+          studyYearSlug: post.studyYearSlug ?? "",
+          courseSlug: post.courseSlug ?? "",
+        };
 
   const handleLike = async () => {
+    if (post.isArchived) return;
     if (!user) {
       toast.error("Please sign in to like posts.");
       return;
@@ -169,10 +184,20 @@ export default function PostDetailPage() {
   };
 
   const handleTogglePin = async () => {
+    if (post.isArchived) return;
     try {
       await pinMutation.mutateAsync({
         postId: post.id,
         pinned: !post.pinned,
+        target:
+          post.channel === "COMMUNITY"
+            ? { type: "community", communitySlug: post.communitySlug ?? "" }
+            : {
+                type: "course",
+                communitySlug: post.communitySlug ?? "",
+                studyYearSlug: post.studyYearSlug ?? "",
+                courseSlug: post.courseSlug ?? "",
+              },
       });
       toast.success(post.pinned ? "Post unpinned." : "Post pinned to top!");
     } catch {
@@ -214,7 +239,7 @@ export default function PostDetailPage() {
       : "Back to Discussions";
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16">
+    <div className="space-y-6">
       {/* Top Navigation */}
       <div className="flex items-center justify-between gap-4">
         <Link
@@ -227,19 +252,23 @@ export default function PostDetailPage() {
       </div>
 
       {/* Main Post Card */}
-      <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-5">
+
+      <Card className="rounded-2xl border bg-card p-6 shadow-xs space-y-0">
         {/* Header: Author info, badges, actions */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3">
-            <UserAvatar username={post.owner?.username} size="default" />
+            <UserAvatar
+              username={post.owner?.username ?? "Deleted User"}
+              size="md"
+            />
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-sm text-foreground">
-                  {post.owner?.username ?? "Anonymous"}
+                  {post.owner?.username ?? "Deleted User"}
                 </span>
                 {isPostAuthor && (
-                  <span className="rounded-md bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.2 text-[10px] font-bold">
-                    Author
+                  <span className="text-[11px] text-muted-foreground">
+                    (You)
                   </span>
                 )}
               </div>
@@ -327,8 +356,8 @@ export default function PostDetailPage() {
         </div>
 
         {/* Post Title & Description */}
-        <div className="space-y-3">
-          <h1 className="font-heading text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+        <div className="space-y-1">
+          <h1 className="font-heading text-base md:text-lg font-bold text-foreground">
             {post.title}
           </h1>
           <div className="text-sm leading-relaxed">
@@ -340,11 +369,15 @@ export default function PostDetailPage() {
         <div className="flex items-center justify-between pt-4 border-t border-border/70 text-xs">
           <div className="flex items-center gap-3">
             <Button
+              disabled={post.isArchived}
               variant="ghost"
               size="xs"
               onClick={handleLike}
               className={cn(
-                "gap-1.5 font-semibold text-xs cursor-pointer transition-colors",
+                "gap-1.5 font-semibold text-xs transition-colors",
+                post.isArchived
+                  ? "opacity-70 cursor-default"
+                  : "cursor-pointer",
                 isLiked
                   ? "text-rose-500 dark:text-rose-600 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100"
                   : "text-muted-foreground hover:text-foreground",
@@ -385,10 +418,14 @@ export default function PostDetailPage() {
 
         {/* Comment Composer */}
 
-        {true ? (
+        {post.isArchived ? (
+          <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
+            Discussions are locked because this course is archived.
+          </p>
+        ) : user ? (
           <CommentComposer postId={post.id} />
         ) : (
-          <p className="text-xs text-muted-foreground text-center py-3">
+          <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border">
             Please sign in to join this discussion.
           </p>
         )}
@@ -397,10 +434,11 @@ export default function PostDetailPage() {
         <div className="space-y-3 pt-2">
           {isCommentsLoading ? (
             <div className="py-8 text-center text-xs text-muted-foreground flex flex-col items-center gap-2">
-              <Spinner className="size-5 text-primary" />
-              <span>Loading discussion...</span>
+              <Spinner className="size-5" />
             </div>
-          ) : fetchedComments.length === 0 ? (
+          ) : post.isArchived &&
+            fetchedComments.length === 0 ? null : fetchedComments.length ===
+            0 ? (
             <div className="py-10 text-center rounded-2xl border border-dashed border-border bg-card p-6">
               <p className="text-xs text-muted-foreground italic">
                 No replies yet. Be the first to share your thoughts!
@@ -422,7 +460,8 @@ export default function PostDetailPage() {
                   >
                     <CommentItem
                       comment={comment}
-                      communitySlug={post.communitySlug ?? undefined}
+                      target={postTarget}
+                      isArchived={post.isArchived}
                     />
                   </div>
                 );
@@ -456,12 +495,14 @@ export default function PostDetailPage() {
       {/* Edit & Delete Dialogs */}
       <EditPostModal
         post={post}
+        target={postTarget}
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
       />
 
       <DeletePostDialog
         post={post}
+        target={postTarget}
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
         onDeleted={handlePostDeleted}

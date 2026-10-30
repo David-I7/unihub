@@ -147,7 +147,6 @@ public class CommunityController {
     }
 
     @PostMapping("/{communitySlug}/posts")
-    @PreAuthorize("hasPermission(#communitySlug, 'POST', 'CREATE')")
     public ResponseEntity<PostResponseDto> createCommunityPost(
             @PathVariable String communitySlug,
             @AuthenticationPrincipal UserDto user,

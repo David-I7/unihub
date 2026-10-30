@@ -65,11 +65,7 @@ public class CommunityResourceMapper {
     }
 
     public TeacherRatingResponseDto toTeacherRatingResponseDto(TeacherRating rating) {
-        OwnerDto author = new OwnerDto(
-                rating.getUser().getId(),
-                rating.getUser().getUsername(),
-                rating.getUser().isActive()
-        );
+        OwnerDto author = toOwnerDto(rating.getUser());
 
         List<TeacherRatingValueResponseDto> values = rating.getValues() != null
                 ? rating.getValues().stream().map(this::toTeacherRatingValueResponseDto).toList()
@@ -99,9 +95,9 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CommunityMember toCommunityMemberEntity(Community community, User user, UUID roleId, OffsetDateTime joinedAt) {
+    public CommunityMember toCommunityMemberEntity(UUID id,Community community, User user, UUID roleId, OffsetDateTime joinedAt) {
         return CommunityMember.builder()
-                .id(new CommunityMembersId(community.getId(), user.getId()))
+                .id(id)
                 .community(community)
                 .user(user)
                 .roleId(roleId)
@@ -111,9 +107,10 @@ public class CommunityResourceMapper {
 
     public CommunityMemberResponseDto toCommunityMemberResponseDto(CommunityMember member, String roleName) {
         return CommunityMemberResponseDto.builder()
-                .userId(member.getUser().getId())
-                .username(member.getUser().getUsername())
-                .email(member.getUser().getEmail())
+                .membershipId(member.getId())
+                .userId(member.getUser() == null ? null : member.getUser().getId())
+                .username(member.getUser() == null ? null : member.getUser().getUsername())
+                .email(member.getUser() == null ? null : member.getUser().getEmail())
                 .role(roleName)
                 .joinedAt(member.getJoinedAt())
                 .build();

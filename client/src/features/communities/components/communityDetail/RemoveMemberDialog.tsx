@@ -33,9 +33,10 @@ export function RemoveMemberDialog({
     try {
       await removeMutation.mutateAsync({
         communitySlug,
-        username: member.username,
+        member: member,
       });
-      toast.success(`@${member.username} was removed from the community.`);
+      const displayName = member.username ? `@${member.username}` : "Deleted Account";
+      toast.success(`${displayName} was removed from the community.`);
       onOpenChange(false);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, "Failed to remove member."));
@@ -49,7 +50,7 @@ export function RemoveMemberDialog({
           <DialogTitle>Remove Member</DialogTitle>
           <DialogDescription>
             Are you sure you want to remove{" "}
-            <strong className="text-foreground">{member.username}</strong> from
+            <strong className="text-foreground">{member.username ? `@${member.username}` : "this deleted account"}</strong> from
             this community?
           </DialogDescription>
         </DialogHeader>

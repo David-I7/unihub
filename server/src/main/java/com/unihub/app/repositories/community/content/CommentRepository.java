@@ -25,4 +25,16 @@ public interface CommentRepository extends JpaRepository<Comment, UUID> {
 
     @Query("SELECT c FROM Comment c JOIN FETCH c.owner JOIN FETCH c.post WHERE c.id = :id")
     Optional<Comment> findByIdWithOwner(@Param("id") UUID id);
+
+    @Query("""
+            SELECT c FROM Comment c
+            JOIN FETCH c.owner
+            JOIN FETCH c.post
+            LEFT JOIN FETCH c.post.communityPost comm_p
+            LEFT JOIN FETCH comm_p.community
+            LEFT JOIN FETCH c.post.coursePost course_p
+            LEFT JOIN FETCH course_p.course
+            WHERE c.id = :id
+          """)
+    Optional<Comment> findByIdWithOwnerAndPost(@Param("id") UUID id);
 }

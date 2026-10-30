@@ -2,7 +2,6 @@ package com.unihub.app.repositories.community.resources;
 
 import com.unihub.app.entities.authentication.User;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.entities.community.resources.CommunityMembersId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +12,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CommunityMemberRepository extends JpaRepository<CommunityMember, CommunityMembersId> {
+public interface CommunityMemberRepository extends JpaRepository<CommunityMember, UUID> {
+
+    @Query("SELECT cm FROM CommunityMember cm LEFT JOIN FETCH cm.user u JOIN FETCH cm.community c WHERE cm.id = :id")
+    Optional<CommunityMember> findByIdWithOwnerAndCommunity(@Param("id") UUID id);
 
     @Query("SELECT cm.community.id FROM CommunityMember cm WHERE cm.user.id = :userId")
     List<UUID> findCommunityIdsByUserId(@Param("userId") UUID userId);
@@ -27,13 +29,6 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
     @Query("SELECT cm FROM CommunityMember cm WHERE cm.community.slug = :communitySlug AND cm.user.id = :userId")
     Optional<CommunityMember> findMemberByCommunitySlug(@Param("communitySlug") String communitySlug, @Param("userId") UUID userId);
 
-    @Query("""
-        SELECT cm FROM CommunityMember cm
-        JOIN FETCH cm.community c
-        WHERE cm.user.id = :userId
-    """)
-    List<CommunityMember> findMembershipsByUserIdWithCommunity(@Param("userId") UUID userId);
-
     @Query(value = """
         SELECT cm FROM CommunityMember cm
         JOIN FETCH cm.community c
@@ -46,15 +41,16 @@ public interface CommunityMemberRepository extends JpaRepository<CommunityMember
 
     @Query(value = """
         SELECT cm FROM CommunityMember cm
-        JOIN FETCH cm.user u
+        LEFT JOIN FETCH cm.user u
         WHERE cm.community.slug = :communitySlug
         AND (:roleId IS NULL OR cm.roleId = :roleId)
-        AND (COALESCE(:search, '') = '' OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND (COALESCE(:search, '') = '' OR (u.username IS NOT NULL AND LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))))
     """, countQuery = """
         SELECT COUNT(cm) FROM CommunityMember cm
+        LEFT JOIN cm.user u
         WHERE cm.community.slug = :communitySlug
         AND (:roleId IS NULL OR cm.roleId = :roleId)
-        AND (COALESCE(:search, '') = '' OR LOWER(cm.user.username) LIKE LOWER(CONCAT('%', :search, '%')))
+        AND (COALESCE(:search, '') = '' OR (u.username IS NOT NULL AND LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))))
     """)
     Page<CommunityMember> findMembersByCommunitySlugWithFilters(
             @Param("communitySlug") String communitySlug,

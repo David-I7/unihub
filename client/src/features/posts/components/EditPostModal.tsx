@@ -23,15 +23,18 @@ import {
 } from "../schemas/postSchemas";
 import { useUpdatePost } from "../api/updatePost";
 import type { Post } from "@/types/domain";
+import type { PostTarget } from "../api/types";
 
 interface EditPostModalProps {
   post: Post | null;
+  target: PostTarget;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function EditPostModal({
   post,
+  target,
   open,
   onOpenChange,
 }: EditPostModalProps) {
@@ -56,6 +59,7 @@ export function EditPostModal({
 
         await updateMutation.mutateAsync({
           postId: post.id,
+          target,
           payload,
         });
 

@@ -86,7 +86,7 @@ public class PostServiceTests {
                 .updatedAt(OffsetDateTime.now())
                 .build();
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
         PostDetailResponseDto result = postService.getPostById(postId, userDto);
@@ -123,7 +123,7 @@ public class PostServiceTests {
 
         UpdatePostRequestDto dto = new UpdatePostRequestDto("New Title", "New Desc");
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         when(postRepository.save(any(Post.class))).thenAnswer(i -> i.getArgument(0));
 
         PostResponseDto result = postService.updatePost(postId, userDto, dto);
@@ -143,7 +143,7 @@ public class PostServiceTests {
         Post post = Post.builder().id(postId).build();
         UpdatePostRequestDto dto = new UpdatePostRequestDto("New", "Desc");
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         doThrow(new AccessDeniedException("Access denied")).when(postPolicy).check(userDto, post, PermissionType.UPDATE_POST);
 
         assertThrows(AccessDeniedException.class, () -> postService.updatePost(postId, userDto, dto));
@@ -160,7 +160,7 @@ public class PostServiceTests {
 
         Post post = Post.builder().id(postId).owner(owner).build();
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
 
         postService.deletePost(postId, userDto);
 
@@ -175,7 +175,7 @@ public class PostServiceTests {
         UserDto userDto = new UserDto(UUID.randomUUID(), "david@example.com", "david", true, RoleType.USER);
         Post post = Post.builder().id(postId).build();
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         doThrow(new AccessDeniedException("Access denied")).when(postPolicy).check(userDto, post, PermissionType.DELETE_POST);
 
         assertThrows(AccessDeniedException.class, () -> postService.deletePost(postId, userDto));
@@ -199,7 +199,7 @@ public class PostServiceTests {
                 .build();
         PinPostRequestDto dto = new PinPostRequestDto(true);
 
-        when(postRepository.findByIdWithOwner(postId)).thenReturn(Optional.of(post));
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         when(postRepository.save(any(Post.class))).thenAnswer(i -> i.getArgument(0));
 
         PostResponseDto result = postService.pinPost(postId, caller, dto);
@@ -218,8 +218,7 @@ public class PostServiceTests {
         UserDto caller = new UserDto(userId, "user@example.com", "user", true, RoleType.USER);
         Post post = Post.builder().id(postId).build();
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
-        when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(false);
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
 
         postService.likePost(postId, caller);
 
@@ -234,7 +233,8 @@ public class PostServiceTests {
         UUID userId = UUID.randomUUID();
         UserDto caller = new UserDto(userId, "user@example.com", "user", true, RoleType.USER);
 
-        when(postRepository.existsById(postId)).thenReturn(true);
+        Post post = Post.builder().id(postId).build();
+        when(postRepository.findByIdWithOwnerAndPost(postId)).thenReturn(Optional.of(post));
         when(postLikeRepository.existsByIdPostIdAndIdUserId(postId, userId)).thenReturn(true);
 
         postService.unlikePost(postId, caller);

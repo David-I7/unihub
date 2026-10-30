@@ -1,5 +1,6 @@
 package com.unihub.app.services.community.content;
 
+import com.unihub.app.domain.PermissionType;
 import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.content.request.CreatePostRequestDto;
@@ -19,6 +20,7 @@ import com.unihub.app.repositories.community.content.PostLikeRepository;
 import com.unihub.app.repositories.community.content.PostRepository;
 import com.unihub.app.repositories.community.resources.CourseRepository;
 
+import com.unihub.app.security.policies.PostPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -43,6 +45,7 @@ public class CoursePostService {
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final PostPolicy postPolicy;
 
     @Transactional
     public PostResponseDto createCoursePost(
@@ -57,14 +60,15 @@ public class CoursePostService {
 
         User owner = userMapper.toEntity(caller);
         Post post = contentMapper.toPostEntity(dto, CommunicationChannel.COURSE, owner);
-        Post savedPost = postRepository.save(post);
-
         CoursePost coursePost = CoursePost.builder()
-                .post(savedPost)
+                .post(post)
                 .course(course)
                 .build();
-        coursePostRepository.save(coursePost);
+        post.setCoursePost(coursePost);
 
+        postPolicy.check(caller, post, PermissionType.CREATE_POST);
+
+        Post savedPost = postRepository.save(post);
         eventPublisher.publishEvent(new CoursePostCreatedNotificationEvent(savedPost, course, owner));
 
         return contentMapper.toPostResponseDto(savedPost, false);
