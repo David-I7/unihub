@@ -54,14 +54,14 @@ export function MemberCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <UserAvatar
-              username={member.username}
+              username={member.username ?? "Deleted Account"}
               size="md"
               className="ring-1 ring-border shrink-0"
             />
             <div className="space-y-0.5 min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <h3 className="font-heading text-sm font-bold text-foreground truncate">
-                  {member.username}
+                  {member.username ?? "Deleted Account"}
                 </h3>
                 {isSelf && (
                   <span className="text-[10px] text-muted-foreground font-medium shrink-0">

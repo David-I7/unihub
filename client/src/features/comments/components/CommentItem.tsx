@@ -17,30 +17,32 @@ import { isFieldValueEqual } from "@/hooks/useForm";
 import { useUpdateComment } from "../api/updateComment";
 import { DeleteCommentDialog } from "./DeleteCommentDialog";
 import type { Comment } from "@/types/domain";
+import type { PostTarget } from "@/features/posts/api/types";
 
 interface CommentItemProps {
   comment: Comment;
-  communitySlug?: string;
+  target: PostTarget;
   isArchived?: boolean;
 }
 
 export function CommentItem({
   comment,
-  communitySlug,
+  target,
   isArchived = false,
 }: CommentItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { user, canEditComment, canDeleteComment } =
-    usePermissions(communitySlug);
+  const { user, canEditComment, canDeleteComment } = usePermissions(
+    target.communitySlug,
+  );
   const updateMutation = useUpdateComment();
 
   const isAuthor = Boolean(
     user && comment.owner && String(user.id) === String(comment.owner.id),
   );
-  const isAuthorizedToEdit = !isArchived && canEditComment(comment.owner?.id);
+  const isAuthorizedToEdit = !isArchived && canEditComment(comment);
   const isAuthorizedToDelete =
     !isArchived && canDeleteComment(comment.owner?.id);
 
@@ -70,30 +72,39 @@ export function CommentItem({
 
   return (
     <>
-      <div className="group rounded-xl bg-muted/40 p-3 space-y-1.5 text-xs transition-colors hover:bg-muted/60">
+      <div className="group rounded-xl dark:bg-muted/30 bg-muted/70 p-3 space-y-1.5 text-xs transition-colors hover:bg-muted dark:hover:bg-muted/50">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <UserAvatar
-              username={comment.owner?.username}
+              username={comment.owner?.username || "Deleted User"}
               size="xs"
-              className="size-6 rounded-lg text-[10px]"
+              className="size-6 rounded-md text-[10px]"
               fallbackClassName="rounded-lg"
             />
-            <span className="font-semibold text-foreground">
-              {comment.owner?.username ?? "Anonymous"}
-            </span>
-            {isAuthor && (
-              <span className="rounded-md bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.5 text-[9px] font-bold">
-                Author
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-foreground">
+                  {comment.owner?.username ?? "Deleted User"}
+                </span>
+                {isAuthor && (
+                  <span className="text-[10px] text-muted-foreground">
+                    (You)
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] text-muted-foreground">
+                {formatPostDate(comment.createdAt)}
               </span>
-            )}
+              {comment.updatedAt !== comment.createdAt && (
+                <span className="text-[10px] text-muted-foreground">
+                  {" "}
+                  (Edited)
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-muted-foreground">
-              {formatPostDate(comment.createdAt)}
-            </span>
-
             {/* 3-Dots Dropdown Menu for Author (Edit/Delete) and Moderators (Delete Only) */}
             {!isEditing && (isAuthorizedToEdit || isAuthorizedToDelete) && (
               <DropdownMenu>
@@ -173,7 +184,7 @@ export function CommentItem({
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground pl-8 leading-relaxed whitespace-pre-line text-xs">
+          <p className="pl-8 leading-relaxed whitespace-pre-line text-xs">
             {comment.content}
           </p>
         )}

@@ -42,7 +42,7 @@ public class TeacherRatingPolicy implements ResourcePolicy {
 
         return switch (permission) {
             case CREATE_TEACHER_RATING -> helper.hasCommunityPermission(communitySlug, user.id(), permission);
-            case UPDATE_TEACHER_RATING -> isAuthor;
+            case UPDATE_TEACHER_RATING -> isAuthor && rating.getCreatedAt().isBefore(rating.getCreatedAt().plusMinutes(30));
             case DELETE_TEACHER_RATING -> isAuthor || helper.hasCommunityPermission(communitySlug, user.id(), PermissionType.MODERATE_TEACHER_RATING);
             default -> false;
         };

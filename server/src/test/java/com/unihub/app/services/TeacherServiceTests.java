@@ -7,6 +7,7 @@ import com.unihub.app.dto.PageDto;
 import com.unihub.app.dto.UserDto;
 import com.unihub.app.dto.community.resources.request.CreateTeacherRequestDto;
 import com.unihub.app.dto.community.resources.request.UpdateTeacherRequestDto;
+import org.openapitools.jackson.nullable.JsonNullable;
 import com.unihub.app.dto.community.resources.response.TeacherDetailResponseDto;
 import com.unihub.app.dto.community.resources.response.TeacherResponseDto;
 import com.unihub.app.entities.community.resources.Community;
@@ -143,9 +144,9 @@ public class TeacherServiceTests {
                 .build();
 
         UpdateTeacherRequestDto request = UpdateTeacherRequestDto.builder()
-                .firstName("Dan")
-                .lastName("Dragulici")
-                .estimatedAge(45)
+                .firstName(JsonNullable.of("Dan"))
+                .lastName(JsonNullable.of("Dragulici"))
+                .estimatedAge(JsonNullable.of(45))
                 .build();
 
         when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
@@ -167,7 +168,7 @@ public class TeacherServiceTests {
     public void testUpdateTeacher_AccessDenied() {
         UUID teacherId = UUID.randomUUID();
         Teacher existingTeacher = Teacher.builder().id(teacherId).build();
-        UpdateTeacherRequestDto request = UpdateTeacherRequestDto.builder().firstName("Dan").build();
+        UpdateTeacherRequestDto request = UpdateTeacherRequestDto.builder().firstName(JsonNullable.of("Dan")).build();
 
         when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(existingTeacher));
         doThrow(new AccessDeniedException("Access denied")).when(teacherPolicy).check(memberUser, existingTeacher, PermissionType.UPDATE_TEACHER);

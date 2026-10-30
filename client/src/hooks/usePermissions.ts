@@ -4,11 +4,14 @@ import { useUserProfile } from "@/features/users/api/getUserProfile";
 import { PERMISSIONS, checkPermission } from "@/lib/permissions";
 import type {
   CallerMembership,
+  Comment,
   CommunityMember,
   CommunityMemberRole,
+  Post,
 } from "@/features/communities/api/types";
 
 import { useCommunityMembership } from "@/features/communities/api/getCommunityMembership";
+import type { TeacherRating } from "@/features/teachers/api/types";
 
 export function usePermissions(target?: string | CallerMembership | null) {
   const user = useAuthStore((state) => state.user);
@@ -73,6 +76,8 @@ export function usePermissions(target?: string | CallerMembership | null) {
     return hasPermission(PERMISSIONS.DELETE_MEMBER) && hasHigherRoleThanTarget;
   };
   const canUpdateMemberRole = (member: CommunityMember) => {
+    if (member.userId === null) return false;
+
     if (isPlatformAdmin) {
       return member.role !== "COMMUNITY_OWNER";
     }
@@ -110,9 +115,16 @@ export function usePermissions(target?: string | CallerMembership | null) {
     PERMISSIONS.CREATE_TEACHER_RATING,
   );
   const canUpdateTeacherRating = useCallback(
-    (reviewOwnerId: string) => {
-      if (user && reviewOwnerId && String(user.id) === String(reviewOwnerId)) {
-        return true;
+    (review: TeacherRating) => {
+      if (
+        user &&
+        review.author &&
+        String(user.id) === String(review.author.id)
+      ) {
+        return (
+          new Date(review.createdAt).getTime() <
+          new Date().getTime() - 30 * 60 * 1000
+        );
       }
       return false;
     },
@@ -129,9 +141,12 @@ export function usePermissions(target?: string | CallerMembership | null) {
   );
 
   const canEditPost = useCallback(
-    (postOwnerId: string) => {
-      if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
-        return true;
+    (post: Post) => {
+      if (user && post.owner && post.owner.id === user.id) {
+        return (
+          new Date(post.createdAt).getTime() <
+          new Date().getTime() - 30 * 60 * 1000
+        ); // Allow editing within 30 minutes of creation
       }
       return false;
     },
@@ -139,7 +154,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
   );
 
   const canDeletePost = useCallback(
-    (postOwnerId: string) => {
+    (postOwnerId?: string | null) => {
       if (user && postOwnerId && String(user.id) === String(postOwnerId)) {
         return true;
       }
@@ -149,13 +164,16 @@ export function usePermissions(target?: string | CallerMembership | null) {
   );
 
   const canEditComment = useCallback(
-    (commentOwnerId?: string | number | null) => {
+    (comment: Comment) => {
       if (
         user &&
-        commentOwnerId &&
-        String(user.id) === String(commentOwnerId)
+        comment.owner &&
+        String(user.id) === String(comment.owner.id)
       ) {
-        return true;
+        return (
+          new Date(comment.createdAt).getTime() <
+          new Date().getTime() - 30 * 60 * 1000
+        ); // Allow editing within 30 minutes of creation
       }
       return false;
     },
@@ -163,7 +181,7 @@ export function usePermissions(target?: string | CallerMembership | null) {
   );
 
   const canDeleteComment = useCallback(
-    (commentOwnerId?: string | number | null) => {
+    (commentOwnerId?: string | null) => {
       if (
         user &&
         commentOwnerId &&

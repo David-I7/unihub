@@ -35,11 +35,21 @@ export function CoursePostsTab({
     return data?.pages.flatMap((page) => page.content) ?? [];
   }, [data]);
 
+  const target = useMemo(
+    () => ({
+      type: "course" as const,
+      communitySlug,
+      studyYearSlug,
+      courseSlug,
+    }),
+    [communitySlug, studyYearSlug, courseSlug],
+  );
+
   return (
     <>
       <PostsFeed
         posts={allPosts}
-        communitySlug={communitySlug}
+        target={target}
         isArchived={isArchived}
         isLoading={isLoading}
         isError={isError}
@@ -59,12 +69,7 @@ export function CoursePostsTab({
 
       {!isArchived && (
         <PostComposerModal
-          target={{
-            type: "course",
-            communitySlug,
-            studyYearSlug,
-            courseSlug,
-          }}
+          target={target}
           open={composerOpen}
           onOpenChange={setComposerOpen}
         />

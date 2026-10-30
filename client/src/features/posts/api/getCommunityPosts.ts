@@ -32,12 +32,8 @@ export const postKeys = {
   all: ["posts"] as const,
   community: (slug: string) => [...postKeys.all, "community", slug] as const,
   communityInfinite: (slug: string, params: { size?: number }) =>
-    [...postKeys.all, "community", slug, "infinite", params] as const,
-  course: (
-    communitySlug: string,
-    studyYearSlug: string,
-    courseSlug: string,
-  ) =>
+    [...postKeys.community(slug), "infinite", params] as const,
+  course: (communitySlug: string, studyYearSlug: string, courseSlug: string) =>
     [
       ...postKeys.all,
       "course",

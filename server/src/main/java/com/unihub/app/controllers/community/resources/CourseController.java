@@ -216,7 +216,6 @@ public class CourseController {
     }
 
     @PostMapping("/{courseSlug}/posts")
-    @PreAuthorize("hasPermission(#communitySlug, 'POST', 'CREATE')")
     public ResponseEntity<PostResponseDto> createCoursePost(
             @PathVariable String communitySlug,
             @PathVariable StudyYearName studyYearName,

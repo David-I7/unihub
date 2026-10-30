@@ -57,23 +57,35 @@ public class CommunityContentMapper {
         String studyYearName = null;
         String courseSlug = null;
         String courseName = null;
+        boolean isArchived = false;
 
-        if (post.getCommunityPost() != null && post.getCommunityPost().getCommunity() != null) {
-            communitySlug = post.getCommunityPost().getCommunity().getSlug();
-            communityName = post.getCommunityPost().getCommunity().getName();
-        } else if (post.getCoursePost() != null && post.getCoursePost().getCourse() != null) {
-            var course = post.getCoursePost().getCourse();
-            courseSlug = course.getSlug();
-            courseName = course.getName();
-            if (course.getStudyYear() != null) {
-                if (course.getStudyYear().getStudyYearName() != null) {
-                    studyYearName = course.getStudyYear().getStudyYearName().name();
-                    studyYearSlug = course.getStudyYear().getStudyYearName().name().toLowerCase().replace('_', '-');
+        switch (post.getChannel()) {
+            case COMMUNITY -> {
+                if (post.getCommunityPost() != null && post.getCommunityPost().getCommunity() != null) {
+                    communitySlug = post.getCommunityPost().getCommunity().getSlug();
+                    communityName = post.getCommunityPost().getCommunity().getName();
                 }
-                if (course.getStudyYear().getCommunity() != null) {
-                    communitySlug = course.getStudyYear().getCommunity().getSlug();
-                    communityName = course.getStudyYear().getCommunity().getName();
+            }
+            case COURSE -> {
+                if (post.getCoursePost() != null && post.getCoursePost().getCourse() != null) {
+                    var course = post.getCoursePost().getCourse();
+                    courseSlug = course.getSlug();
+                    courseName = course.getName();
+                    isArchived = course.isArchived();
+                    if (course.getStudyYear() != null) {
+                        if (course.getStudyYear().getStudyYearName() != null) {
+                            studyYearName = course.getStudyYear().getStudyYearName().name();
+                            studyYearSlug = course.getStudyYear().getStudyYearName().name().toLowerCase().replace('_', '-');
+                        }
+                        if (course.getStudyYear().getCommunity() != null) {
+                            communitySlug = course.getStudyYear().getCommunity().getSlug();
+                            communityName = course.getStudyYear().getCommunity().getName();
+                        }
+                    }
                 }
+            }
+            case GENERAL -> {
+                // No additional information for GENERAL channel
             }
         }
 
@@ -95,6 +107,7 @@ public class CommunityContentMapper {
                 .studyYearName(studyYearName)
                 .courseSlug(courseSlug)
                 .courseName(courseName)
+                .isArchived(isArchived)
                 .build();
     }
 

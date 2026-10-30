@@ -20,7 +20,14 @@ export function CommentComposer({ postId }: CommentComposerProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanContent = content.trim();
-    if (!cleanContent) return;
+    if (!cleanContent) {
+      toast.error("Comment cannot be empty.");
+      return;
+    }
+    if (cleanContent.length > 500) {
+      toast.error("Comment cannot exceed 500 characters.");
+      return;
+    }
 
     try {
       await createMutation.mutateAsync({
@@ -46,7 +53,7 @@ export function CommentComposer({ postId }: CommentComposerProps) {
       <UserAvatar
         username={user?.username}
         size="xs"
-        className="size-6 rounded-lg text-[10px]"
+        className="size-6 rounded-md text-[10px]"
         fallbackClassName="rounded-lg"
       />
 
@@ -58,7 +65,7 @@ export function CommentComposer({ postId }: CommentComposerProps) {
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={2}
-            maxLength={2000}
+            maxLength={500}
             className="text-xs resize-none pr-10 py-2 min-h-[60px] rounded-xl bg-background"
           />
 
@@ -66,7 +73,7 @@ export function CommentComposer({ postId }: CommentComposerProps) {
             type="submit"
             size="icon-xs"
             disabled={!content.trim() || createMutation.isPending}
-            className="absolute bottom-2 right-2 size-6 rounded-lg cursor-pointer"
+            className="absolute bottom-2 right-2 size-6 rounded-md cursor-pointer"
             title="Send comment"
           >
             <Send className="size-3" />

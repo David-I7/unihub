@@ -99,9 +99,9 @@ public class CommunityResourceMapper {
                 .build();
     }
 
-    public CommunityMember toCommunityMemberEntity(Community community, User user, UUID roleId, OffsetDateTime joinedAt) {
+    public CommunityMember toCommunityMemberEntity(UUID id,Community community, User user, UUID roleId, OffsetDateTime joinedAt) {
         return CommunityMember.builder()
-                .id(new CommunityMembersId(community.getId(), user.getId()))
+                .id(id)
                 .community(community)
                 .user(user)
                 .roleId(roleId)
@@ -111,9 +111,10 @@ public class CommunityResourceMapper {
 
     public CommunityMemberResponseDto toCommunityMemberResponseDto(CommunityMember member, String roleName) {
         return CommunityMemberResponseDto.builder()
-                .userId(member.getUser().getId())
-                .username(member.getUser().getUsername())
-                .email(member.getUser().getEmail())
+                .membershipId(member.getId())
+                .userId(member.getUser() == null ? null : member.getUser().getId())
+                .username(member.getUser() == null ? null : member.getUser().getUsername())
+                .email(member.getUser() == null ? null : member.getUser().getEmail())
                 .role(roleName)
                 .joinedAt(member.getJoinedAt())
                 .build();

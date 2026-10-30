@@ -141,12 +141,12 @@ export function PostComposerModal({
                   onChange={form.handleChange}
                   onBlur={form.handleBlur}
                   aria-invalid={form.isInvalid("description")}
-                  maxLength={10000}
+                  maxLength={1000}
                   className="font-mono text-xs leading-relaxed"
                 />
                 <div className="flex justify-between text-[11px] text-muted-foreground">
                   <span>Markdown formatting is supported.</span>
-                  <span>{form.values.description.length} / 10000</span>
+                  <span>{form.values.description.length} / 1000</span>
                 </div>
               </div>
             ) : (

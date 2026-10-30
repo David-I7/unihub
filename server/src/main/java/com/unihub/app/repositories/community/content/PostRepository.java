@@ -14,6 +14,17 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT p FROM Post p JOIN FETCH p.owner WHERE p.id = :id")
     Optional<Post> findByIdWithOwner(@Param("id") UUID id);
 
+    @Query("""
+        SELECT p FROM Post p JOIN FETCH p.owner
+        LEFT JOIN FETCH p.communityPost comm_p
+        LEFT JOIN FETCH p.coursePost cp
+        LEFT JOIN FETCH comm_p.community
+        LEFT JOIN FETCH cp.course c
+        LEFT JOIN FETCH c.studyYear
+        WHERE p.id = :id
+        """)
+    Optional<Post> findByIdWithOwnerAndPost(@Param("id") UUID id);
+
     @Modifying
     @Query("UPDATE Post p SET p.likesCount = p.likesCount + 1 WHERE p.id = :id")
     void incrementLikesCount(@Param("id") UUID id);

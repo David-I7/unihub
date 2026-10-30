@@ -86,6 +86,17 @@ public class CommunityMemberController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/members/{membershipId}")
+    @PreAuthorize("hasPermission(#communitySlug, 'MEMBER', 'DELETE')")
+    public ResponseEntity<Void> removeMemberById(
+            @PathVariable String communitySlug,
+            @AuthenticationPrincipal UserDto caller,
+            @PathVariable UUID membershipId
+    ) {
+        communityMemberService.removeMember(communitySlug, caller, membershipId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/join-codes")
     @PreAuthorize("hasPermission(#communitySlug, 'JOIN_CODE', 'CREATE')")
     public ResponseEntity<CommunityJoinCodeResponseDto> createJoinCode(

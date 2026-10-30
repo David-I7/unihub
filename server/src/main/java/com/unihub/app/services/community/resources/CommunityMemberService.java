@@ -12,7 +12,6 @@ import com.unihub.app.entities.authorization.Role;
 import com.unihub.app.entities.community.resources.Community;
 import com.unihub.app.entities.community.resources.CommunityJoinCode;
 import com.unihub.app.entities.community.resources.CommunityMember;
-import com.unihub.app.entities.community.resources.CommunityMembersId;
 import com.unihub.app.mappers.PageMapper;
 import com.unihub.app.mappers.UserMapper;
 import com.unihub.app.mappers.community.CommunityResourceMapper;
@@ -20,9 +19,7 @@ import com.unihub.app.repositories.authentication.UserRepository;
 import com.unihub.app.repositories.community.resources.CommunityJoinCodeRepository;
 import com.unihub.app.repositories.community.resources.CommunityMemberRepository;
 import com.unihub.app.repositories.community.resources.CommunityRepository;
-import com.unihub.app.services.authentication.SessionService;
 import com.unihub.app.services.authorization.RoleService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
@@ -36,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -50,10 +46,9 @@ public class CommunityMemberService {
     private final PageMapper pageMapper;
     private final UserMapper userMapper;
     private final CommunityResourceMapper communityMapper;
-    private final SessionService sessionService;
     private final Cache communityMembershipsCache;
 
-    public CommunityMemberService(CacheManager cacheManager, CommunityMemberRepository communityMemberRepository, CommunityRepository communityRepository, CommunityJoinCodeRepository joinCodeRepository, UserRepository userRepository, RoleService roleService, PageMapper pageMapper, UserMapper userMapper, CommunityResourceMapper communityMapper, SessionService sessionService) {
+    public CommunityMemberService(CacheManager cacheManager, CommunityMemberRepository communityMemberRepository, CommunityRepository communityRepository, CommunityJoinCodeRepository joinCodeRepository, UserRepository userRepository, RoleService roleService, PageMapper pageMapper, UserMapper userMapper, CommunityResourceMapper communityMapper) {
         this.communityMemberRepository = communityMemberRepository;
         this.communityRepository = communityRepository;
         this.joinCodeRepository = joinCodeRepository;
@@ -62,8 +57,7 @@ public class CommunityMemberService {
         this.pageMapper = pageMapper;
         this.userMapper = userMapper;
         this.communityMapper = communityMapper;
-        this.sessionService = sessionService;
-        this.communityMembershipsCache = cacheManager.getCache("communityMemberships");
+        this.communityMembershipsCache = cacheManager != null ? cacheManager.getCache("communityMemberships") : null;
     }
 
     @Transactional(readOnly = true)
@@ -115,6 +109,7 @@ public class CommunityMemberService {
         OffsetDateTime now = OffsetDateTime.now();
 
         CommunityMember member = communityMapper.toCommunityMemberEntity(
+                null,
                 community,
                 user,
                 memberRole.getId(),
@@ -161,6 +156,7 @@ public class CommunityMemberService {
         OffsetDateTime now = OffsetDateTime.now();
 
         CommunityMember member = communityMapper.toCommunityMemberEntity(
+                null,
                 community,
                 targetUser,
                 assignedRole.getId(),
@@ -216,7 +212,9 @@ public class CommunityMemberService {
         member.setRoleId(newRole.getId());
         CommunityMember saved = communityMemberRepository.save(member);
 
-        communityMembershipsCache.evict(communitySlug + ':' + targetUser.getId());
+        if (communityMembershipsCache != null) {
+            communityMembershipsCache.evict(communitySlug + ':' + targetUser.getId());
+        }
         return communityMapper.toCommunityMemberResponseDto(saved, newRole.getName());
     }
 
@@ -252,6 +250,30 @@ public class CommunityMemberService {
         return targetUser;
     }
 
+    @Transactional
+    public void removeMember(String communitySlug, UserDto caller, UUID membershipId) {
+        CommunityMember targetMember = communityMemberRepository.findByIdWithOwnerAndCommunity(membershipId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found"));
+
+        if (targetMember.getUser() != null){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "This methods is intended only for deleted users.");
+        }
+
+        boolean isPlatformAdmin = caller.role() == RoleType.ROOT || caller.role() == RoleType.ADMIN;
+        RoleType communityRole = getCommunityRole(communitySlug, caller.id());
+        boolean isOwner = communityRole.equals(RoleType.COMMUNITY_OWNER);
+
+        String targetRoleName = roleService.getRoleById(targetMember.getRoleId()).getName();
+
+        // If caller is COMMUNITY_ADMIN (not owner or platform admin), they cannot remove another COMMUNITY_ADMIN
+        if (!isOwner && !isPlatformAdmin && RoleType.COMMUNITY_ADMIN.name().equals(targetRoleName)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Community administrators cannot remove other administrators");
+        }
+
+        communityRepository.updateMemberCount(targetMember.getCommunity().getId(), -1);
+        communityMemberRepository.delete(targetMember);
+    }
+
     @Scheduled(cron="@daily")
     protected void deleteExpiredCodes(){
         joinCodeRepository.deleteExpiredCodes();
@@ -271,7 +293,9 @@ public class CommunityMemberService {
     }
 
     public void evictCommunityMemberRoleCache(String communitySlug, UUID userId) {
-        communityMembershipsCache.evict(communitySlug + ':' + userId);
+        if (communityMembershipsCache != null) {
+            communityMembershipsCache.evict(communitySlug + ':' + userId);
+        }
     }
 
 }

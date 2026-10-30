@@ -15,11 +15,12 @@ CREATE TABLE COMMUNITIES(
 );
 
 CREATE TABLE COMMUNITY_MEMBERS(
+   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
    community_id UUID REFERENCES COMMUNITIES(id) ON DELETE CASCADE,
    user_id UUID REFERENCES USERS(id) ON DELETE SET NULL,
    role_id UUID not null REFERENCES ROLES(id),
    joined_at timestamptz not null default now(),
-   PRIMARY KEY (community_id, user_id)
+   UNIQUE (community_id, user_id)
 );
 
 CREATE TABLE TEACHERS(

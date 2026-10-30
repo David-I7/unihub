@@ -97,7 +97,6 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/comments")
-    @PreAuthorize("hasPermission(#postId, 'COMMENT', 'CREATE')")
     public ResponseEntity<CommentResponseDto> createComment(
             @PathVariable UUID postId,
             @AuthenticationPrincipal UserDto user,

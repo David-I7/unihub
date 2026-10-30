@@ -48,7 +48,7 @@ export function TeacherReviewCard({
 
   const authorName = review.isAnonymous
     ? "Anonymous Student"
-    : (review.author?.username ?? "Student");
+    : (review.author?.username ?? "Deleted Account");
 
   return (
     <Card className="rounded-2xl border bg-card p-5 shadow-xs">
@@ -60,7 +60,7 @@ export function TeacherReviewCard({
             username={
               review.isAnonymous
                 ? "Anonymous"
-                : (review.author?.username ?? "Student")
+                : (review.author?.username ?? "Deleted Account")
             }
             size="sm"
             className="size-9 rounded-xl shrink-0"

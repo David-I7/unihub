@@ -35,6 +35,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -447,11 +449,18 @@ public class UserServiceTests {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(passwordEncoder.encode("newPassword")).thenReturn("newEncoded");
 
+        Cache activeResetTokens = mock(Cache.class);
+        Cache.ValueWrapper valueWrapper = mock(Cache.ValueWrapper.class);
+        when(cacheManager.getCache("activeResetTokens")).thenReturn(activeResetTokens);
+        when(activeResetTokens.get(userId)).thenReturn(valueWrapper);
+        when(activeResetTokens.get(userId, Map.class)).thenReturn(Map.of("token", "reset-token"));
+
         userService.resetPassword("reset-token", "newPassword");
 
         assertEquals("newEncoded", user.getPassword());
         verify(userRepository).save(user);
         verify(sessionService).revokeAllUserSessionsAndAccessTokens(userId);
+        verify(activeResetTokens).evict(userId);
     }
 
     // =========================================================================

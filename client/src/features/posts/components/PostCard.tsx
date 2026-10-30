@@ -36,10 +36,12 @@ import { EditPostModal } from "./EditPostModal";
 import { DeletePostDialog } from "./DeletePostDialog";
 import type { Post } from "@/types/domain";
 import type { CallerMembership } from "@/features/communities/api/types";
+import type { PostTarget } from "../api/types";
+import { Spinner } from "@/components/ui/spinner";
 
 export interface PostCardProps {
   post: Post;
-  communitySlug?: string;
+  target: PostTarget;
   callerMembership?: CallerMembership | null;
   isArchived?: boolean;
   className?: string;
@@ -47,7 +49,7 @@ export interface PostCardProps {
 
 export function PostCard({
   post,
-  communitySlug,
+  target,
   callerMembership,
   isArchived = false,
   className,
@@ -60,7 +62,7 @@ export function PostCard({
 
   const user = useAuthStore((state) => state.user);
   const { canPinPost, canEditPost, canDeletePost } = usePermissions(
-    callerMembership !== undefined ? callerMembership : communitySlug,
+    callerMembership !== undefined ? callerMembership : target.communitySlug,
   );
 
   const likeMutation = useTogglePostLike();
@@ -82,7 +84,7 @@ export function PostCard({
     user && post.owner && String(user.id) === String(post.owner.id),
   );
   const canPin = !isArchived && canPinPost;
-  const canEdit = !isArchived && canEditPost(post.owner?.id);
+  const canEdit = !isArchived && canEditPost(post);
   const canDelete = !isArchived && canDeletePost(post.owner?.id);
   const hasActions = canPin || canEdit || canDelete;
 
@@ -117,10 +119,13 @@ export function PostCard({
   };
 
   const handleTogglePin = async () => {
+    if (isArchived) return;
+
     try {
       await pinMutation.mutateAsync({
         postId: post.id,
         pinned: !post.pinned,
+        target,
       });
       toast.success(post.pinned ? "Post unpinned." : "Post pinned to top!");
     } catch {
@@ -140,26 +145,31 @@ export function PostCard({
         )}
       >
         {/* Header: Author info, badges, and actions */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <UserAvatar username={post.owner?.username} size="default" />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold text-sm text-foreground">
-                  {post.owner?.username ?? "Anonymous"}
-                </span>
-                {isPostAuthor && (
-                  <span className="rounded-md bg-secondary text-secondary-foreground border border-border/50 px-1.5 py-0.2 text-[10px] font-bold">
-                    Author
-                  </span>
-                )}
-              </div>
-              <span className="text-[11px] text-muted-foreground">
-                {formatPostDate(post.createdAt)}
-              </span>
-            </div>
-          </div>
 
+        <div className="flex items-start justify-between gap-2">
+          <Link to={`/posts/${post.id}`}>
+            <div className="flex items-center gap-3">
+              <UserAvatar
+                username={post.owner?.username ?? "Deleted User"}
+                size="md"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm text-foreground">
+                    {post.owner?.username ?? "Deleted User"}
+                  </span>
+                  {isPostAuthor && (
+                    <span className="text-[11px] text-muted-foreground">
+                      (You)
+                    </span>
+                  )}
+                </div>
+                <span className="text-[11px] text-muted-foreground">
+                  {formatPostDate(post.createdAt)}
+                </span>
+              </div>
+            </div>
+          </Link>
           <div className="flex items-center gap-1.5">
             {post.pinned && (
               <Badge
@@ -239,14 +249,9 @@ export function PostCard({
 
         {/* Post Content */}
         <div className="space-y-1">
-          <Link
-            to={`/posts/${post.id}`}
-            className="hover:underline hover:text-primary transition-colors block"
-          >
-            <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
-              {post.title}
-            </h3>
-          </Link>
+          <h3 className="font-heading text-base md:text-lg font-bold text-foreground">
+            {post.title}
+          </h3>
           <MarkdownRenderer content={post.description} />
         </div>
 
@@ -313,9 +318,11 @@ export function PostCard({
             {/* Comments List */}
             {isCommentsLoading ? (
               <div className="py-4 text-center text-xs text-muted-foreground">
-                Loading comments...
+                <Spinner className="size-5" />
               </div>
-            ) : fetchedComments.length === 0 ? (
+            ) : isArchived &&
+              fetchedComments.length === 0 ? null : fetchedComments.length ===
+              0 ? (
               <p className="text-xs text-muted-foreground italic py-2">
                 No comments yet on this post. Be the first to share your
                 thoughts!
@@ -326,7 +333,7 @@ export function PostCard({
                   <CommentItem
                     key={comment.id}
                     comment={comment}
-                    communitySlug={communitySlug}
+                    target={target}
                     isArchived={isArchived}
                   />
                 ))}

@@ -33,7 +33,7 @@ export function RemoveMemberDialog({
     try {
       await removeMutation.mutateAsync({
         communitySlug,
-        username: member.username,
+        member: member,
       });
       toast.success(`@${member.username} was removed from the community.`);
       onOpenChange(false);

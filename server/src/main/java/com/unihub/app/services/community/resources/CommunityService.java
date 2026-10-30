@@ -181,7 +181,7 @@ public class CommunityService {
         Community savedCommunity = communityRepository.save(community);
 
         Role ownerRole = roleService.getRoleByName(RoleType.COMMUNITY_OWNER);
-        CommunityMember member = communityMapper.toCommunityMemberEntity(savedCommunity, owner, ownerRole.getId(), now);
+        CommunityMember member = communityMapper.toCommunityMemberEntity(null,savedCommunity, owner, ownerRole.getId(), now);
 
         communityMemberRepository.save(member);
 
@@ -257,6 +257,7 @@ public class CommunityService {
                 communityMemberRepository.save(newOwnerMember);
             } else {
                 CommunityMember newMember = communityMapper.toCommunityMemberEntity(
+                        null,
                         community,
                         newOwner,
                         ownerRole.getId(),

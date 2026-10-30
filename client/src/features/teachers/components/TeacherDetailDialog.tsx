@@ -443,7 +443,7 @@ type ReviewTabProps = {
   setCreateReviewOpen: (open: boolean) => void;
   user: User;
   open: boolean;
-  canUpdateTeacherRating: (authorId: string) => boolean;
+  canUpdateTeacherRating: (review: TeacherRating) => boolean;
   canDeleteTeacherRating: (authorId: string) => boolean;
   canCreateTeacherRating: boolean;
 };
@@ -529,9 +529,7 @@ function ReviewTab({
                 key={review.id}
                 review={review}
                 isAuthor={isAuthor}
-                canUpdateReview={canUpdateTeacherRating(
-                  review.author?.id || "",
-                )}
+                canUpdateReview={canUpdateTeacherRating(review)}
                 canDeleteReview={canDeleteTeacherRating(
                   review.author?.id || "",
                 )}

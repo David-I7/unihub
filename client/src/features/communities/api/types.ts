@@ -64,13 +64,23 @@ export type CommunityMemberRole =
   | "COMMUNITY_ADMIN"
   | "COMMUNITY_MEMBER";
 
-export type CommunityMember = {
-  userId: string;
-  username: string;
-  email?: string;
-  role: CommunityMemberRole;
-  joinedAt: string;
-};
+export type CommunityMember =
+  | {
+      membershipId: string;
+      userId: string;
+      username: string;
+      email: string;
+      role: CommunityMemberRole;
+      joinedAt: string;
+    }
+  | {
+      membershipId: string;
+      userId: null;
+      username: null;
+      email: null;
+      role: CommunityMemberRole;
+      joinedAt: string;
+    };
 
 export type AddCommunityMemberDto = {
   username: string;

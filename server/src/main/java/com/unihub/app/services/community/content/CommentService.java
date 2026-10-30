@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -34,18 +35,11 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
-    private final PostService postService;
     private final CommunityContentMapper contentMapper;
     private final UserMapper userMapper;
     private final PageMapper pageMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final CommentPolicy commentPolicy;
-
-    public String getCommunitySlugForComment(UUID commentId) {
-        Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
-        return postService.getCommunitySlugForPost(comment.getPost().getId());
-    }
 
     @Transactional(readOnly = true)
     public PageDto<CommentResponseDto> getComments(UUID postId, Pageable pageable) {
@@ -59,11 +53,16 @@ public class CommentService {
 
     @Transactional
     public CommentResponseDto createComment(UUID postId, UserDto caller, CreateCommentRequestDto dto) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found"));
-
+        Optional<Post> existingPost = postRepository.findByIdWithOwnerAndPost(postId);
+        if (existingPost.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Post not found");
+        }
+        Post post = existingPost.get();
         User owner = userMapper.toEntity(caller);
         Comment comment = contentMapper.toCommentEntity(dto, post, owner);
+
+        commentPolicy.check(caller, comment, PermissionType.CREATE_COMMENT);
+
         Comment savedComment = commentRepository.save(comment);
 
         postRepository.incrementCommentsCount(postId);
@@ -75,9 +74,12 @@ public class CommentService {
 
     @Transactional
     public CommentResponseDto updateComment(UUID commentId, UserDto caller, UpdateCommentRequestDto dto) {
-        Comment comment = commentRepository.findByIdWithOwner(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+        Optional<Comment> existingComment = commentRepository.findByIdWithOwnerAndPost(commentId);
+        if (existingComment.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found");
+        }
 
+        Comment comment = existingComment.get();
         commentPolicy.check(caller, comment, PermissionType.UPDATE_COMMENT);
 
         comment.setContent(dto.content());
@@ -87,9 +89,12 @@ public class CommentService {
 
     @Transactional
     public void deleteComment(UUID commentId, UserDto caller) {
-        Comment comment = commentRepository.findByIdWithOwner(commentId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+        Optional<Comment> existingComment = commentRepository.findByIdWithOwnerAndPost(commentId);
+        if (existingComment.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found");
+        }
 
+        Comment comment = existingComment.get();
         commentPolicy.check(caller, comment, PermissionType.DELETE_COMMENT);
 
         postRepository.decrementCommentsCount(comment.getPost().getId());

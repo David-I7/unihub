@@ -25,6 +25,7 @@ public record PostDetailResponseDto(
         String studyYearSlug,
         String studyYearName,
         String courseSlug,
-        String courseName
+        String courseName,
+        Boolean isArchived
 ) {
 }

@@ -1,14 +1,9 @@
 import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Post, PostDetail } from "@/types/domain";
-import type { UpdatePostPayload } from "./types";
+import type { Post } from "@/types/domain";
+import type { PostTarget, UpdatePostPayload } from "./types";
 import { postKeys } from "./getCommunityPosts";
-import {
-  updateInfiniteQueryItem,
-  patchDetailQuery,
-  rollbackOptimisticContext,
-  type OptimisticRollbackContext,
-} from "@/lib/queryCacheUtils";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface UpdatePostVariables {
   postId: string;
@@ -27,55 +22,41 @@ export function useUpdatePost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: updatePost,
-    onMutate: async ({ postId, payload }): Promise<OptimisticRollbackContext> => {
-      await queryClient.cancelQueries({ queryKey: postKeys.all });
-
-      const detailKey = postKeys.detail(postId);
-      const previousDetail = queryClient.getQueryData<PostDetail>(detailKey);
-      const previousQueries = queryClient.getQueriesData({
-        queryKey: postKeys.all,
+    mutationFn: (
+      variables: { postId: string; target: PostTarget } & UpdatePostVariables,
+    ) => {
+      return updatePost(variables);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: postKeys.detail(variables.postId),
       });
 
-      patchDetailQuery<PostDetail>(queryClient, detailKey, (old) => ({
-        ...old,
-        ...payload,
-        updatedAt: new Date().toISOString(),
-      }));
-
-      updateInfiniteQueryItem<Post>(queryClient, postKeys.all, postId, (post) => ({
-        ...post,
-        ...payload,
-        updatedAt: new Date().toISOString(),
-      }));
-
-      return {
-        previousDetail: [detailKey, previousDetail],
-        previousQueries,
-      };
-    },
-    onSuccess: (updatedPost) => {
-      patchDetailQuery<PostDetail>(
-        queryClient,
-        postKeys.detail(updatedPost.id),
-        (old) => ({
-          ...old,
-          ...updatedPost,
-        }),
-      );
-
-      updateInfiniteQueryItem<Post>(
-        queryClient,
-        postKeys.all,
-        updatedPost.id,
-        (post) => ({
-          ...post,
-          ...updatedPost,
-        }),
-      );
-    },
-    onError: (_err, _vars, context) => {
-      rollbackOptimisticContext(queryClient, context);
+      if (variables.target.type === "community") {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.community(variables.target.communitySlug),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.community(variables.target.communitySlug),
+        });
+      } else {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        );
+        queryClient.invalidateQueries({
+          queryKey: postKeys.course(
+            variables.target.communitySlug,
+            variables.target.studyYearSlug,
+            variables.target.courseSlug,
+          ),
+        });
+      }
     },
   });
 }

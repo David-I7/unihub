@@ -30,6 +30,14 @@ export function CommunityPostsTab({
     return data?.pages.flatMap((page) => page.content) ?? [];
   }, [data]);
 
+  const target = useMemo(
+    () => ({
+      type: "community" as const,
+      communitySlug,
+    }),
+    [communitySlug],
+  );
+
   return (
     <>
       <PostsFeed
@@ -44,12 +52,12 @@ export function CommunityPostsTab({
         onOpenComposer={() => setComposerOpen(true)}
         emptyTitle="No Discussions Yet"
         emptyDescription="Be the first to start an academic discussion or share materials in this community."
-        communitySlug={communitySlug}
+        target={target}
         callerMembership={callerMembership}
       />
 
       <PostComposerModal
-        target={{ type: "community", communitySlug }}
+        target={target}
         open={composerOpen}
         onOpenChange={setComposerOpen}
       />

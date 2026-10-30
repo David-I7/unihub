@@ -24,6 +24,8 @@ import com.unihub.app.security.JwtAuthentication;
 import com.unihub.app.services.authorization.RoleService;
 import com.unihub.app.services.community.resources.CommunityMemberService;
 import org.junit.jupiter.api.DisplayName;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,6 +65,12 @@ public class CommunityMemberServiceTests {
     @Mock
     private RoleService roleService;
 
+    @Mock
+    private CacheManager cacheManager;
+
+    @Mock
+    private Cache cache;
+
     private PageMapper pageMapper;
     private CommunityResourceMapper communityMapper;
     private UserMapper userMapper;
@@ -73,7 +81,9 @@ public class CommunityMemberServiceTests {
         pageMapper = new PageMapper();
         communityMapper = new CommunityResourceMapper();
         userMapper = new UserMapper(roleService);
+        when(cacheManager.getCache("communityMemberships")).thenReturn(cache);
         communityMemberService = new CommunityMemberService(
+                cacheManager,
                 communityMemberRepository,
                 communityRepository,
                 joinCodeRepository,

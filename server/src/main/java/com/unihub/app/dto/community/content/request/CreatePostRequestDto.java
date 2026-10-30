@@ -9,7 +9,7 @@ public record CreatePostRequestDto(
         String title,
 
         @NotBlank(message = "Description is required")
-        @Size(max = 10000, message = "Description must not exceed 10000 characters")
+        @Size(max = 1000, message = "Description must not exceed 1000 characters")
         String description
 ) {
 }
