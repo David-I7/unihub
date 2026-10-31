@@ -73,7 +73,14 @@ public class StudyYearService {
         StudyYear studyYear = studyYearRepository.findByCommunitySlugAndStudyYearNameWithCourses(communitySlug, studyYearName)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Study year not found"));
 
-        return studyYear.getCourses().stream().map(communityMapper::courseIdentifiersResponseDto).toList();
+        if (studyYear.getCourses() == null) {
+            return java.util.Collections.emptyList();
+        }
+
+        return studyYear.getCourses().stream()
+                .filter(course -> !course.isArchived())
+                .map(communityMapper::courseIdentifiersResponseDto)
+                .toList();
     }
 
     @Transactional

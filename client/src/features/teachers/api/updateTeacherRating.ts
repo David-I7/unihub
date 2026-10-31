@@ -35,10 +35,9 @@ export function useUpdateTeacherRating(
       );
     },
     onSuccess: () => {
-      removeInfiniteQueryPagesExceptFirst(
-        queryClient,
-        teacherKeys.ratings(teacherId),
-      );
+      queryClient.invalidateQueries({
+        queryKey: teacherKeys.ratings(teacherId),
+      });
       queryClient.invalidateQueries({
         queryKey: teacherKeys.detail(teacherId),
       });

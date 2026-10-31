@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import {
   MoreVertical,
   Edit2,
-  Users,
   Archive,
   ArchiveRestore,
   Trash2,
@@ -20,7 +19,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { getErrorMessage } from "@/api/types";
 import { useArchiveCourse } from "../api/archiveCourse";
 import { EditCourseModal } from "./EditCourseModal";
-import { ManageCourseTeachersModal } from "./ManageCourseTeachersModal";
 import { DeleteCourseDialog } from "./DeleteCourseDialog";
 import type { Course, CourseCardInfo } from "../api/types";
 import type { Teacher, TeacherSummary } from "@/features/teachers/api/types";
@@ -45,15 +43,13 @@ export function CourseActionMenu({
   align = "end",
 }: CourseActionMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
-  const [teachersOpen, setTeachersOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { canEditCourse, canArchiveCourse, canDeleteCourse } =
     usePermissions(communitySlug);
   const archiveMutation = useArchiveCourse();
 
-  const hasAnyPermission =
-    canEditCourse || canArchiveCourse || canDeleteCourse;
+  const hasAnyPermission = canEditCourse || canArchiveCourse || canDeleteCourse;
 
   if (!hasAnyPermission) {
     return null;
@@ -118,19 +114,6 @@ export function CourseActionMenu({
             </DropdownMenuItem>
           )}
 
-          {canEditCourse && !course.archived && (
-            <DropdownMenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                setTeachersOpen(true);
-              }}
-              className="gap-2 text-xs cursor-pointer"
-            >
-              <Users className="size-3.5" />
-              <span>Manage Teachers</span>
-            </DropdownMenuItem>
-          )}
-
           {canArchiveCourse && (
             <DropdownMenuItem
               onClick={handleToggleArchive}
@@ -177,15 +160,6 @@ export function CourseActionMenu({
         initialTeachers={teachers}
         open={editOpen}
         onOpenChange={setEditOpen}
-      />
-
-      <ManageCourseTeachersModal
-        communitySlug={communitySlug}
-        studyYearSlug={studyYearSlug}
-        course={course}
-        currentTeachers={teachers}
-        open={teachersOpen}
-        onOpenChange={setTeachersOpen}
       />
 
       <DeleteCourseDialog

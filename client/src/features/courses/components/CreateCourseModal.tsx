@@ -238,7 +238,7 @@ function CreateCourseForm({
       {/* Abbreviation, Credits, Semester */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Field>
-          <FieldLabel htmlFor="abbreviation">Code / Abbr. *</FieldLabel>
+          <FieldLabel htmlFor="abbreviation">Abbr. *</FieldLabel>
           <Input
             id="abbreviation"
             name="abbreviation"

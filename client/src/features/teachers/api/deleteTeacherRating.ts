@@ -25,6 +25,9 @@ export function useDeleteTeacherRating(
         teacherKeys.ratings(teacherId),
       );
       queryClient.invalidateQueries({
+        queryKey: teacherKeys.ratings(teacherId),
+      });
+      queryClient.invalidateQueries({
         queryKey: teacherKeys.detail(teacherId),
       });
 

@@ -16,10 +16,10 @@ import {
 import { CourseCard, CreateCourseModal } from "@/features/courses";
 import { useInfiniteStudyYearHome } from "../api/getStudyYearHome";
 
-export type FilterOption = "all" | "sem-1" | "sem-2" | "archived";
+export type FilterOption = "active" | "sem-1" | "sem-2" | "archived";
 
 const FILTER_OPTIONS = [
-  { value: "all", label: "All Courses" },
+  { value: "active", label: "Active Courses" },
   { value: "sem-1", label: "Semester 1" },
   { value: "sem-2", label: "Semester 2" },
   { value: "archived", label: "Archived" },
@@ -33,8 +33,8 @@ interface StudyYearCoursesFilters {
 const COURSES_FILTER_SCHEMA: FilterSchema<StudyYearCoursesFilters> = {
   search: { defaultValue: "", paramKey: "search" },
   filter: {
-    defaultValue: "all",
-    allowedValues: ["all", "sem-1", "sem-2", "archived"] as const,
+    defaultValue: "active",
+    allowedValues: ["active", "sem-1", "sem-2", "archived"] as const,
     paramKey: "filter",
   },
 };
@@ -108,7 +108,8 @@ export function StudyYearCoursesList({
     rootMargin: "250px",
   });
 
-  const hasActiveFilters = Boolean(debouncedSearch) || filters.filter !== "all";
+  const hasActiveFilters =
+    Boolean(debouncedSearch) || filters.filter !== "active";
 
   const handleClearFilters = () => {
     setSearchInput("");
@@ -137,7 +138,7 @@ export function StudyYearCoursesList({
           value={filters.filter}
           onChange={(val) => setFilter("filter", val as FilterOption)}
           options={FILTER_OPTIONS}
-          defaultValue="all"
+          defaultValue="active"
           icon={BookOpen}
         />
 

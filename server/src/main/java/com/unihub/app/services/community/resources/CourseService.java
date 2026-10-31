@@ -103,7 +103,7 @@ public class CourseService {
 
         List<Teacher> teachers = Collections.emptyList();
         if (dto.teacherIds() != null && !dto.teacherIds().isEmpty()) {
-            teachers = teacherRepository.findAllByIdInAndCommunityId(dto.teacherIds(), studyYear.getCommunity().getId());
+            teachers = teacherRepository.findAllByIdInAndCommunityIdWithCourses(dto.teacherIds(), studyYear.getCommunity().getId());
             if (teachers.size() != dto.teacherIds().size()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more teachers were not found in this community");
             }
@@ -112,17 +112,12 @@ public class CourseService {
         Course course = resourceMapper.toCourseEntity(dto, studyYear, teachers);
         Course saved = courseRepository.save(course);
 
-        if (!teachers.isEmpty()) {
-            for (Teacher teacher : teachers) {
-                if (teacher.getCoursesTaught() == null) {
-                    teacher.setCoursesTaught(new ArrayList<>());
-                }
-                if (!teacher.getCoursesTaught().contains(saved)) {
-                    teacher.getCoursesTaught().add(saved);
-                }
-                teacherRepository.save(teacher);
-            }
-        }
+        teachers.forEach(teacher -> {
+            if (teacher.getCoursesTaught() == null) {
+                teacher.setCoursesTaught(List.of(course));
+            }else teacher.getCoursesTaught().add(course);
+            teacherRepository.save(teacher);
+        });
 
         return resourceMapper.toCourseResponseDto(saved);
     }
@@ -132,7 +127,7 @@ public class CourseService {
         if (dto.name().isUndefined() && dto.slug().isUndefined() && dto.abbreviation().isUndefined()
                 && dto.semester().isUndefined() && dto.creditPoints().isUndefined()
                 && dto.description().isUndefined() && dto.readme().isUndefined()
-                && dto.archived().isUndefined() && dto.teacherIds().isUndefined()) {
+                && dto.teacherIds().isUndefined()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one field must be provided for update");
         }
 
@@ -166,13 +161,12 @@ public class CourseService {
         dto.creditPoints().ifPresent(course::setCreditPoints);
         dto.description().ifPresent(course::setDescription);
         dto.readme().ifPresent(course::setReadme);
-        dto.archived().ifPresent(course::setArchived);
 
         if (dto.teacherIds().isPresent()) {
             List<UUID> teacherIds = dto.teacherIds().get();
             List<Teacher> newTeachers = Collections.emptyList();
             if (teacherIds != null && !teacherIds.isEmpty()) {
-                newTeachers = teacherRepository.findAllByIdInAndCommunityId(teacherIds, course.getStudyYear().getCommunity().getId());
+                newTeachers = teacherRepository.findAllByIdInAndCommunityIdWithCourses(teacherIds, course.getStudyYear().getCommunity().getId());
                 if (newTeachers.size() != teacherIds.size()) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "One or more teachers were not found in this community");
                 }
@@ -223,56 +217,5 @@ public class CourseService {
         course.setArchived(archived);
         Course saved = courseRepository.save(course);
         return resourceMapper.toCourseResponseDto(saved);
-    }
-
-    @Transactional
-    public CourseHomeResponseDto addTeacher(String communitySlug, StudyYearName studyYearName, String courseSlug, UUID teacherId) {
-        Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachersAndCommunity(courseSlug, communitySlug, studyYearName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-
-        Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-
-        if (!teacher.getCommunity().getId().equals(course.getStudyYear().getCommunity().getId())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Teacher does not belong to this community");
-        }
-
-        if (teacher.getCoursesTaught() == null) {
-            teacher.setCoursesTaught(new ArrayList<>());
-        }
-        if (!teacher.getCoursesTaught().contains(course)) {
-            teacher.getCoursesTaught().add(course);
-        }
-
-        if (course.getTeachers() == null) {
-            course.setTeachers(new ArrayList<>());
-        }
-        if (!course.getTeachers().contains(teacher)) {
-            course.getTeachers().add(teacher);
-        }
-
-        teacherRepository.save(teacher);
-        Course saved = courseRepository.save(course);
-        return resourceMapper.toCourseHomeResponseDto(saved);
-    }
-
-    @Transactional
-    public CourseHomeResponseDto removeTeacher(String communitySlug, StudyYearName studyYearName, String courseSlug, UUID teacherId) {
-        Course course = courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachersAndCommunity(courseSlug, communitySlug, studyYearName)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
-
-        Teacher teacher = teacherRepository.findByIdWithCommunity(teacherId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Teacher not found"));
-
-        if (teacher.getCoursesTaught() != null) {
-            teacher.getCoursesTaught().remove(course);
-        }
-        if (course.getTeachers() != null) {
-            course.getTeachers().remove(teacher);
-        }
-
-        teacherRepository.save(teacher);
-        Course saved = courseRepository.save(course);
-        return resourceMapper.toCourseHomeResponseDto(saved);
     }
 }

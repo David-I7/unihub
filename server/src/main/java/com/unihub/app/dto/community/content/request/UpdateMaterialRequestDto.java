@@ -4,6 +4,7 @@ import com.unihub.app.entities.community.content.MaterialLinkType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import com.unihub.app.utils.JsonNullableUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 
 import java.util.UUID;
@@ -29,11 +30,11 @@ public record UpdateMaterialRequestDto(
         }
 
         public UpdateMaterialRequestDto {
-                title = title == null ? JsonNullable.undefined() : title.map(String::trim);
-                description = description == null ? JsonNullable.undefined() : description.map(String::trim);
+                title = JsonNullableUtils.trim(title);
+                description = JsonNullableUtils.trim(description);
                 folderId = folderId == null ? JsonNullable.undefined() : folderId;
                 moveToRoot = moveToRoot == null ? JsonNullable.undefined() : moveToRoot;
-                url = url == null ? JsonNullable.undefined() : url.map(String::trim);
+                url = JsonNullableUtils.trim(url);
                 linkType = linkType == null ? JsonNullable.undefined() : linkType;
         }
 

@@ -19,7 +19,7 @@ export const communityKeys = {
   membershipDetail: (slug: string) =>
     [...communityKeys.allMemberships, slug] as const,
   allStudyYears: ["communities", "study-years"] as const,
-  studyYearDetail: (slug: string) =>
+  communityStudyYears: (slug: string) =>
     [...communityKeys.allStudyYears, slug] as const,
   allReadme: ["communities", "readme"] as const,
   readmeDetail: (slug: string) => [...communityKeys.allReadme, slug] as const,

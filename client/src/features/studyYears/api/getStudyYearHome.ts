@@ -7,7 +7,6 @@ import {
 import type { StudyYearHome } from "./types";
 import {
   useInfiniteQuery,
-
   keepPreviousData,
   type InfiniteData,
   type UseInfiniteQueryOptions,
@@ -58,15 +57,15 @@ export async function getStudyYearHome(
 
 export const studyYearHomeKeys = {
   all: ["study-years", "home"] as const,
-  byStudyYear: (communitySlug: string, studyYearName: string) =>
-    [...studyYearHomeKeys.all, communitySlug, studyYearName] as const,
+  byStudyYear: (communitySlug: string, studyYearSlug: string) =>
+    [...studyYearHomeKeys.all, communitySlug, studyYearSlug] as const,
   infinite: (
     communitySlug: string,
-    studyYearName: string,
+    studyYearSlug: string,
     params: StudyYearHomeQueryParams = {},
   ) =>
     [
-      ...studyYearHomeKeys.byStudyYear(communitySlug, studyYearName),
+      ...studyYearHomeKeys.byStudyYear(communitySlug, studyYearSlug),
       "infinite",
       params,
     ] as const,

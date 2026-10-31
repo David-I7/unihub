@@ -2,7 +2,6 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CommunityMember, UpdateMemberRoleDto } from "./types";
 import { communityKeys } from "./communityKeys";
-import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface UpdateCommunityMemberRoleVariables {
   communitySlug: string;
@@ -28,10 +27,6 @@ export function useUpdateCommunityMemberRole() {
   return useMutation({
     mutationFn: updateCommunityMemberRole,
     onSuccess: (_, variables) => {
-      removeInfiniteQueryPagesExceptFirst(
-        queryClient,
-        communityKeys.membersList(variables.communitySlug),
-      );
       queryClient.invalidateQueries({
         queryKey: communityKeys.communityMembers(variables.communitySlug),
       });

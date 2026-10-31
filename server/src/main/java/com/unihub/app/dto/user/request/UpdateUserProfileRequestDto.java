@@ -3,6 +3,7 @@ package com.unihub.app.dto.user.request;
 import com.unihub.app.validation.Username;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
+import com.unihub.app.utils.JsonNullableUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 
 @Builder
@@ -14,6 +15,6 @@ public record UpdateUserProfileRequestDto(
         }
 
         public UpdateUserProfileRequestDto {
-                username = username == null ? JsonNullable.undefined() : username.map(s->s.trim().toLowerCase());
+                username = JsonNullableUtils.trimToLowerCase(username);
         }
 }

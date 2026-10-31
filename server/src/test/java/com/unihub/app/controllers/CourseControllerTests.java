@@ -149,6 +149,32 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.creditPoints").value(6));
     }
 
+    @Test
+    @DisplayName("PATCH .../courses/asc with null readme and description clears them")
+    public void testUpdateCourse_NullReadmeAndDescription() throws Exception {
+        CourseResponseDto responseDto = CourseResponseDto.builder()
+                .id(1L)
+                .name("ASC")
+                .slug("asc")
+                .abbreviation("ASC")
+                .semester(1)
+                .creditPoints(6)
+                .readme(null)
+                .description(null)
+                .build();
+
+        when(courseService.updateCourse(eq("fmi-info-id"), eq(StudyYearName.YEAR_1), eq("asc"), any(UpdateCourseRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(COURSE_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"readme\": null, \"description\": null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.readme").doesNotExist())
+                .andExpect(jsonPath("$.description").doesNotExist());
+    }
+
     // =========================================================================
     // DELETE /{courseSlug} (deleteCourse)
     // =========================================================================
@@ -185,50 +211,6 @@ public class CourseControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.archived").value(true));
     }
 
-    // =========================================================================
-    // POST & DELETE /{courseSlug}/teachers/{teacherId}
-    // =========================================================================
-
-    @Test
-    @DisplayName("POST .../courses/asc/teachers/{teacherId} adds teacher to course")
-    public void testAddTeacher_Success() throws Exception {
-        UUID teacherId = UUID.randomUUID();
-        TeacherResponseDto teacherDto = TeacherResponseDto.builder()
-                .id(teacherId)
-                .firstName("Daniel")
-                .lastName("Dragulici")
-                .build();
-
-        CourseHomeResponseDto responseDto = CourseHomeResponseDto.builder()
-                .course(CourseResponseDto.builder().id(1L).slug("asc").build())
-                .teachers(List.of(teacherDto))
-                .build();
-
-        when(courseService.addTeacher("fmi-info-id", StudyYearName.YEAR_1, "asc", teacherId))
-                .thenReturn(responseDto);
-
-        mockMvc.perform(post(COURSE_URL + "/teachers/" + teacherId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.teachers[0].id").value(teacherId.toString()))
-                .andExpect(jsonPath("$.teachers[0].firstName").value("Daniel"));
-    }
-
-    @Test
-    @DisplayName("DELETE .../courses/asc/teachers/{teacherId} removes teacher from course")
-    public void testRemoveTeacher_Success() throws Exception {
-        UUID teacherId = UUID.randomUUID();
-        CourseHomeResponseDto responseDto = CourseHomeResponseDto.builder()
-                .course(CourseResponseDto.builder().id(1L).slug("asc").build())
-                .teachers(List.of())
-                .build();
-
-        when(courseService.removeTeacher("fmi-info-id", StudyYearName.YEAR_1, "asc", teacherId))
-                .thenReturn(responseDto);
-
-        mockMvc.perform(delete(COURSE_URL + "/teachers/" + teacherId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.teachers").isEmpty());
-    }
 
     // =========================================================================
     // GET /home (getCourseHome)

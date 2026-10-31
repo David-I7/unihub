@@ -132,9 +132,7 @@ function EditCourseForm({
               ? Number(values.creditPoints)
               : undefined;
         if (dirty.description)
-          payload.description = values.description
-            ? values.description.trim()
-            : "";
+          payload.description = values.description?.trim() || null;
         if (dirty.teacherIds) payload.teacherIds = selectedTeacherIds;
 
         const updated = await updateMutation.mutateAsync({
@@ -262,7 +260,7 @@ function EditCourseForm({
       {/* Abbreviation, Credits, Semester */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <Field>
-          <FieldLabel htmlFor="abbreviation">Code / Abbr. *</FieldLabel>
+          <FieldLabel htmlFor="abbreviation">Abbr. *</FieldLabel>
           <Input
             id="abbreviation"
             name="abbreviation"
@@ -359,7 +357,6 @@ function EditCourseForm({
               {isTeachersLoading ? (
                 <div className="py-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <Spinner className="size-3.5" />
-                  <span>Loading instructors...</span>
                 </div>
               ) : allTeachers.length === 0 ? (
                 <div className="py-4 text-center text-xs text-muted-foreground">
@@ -386,12 +383,15 @@ function EditCourseForm({
                       >
                         <div className="flex items-center gap-2 min-w-0">
                           <UserAvatar
-                            username={teacher.lastName || teacher.firstName}
+                            username={teacher.lastName.concat(
+                              " ",
+                              teacher.firstName,
+                            )}
                             size="xs"
                             className="size-5 rounded-md"
                           />
                           <span className="truncate">
-                            Prof. {teacher.firstName} {teacher.lastName}
+                            Prof. {teacher.lastName} {teacher.firstName}
                           </span>
                         </div>
                         {isSelected && (

@@ -55,16 +55,15 @@ export function CourseCard({
         </span>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          {isArchived ? (
+          {isArchived && (
             <Badge variant="warning" size="xs" className="font-medium gap-1">
               <Archive className="size-3" />
               Archived
             </Badge>
-          ) : (
-            <Badge variant="secondary" size="xs" className="font-medium">
-              Sem {item.semester}
-            </Badge>
           )}
+          <Badge variant="secondary" size="xs" className="font-medium">
+            Sem {item.semester}
+          </Badge>
 
           <Badge
             variant="outline"
@@ -108,7 +107,7 @@ export function CourseCard({
               {teachers.slice(0, 2).map((teacher) => (
                 <UserAvatar
                   key={teacher.id}
-                  username={teacher.lastName || teacher.firstName}
+                  username={`${teacher.lastName ?? ""} ${teacher.firstName ?? ""}`.trim() || "Teacher"}
                   size="xs"
                   className="size-6 rounded-lg ring-2 ring-card"
                   fallbackClassName="rounded-lg text-[9px]"
@@ -122,7 +121,7 @@ export function CourseCard({
             </div>
 
             <span className="font-medium text-foreground text-xs truncate">
-              Prof. {primaryTeacher?.lastName || primaryTeacher?.firstName}
+              Prof. {primaryTeacher ? `${primaryTeacher.lastName ?? ""} ${primaryTeacher.firstName ?? ""}`.trim() : ""}
               {hasMultipleTeachers && (
                 <span className="text-muted-foreground text-[11px] ml-1">
                   +{teachers.length - 1} more

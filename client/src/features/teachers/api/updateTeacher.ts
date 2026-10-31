@@ -2,7 +2,6 @@ import client from "@/api/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { UpdateTeacherRequest, Teacher } from "./types";
 import { teacherKeys } from "./keys";
-import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 import { courseHomeKeys } from "@/features/courses/api/getCourseHome";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 
@@ -30,12 +29,8 @@ export function useUpdateTeacher(communitySlug: string) {
     },
     onSuccess: (_, variables) => {
       const id = variables.teacherId;
-      queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: teacherKeys.detail(id) });
 
-      removeInfiniteQueryPagesExceptFirst(
-        queryClient,
-        teacherKeys.communityList(communitySlug),
-      );
       queryClient.invalidateQueries({
         queryKey: teacherKeys.communityList(communitySlug),
       });

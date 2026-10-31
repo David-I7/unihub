@@ -14,16 +14,13 @@ export function useDeleteTeacher(communitySlug: string) {
 
   return useMutation({
     mutationFn: (targetId: string) => {
-      const id = targetId;
-      if (!id) {
-        throw new Error("Teacher ID is required for deletion.");
-      }
-      return deleteTeacher(id);
+      return deleteTeacher(targetId);
     },
     onSuccess: (_, variables) => {
       const id = variables;
 
       queryClient.removeQueries({ queryKey: teacherKeys.detail(id) });
+      queryClient.removeQueries({ queryKey: teacherKeys.ratings(id) });
 
       removeInfiniteQueryPagesExceptFirst(
         queryClient,

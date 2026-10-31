@@ -100,30 +100,6 @@ public class CourseController {
         return ResponseEntity.ok(updated);
     }
 
-    @PostMapping("/{courseSlug}/teachers/{teacherId}")
-    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'UPDATE')")
-    public ResponseEntity<CourseHomeResponseDto> addTeacher(
-            @PathVariable String communitySlug,
-            @PathVariable StudyYearName studyYearName,
-            @PathVariable String courseSlug,
-            @PathVariable UUID teacherId
-    ) {
-        CourseHomeResponseDto response = courseService.addTeacher(communitySlug, studyYearName, courseSlug, teacherId);
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping("/{courseSlug}/teachers/{teacherId}")
-    @PreAuthorize("hasPermission(#communitySlug, 'COURSE', 'UPDATE')")
-    public ResponseEntity<CourseHomeResponseDto> removeTeacher(
-            @PathVariable String communitySlug,
-            @PathVariable StudyYearName studyYearName,
-            @PathVariable String courseSlug,
-            @PathVariable UUID teacherId
-    ) {
-        CourseHomeResponseDto response = courseService.removeTeacher(communitySlug, studyYearName, courseSlug, teacherId);
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/{courseSlug}/home")
     public ResponseEntity<CourseHomeResponseDto> getCourseHome(
             @PathVariable String communitySlug,

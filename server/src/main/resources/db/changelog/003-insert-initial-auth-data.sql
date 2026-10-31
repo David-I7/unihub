@@ -40,7 +40,7 @@ Pattern: <action>:<resource>
   create:studyYear           |  X   |   X   |        X        |        X        |                  |
   delete:studyYear           |  X   |   X   |        X        |        X        |                  |
   create:course              |  X   |   X   |        X        |        X        |        X         |
-  update:course              |  X   |   X   |        X        |        X        |                  |
+  update:course              |  X   |   X   |        X        |        X        |        X         |
   delete:course              |  X   |   X   |        X        |        X        |                  |
   archive:course             |  X   |   X   |        X        |        X        |                  |
   create:folder              |  X   |   X   |        X        |        X        |        X         |
@@ -289,6 +289,7 @@ FROM ROLES r, PERMISSIONS p
 WHERE r.name = 'COMMUNITY_MEMBER'
   AND p.name IN (
     'create:course',
+    'update:course',
     'create:folder',
     'update:folder',
     'delete:folder',

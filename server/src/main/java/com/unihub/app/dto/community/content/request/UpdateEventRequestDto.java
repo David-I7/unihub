@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import com.unihub.app.utils.JsonNullableUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 
 @Builder
@@ -25,11 +26,11 @@ public record UpdateEventRequestDto(
         JsonNullable<@Size(max = 500, message = "Location details must not exceed 500 characters") String> locationDetails
 ) {
         public UpdateEventRequestDto {
-                title = title == null ? JsonNullable.undefined() : title.map(String::trim);
-                description = description == null ? JsonNullable.undefined() : description.map(String::trim);
+                title = JsonNullableUtils.trim(title);
+                description = JsonNullableUtils.trim(description);
                 type = type == null ? JsonNullable.undefined() : type;
                 durationHours = durationHours == null ? JsonNullable.undefined() : durationHours;
                 location = location == null ? JsonNullable.undefined() : location;
-                locationDetails = locationDetails == null ? JsonNullable.undefined() : locationDetails.map(String::trim);
+                locationDetails = JsonNullableUtils.trim(locationDetails);
         }
 }
