@@ -5,6 +5,8 @@ import { courseHomeKeys } from "./getCourseHome";
 import { studyYearHomeKeys } from "@/features/studyYears/api/getStudyYearHome";
 import { studyYearCoursesKeys } from "@/features/studyYears/api/getStudyYearCourses";
 import { communityKeys } from "@/features/communities";
+import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
+import { teacherKeys } from "@/features/teachers/api/keys";
 
 export interface UpdateCourseVariables {
   communitySlug: string;
@@ -31,7 +33,7 @@ export function useUpdateCourse() {
 
   return useMutation({
     mutationFn: updateCourse,
-    onSuccess: (updatedCourse, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: studyYearHomeKeys.byStudyYear(
           variables.communitySlug,
@@ -39,32 +41,50 @@ export function useUpdateCourse() {
         ),
       });
       queryClient.invalidateQueries({
-        queryKey: studyYearCoursesKeys.byStudyYear(
+        queryKey: studyYearCoursesKeys.courses(
           variables.communitySlug,
           variables.studyYearSlug,
         ),
       });
-      queryClient.setQueryData(
-        courseHomeKeys.byCourse(
-          variables.communitySlug,
-          variables.studyYearSlug,
-          variables.courseSlug,
-        ),
-        (old: { course: Course; teachers: unknown[] } | undefined) =>
-          old ? { ...old, course: updatedCourse } : old,
-      );
-      if (updatedCourse.slug && updatedCourse.slug !== variables.courseSlug) {
+      if (variables.payload.slug) {
+        queryClient.removeQueries({
+          queryKey: courseHomeKeys.byCourse(
+            variables.communitySlug,
+            variables.studyYearSlug,
+            variables.payload.slug,
+          ),
+        });
+      } else {
         queryClient.invalidateQueries({
           queryKey: courseHomeKeys.byCourse(
             variables.communitySlug,
             variables.studyYearSlug,
-            updatedCourse.slug,
+            variables.courseSlug,
           ),
         });
       }
-      queryClient.invalidateQueries({
-        queryKey: communityKeys.homeDetail(variables.communitySlug),
-      });
+      if (variables.payload.creditPoints) {
+        queryClient.invalidateQueries({
+          queryKey: communityKeys.homeDetail(variables.communitySlug),
+        });
+      }
+
+      if (variables.payload.teacherIds) {
+        removeInfiniteQueryPagesExceptFirst(
+          queryClient,
+          teacherKeys.communityList(variables.communitySlug),
+        );
+        queryClient.invalidateQueries({
+          queryKey: teacherKeys.communityList(variables.communitySlug),
+          refetchType: "none",
+        });
+
+        variables.payload.teacherIds.forEach((teacherId) => {
+          queryClient.invalidateQueries({
+            queryKey: teacherKeys.detail(teacherId),
+          });
+        });
+      }
     },
   });
 }

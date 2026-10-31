@@ -31,6 +31,10 @@ export function useCreateTeacherRating(
         teacherKeys.ratings(teacherId),
       );
       queryClient.invalidateQueries({
+        queryKey: teacherKeys.ratings(teacherId),
+      });
+
+      queryClient.invalidateQueries({
         queryKey: teacherKeys.detail(teacherId),
       });
 

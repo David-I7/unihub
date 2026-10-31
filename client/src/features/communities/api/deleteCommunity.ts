@@ -23,7 +23,7 @@ export function useDeleteCommunity() {
         queryKey: communityKeys.membershipDetail(communitySlug),
       });
       queryClient.removeQueries({
-        queryKey: communityKeys.studyYearDetail(communitySlug),
+        queryKey: communityKeys.communityStudyYears(communitySlug),
       });
       queryClient.removeQueries({
         queryKey: postKeys.community(communitySlug),

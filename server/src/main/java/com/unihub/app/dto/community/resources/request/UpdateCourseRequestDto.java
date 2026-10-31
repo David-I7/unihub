@@ -30,8 +30,6 @@ public record UpdateCourseRequestDto(
 
         JsonNullable<@Size(max = 50000, message = "Readme must not exceed 50000 characters") String> readme,
 
-        JsonNullable<@NotNull(message = "Archived cannot be null") Boolean> archived,
-
         JsonNullable<List<UUID>> teacherIds
 ) {
     public UpdateCourseRequestDto {
@@ -42,7 +40,6 @@ public record UpdateCourseRequestDto(
         creditPoints = creditPoints == null ? JsonNullable.undefined() : creditPoints;
         description = description == null ? JsonNullable.undefined() : description.map(String::trim);
         readme = readme == null ? JsonNullable.undefined() : readme.map(String::trim);
-        archived = archived == null ? JsonNullable.undefined() : archived;
         teacherIds = teacherIds == null ? JsonNullable.undefined() : teacherIds;
     }
 
@@ -79,11 +76,6 @@ public record UpdateCourseRequestDto(
 
         public UpdateCourseRequestDtoBuilder readme(String readme) {
             this.readme = readme != null ? JsonNullable.of(readme) : JsonNullable.of(null);
-            return this;
-        }
-
-        public UpdateCourseRequestDtoBuilder archived(Boolean archived) {
-            this.archived = archived != null ? JsonNullable.of(archived) : JsonNullable.of(null);
             return this;
         }
 

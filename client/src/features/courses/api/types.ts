@@ -155,8 +155,7 @@ export interface UpdateCoursePayload {
   semester?: number;
   creditPoints?: number;
   description?: string;
-  readme?: string;
-  archived?: boolean;
+  readme?: string | null;
   teacherIds?: string[];
 }
 

@@ -14,7 +14,7 @@ export async function getCommunityStudyYears(
 
 export function useCommunityStudyYears(communitySlug: string) {
   return useQuery<CommunityStudyYears>({
-    queryKey: communityKeys.studyYearDetail(communitySlug),
+    queryKey: communityKeys.communityStudyYears(communitySlug),
     queryFn: () => getCommunityStudyYears(communitySlug),
     placeholderData: keepPreviousData,
     enabled: communitySlug.length > 0,

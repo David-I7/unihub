@@ -6,15 +6,15 @@ import { studyYearCoursesKeys } from "./getStudyYearCourses";
 
 export interface DeleteStudyYearVariables {
   communitySlug: string;
-  studyYearName: string;
+  studyYearSlug: string;
 }
 
 export async function deleteStudyYear({
   communitySlug,
-  studyYearName,
+  studyYearSlug,
 }: DeleteStudyYearVariables): Promise<void> {
   await client.delete(
-    `/communities/${communitySlug}/study-years/${studyYearName}`,
+    `/communities/${communitySlug}/study-years/${studyYearSlug}`,
   );
 }
 
@@ -28,18 +28,18 @@ export function useDeleteStudyYear() {
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: communityKeys.studyYearDetail(variables.communitySlug),
+        queryKey: communityKeys.communityStudyYears(variables.communitySlug),
       });
       queryClient.removeQueries({
         queryKey: studyYearHomeKeys.byStudyYear(
           variables.communitySlug,
-          variables.studyYearName,
+          variables.studyYearSlug,
         ),
       });
       queryClient.removeQueries({
         queryKey: studyYearCoursesKeys.courses(
           variables.communitySlug,
-          variables.studyYearName,
+          variables.studyYearSlug,
         ),
       });
     },

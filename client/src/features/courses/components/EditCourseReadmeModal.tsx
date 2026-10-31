@@ -67,7 +67,7 @@ export function EditCourseReadmeModal({
         studyYearSlug,
         courseSlug: course.slug,
         payload: {
-          readme: readme.trim() || undefined,
+          readme: readme.trim() || null,
         },
       });
 

@@ -17,8 +17,7 @@ export async function updateProfile(
 export function useUpdateProfile() {
   return useMutation({
     mutationFn: updateProfile,
-    onSuccess: async (data) => {
-      useAuthStore.getState().updateUser({ username: data.username });
+    onSuccess: async (_) => {
       try {
         const refreshed = await refresh();
         useAuthStore

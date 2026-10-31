@@ -31,6 +31,7 @@ public record CreateCourseRequestDto(
         @Max(value = 2, message = "Semester must be either 1 or 2")
         Integer semester,
 
+        @NotNull(message = "Credit points are required")
         @Min(value = 1, message = "Credit points must be at least 1")
         @Max(value = 6, message = "Credit points cannot exceed 6")
         Integer creditPoints,
@@ -45,8 +46,5 @@ public record CreateCourseRequestDto(
         slug = slug != null ? slug.trim() : slug;
         abbreviation = abbreviation != null ? abbreviation.trim() : abbreviation;
         description = description != null ? description.trim() : description;
-        if (creditPoints == null) {
-            creditPoints = 5;
-        }
     }
 }

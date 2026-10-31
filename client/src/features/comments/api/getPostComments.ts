@@ -32,7 +32,7 @@ export const commentKeys = {
   all: ["comments"] as const,
   post: (postId: string) => [...commentKeys.all, "post", postId] as const,
   infinite: (postId: string, params: { size?: number }) =>
-    [...commentKeys.all, "post", postId, "infinite", params] as const,
+    [...commentKeys.post(postId), "infinite", params] as const,
 };
 
 export function useInfinitePostComments(

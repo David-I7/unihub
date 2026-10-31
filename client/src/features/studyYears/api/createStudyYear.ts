@@ -33,7 +33,7 @@ export function useCreateStudyYear() {
         queryKey: communityKeys.homeDetail(variables.communitySlug),
       });
       queryClient.invalidateQueries({
-        queryKey: communityKeys.studyYearDetail(variables.communitySlug),
+        queryKey: communityKeys.communityStudyYears(variables.communitySlug),
       });
     },
   });

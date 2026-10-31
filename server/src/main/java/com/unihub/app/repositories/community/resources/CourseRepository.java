@@ -15,7 +15,7 @@ import java.util.Set;
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query(value = """
-        SELECT DISTINCT c FROM Course c
+        SELECT c FROM Course c
         LEFT JOIN c.teachers t
         WHERE c.studyYear.id = :studyYearId
           AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
@@ -24,12 +24,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             COALESCE(:search, '') = '' OR (
               LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
               OR LOWER(c.abbreviation) LIKE LOWER(CONCAT('%', :search, '%'))
-              OR LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-              OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(c.slug) LIKE LOWER(CONCAT('%', :search, '%'))
             )
           )
+          ORDER BY c.semester, c.name
     """, countQuery = """
-        SELECT COUNT(DISTINCT c) FROM Course c
+        SELECT COUNT(c) FROM Course c
         LEFT JOIN c.teachers t
         WHERE c.studyYear.id = :studyYearId
           AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
@@ -38,8 +38,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             COALESCE(:search, '') = '' OR (
               LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%'))
               OR LOWER(c.abbreviation) LIKE LOWER(CONCAT('%', :search, '%'))
-              OR LOWER(t.firstName) LIKE LOWER(CONCAT('%', :search, '%'))
-              OR LOWER(t.lastName) LIKE LOWER(CONCAT('%', :search, '%'))
+              OR LOWER(c.slug) LIKE LOWER(CONCAT('%', :search, '%'))
             )
           )
     """)

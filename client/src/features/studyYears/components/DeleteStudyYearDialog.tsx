@@ -42,7 +42,7 @@ export function DeleteStudyYearDialog({
     try {
       await deleteMutation.mutateAsync({
         communitySlug,
-        studyYearName: yearSlug,
+        studyYearSlug: yearSlug,
       });
 
       toast.success(`${displayName} was deleted successfully.`);
