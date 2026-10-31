@@ -330,7 +330,7 @@ public class CourseServiceTests {
                 .thenReturn(Optional.of(studyYear));
         when(courseRepository.existsByStudyYearIdAndNameIgnoreCase(1, "Baze de Date")).thenReturn(false);
         when(courseRepository.existsByStudyYearIdAndSlugIgnoreCase(1, "bd")).thenReturn(false);
-        when(teacherRepository.findAllByIdInAndCommunityId(List.of(teacherId), communityId))
+        when(teacherRepository.findAllByIdInAndCommunityIdWithCourses(List.of(teacherId), communityId))
                 .thenReturn(List.of(teacher));
         when(courseRepository.save(any(Course.class)))
                 .thenAnswer(invocation -> {
@@ -392,7 +392,7 @@ public class CourseServiceTests {
                 .thenReturn(Optional.of(studyYear));
         when(courseRepository.existsByStudyYearIdAndNameIgnoreCase(1, "BD")).thenReturn(false);
         when(courseRepository.existsByStudyYearIdAndSlugIgnoreCase(1, "bd")).thenReturn(false);
-        when(teacherRepository.findAllByIdInAndCommunityId(List.of(teacherId), communityId))
+        when(teacherRepository.findAllByIdInAndCommunityIdWithCourses(List.of(teacherId), communityId))
                 .thenReturn(Collections.emptyList());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -512,55 +512,74 @@ public class CourseServiceTests {
         assertFalse(unarchived.archived());
     }
 
-    // =========================================================================
-    // addTeacher & removeTeacher Tests
-    // =========================================================================
-
     @Test
-    @DisplayName("addTeacher adds teacher to course")
-    public void testAddTeacher_Success() {
-        UUID communityId = UUID.randomUUID();
-        UUID teacherId = UUID.randomUUID();
-        Community community = Community.builder().id(communityId).slug("fmi-info-id").build();
+    @DisplayName("updateCourse clears readme and description when null is passed")
+    public void testUpdateCourse_ClearReadmeAndDescription() {
+        Community community = Community.builder().id(UUID.randomUUID()).slug("fmi-info-id").build();
         StudyYear studyYear = StudyYear.builder().id(1).studyYearName(StudyYearName.YEAR_1).community(community).build();
-        Course course = Course.builder().id(1L).slug("bd").studyYear(studyYear).teachers(new ArrayList<>()).build();
-        Teacher teacher = Teacher.builder().id(teacherId).community(community).coursesTaught(new ArrayList<>()).build();
+        Course course = Course.builder()
+                .id(1L)
+                .name("BD")
+                .slug("bd")
+                .abbreviation("BD")
+                .studyYear(studyYear)
+                .description("Old description")
+                .readme("# Old Readme")
+                .build();
+
+        UpdateCourseRequestDto request = UpdateCourseRequestDto.builder()
+                .description(null)
+                .readme(null)
+                .build();
 
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachersAndCommunity("bd", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(teacher));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        CourseHomeResponseDto result = courseService.addTeacher("fmi-info-id", StudyYearName.YEAR_1, "bd", teacherId);
+        CourseResponseDto result = courseService.updateCourse("fmi-info-id", StudyYearName.YEAR_1, "bd", request);
 
         assertNotNull(result);
-        assertEquals(1, result.teachers().size());
-        assertEquals(teacherId, result.teachers().get(0).id());
-        verify(teacherRepository).save(teacher);
+        assertNull(course.getDescription());
+        assertNull(course.getReadme());
     }
 
     @Test
-    @DisplayName("removeTeacher removes teacher from course")
-    public void testRemoveTeacher_Success() {
+    @DisplayName("updateCourse successfully updates teachers")
+    public void testUpdateCourse_UpdateTeachers() {
         UUID communityId = UUID.randomUUID();
-        UUID teacherId = UUID.randomUUID();
+        UUID teacher1Id = UUID.randomUUID();
+        UUID teacher2Id = UUID.randomUUID();
         Community community = Community.builder().id(communityId).slug("fmi-info-id").build();
         StudyYear studyYear = StudyYear.builder().id(1).studyYearName(StudyYearName.YEAR_1).community(community).build();
-        Teacher teacher = Teacher.builder().id(teacherId).community(community).coursesTaught(new ArrayList<>()).build();
-        List<Teacher> teachers = new ArrayList<>();
-        teachers.add(teacher);
-        Course course = Course.builder().id(1L).slug("bd").studyYear(studyYear).teachers(teachers).build();
-        teacher.getCoursesTaught().add(course);
+        Teacher teacher1 = Teacher.builder().id(teacher1Id).community(community).coursesTaught(new ArrayList<>()).build();
+        Teacher teacher2 = Teacher.builder().id(teacher2Id).community(community).coursesTaught(new ArrayList<>()).build();
+
+        Course course = Course.builder()
+                .id(1L)
+                .name("BD")
+                .slug("bd")
+                .abbreviation("BD")
+                .studyYear(studyYear)
+                .teachers(new ArrayList<>(List.of(teacher1)))
+                .build();
+        teacher1.getCoursesTaught().add(course);
+
+        UpdateCourseRequestDto request = UpdateCourseRequestDto.builder()
+                .teacherIds(List.of(teacher2Id))
+                .build();
 
         when(courseRepository.findBySlugAndCommunitySlugAndStudyYearNameWithTeachersAndCommunity("bd", "fmi-info-id", StudyYearName.YEAR_1))
                 .thenReturn(Optional.of(course));
-        when(teacherRepository.findByIdWithCommunity(teacherId)).thenReturn(Optional.of(teacher));
+        when(teacherRepository.findAllByIdInAndCommunityIdWithCourses(List.of(teacher2Id), communityId))
+                .thenReturn(List.of(teacher2));
         when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        CourseHomeResponseDto result = courseService.removeTeacher("fmi-info-id", StudyYearName.YEAR_1, "bd", teacherId);
+        CourseResponseDto result = courseService.updateCourse("fmi-info-id", StudyYearName.YEAR_1, "bd", request);
 
         assertNotNull(result);
-        assertEquals(0, result.teachers().size());
-        verify(teacherRepository).save(teacher);
+        verify(teacherRepository).save(teacher1);
+        verify(teacherRepository).save(teacher2);
+        assertFalse(teacher1.getCoursesTaught().contains(course));
+        assertTrue(teacher2.getCoursesTaught().contains(course));
     }
 }

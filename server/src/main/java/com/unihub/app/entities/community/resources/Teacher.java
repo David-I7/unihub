@@ -48,6 +48,7 @@ public class Teacher {
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
+    @ManyToMany
     @JoinTable(
             name = "course_teachers",
             joinColumns = @JoinColumn(name = "teacher_id"),

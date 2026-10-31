@@ -45,10 +45,12 @@ export const updateCommunitySchema = z.object({
   description: z
     .string()
     .max(500, "Description must not exceed 500 characters")
+    .nullable()
     .optional(),
   readme: z
     .string()
     .max(50000, "Readme markdown must not exceed 50,000 characters")
+    .nullable()
     .optional(),
   backgroundColor: z
     .string()

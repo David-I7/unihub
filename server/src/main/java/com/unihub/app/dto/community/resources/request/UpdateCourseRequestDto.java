@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import com.unihub.app.utils.JsonNullableUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 
 import java.util.List;
@@ -33,13 +34,13 @@ public record UpdateCourseRequestDto(
         JsonNullable<List<UUID>> teacherIds
 ) {
     public UpdateCourseRequestDto {
-        name = name == null ? JsonNullable.undefined() : name.map(String::trim);
-        slug = slug == null ? JsonNullable.undefined() : slug.map(String::trim);
-        abbreviation = abbreviation == null ? JsonNullable.undefined() : abbreviation.map(String::trim);
+        name = JsonNullableUtils.trim(name);
+        slug = JsonNullableUtils.trim(slug);
+        abbreviation = JsonNullableUtils.trim(abbreviation);
         semester = semester == null ? JsonNullable.undefined() : semester;
         creditPoints = creditPoints == null ? JsonNullable.undefined() : creditPoints;
-        description = description == null ? JsonNullable.undefined() : description.map(String::trim);
-        readme = readme == null ? JsonNullable.undefined() : readme.map(String::trim);
+        description = JsonNullableUtils.trim(description);
+        readme = JsonNullableUtils.trim(readme);
         teacherIds = teacherIds == null ? JsonNullable.undefined() : teacherIds;
     }
 

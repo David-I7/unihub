@@ -288,4 +288,34 @@ public class CommunityServiceTests {
 
         assertThrows(ResponseStatusException.class, () -> communityService.getCommunityReadme("unknown"));
     }
+
+    @Test
+    @DisplayName("updateCommunity clears readme and description when null is passed")
+    public void testUpdateCommunity_ClearReadmeAndDescription() {
+        UUID userId = UUID.randomUUID();
+        UserDto userDto = new UserDto(userId, "david@example.com", "david", false, RoleType.USER);
+        User owner = User.builder().id(userId).username("david").build();
+        Community community = Community.builder()
+                .id(UUID.randomUUID())
+                .name("FMI")
+                .slug("fmi")
+                .description("Old description")
+                .readme("# Old Readme")
+                .owner(owner)
+                .build();
+
+        UpdateCommunityRequestDto dto = UpdateCommunityRequestDto.builder()
+                .description(org.openapitools.jackson.nullable.JsonNullable.of(null))
+                .readme(org.openapitools.jackson.nullable.JsonNullable.of(null))
+                .build();
+
+        when(communityRepository.findBySlugWithOwner("fmi")).thenReturn(Optional.of(community));
+        when(communityRepository.save(any(Community.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        CommunityResponseDto result = communityService.updateCommunity("fmi", userDto, dto);
+
+        assertNotNull(result);
+        assertNull(community.getDescription());
+        assertNull(community.getReadme());
+    }
 }

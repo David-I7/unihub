@@ -121,6 +121,6 @@ public interface TeacherRepository extends JpaRepository<Teacher, UUID> {
     @Query("SELECT t FROM Teacher t WHERE t.id IN :ids AND t.community.id = :communityId")
     List<Teacher> findAllByIdInAndCommunityId(@Param("ids") List<UUID> ids, @Param("communityId") UUID communityId);
 
-    @Query("SELECT t FROM Teacher t LEFT JOIN t.coursesTaught ct WHERE t.id IN :ids AND t.community.id = :communityId")
+    @Query("SELECT DISTINCT t FROM Teacher t LEFT JOIN FETCH t.coursesTaught ct WHERE t.id IN :ids AND t.community.id = :communityId")
     List<Teacher> findAllByIdInAndCommunityIdWithCourses(@Param("ids") List<UUID> ids, @Param("communityId") UUID communityId);
 }

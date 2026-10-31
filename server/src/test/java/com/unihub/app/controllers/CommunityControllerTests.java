@@ -300,6 +300,32 @@ public class CommunityControllerTests extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.backgroundColor").value("#10b981"));
     }
 
+    @Test
+    @DisplayName("PATCH /api/v1/communities/{communitySlug} with null readme and description clears them")
+    public void testUpdateCommunity_NullReadmeAndDescription() throws Exception {
+        CommunityResponseDto responseDto = CommunityResponseDto.builder()
+                .id(UUID.randomUUID())
+                .name("Updated Name")
+                .slug("fmi-info-id")
+                .description(null)
+                .backgroundColor("#10b981")
+                .memberCount(10)
+                .verified(true)
+                .createdAt(OffsetDateTime.now())
+                .owner(new OwnerDto(userId, "david", true))
+                .build();
+
+        when(communityService.updateCommunity(eq("fmi-info-id"), any(), any(UpdateCommunityRequestDto.class)))
+                .thenReturn(responseDto);
+
+        mockMvc.perform(patch(BASE_URL + "/fmi-info-id")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"readme\": null, \"description\": null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Updated Name"))
+                .andExpect(jsonPath("$.description").doesNotExist());
+    }
+
     // =========================================================================
     // DELETE /api/v1/communities/{communitySlug}
     // =========================================================================

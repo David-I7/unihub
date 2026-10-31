@@ -46,8 +46,18 @@ export function useUpdateCourse() {
           variables.studyYearSlug,
         ),
       });
-      if (variables.payload.slug) {
+      if (
+        variables.payload.slug &&
+        variables.payload.slug !== variables.courseSlug
+      ) {
         queryClient.removeQueries({
+          queryKey: courseHomeKeys.byCourse(
+            variables.communitySlug,
+            variables.studyYearSlug,
+            variables.courseSlug,
+          ),
+        });
+        queryClient.invalidateQueries({
           queryKey: courseHomeKeys.byCourse(
             variables.communitySlug,
             variables.studyYearSlug,
@@ -79,10 +89,8 @@ export function useUpdateCourse() {
           refetchType: "none",
         });
 
-        variables.payload.teacherIds.forEach((teacherId) => {
-          queryClient.invalidateQueries({
-            queryKey: teacherKeys.detail(teacherId),
-          });
+        queryClient.invalidateQueries({
+          queryKey: teacherKeys.details(),
         });
       }
     },

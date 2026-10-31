@@ -16,7 +16,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query(value = """
         SELECT c FROM Course c
-        LEFT JOIN c.teachers t
         WHERE c.studyYear.id = :studyYearId
           AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
           AND (CAST(:semester AS integer) IS NULL OR c.semester = :semester)
@@ -30,7 +29,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
           ORDER BY c.semester, c.name
     """, countQuery = """
         SELECT COUNT(c) FROM Course c
-        LEFT JOIN c.teachers t
         WHERE c.studyYear.id = :studyYearId
           AND (CAST(:archived AS boolean) IS NULL OR c.archived = :archived)
           AND (CAST(:semester AS integer) IS NULL OR c.semester = :semester)

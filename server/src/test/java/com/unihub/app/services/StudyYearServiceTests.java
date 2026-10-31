@@ -308,4 +308,36 @@ public class StudyYearServiceTests {
 
         assertThrows(ResponseStatusException.class, () -> studyYearService.deleteStudyYear("fmi-info-id", StudyYearName.YEAR_1));
     }
+
+    @Test
+    @DisplayName("getStudyYearCourses returns only non-archived courses")
+    public void testGetStudyYearCourses_FiltersArchived() {
+        Course active = Course.builder().id(1L).name("Active").slug("active").abbreviation("ACT").semester(1).archived(false).build();
+        Course archived = Course.builder().id(2L).name("Archived").slug("archived").abbreviation("ARC").semester(1).archived(true).build();
+        StudyYear studyYear = StudyYear.builder().id(1).studyYearName(StudyYearName.YEAR_1).courses(List.of(active, archived)).build();
+
+        when(studyYearRepository.findByCommunitySlugAndStudyYearNameWithCourses("fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(studyYear));
+
+        var result = studyYearService.getStudyYearCourses("fmi-info-id", StudyYearName.YEAR_1);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("active", result.get(0).slug());
+    }
+
+    @Test
+    @DisplayName("getStudyYearCourses returns empty list when all courses are archived")
+    public void testGetStudyYearCourses_EmptyWhenAllArchived() {
+        Course archived = Course.builder().id(2L).name("Archived").slug("archived").abbreviation("ARC").semester(1).archived(true).build();
+        StudyYear studyYear = StudyYear.builder().id(1).studyYearName(StudyYearName.YEAR_1).courses(List.of(archived)).build();
+
+        when(studyYearRepository.findByCommunitySlugAndStudyYearNameWithCourses("fmi-info-id", StudyYearName.YEAR_1))
+                .thenReturn(Optional.of(studyYear));
+
+        var result = studyYearService.getStudyYearCourses("fmi-info-id", StudyYearName.YEAR_1);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
 }

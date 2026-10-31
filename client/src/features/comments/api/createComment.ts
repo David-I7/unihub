@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Comment } from "@/types/domain";
 import type { CreateCommentPayload } from "./types";
 import { commentKeys } from "./getPostComments";
+import { postKeys } from "@/features/posts/api/getCommunityPosts";
 import { removeInfiniteQueryPagesExceptFirst } from "@/lib/queryCacheUtils";
 
 export interface CreateCommentVariables {
@@ -33,6 +34,12 @@ export function useCreateComment() {
       );
       queryClient.invalidateQueries({
         queryKey: commentKeys.post(variables.postId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: postKeys.detail(variables.postId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: postKeys.all,
       });
     },
   });

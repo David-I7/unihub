@@ -56,8 +56,8 @@ export function CommunitySettingsModal({
 
         if (dirty.name) payload.name = values.name?.trim();
         if (dirty.slug) payload.slug = values.slug?.trim();
-        if (dirty.description) payload.description = values.description?.trim();
-        if (dirty.readme) payload.readme = values.readme?.trim() || undefined;
+        if (dirty.description) payload.description = values.description?.trim() || null;
+        if (dirty.readme) payload.readme = values.readme?.trim() || null;
         if (dirty.backgroundColor)
           payload.backgroundColor = values.backgroundColor;
 

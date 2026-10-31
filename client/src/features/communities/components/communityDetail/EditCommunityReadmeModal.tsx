@@ -71,7 +71,7 @@ export function EditCommunityReadmeModal({
       await updateMutation.mutateAsync({
         communitySlug: community.slug,
         payload: {
-          readme: trimmedReadme,
+          readme: trimmedReadme || null,
         },
       });
 

@@ -132,9 +132,7 @@ function EditCourseForm({
               ? Number(values.creditPoints)
               : undefined;
         if (dirty.description)
-          payload.description = values.description
-            ? values.description.trim()
-            : "";
+          payload.description = values.description?.trim() || null;
         if (dirty.teacherIds) payload.teacherIds = selectedTeacherIds;
 
         const updated = await updateMutation.mutateAsync({

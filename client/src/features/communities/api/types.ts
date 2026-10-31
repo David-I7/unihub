@@ -34,8 +34,8 @@ export type CreateCommunityDto = {
 export type UpdateCommunityDto = {
   name?: string;
   slug?: string;
-  description?: string;
-  readme?: string;
+  description?: string | null;
+  readme?: string | null;
   backgroundColor?: string;
   verified?: boolean;
   newOwnerUsername?: string;

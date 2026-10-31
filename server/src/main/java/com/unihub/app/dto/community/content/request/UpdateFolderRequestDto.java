@@ -3,6 +3,7 @@ package com.unihub.app.dto.community.content.request;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import com.unihub.app.utils.JsonNullableUtils;
 import org.openapitools.jackson.nullable.JsonNullable;
 
 import java.util.UUID;
@@ -22,7 +23,7 @@ public record UpdateFolderRequestDto(
         }
 
         public UpdateFolderRequestDto {
-                name = name == null ? JsonNullable.undefined() : name.map(String::trim);
+                name = JsonNullableUtils.trim(name);
                 parentFolderId = parentFolderId == null ? JsonNullable.undefined() : parentFolderId;
                 moveToRoot = moveToRoot == null ? JsonNullable.undefined() : moveToRoot;
         }

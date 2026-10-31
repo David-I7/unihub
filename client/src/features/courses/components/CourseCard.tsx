@@ -107,7 +107,7 @@ export function CourseCard({
               {teachers.slice(0, 2).map((teacher) => (
                 <UserAvatar
                   key={teacher.id}
-                  username={teacher.lastName.concat(" ", teacher.firstName)}
+                  username={`${teacher.lastName ?? ""} ${teacher.firstName ?? ""}`.trim() || "Teacher"}
                   size="xs"
                   className="size-6 rounded-lg ring-2 ring-card"
                   fallbackClassName="rounded-lg text-[9px]"
@@ -121,7 +121,7 @@ export function CourseCard({
             </div>
 
             <span className="font-medium text-foreground text-xs truncate">
-              Prof. {primaryTeacher.lastName} {primaryTeacher?.firstName}
+              Prof. {primaryTeacher ? `${primaryTeacher.lastName ?? ""} ${primaryTeacher.firstName ?? ""}`.trim() : ""}
               {hasMultipleTeachers && (
                 <span className="text-muted-foreground text-[11px] ml-1">
                   +{teachers.length - 1} more
